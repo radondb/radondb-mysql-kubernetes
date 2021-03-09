@@ -1,0 +1,270 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: {{ template "krypton.chart" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+{{- with .Values.statefulsetAnnotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+
+spec:
+  serviceName: {{ template "fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "fullname" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "fullname" . }}
+        release: {{ .Release.Name }}
+{{- with .Values.podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
+      annotations:
+        checksum/config: {{include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+{{- with .Values.podAnnotations }}
+{{ toYaml . | indent 8 }}
+{{- end }}
+    spec:
+      {{- if .Values.schedulerName }}
+      schedulerName: "{{ .Values.schedulerName }}"
+      {{- end }}
+      initContainers:
+      - name: init-mysql
+        image: "{{ .Values.busybox.image }}:{{ .Values.busybox.tag }}"
+        imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
+        command: ['sh','-c']
+        args:
+          - |
+            # Generate mysql server-id from pod ordinal index.
+            ordinal=$(echo $(hostname) | tr -cd "[0-9]")
+            # Copy server-id.conf adding offset to avoid reserved server-id=0 value.
+            cat /mnt/config-map/server-id.cnf | sed s/@@SERVER_ID@@/$((100 + $ordinal))/g > /mnt/conf.d/server-id.cnf
+            # Copy appropriate conf.d files from config-map to config mount.
+            cp -f /mnt/config-map/node.cnf /mnt/conf.d/
+        volumeMounts:
+          - name: conf
+            mountPath: /mnt/conf.d
+          - name: config-map
+            mountPath: /mnt/config-map
+      - name: init-xenon
+        image: "{{ .Values.busybox.image }}:{{ .Values.busybox.tag }}"
+        imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
+        command: ['sh','-c']
+        args:
+          - |
+            # add peers.
+            printf '{"peers":[' > /mnt/xenon/peers.json
+            i=0
+            while [ $i -lt {{ .Values.replicaCount }} ]
+            do
+              if [ $i = 0 ]
+              then
+                printf '"{{ template "fullname" . }}-%g.{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:8801"' $i >> /mnt/xenon/peers.json
+              else
+                printf ',"{{ template "fullname" . }}-%g.{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:8801"' $i >> /mnt/xenon/peers.json
+              fi
+              let i++
+            done
+            printf ']}' >> /mnt/xenon/peers.json
+        volumeMounts:
+        - name: xenon-data
+          mountPath: /mnt/xenon
+      containers:
+      - name: mysql
+        image: "{{ .Values.mysql.image }}:{{ .Values.mysql.tag }}"
+        imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
+        {{- with .Values.mysql.args }}
+        args:
+        {{- range . }}
+          - {{ . | quote }}
+        {{- end }}
+        {{- end }}
+        resources:
+{{ toYaml .Values.mysql.resources | indent 10 }}
+        env:
+#        {{- if .Values.mysql.allowEmptyRootPassword }}
+#        - name: MYSQL_ALLOW_EMPTY_ROOT_PASSWORD
+#          value: "true"
+#        {{- else }}
+#        - name: MYSQL_ROOT_PASSWORD
+#          valueFrom:
+#            secretKeyRef:
+#              name: {{ template "fullname" . }}
+#              key: mysql-root-password
+#        {{- end }}
+        - name: MYSQL_REPL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}
+              key: mysql-replication-password
+        {{- if .Values.mysql.database }}
+        - name: MYSQL_DATABASE
+          value: {{ .Values.mysql.database | quote }}
+        {{- end }}
+        {{- if .Values.mysql.mysqlUser }}
+        - name: MYSQL_USER
+          value: {{ .Values.mysql.mysqlUser | quote }}
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}
+              key: mysql-password
+        {{- end }}
+        - name: SERVER_UUID
+          value: {{ template "mysql.uuid" . }}
+        {{- if .Values.mysql.extraEnvVars }}
+{{ tpl .Values.mysql.extraEnvVars . | indent 8 }}
+        {{- end }}
+        ports:
+        - name: mysql
+          containerPort: 3306
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+          {{- if .Values.persistence.subPath }}
+          subPath: {{ .Values.persistence.subPath }}
+          {{- end }}
+        - name: conf
+          mountPath: /etc/mysql/conf.d
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - "-c"
+            - mysqladmin ping -h 127.0.0.1 -u root
+          initialDelaySeconds: {{ .Values.mysql.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.mysql.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.mysql.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.mysql.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.mysql.livenessProbe.failureThreshold }}
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - "-c"
+            - mysql -h 127.0.0.1 -u root -e "SELECT 1"
+          initialDelaySeconds: {{ .Values.mysql.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.mysql.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.mysql.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.mysql.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.mysql.readinessProbe.failureThreshold }}
+      - name: xenon
+        image: "{{ .Values.xenon.image }}:{{ .Values.xenon.tag }}"
+        imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
+        {{- with .Values.xenon.args }}
+        args:
+        {{- range . }}
+          - {{ . | quote }}
+        {{- end }}
+        {{- end }}
+        lifecycle:
+          postStart:
+            exec:
+              command: ["sh", "-c", "until nc -z -w 2 localhost 3306 && echo mysql ok; do sleep 2; done"]
+        resources:
+{{ toYaml .Values.xenon.resources | indent 10 }}
+        volumeMounts:
+        - name: xenon-data
+          mountPath: /var/lib/xenon
+        env:
+        - name: MYSQL_REPL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}
+              key: mysql-replication-password
+        - name: HOST_SUFFIX
+          value: {{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+        {{- if .Values.xenon.extraEnvVars }}
+{{ tpl .Values.xenon.extraEnvVars . | indent 8 }}
+        {{- end }}
+        ports:
+        - name: xenon
+          containerPort: 8801
+        livenessProbe:
+          exec:
+            command:
+              - pgrep
+              - xenon
+          initialDelaySeconds: {{ .Values.xenon.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.xenon.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.xenon.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.xenon.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.xenon.livenessProbe.failureThreshold }}
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "/xenon/xenoncli xenon ping"
+          initialDelaySeconds: {{ .Values.xenon.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.xenon.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.xenon.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.xenon.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.xenon.readinessProbe.failureThreshold }}
+      {{- if .Values.metrics.enabled }}
+      - name: metrics
+        image: "{{ .Values.metrics.image }}:{{ .Values.metrics.tag }}"
+        imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
+        command: ['sh', '-c', 'DATA_SOURCE_NAME="root@(localhost:3306)/" /bin/mysqld_exporter' ]
+        ports:
+        - name: metrics
+          containerPort: 9104
+        livenessProbe:
+          httpGet:
+            path: /
+            port: metrics
+          initialDelaySeconds: {{ .Values.metrics.livenessProbe.initialDelaySeconds }}
+          timeoutSeconds: {{ .Values.metrics.livenessProbe.timeoutSeconds }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: metrics
+          initialDelaySeconds: {{ .Values.metrics.readinessProbe.initialDelaySeconds }}
+          timeoutSeconds: {{ .Values.metrics.readinessProbe.timeoutSeconds }}
+        resources:
+{{ toYaml .Values.metrics.resources | indent 10 }}
+      {{- end }}
+      volumes:
+      - name: conf
+        emptyDir: {}
+      - name: config-map
+        configMap:
+          name: {{ template "fullname" . }}
+      - name: xenon-data
+        emptyDir: {}
+{{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      annotations:
+      {{- range $key, $value := .Values.persistence.annotations }}
+        {{ $key }}: {{ $value }}
+      {{- end }}
+    spec:
+      accessModes:
+      {{- range .Values.persistence.accessModes }}
+      - {{ . | quote }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size | quote }}
+      {{- if .Values.persistence.storageClass }}
+      {{- if (eq "-" .Values.persistence.storageClass) }}
+      storageClassName: ""
+      {{- else }}
+      storageClassName: "{{ .Values.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+{{- else }}
+      - name: data
+        emptyDir: {}
+{{- end }}

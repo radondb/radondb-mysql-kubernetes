@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    app: {{ template "fullname" . }}
+    chart: {{ template "krypton.chart" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+data:
+  node.cnf: |-
+{{ .Files.Get "files/node.cnf" | indent 4 }}
+  server-id.cnf: |
+    [mysqld]
+    server-id=@@SERVER_ID@@
