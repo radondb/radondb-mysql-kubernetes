@@ -63,15 +63,15 @@ printf '{
   "election-timeout": 10000,
   "admit-defeat-hearbeat-count": 5,
   "heartbeat-timeout": 2000,
-  "meta-datadir": "/var/lib/xenon/",
+  "meta-datadir": "/var/lib/krypton/",
   "leader-start-command": "",
   "leader-stop-command": "",
   "semi-sync-degrade": true,
   "purge-binlog-disabled": true,
   "super-idle": false
  }
-}' $host $MYSQL_REPL_PASSWORD > /etc/xenon/xenon.json
+}' $host $MYSQL_REPL_PASSWORD > /etc/krypton/krypton.json
 
-chown -R mysql:mysql /etc/xenon/xenon.json
+chown -R mysql:mysql /etc/krypton/krypton.json
 
 exec "$@"

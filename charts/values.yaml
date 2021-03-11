@@ -65,8 +65,8 @@ mysql:
       memory: 256Mi
       cpu: 100m
 
-xenon:
-  image: zhyass/xenon
+krypton:
+  image: zhyass/krypton
   tag: beta0.1.0
   args: []
 
@@ -94,8 +94,8 @@ xenon:
 
   resources:
     requests:
-      memory: 256Mi
-      cpu: 100m
+      memory: 128Mi
+      cpu: 50m
     limits:
       memory: 256Mi
       cpu: 100m
@@ -113,9 +113,12 @@ metrics:
     initialDelaySeconds: 5
     timeoutSeconds: 1
   resources:
+    limits:
+      cpu:     100m
+      memory:  128Mi
     requests:
-      cpu: 100m
-      memory: 100Mi
+      cpu:     10m
+      memory:  32Mi
 
 # create pv for test persistence
 #apiVersion: v1

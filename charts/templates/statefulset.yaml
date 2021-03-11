@@ -55,29 +55,6 @@ spec:
             mountPath: /mnt/conf.d
           - name: config-map
             mountPath: /mnt/config-map
-      - name: init-xenon
-        image: "{{ .Values.busybox.image }}:{{ .Values.busybox.tag }}"
-        imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
-        command: ['sh','-c']
-        args:
-          - |
-            # add peers.
-            printf '{"peers":[' > /mnt/xenon/peers.json
-            i=0
-            while [ $i -lt {{ .Values.replicaCount }} ]
-            do
-              if [ $i = 0 ]
-              then
-                printf '"{{ template "fullname" . }}-%g.{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:8801"' $i >> /mnt/xenon/peers.json
-              else
-                printf ',"{{ template "fullname" . }}-%g.{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:8801"' $i >> /mnt/xenon/peers.json
-              fi
-              let i++
-            done
-            printf ']}' >> /mnt/xenon/peers.json
-        volumeMounts:
-        - name: xenon-data
-          mountPath: /mnt/xenon
       containers:
       - name: mysql
         image: "{{ .Values.mysql.image }}:{{ .Values.mysql.tag }}"
@@ -157,10 +134,10 @@ spec:
           timeoutSeconds: {{ .Values.mysql.readinessProbe.timeoutSeconds }}
           successThreshold: {{ .Values.mysql.readinessProbe.successThreshold }}
           failureThreshold: {{ .Values.mysql.readinessProbe.failureThreshold }}
-      - name: xenon
-        image: "{{ .Values.xenon.image }}:{{ .Values.xenon.tag }}"
+      - name: krypton
+        image: "{{ .Values.krypton.image }}:{{ .Values.krypton.tag }}"
         imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
-        {{- with .Values.xenon.args }}
+        {{- with .Values.krypton.args }}
         args:
         {{- range . }}
           - {{ . | quote }}
@@ -169,12 +146,13 @@ spec:
         lifecycle:
           postStart:
             exec:
-              command: ["sh", "-c", "until nc -z -w 2 localhost 3306 && echo mysql ok; do sleep 2; done"]
+              command: ['sh', '-c', 'until /krypton/kryptoncli xenon ping > /dev/null 2>&1; do sleep 2; done && /krypton/kryptoncli mysql stopmonitor && /krypton/kryptoncli cluster add "$(/bin/bash /create-peers.sh)"']
         resources:
-{{ toYaml .Values.xenon.resources | indent 10 }}
+{{ toYaml .Values.krypton.resources | indent 10 }}
         volumeMounts:
-        - name: xenon-data
-          mountPath: /var/lib/xenon
+        - name: config-map
+          mountPath: /create-peers.sh
+          subPath: create-peers.sh
         env:
         - name: MYSQL_REPL_PASSWORD
           valueFrom:
@@ -183,33 +161,33 @@ spec:
               key: mysql-replication-password
         - name: HOST_SUFFIX
           value: {{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
-        {{- if .Values.xenon.extraEnvVars }}
-{{ tpl .Values.xenon.extraEnvVars . | indent 8 }}
+        {{- if .Values.krypton.extraEnvVars }}
+{{ tpl .Values.krypton.extraEnvVars . | indent 8 }}
         {{- end }}
         ports:
-        - name: xenon
+        - name: krypton
           containerPort: 8801
         livenessProbe:
           exec:
             command:
               - pgrep
-              - xenon
-          initialDelaySeconds: {{ .Values.xenon.livenessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.xenon.livenessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.xenon.livenessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.xenon.livenessProbe.successThreshold }}
-          failureThreshold: {{ .Values.xenon.livenessProbe.failureThreshold }}
+              - krypton
+          initialDelaySeconds: {{ .Values.krypton.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.krypton.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.krypton.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.krypton.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.krypton.livenessProbe.failureThreshold }}
         readinessProbe:
           exec:
             command:
             - sh
             - -c
-            - "/xenon/xenoncli xenon ping"
-          initialDelaySeconds: {{ .Values.xenon.readinessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.xenon.readinessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.xenon.readinessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.xenon.readinessProbe.successThreshold }}
-          failureThreshold: {{ .Values.xenon.readinessProbe.failureThreshold }}
+            - "/krypton/kryptoncli xenon ping"
+          initialDelaySeconds: {{ .Values.krypton.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.krypton.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.krypton.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.krypton.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.krypton.readinessProbe.failureThreshold }}
       {{- if .Values.metrics.enabled }}
       - name: metrics
         image: "{{ .Values.metrics.image }}:{{ .Values.metrics.tag }}"
@@ -239,8 +217,6 @@ spec:
       - name: config-map
         configMap:
           name: {{ template "fullname" . }}
-      - name: xenon-data
-        emptyDir: {}
 {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
   - metadata:

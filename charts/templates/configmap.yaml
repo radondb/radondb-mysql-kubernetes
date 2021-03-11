@@ -13,3 +13,17 @@ data:
   server-id.cnf: |
     [mysqld]
     server-id=@@SERVER_ID@@
+  create-peers.sh: |
+    #!/bin/bash
+    i=0
+    while [ $i -lt {{ .Values.replicaCount }} ]
+    do
+      if [ $i = 0 ]
+      then
+        echo -n "{{ template "fullname" . }}-${i}.{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:8801"
+      else
+        echo -n ",{{ template "fullname" . }}-${i}.{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:8801"
+      fi
+      let i++
+    done
+
