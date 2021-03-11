@@ -5,8 +5,8 @@
 ## Specify an imagePullPolicy (Required)
 ## It's recommended to change this to 'Always' if the image tag is 'latest'
 ## ref: http://kubernetes.io/docs/user-guide/images/#updating-images
-##
-imagePullPolicy: IfNotPresent
+## Always IfNotPresent NEVER
+imagePullPolicy: Always
 
 ## String to partially override orangehrm.fullname template (will maintain the release name)
 ##
@@ -29,6 +29,7 @@ mysql:
   mysqlPassword: Qing@123
   mysqlReplicationPassword: Repl_123
   database: qingcloud
+  initTokudb: false
   uuid: ""
   ## Additionnal arguments that are passed to the MySQL container.
   ## For example use --default-authentication-plugin=mysql_native_password if older clients need to
@@ -62,8 +63,8 @@ mysql:
       memory: 256Mi
       cpu: 100m
     limits:
-      memory: 256Mi
-      cpu: 100m
+      memory: 1Gi
+      cpu: 500m
 
 krypton:
   image: zhyass/krypton
@@ -119,6 +120,18 @@ metrics:
     requests:
       cpu:     10m
       memory:  32Mi
+
+## Configure the service
+## ref: http://kubernetes.io/docs/user-guide/services/
+service:
+  annotations: {}
+  ## Specify a service type, NodePort|ClusterIP|LoadBalancer
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types
+  type: NodePort
+  # clusterIP: None
+  port: 3306
+  # nodePort: 32000
+  # loadBalancerIP:
 
 # create pv for test persistence
 #apiVersion: v1

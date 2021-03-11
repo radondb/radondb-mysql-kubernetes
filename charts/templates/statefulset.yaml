@@ -50,11 +50,20 @@ spec:
             cat /mnt/config-map/server-id.cnf | sed s/@@SERVER_ID@@/$((100 + $ordinal))/g > /mnt/conf.d/server-id.cnf
             # Copy appropriate conf.d files from config-map to config mount.
             cp -f /mnt/config-map/node.cnf /mnt/conf.d/
+            {{- if .Values.mysql.initTokudb }}
+            # For install tokudb.
+            printf '\nloose_tokudb_directio = ON\n' >> /mnt/conf.d/node.cnf
+            echo never > /host-sys/kernel/mm/transparent_hugepage/enabled
+            {{- end }}
         volumeMounts:
           - name: conf
             mountPath: /mnt/conf.d
           - name: config-map
             mountPath: /mnt/config-map
+          {{- if .Values.mysql.initTokudb }}
+          - name: host-sys
+            mountPath: /host-sys
+          {{- end }}
       containers:
       - name: mysql
         image: "{{ .Values.mysql.image }}:{{ .Values.mysql.tag }}"
@@ -95,6 +104,10 @@ spec:
             secretKeyRef:
               name: {{ template "fullname" . }}
               key: mysql-password
+        {{- end }}
+        {{- if .Values.mysql.initTokudb }}
+        - name: INIT_TOKUDB
+          value: "1"
         {{- end }}
         - name: SERVER_UUID
           value: {{ template "mysql.uuid" . }}
@@ -217,6 +230,11 @@ spec:
       - name: config-map
         configMap:
           name: {{ template "fullname" . }}
+      {{- if .Values.mysql.initTokudb }}
+      - name: host-sys
+        hostPath:
+          path: /sys
+      {{- end }}
 {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
   - metadata:
