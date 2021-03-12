@@ -1,0 +1,182 @@
+# Default values for krypton.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+## Specify an imagePullPolicy (Required)
+## It's recommended to change this to 'Always' if the image tag is 'latest'
+## ref: http://kubernetes.io/docs/user-guide/images/#updating-images
+## Always IfNotPresent NEVER
+imagePullPolicy: Always
+
+## String to partially override orangehrm.fullname template (will maintain the release name)
+##
+# nameOverride: ""
+## String to fully override orangehrm.fullname template
+##
+# fullnameOverride: ""
+
+replicaCount: 3
+
+busybox:
+  image: "busybox"
+  tag: "1.32"
+
+mysql:
+  image: zhyass/percona57
+  tag: beta0.1.0
+
+  mysqlReplicationPassword: Repl_123
+
+  mysqlUser: qingcloud
+  mysqlPassword: Qing@123
+  database: qingcloud
+
+  initTokudb: false
+  uuid: ""
+  ## Additionnal arguments that are passed to the MySQL container.
+  ## For example use --default-authentication-plugin=mysql_native_password if older clients need to
+  ## connect to a MySQL 8 instance.
+  args: []
+
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+
+  ## A string to add extra environment variables
+  # extraEnvVars: |
+  #   - name: EXTRA_VAR
+  #     value: "extra"
+
+  ## Configure resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+krypton:
+  image: zhyass/krypton
+  tag: beta0.1.0
+  args: []
+
+  ## A string to add extra environment variables
+  # extraEnvVars: |
+  #   - name: EXTRA_VAR
+  #     value: "extra"
+
+  ## Configure resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+  readinessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+    limits:
+      memory: 256Mi
+      cpu: 100m
+
+metrics:
+  enabled: true
+  image: prom/mysqld-exporter
+  tag: v0.12.1
+  annotations: {}
+
+  livenessProbe:
+    initialDelaySeconds: 15
+    timeoutSeconds: 5
+  readinessProbe:
+    initialDelaySeconds: 5
+    timeoutSeconds: 1
+  resources:
+    limits:
+      cpu:     100m
+      memory:  128Mi
+    requests:
+      cpu:     10m
+      memory:  32Mi
+
+## Configure the service
+## ref: http://kubernetes.io/docs/user-guide/services/
+service:
+  annotations: {}
+  ## Specify a service type, NodePort|ClusterIP|LoadBalancer
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types
+  type: NodePort
+  # clusterIP: None
+  port: 3306
+  # nodePort: 32000
+  # loadBalancerIP:
+
+# create pv for test persistence
+#apiVersion: v1
+#kind: PersistentVolume
+#metadata:
+#  name: lzz-pv1
+#spec:
+#  capacity:
+#    storage: 1Gi
+#  persistentVolumeReclaimPolicy: Recycle
+#  accessModes:
+#    - ReadWriteOnce
+#  hostPath:
+#    path: "/pv/lzz-pv1"
+
+## Enable persistence using Persistent Volume Claims
+## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+##
+persistence:
+  enabled: true
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, azure-disk on
+  ##   Azure, standard on GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+  accessModes:
+  - ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+
+## Set pod priorityClassName
+# priorityClassName: {}
+
+## Use an alternate scheduler, e.g. "stork".
+## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+##
+# schedulerName:
+
+# statefulset Annotations
+statefulsetAnnotations: {}
+
+# To be added to the database server pod(s)
+podAnnotations: {}
+podLabels: {}
