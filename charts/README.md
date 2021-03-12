@@ -102,7 +102,7 @@ The following table lists the configurable parameters of the krypton chart and t
 | `statefulsetAnnotations`		               | Map of annotations for statefulset							                                       | `{}`			                			     |
 | `podAnnotations`                             | Map of annotations to add to the pods                                                             | `{}`                                            |
 | `podLabels`                                  | Map of labels to add to the pods                                                                  | `{}`                                            |
-| `persistence.enabled`                        | Create a volume to store data                                                                     | false                                           |
+| `persistence.enabled`                        | Create a volume to store data                                                                     | true                                           |
 | `persistence.size`                           | Size of persistent volume claim                                                                   | 10Gi                                            |
 | `persistence.storageClass`                   | Type of persistent volume claim                                                                   | nil                                             |
 | `persistence.accessMode`                     | ReadWriteOnce or ReadOnly                                                                         | ReadWriteOnce                                   |

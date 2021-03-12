@@ -120,9 +120,6 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
-          {{- if .Values.persistence.subPath }}
-          subPath: {{ .Values.persistence.subPath }}
-          {{- end }}
         - name: conf
           mountPath: /etc/mysql/conf.d
         livenessProbe:
