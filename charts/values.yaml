@@ -5,8 +5,8 @@
 ## Specify an imagePullPolicy (Required)
 ## It's recommended to change this to 'Always' if the image tag is 'latest'
 ## ref: http://kubernetes.io/docs/user-guide/images/#updating-images
-## Always IfNotPresent NEVER
-imagePullPolicy: Always
+## Always IfNotPresent Never
+imagePullPolicy: IfNotPresent
 
 ## String to partially override orangehrm.fullname template (will maintain the release name)
 ##
