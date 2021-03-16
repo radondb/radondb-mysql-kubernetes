@@ -50,6 +50,10 @@ spec:
             cat /mnt/config-map/server-id.cnf | sed s/@@SERVER_ID@@/$((100 + $ordinal))/g > /mnt/conf.d/server-id.cnf
             # Copy appropriate conf.d files from config-map to config mount.
             cp -f /mnt/config-map/node.cnf /mnt/conf.d/
+            {{- if .Values.persistence.enabled }}
+            # remove lost+found.
+            rm -rf /mnt/data/lost+found
+            {{- end }}
             {{- if .Values.mysql.initTokudb }}
             # For install tokudb.
             printf '\nloose_tokudb_directio = ON\n' >> /mnt/conf.d/node.cnf
@@ -60,6 +64,10 @@ spec:
             mountPath: /mnt/conf.d
           - name: config-map
             mountPath: /mnt/config-map
+          {{- if .Values.persistence.enabled }}
+          - name: data
+            mountPath: /mnt/data
+          {{- end }}
           {{- if .Values.mysql.initTokudb }}
           - name: host-sys
             mountPath: /host-sys
