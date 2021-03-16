@@ -28,8 +28,6 @@ This variable is optional. It allows you to specify the name of a database to be
 
 These variables are optional, used in conjunction to create a new user and set that user's password. This user will be granted superuser permissions (see above) for the database specified by the `MYSQL_DATABASE` variable. Both variables are required for a user to be created.
 
-Do note that there is no need to use this mechanism to create the `root` superuser or `qc_repl` replication user, that user gets created by default with the password set by either of the mechanisms (given or generated) discussed above.
-
 ## `SERVER_UUID`
 
 The variable is a mysql parameter configured in `auto.cnf`, used to provide UUID when mysql is started for the first time.
