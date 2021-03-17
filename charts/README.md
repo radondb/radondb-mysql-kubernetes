@@ -99,13 +99,13 @@ The following table lists the configurable parameters of the krypton chart and t
 | `service.port`                               | The service port                                                                                  | `3306`                                          |
 | `schedulerName`                              | Name of the k8s scheduler (other than default)                                                    | `nil`                                           |
 | `priorityClassName`                          | Set pod priorityClassName                                                                         | `{}`                                            |
-| `statefulsetAnnotations`		               | Map of annotations for statefulset							                                       | `{}`			                			     |
+| `statefulsetAnnotations`		                 | Map of annotations for statefulset							                                                   | `{}`			                			                 |
 | `podAnnotations`                             | Map of annotations to add to the pods                                                             | `{}`                                            |
 | `podLabels`                                  | Map of labels to add to the pods                                                                  | `{}`                                            |
-| `persistence.enabled`                        | Create a volume to store data                                                                     | true                                           |
+| `persistence.enabled`                        | Create a volume to store data                                                                     | true                                            |
 | `persistence.size`                           | Size of persistent volume claim                                                                   | 10Gi                                            |
 | `persistence.storageClass`                   | Type of persistent volume claim                                                                   | nil                                             |
-| `persistence.accessMode`                     | ReadWriteOnce or ReadOnly                                                                         | ReadWriteOnce                                   |
+| `persistence.accessMode`                     | Access mode                                                                                       | ReadWriteOnce                                   |
 | `persistence.annotations`                    | Persistent Volume annotations                                                                     | {}                                              |
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
