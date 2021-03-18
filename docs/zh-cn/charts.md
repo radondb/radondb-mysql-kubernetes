@@ -24,7 +24,7 @@ $ cd charts
 $ helm install --name my-release .
 ```
 
-以上指令使用默认配置在 Kubernets 中部署 krypton 集群，[配置](#configuration)中列出了可在安装过程中配置的参数。
+以上指令使用默认配置在 Kubernets 中部署 krypton 集群，[配置](#配置)中列出了可在安装过程中配置的参数。
 
 ## 卸载  
 
@@ -137,7 +137,7 @@ $ helm install my-release -f values.yaml .
 
 ## 自定义 MYSQL 配置
 
-在 [node.cnf](./files/node.cnf) 中添加/更改 MYSQL 配置。
+在 [node.cnf](../../charts/files/node.cnf) 中添加/更改 MYSQL 配置。
 
 ```bash
 [mysqld]
