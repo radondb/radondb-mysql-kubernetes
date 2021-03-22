@@ -4,34 +4,26 @@ The cluster is comprised of {{ .Values.replicaCount }} Krypthon pods: 1 master a
 
 To connect to your database:
 
-1. Run an Ubuntu pod that you can use as a client:
-
-    kubectl run -i --tty ubuntu --image=ubuntu:focal --restart=Never -- bash -il
-
-2. Install the mysql client:
-
-    $ apt-get update && apt-get install mysql-client -y
-
-3. Get mysql user `{{ .Values.mysql.mysqlUser}}`'s password:
+1. Get mysql user `{{ .Values.mysql.mysqlUser}}`'s password:
 
     kubectl get secret -n {{ .Release.Namespace }} {{ template "fullname" . }} -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
 
-4. To connect to master service:
+2. Run an Ubuntu pod that you can use as a client:
 
-    Get the master:
+    kubectl run -i --tty ubuntu --image=ubuntu:focal --restart=Never -- bash -il
 
-        kubectl exec -ti -n {{ .Release.Namespace }} {{ template "fullname" . }}-0 -c krypton /krypton/kryptoncli raft status | jq .leader | cut -d . -f 1-2 | tail -c +2
+3. Install the mysql client:
 
-    The execution result is the master and where all writes should be executed against. Read queries can be executed against the `{{ template "fullname" . }}` service which distributes connections across all MySQL pods.
+    $ apt-get update && apt-get install mysql-client -y
 
-    Suppose the master is `{{ template "fullname" . }}-2.{{ template "fullname" . }}`, password is `Qing@123`, execute:
+4. To connect to master service in the Ubuntu pod:
 
-        mysql -h {{ template "fullname" . }}-2.{{ template "fullname" . }} -u {{ .Values.mysql.mysqlUser }} -pQing@123
+    mysql -h {{ template "fullname" . }}-master -u {{ .Values.mysql.mysqlUser }} -p
 
 {{- if lt 1 (.Values.replicaCount | int64) }}
 
-5. To connect to slave service (read-only):
+5. To connect to slave service (read-only) in the Ubuntu pod:
 
-    mysql -h {{ template "fullname" . }} -u {{ .Values.mysql.mysqlUser }} -pQing@123
+    mysql -h {{ template "fullname" . }}-slave -u {{ .Values.mysql.mysqlUser }} -p
 
 {{- end }}

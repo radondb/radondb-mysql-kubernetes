@@ -70,7 +70,7 @@ mysql:
 
 krypton:
   image: zhyass/krypton
-  tag: beta0.1.0
+  tag: beta0.1.1
   args: []
 
   ## A string to add extra environment variables
@@ -123,6 +123,20 @@ metrics:
       cpu:     10m
       memory:  32Mi
 
+  # Enable this if you're using https://github.com/coreos/prometheus-operator
+  serviceMonitor:
+    enabled: false
+    ## Specify a namespace if needed
+    # namespace: monitoring
+    # fallback to the prometheus default unless specified
+    interval: 10s
+    # scrapeTimeout: 10s
+    ## Defaults to what's used if you follow CoreOS [Prometheus Install Instructions](https://github.com/helm/charts/tree/master/stable/prometheus-operator#tldr)
+    ## [Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#prometheus-operator-1)
+    ## [Kube Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#exporters)
+    # selector:
+    #  prometheus: kube-prometheus
+
 ## Configure the service
 ## ref: http://kubernetes.io/docs/user-guide/services/
 service:
@@ -134,6 +148,18 @@ service:
   port: 3306
   # nodePort: 32000
   # loadBalancerIP:
+
+# Default values for spring-cloud-data-flow.
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the serviceAccountName template
+  name:
 
 # create pv for test persistence
 #apiVersion: v1

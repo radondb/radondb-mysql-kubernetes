@@ -24,6 +24,17 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Create the name of the service account to use
+*/}}
+{{- define "serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "krypton.chart" -}}

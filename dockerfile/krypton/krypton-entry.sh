@@ -31,6 +31,8 @@ if [ -n "$HOST_SUFFIX" ]; then
 fi
 
 file_env 'MYSQL_REPL_PASSWORD' 'Repl_123'
+file_env 'LEADER_START_CMD' ':'
+file_env 'LEADER_STOP_CMD' ':'
 
 printf '{
  "log": {
@@ -49,8 +51,6 @@ printf '{
  "mysql": {
   "admit-defeat-ping-count": 3,
   "admin": "root",
-  "basedir": "/usr",
-  "defaults-file": "/etc/mysql/my.cnf",
   "ping-timeout": 2000,
   "passwd": "",
   "host": "localhost",
@@ -64,13 +64,13 @@ printf '{
   "admit-defeat-hearbeat-count": 5,
   "heartbeat-timeout": 2000,
   "meta-datadir": "/var/lib/krypton/",
-  "leader-start-command": "",
-  "leader-stop-command": "",
+  "leader-start-command": "%s",
+  "leader-stop-command": "%s",
   "semi-sync-degrade": true,
   "purge-binlog-disabled": true,
   "super-idle": false
  }
-}' $host $MYSQL_REPL_PASSWORD > /etc/krypton/krypton.json
+}' "$host" "$MYSQL_REPL_PASSWORD" "$LEADER_START_CMD" "$LEADER_STOP_CMD" > /etc/krypton/krypton.json
 
 chown -R mysql:mysql /etc/krypton/krypton.json
 

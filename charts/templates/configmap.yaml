@@ -26,4 +26,13 @@ data:
       fi
       let i++
     done
-
+  leader-start.sh: |
+    #!/bin/bash
+    curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
+    --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/{{ .Release.Namespace }}/pods/$HOSTNAME \
+    -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "master"}]'
+  leader-stop.sh: |
+    #!/bin/bash
+    curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
+    --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/{{ .Release.Namespace }}/pods/$HOSTNAME \
+    -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "slave"}]'

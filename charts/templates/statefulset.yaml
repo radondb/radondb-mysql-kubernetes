@@ -25,6 +25,7 @@ spec:
       labels:
         app: {{ template "fullname" . }}
         release: {{ .Release.Name }}
+        role: candidate
 {{- with .Values.podLabels }}
 {{ toYaml . | indent 8 }}
 {{- end }}
@@ -37,6 +38,7 @@ spec:
       {{- if .Values.schedulerName }}
       schedulerName: "{{ .Values.schedulerName }}"
       {{- end }}
+      serviceAccountName: {{ template "serviceAccountName" . }}
       initContainers:
       - name: init-mysql
         image: "{{ .Values.busybox.image }}:{{ .Values.busybox.tag }}"
@@ -171,6 +173,12 @@ spec:
         - name: config-map
           mountPath: /create-peers.sh
           subPath: create-peers.sh
+        - name: config-map
+          mountPath: /leader-start.sh
+          subPath: leader-start.sh
+        - name: config-map
+          mountPath: /leader-stop.sh
+          subPath: leader-stop.sh
         env:
         - name: MYSQL_REPL_PASSWORD
           valueFrom:
@@ -179,6 +187,10 @@ spec:
               key: mysql-replication-password
         - name: HOST_SUFFIX
           value: {{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+        - name: LEADER_START_CMD
+          value: "/bin/bash /leader-start.sh"
+        - name: LEADER_STOP_CMD
+          value: "/bin/bash /leader-stop.sh"
         {{- if .Values.krypton.extraEnvVars }}
 {{ tpl .Values.krypton.extraEnvVars . | indent 8 }}
         {{- end }}
