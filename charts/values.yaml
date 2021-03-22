@@ -38,6 +38,12 @@ mysql:
   ## connect to a MySQL 8 instance.
   args: []
 
+  configFiles:
+    node.cnf: |
+      [mysqld]
+      default_storage_engine=InnoDB
+      max_connections=65535
+
   livenessProbe:
     initialDelaySeconds: 30
     periodSeconds: 10

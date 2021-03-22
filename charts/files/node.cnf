@@ -1,3 +1,0 @@
-[mysqld]
-default_storage_engine=InnoDB
-max_connections=65535
