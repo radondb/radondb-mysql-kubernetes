@@ -12,7 +12,7 @@ metadata:
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
   {{- if .Values.metrics.serviceMonitor.selector }}
-  {{ toYaml .Values.metrics.serviceMonitor.selector }}
+{{ toYaml .Values.metrics.serviceMonitor.selector | indent 2 }}
   {{- end }}
 spec:
   selector:

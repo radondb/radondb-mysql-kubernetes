@@ -8,6 +8,9 @@ metadata:
     chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
+    {{- if .Values.service.annotations }}
+{{ toYaml .Values.service.annotations | indent 4 }}
+    {{- end }}
 spec:
   ports:
   - name: {{ template "fullname" . }}
@@ -27,12 +30,6 @@ metadata:
     chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-{{- if .Values.service.annotations }}
-{{ toYaml .Values.service.annotations | indent 4 }}
-{{- end }}
-{{- if and (.Values.metrics.enabled) (.Values.metrics.annotations) }}
-{{ toYaml .Values.metrics.annotations | indent 4 }}
-{{- end }}
 spec:
   type: {{ .Values.service.type }}
   {{- if (and (eq .Values.service.type "ClusterIP") (not (empty .Values.service.clusterIP))) }}
@@ -63,12 +60,6 @@ metadata:
     chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-{{- if .Values.service.annotations }}
-{{ toYaml .Values.service.annotations | indent 4 }}
-{{- end }}
-{{- if and (.Values.metrics.enabled) (.Values.metrics.annotations) }}
-{{ toYaml .Values.metrics.annotations | indent 4 }}
-{{- end }}
 spec:
   type: {{ .Values.service.type }}
   {{- if (and (eq .Values.service.type "ClusterIP") (not (empty .Values.service.clusterIP))) }}
@@ -99,6 +90,9 @@ metadata:
     chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
+    {{- if .Values.metrics.annotations }}
+{{ toYaml .Values.metrics.annotations | indent 4 }}
+    {{- end }}
 spec:
   clusterIP: None
   ports:

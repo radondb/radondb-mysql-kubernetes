@@ -8,10 +8,10 @@ metadata:
     chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-{{- with .Values.statefulsetAnnotations }}
+  {{- with .Values.statefulsetAnnotations }}
   annotations:
 {{ toYaml . | indent 4 }}
-{{- end }}
+  {{- end }}
 
 spec:
   serviceName: {{ template "fullname" . }}
@@ -26,14 +26,14 @@ spec:
         app: {{ template "fullname" . }}
         release: {{ .Release.Name }}
         role: candidate
-{{- with .Values.podLabels }}
+        {{- with .Values.podLabels }}
 {{ toYaml . | indent 8 }}
-{{- end }}
+        {{- end }}
       annotations:
         checksum/config: {{include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-{{- with .Values.podAnnotations }}
+        {{- with .Values.podAnnotations }}
 {{ toYaml . | indent 8 }}
-{{- end }}
+        {{- end }}
     spec:
       {{- if .Values.schedulerName }}
       schedulerName: "{{ .Values.schedulerName }}"
@@ -252,7 +252,7 @@ spec:
         hostPath:
           path: /sys
       {{- end }}
-{{- if .Values.persistence.enabled }}
+  {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
   - metadata:
       name: data
@@ -275,7 +275,7 @@ spec:
       storageClassName: "{{ .Values.persistence.storageClass }}"
       {{- end }}
       {{- end }}
-{{- else }}
+  {{- else }}
       - name: data
         emptyDir: {}
-{{- end }}
+  {{- end }}
