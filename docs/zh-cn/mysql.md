@@ -29,10 +29,6 @@
 
 变量可选，结合使用以创建一个新用户并设置该用户的密码。将为该用户授予 `MYSQL_DATABASE` 变量指定的数据库的超级用户权限（请参见上文）。这两个变量都是创建用户所必需的。
 
-## `SERVER_UUID`
-
-该变量是在 `auto.cnf` 中配置的 mysql 参数，用于在首次启动 mysql 时提供 UUID。
-
 # 构建镜像
 
     docker build -t mysql:v1.0 .
