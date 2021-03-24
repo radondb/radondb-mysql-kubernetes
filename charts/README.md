@@ -137,13 +137,15 @@ By default, the PersistentVolumeClaim is disabled. In order to enable this funct
 
 # Custom MySQL configuration
 
-You can add or modify the mysql configuration in [node.cnf](./files/node.cnf).
+You can add or modify the mysql configuration on the `mysql.configFiles`.
 
-```
-[mysqld]
-default_storage_engine=InnoDB
-max_connections=65535
+```yaml
+  configFiles:
+    node.cnf: |
+      [mysqld]
+      default_storage_engine=InnoDB
+      max_connections=65535
 
-# custom mysql configuration.
-expire_logs_days=7
+      # custom mysql configuration.
+      expire_logs_days=7
 ```

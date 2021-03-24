@@ -8,10 +8,10 @@ metadata:
     chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-{{- with .Values.statefulsetAnnotations }}
+  {{- with .Values.statefulsetAnnotations }}
   annotations:
 {{ toYaml . | indent 4 }}
-{{- end }}
+  {{- end }}
 
 spec:
   serviceName: {{ template "fullname" . }}
@@ -25,18 +25,20 @@ spec:
       labels:
         app: {{ template "fullname" . }}
         release: {{ .Release.Name }}
-{{- with .Values.podLabels }}
+        role: candidate
+        {{- with .Values.podLabels }}
 {{ toYaml . | indent 8 }}
-{{- end }}
+        {{- end }}
       annotations:
         checksum/config: {{include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-{{- with .Values.podAnnotations }}
+        {{- with .Values.podAnnotations }}
 {{ toYaml . | indent 8 }}
-{{- end }}
+        {{- end }}
     spec:
       {{- if .Values.schedulerName }}
       schedulerName: "{{ .Values.schedulerName }}"
       {{- end }}
+      serviceAccountName: {{ template "serviceAccountName" . }}
       initContainers:
       - name: init-mysql
         image: "{{ .Values.busybox.image }}:{{ .Values.busybox.tag }}"
@@ -171,6 +173,12 @@ spec:
         - name: config-map
           mountPath: /create-peers.sh
           subPath: create-peers.sh
+        - name: config-map
+          mountPath: /leader-start.sh
+          subPath: leader-start.sh
+        - name: config-map
+          mountPath: /leader-stop.sh
+          subPath: leader-stop.sh
         env:
         - name: MYSQL_REPL_PASSWORD
           valueFrom:
@@ -179,6 +187,10 @@ spec:
               key: mysql-replication-password
         - name: HOST_SUFFIX
           value: {{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+        - name: LEADER_START_CMD
+          value: "/bin/bash /leader-start.sh"
+        - name: LEADER_STOP_CMD
+          value: "/bin/bash /leader-stop.sh"
         {{- if .Values.krypton.extraEnvVars }}
 {{ tpl .Values.krypton.extraEnvVars . | indent 8 }}
         {{- end }}
@@ -240,7 +252,7 @@ spec:
         hostPath:
           path: /sys
       {{- end }}
-{{- if .Values.persistence.enabled }}
+  {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
   - metadata:
       name: data
@@ -263,7 +275,7 @@ spec:
       storageClassName: "{{ .Values.persistence.storageClass }}"
       {{- end }}
       {{- end }}
-{{- else }}
+  {{- else }}
       - name: data
         emptyDir: {}
-{{- end }}
+  {{- end }}

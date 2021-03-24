@@ -137,13 +137,15 @@ $ helm install my-release -f values.yaml .
 
 ## 自定义 MYSQL 配置
 
-在 [node.cnf](../../charts/files/node.cnf) 中添加/更改 MYSQL 配置。
+在 `mysql.configFiles` 中添加/更改 MYSQL 配置。
 
-```bash
-[mysqld]
-default_storage_engine=InnoDB
-max_connections=65535
+```yaml
+  configFiles:
+    node.cnf: |
+      [mysqld]
+      default_storage_engine=InnoDB
+      max_connections=65535
 
-# custom mysql configuration.
-expire_logs_days=7
+      # custom mysql configuration.
+      expire_logs_days=7
 ```

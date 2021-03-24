@@ -20,6 +20,9 @@ RUN set -ex; \
     --no-create-home \
     --gid mysql \
     mysql; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends curl; \
+    rm -rf /var/lib/apt/lists/*; \
     mkdir -p /krypton /etc/krypton /var/log/krypton /var/lib/krypton; \
     echo "/etc/krypton/krypton.json" > /krypton/config.path; \
     # allow to change config files
