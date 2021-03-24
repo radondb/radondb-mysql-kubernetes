@@ -18,7 +18,6 @@ RUN set -ex; \
     fi; \
     rm -rf /var/lib/apt/lists/*
 
-ARG XTRABACKUP_PKG=percona-xtrabackup-24
 RUN set -ex; \
     key='9334A25F8507EFA5'; \
     export GNUPGHOME="$(mktemp -d)"; \
@@ -41,8 +40,7 @@ RUN set -ex; \
     apt-get install -y --no-install-recommends \
         percona-server-server-5.7 \
         percona-server-common-5.7 \
-        percona-server-tokudb-5.7 \
-        ${XTRABACKUP_PKG}; \
+        percona-server-tokudb-5.7; \
     # TokuDB modifications
     echo "LD_PRELOAD=/usr/lib64/libjemalloc.so.1" >> /etc/default/mysql; \
     echo "THP_SETTING=never" >> /etc/default/mysql; \

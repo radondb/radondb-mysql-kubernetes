@@ -119,8 +119,6 @@ spec:
         - name: INIT_TOKUDB
           value: "1"
         {{- end }}
-        - name: SERVER_UUID
-          value: {{ template "mysql.uuid" . }}
         {{- if .Values.mysql.extraEnvVars }}
 {{ tpl .Values.mysql.extraEnvVars . | indent 8 }}
         {{- end }}

@@ -55,7 +55,6 @@ $ helm delete my-release
 | `mysql.mysqlPassword`                        | 新建用户的密码                                                                                      | `Qing@123`, 如果没有设置则随机12字符                |
 | `mysql.mysqlDatabase`                        | 将要创建的数据库名                                                                                   | `qingcloud`                                     |
 | `mysql.initTokudb`                           | 安装 tokudb 引擎                                                                                   | `false`                                         |
-| `mysql.uuid`                                 | mysql 的 Server_uuid                                                                              | 由 `uuidv4` 函数生成                             |
 | `mysql.args`                                 | 要传递到 mysql 容器的其他参数                                                                         | `[]`                                            |
 | `mysql.livenessProbe.initialDelaySeconds`    | Pod 启动后首次进行存活检查的等待时间                                                                    | 30                                              |
 | `mysql.livenessProbe.periodSeconds`          | 存活检查的间隔时间                                                                                    | 10                                              |

@@ -141,17 +141,17 @@ if [ ! -d "$DATADIR/mysql" ]; then
 	fi
 
 	sed -i '/server-id/d' /etc/mysql/my.cnf
-	rm /var/log/mysql/error.log
-	rm /var/lib/mysql/auto.cnf
-
-	uuid=$(cat /proc/sys/kernel/random/uuid)
-	file_env 'SERVER_UUID' $uuid
-	printf '[auto]\nserver_uuid=%s' $SERVER_UUID > a
 	chown -R mysql:mysql "$DATADIR"
-
-	echo
-	echo 'MySQL init process done.'
-	echo
 fi
+
+rm -f /var/log/mysql/error.log
+rm -f /var/lib/mysql/auto.cnf
+
+uuid=$(cat /proc/sys/kernel/random/uuid)
+printf '[auto]\nserver_uuid=%s' $uuid > /var/lib/mysql/auto.cnf
+
+echo
+echo 'MySQL init process done.'
+echo
 
 exec "$@"

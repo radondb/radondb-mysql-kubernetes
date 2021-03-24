@@ -23,7 +23,7 @@ busybox:
 
 mysql:
   image: zhyass/percona57
-  tag: beta0.1.0
+  tag: beta0.1.1
 
   mysqlReplicationPassword: Repl_123
 
@@ -32,7 +32,6 @@ mysql:
   database: qingcloud
 
   initTokudb: false
-  uuid: ""
   ## Additionnal arguments that are passed to the MySQL container.
   ## For example use --default-authentication-plugin=mysql_native_password if older clients need to
   ## connect to a MySQL 8 instance.
