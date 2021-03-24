@@ -164,7 +164,11 @@ spec:
         lifecycle:
           postStart:
             exec:
+              {{- if lt 1 (.Values.replicaCount | int64) }}
               command: ['sh', '-c', 'until /krypton/kryptoncli xenon ping > /dev/null 2>&1; do sleep 2; done && /krypton/kryptoncli mysql stopmonitor && /krypton/kryptoncli cluster add "$(/bin/bash /create-peers.sh)"']
+              {{- else }}
+              command: ['sh', '-c', 'until /krypton/kryptoncli xenon ping > /dev/null 2>&1; do sleep 2; done && /krypton/kryptoncli mysql stopmonitor && /krypton/kryptoncli raft trytoleader']
+              {{- end }}
         resources:
 {{ toYaml .Values.krypton.resources | indent 10 }}
         volumeMounts:
