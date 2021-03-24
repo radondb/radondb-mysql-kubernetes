@@ -43,6 +43,8 @@ spec:
       - name: init-mysql
         image: "{{ .Values.busybox.image }}:{{ .Values.busybox.tag }}"
         imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
         command: ['sh','-c']
         args:
           - |
@@ -130,6 +132,8 @@ spec:
           mountPath: /var/lib/mysql
         - name: conf
           mountPath: /etc/mysql/conf.d
+        - name: logs
+          mountPath: /var/log/mysql
         livenessProbe:
           exec:
             command:
@@ -228,6 +232,8 @@ spec:
       - name: metrics
         image: "{{ .Values.metrics.image }}:{{ .Values.metrics.tag }}"
         imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
         command: ['sh', '-c', 'DATA_SOURCE_NAME="root@(localhost:3306)/" /bin/mysqld_exporter' ]
         ports:
         - name: metrics
@@ -244,11 +250,25 @@ spec:
             port: metrics
           initialDelaySeconds: {{ .Values.metrics.readinessProbe.initialDelaySeconds }}
           timeoutSeconds: {{ .Values.metrics.readinessProbe.timeoutSeconds }}
+      {{- end }}
+      {{- if .Values.slowLogTail }}
+      - name: slowlog
+        image: "{{ .Values.busybox.image }}:{{ .Values.busybox.tag }}"
+        imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
         resources:
-{{ toYaml .Values.metrics.resources | indent 10 }}
+{{ toYaml .Values.resources | indent 10 }}
+        command:
+        - "tail"
+        - "-f"
+        - "/logs/mysql-slow.log"
+        volumeMounts:
+        - name: logs
+          mountPath: /logs
       {{- end }}
       volumes:
       - name: conf
+        emptyDir: {}
+      - name: logs
         emptyDir: {}
       - name: config-map
         configMap:

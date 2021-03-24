@@ -18,8 +18,8 @@ imagePullPolicy: IfNotPresent
 replicaCount: 3
 
 busybox:
-  image: "busybox"
-  tag: "1.32"
+  image: busybox
+  tag: 1.32
 
 mysql:
   image: zhyass/percona57
@@ -120,13 +120,6 @@ metrics:
   readinessProbe:
     initialDelaySeconds: 5
     timeoutSeconds: 1
-  resources:
-    limits:
-      cpu:     100m
-      memory:  128Mi
-    requests:
-      cpu:     10m
-      memory:  32Mi
 
   # Enable this if you're using https://github.com/coreos/prometheus-operator
   serviceMonitor:
@@ -141,6 +134,17 @@ metrics:
     ## [Kube Prometheus Selector Label](https://github.com/helm/charts/tree/master/stable/prometheus-operator#exporters)
     # selector:
     #  prometheus: kube-prometheus
+
+## When set to true will create sidecar to tail mysql slow log.
+slowLogTail: false
+
+resources:
+  limits:
+    cpu:     100m
+    memory:  128Mi
+  requests:
+    cpu:     10m
+    memory:  32Mi
 
 ## Configure the service
 ## ref: http://kubernetes.io/docs/user-guide/services/
