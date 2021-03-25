@@ -49,6 +49,7 @@ spec:
     app: {{ template "fullname" . }}
     release: {{ .Release.Name | quote }}
     role: master
+{{- if lt 1 (.Values.replicaCount | int64) }}
 ---
 # Client service for connecting to any MySQL instance for reads.
 apiVersion: v1
@@ -79,6 +80,7 @@ spec:
     app: {{ template "fullname" . }}
     release: {{ .Release.Name | quote }}
     role: slave
+{{- end }}
 {{ if .Values.metrics.enabled }}
 ---
 apiVersion: v1

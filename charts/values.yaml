@@ -75,7 +75,7 @@ mysql:
 
 krypton:
   image: zhyass/krypton
-  tag: beta0.1.1
+  tag: beta0.1.2
   args: []
 
   ## A string to add extra environment variables

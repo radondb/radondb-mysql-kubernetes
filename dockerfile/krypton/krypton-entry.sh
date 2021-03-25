@@ -22,13 +22,7 @@ file_env() {
 	unset "$fileVar"
 }
 
-host=$(hostname)
-
-file_env 'HOST_SUFFIX' ''
-
-if [ -n "$HOST_SUFFIX" ]; then
-	host=$host.$HOST_SUFFIX
-fi
+file_env 'HOST' $(hostname)
 
 file_env 'MYSQL_REPL_PASSWORD' 'Repl_123'
 file_env 'LEADER_START_CMD' ':'
@@ -70,7 +64,7 @@ printf '{
   "purge-binlog-disabled": true,
   "super-idle": false
  }
-}' "$host" "$MYSQL_REPL_PASSWORD" "$LEADER_START_CMD" "$LEADER_STOP_CMD" > /etc/krypton/krypton.json
+}' "$HOST" "$MYSQL_REPL_PASSWORD" "$LEADER_START_CMD" "$LEADER_STOP_CMD" > /etc/krypton/krypton.json
 
 chown -R mysql:mysql /etc/krypton/krypton.json
 
