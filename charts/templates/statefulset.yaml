@@ -104,9 +104,9 @@ spec:
             secretKeyRef:
               name: {{ template "fullname" . }}
               key: mysql-replication-password
-        {{- if .Values.mysql.database }}
+        {{- if .Values.mysql.mysqlDatabase }}
         - name: MYSQL_DATABASE
-          value: {{ .Values.mysql.database | quote }}
+          value: {{ .Values.mysql.mysqlDatabase | quote }}
         {{- end }}
         {{- if .Values.mysql.mysqlUser }}
         - name: MYSQL_USER

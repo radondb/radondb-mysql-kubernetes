@@ -29,7 +29,7 @@ mysql:
 
   mysqlUser: qingcloud
   mysqlPassword: Qing@123
-  database: qingcloud
+  mysqlDatabase: qingcloud
 
   initTokudb: false
   ## Additionnal arguments that are passed to the MySQL container.
@@ -158,7 +158,6 @@ service:
   # nodePort: 32000
   # loadBalancerIP:
 
-# Default values for spring-cloud-data-flow.
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
@@ -169,20 +168,6 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the serviceAccountName template
   name:
-
-# create pv for test persistence
-#apiVersion: v1
-#kind: PersistentVolume
-#metadata:
-#  name: lzz-pv1
-#spec:
-#  capacity:
-#    storage: 1Gi
-#  persistentVolumeReclaimPolicy: Recycle
-#  accessModes:
-#    - ReadWriteOnce
-#  hostPath:
-#    path: "/pv/lzz-pv1"
 
 ## Enable persistence using Persistent Volume Claims
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
