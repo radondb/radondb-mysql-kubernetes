@@ -18,8 +18,8 @@ imagePullPolicy: IfNotPresent
 replicaCount: 3
 
 busybox:
-  image: "busybox"
-  tag: "1.32"
+  image: busybox
+  tag: 1.32
 
 mysql:
   image: zhyass/percona57
@@ -29,7 +29,7 @@ mysql:
 
   mysqlUser: qingcloud
   mysqlPassword: Qing@123
-  database: qingcloud
+  mysqlDatabase: qingcloud
 
   initTokudb: false
   ## Additionnal arguments that are passed to the MySQL container.
@@ -120,13 +120,6 @@ metrics:
   readinessProbe:
     initialDelaySeconds: 5
     timeoutSeconds: 1
-  resources:
-    limits:
-      cpu:     100m
-      memory:  128Mi
-    requests:
-      cpu:     10m
-      memory:  32Mi
 
   # Enable this if you're using https://github.com/coreos/prometheus-operator
   serviceMonitor:
@@ -142,6 +135,17 @@ metrics:
     # selector:
     #  prometheus: kube-prometheus
 
+## When set to true will create sidecar to tail mysql slow log.
+slowLogTail: false
+
+resources:
+  limits:
+    cpu:     100m
+    memory:  128Mi
+  requests:
+    cpu:     10m
+    memory:  32Mi
+
 ## Configure the service
 ## ref: http://kubernetes.io/docs/user-guide/services/
 service:
@@ -154,7 +158,6 @@ service:
   # nodePort: 32000
   # loadBalancerIP:
 
-# Default values for spring-cloud-data-flow.
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
@@ -165,20 +168,6 @@ serviceAccount:
   # The name of the service account to use.
   # If not set and create is true, a name is generated using the serviceAccountName template
   name:
-
-# create pv for test persistence
-#apiVersion: v1
-#kind: PersistentVolume
-#metadata:
-#  name: lzz-pv1
-#spec:
-#  capacity:
-#    storage: 1Gi
-#  persistentVolumeReclaimPolicy: Recycle
-#  accessModes:
-#    - ReadWriteOnce
-#  hostPath:
-#    path: "/pv/lzz-pv1"
 
 ## Enable persistence using Persistent Volume Claims
 ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
