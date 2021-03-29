@@ -10,7 +10,7 @@ To connect to your database:
 
 2. Run an Ubuntu pod that you can use as a client:
 
-    kubectl run -i --tty ubuntu --image=ubuntu:focal --restart=Never -- bash -il
+    kubectl run ubuntu -n {{ .Release.Namespace }} --image=ubuntu:focal -it --rm --restart='Never' -- bash -il
 
 3. Install the mysql client:
 
