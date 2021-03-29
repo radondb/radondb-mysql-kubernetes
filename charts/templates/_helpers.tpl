@@ -8,17 +8,20 @@ Expand the name of the chart.
 
 {{/*
 Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+The format of host is "fullname"-0."fullname"."namespace".svc.cluster.local, 
+and the MySQL limits the total length of master_host to 60 byte, 
+so the length of "fullname" must be limited to '(60-22-len(namespace))/2'.
 */}}
 {{- define "fullname" -}}
+{{- $length := div (sub 38 (len .Release.Namespace )) 2 | int }}
 {{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- .Values.fullnameOverride | trunc $length | trimSuffix "-" -}}
 {{- else -}}
 {{- $name := default .Chart.Name .Values.nameOverride -}}
 {{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- .Release.Name | trunc $length | trimSuffix "-" -}}
 {{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- printf "%s-%s" .Release.Name $name | trunc $length | trimSuffix "-" -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
