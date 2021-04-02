@@ -13,7 +13,8 @@ data:
     [mysqld]
     server-id=@@SERVER_ID@@
   create-peers.sh: |
-    #!/bin/bash
+    #!/bin/sh
+    set -eu
     i=0
     while [ $i -lt {{ .Values.replicaCount }} ]
     do
@@ -23,15 +24,15 @@ data:
       else
         echo -n ",{{ template "fullname" . }}-${i}.{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:8801"
       fi
-      let i++
+      i=$((i+1))
     done
   leader-start.sh: |
-    #!/bin/bash
+    #!/usr/bin/env bash
     curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
     --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/{{ .Release.Namespace }}/pods/$HOSTNAME \
     -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "master"}]'
   leader-stop.sh: |
-    #!/bin/bash
+    #!/usr/bin/env bash
     curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
     --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/{{ .Release.Namespace }}/pods/$HOSTNAME \
     -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "slave"}]'

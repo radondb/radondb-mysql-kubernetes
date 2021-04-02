@@ -99,12 +99,12 @@ The following table lists the configurable parameters of the krypton chart and t
 | `metrics.livenessProbe.timeoutSeconds`       | When the probe times out                                                                          | 5                                           |
 | `metrics.readinessProbe.initialDelaySeconds` | Delay before metrics readiness probe is initiated                                                 | 5                                           |
 | `metrics.readinessProbe.timeoutSeconds`      | When the probe times out                                                                          | 1                                           |
-| `metrics.serviceMonitor.enabled`             | Set this to `true` to create ServiceMonitor for Prometheus operator                               | `false`                                     |
+| `metrics.serviceMonitor.enabled`             | Set this to `true` to create ServiceMonitor for Prometheus operator                               | `true`                                      |
 | `metrics.serviceMonitor.namespace`           | Optional namespace in which to create ServiceMonitor                                              | `nil`                                       |
 | `metrics.serviceMonitor.interval`            | Scrape interval. If not set, the Prometheus default scrape interval is used                       | 10s                                         |
 | `metrics.serviceMonitor.scrapeTimeout`       | Scrape timeout. If not set, the Prometheus default scrape timeout is used                         | `nil`                                       |
 | `metrics.serviceMonitor.selector`            | Default to kube-prometheus install, but should be set according to Prometheus install             | `{ prometheus: kube-prometheus }`           |
-| `slowLogTail`                                | If set to `true` runs a container to tail mysql-slow.log in the pod                               | `false`                                     |
+| `slowLogTail`                                | If set to `true` runs a container to tail mysql-slow.log in the pod                               | `true`                                      |
 | `resources`                                  | Resource requests/limit                                                                           | Memory: `32Mi`, CPU: `10m`                  |
 | `service.annotations`                        | Kubernetes annotations for service                                                                | {}                                          |
 | `service.type`                               | Kubernetes service type                                                                           | NodePort                                    |
