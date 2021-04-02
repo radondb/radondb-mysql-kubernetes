@@ -55,8 +55,10 @@ The following table lists the configurable parameters of the krypton chart and t
 | `replicaCount`                               | The number of pods                                                                                | `3`                                         |
 | `busybox.image`                              | `busybox` image repository.                                                                       | `busybox`                                   |
 | `busybox.tag`                                | `busybox` image tag.                                                                              | `1.32`                                      |
-| `mysql.image`                                | `mysql` image repository.                                                                         | `zhyass/percona57`                          |
-| `mysql.tag`                                  | `mysql` image tag.                                                                                | `beta0.1.0`                                 |
+| `mysql.image`                                | `mysql` image repository.                                                                         | `kryptondb/percona`                         |
+| `mysql.tag`                                  | `mysql` image tag.                                                                                | `5.7.33`                                    |
+| `mysql.allowEmptyRootPassword`               | If set true, allow a empty root password.                                                         | `true`                                      |
+| `mysql.mysqlRootPassword`                    | Password for the `root` user.                                                                     |                                             |
 | `mysql.mysqlReplicationPassword`             | Password for the `qc_repl` user.                                                                  | `Repl_123`, random 12 characters if not set |
 | `mysql.mysqlUser`                            | Username of new user to create.                                                                   | `qingcloud`                                 |
 | `mysql.mysqlPassword`                        | Password for the new user.                                                                        | `Qing@123`, random 12 characters if not set |
@@ -76,21 +78,21 @@ The following table lists the configurable parameters of the krypton chart and t
 | `mysql.readinessProbe.failureThreshold`      | Minimum consecutive failures for the mysql probe to be considered failed after having succeeded.  | 3                                           |
 | `mysql.extraEnvVars`                         | Additional environment variables as a string to be passed to the `tpl` function                   |                                             |
 | `mysql.resources`                            | CPU/Memory resource requests/limits for mysql.                                                    | Memory: `256Mi`, CPU: `100m`                |
-| `krypton.image`                              | `krypton` image repository.                                                                       | `zhyass/krypton`                            |
-| `krypton.tag`                                | `krypton` image tag.                                                                              | `beta0.1.0`                                 |
-| `krypton.args`                               | Additional arguments to pass to the krypton container.                                            | `[]`                                        |
-| `krypton.extraEnvVars`                       | Additional environment variables as a string to be passed to the `tpl` function                   |                                             |
-| `krypton.livenessProbe.initialDelaySeconds`  | Delay before krypton liveness probe is initiated                                                  | 30                                          |
-| `krypton.livenessProbe.periodSeconds`        | How often to perform the krypton probe                                                            | 10                                          |
-| `krypton.livenessProbe.timeoutSeconds`       | When the krypton probe times out                                                                  | 5                                           |
-| `krypton.livenessProbe.successThreshold`     | Minimum consecutive successes for krypton probe to be considered successful after having failed.  | 1                                           |
-| `krypton.livenessProbe.failureThreshold`     | Minimum consecutive failures for the krypton probe to be considered failed after having succeeded.| 3                                           |
-| `krypton.readinessProbe.initialDelaySeconds` | Delay before krypton readiness probe is initiated                                                 | 10                                          |
-| `krypton.readinessProbe.periodSeconds`       | How often to perform the krypton probe                                                            | 10                                          |
-| `krypton.readinessProbe.timeoutSeconds`      | When the krypton probe times out                                                                  | 1                                           |
-| `krypton.readinessProbe.successThreshold`    | Minimum consecutive successes for krypton probe to be considered successful after having failed.  | 1                                           |
-| `krypton.readinessProbe.failureThreshold`    | Minimum consecutive failures for the krypton probe to be considered failed after having succeeded.| 3                                           |
-| `krypton.resources`                          | CPU/Memory resource requests/limits for krypton.                                                  | Memory: `128Mi`, CPU: `50m`                 |
+| `xenon.image`                                | `xenon` image repository.                                                                         | `kryptondb/xenon`                           |
+| `xenon.tag`                                  | `xenon` image tag.                                                                                | `1.1.5-alpha`                               |
+| `xenon.args`                                 | Additional arguments to pass to the xenon container.                                              | `[]`                                        |
+| `xenon.extraEnvVars`                         | Additional environment variables as a string to be passed to the `tpl` function                   |                                             |
+| `xenon.livenessProbe.initialDelaySeconds`    | Delay before xenon liveness probe is initiated                                                    | 30                                          |
+| `xenon.livenessProbe.periodSeconds`          | How often to perform the xenon probe                                                              | 10                                          |
+| `xenon.livenessProbe.timeoutSeconds`         | When the xenon probe times out                                                                    | 5                                           |
+| `xenon.livenessProbe.successThreshold`       | Minimum consecutive successes for xenon probe to be considered successful after having failed.    | 1                                           |
+| `xenon.livenessProbe.failureThreshold`       | Minimum consecutive failures for the xenon probe to be considered failed after having succeeded.  | 3                                           |
+| `xenon.readinessProbe.initialDelaySeconds`   | Delay before xenon readiness probe is initiated                                                   | 10                                          |
+| `xenon.readinessProbe.periodSeconds`         | How often to perform the xenon probe                                                              | 10                                          |
+| `xenon.readinessProbe.timeoutSeconds`        | When the xenon probe times out                                                                    | 1                                           |
+| `xenon.readinessProbe.successThreshold`      | Minimum consecutive successes for xenon probe to be considered successful after having failed.    | 1                                           |
+| `xenon.readinessProbe.failureThreshold`      | Minimum consecutive failures for the xenon probe to be considered failed after having succeeded.  | 3                                           |
+| `xenon.resources`                            | CPU/Memory resource requests/limits for xenon.                                                    | Memory: `128Mi`, CPU: `50m`                 |
 | `metrics.enabled`                            | Start a side-car prometheus exporter                                                              | `true`                                      |
 | `metrics.image`                              | Exporter image                                                                                    | `prom/mysqld-exporter`                      |
 | `metrics.tag`                                | Exporter image                                                                                    | `v0.12.1`                                   |
