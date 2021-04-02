@@ -3,7 +3,7 @@
 ## 1. Get the pod about leader
 
 ```
-# kubectl exec -ti $pod -c krypton /krypton/kryptoncli raft status | jq .leader | cut -d . -f 1 | tail -c +2
+# kubectl exec -ti $pod -c xenon xenoncli raft status | jq .leader | cut -d . -f 1 | tail -c +2
 demo-krypton-1
 ```
 the leader is the result: `demo-krypton-1`
