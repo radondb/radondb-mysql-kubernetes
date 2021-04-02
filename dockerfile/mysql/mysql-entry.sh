@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # usage: file_env VAR [DEFAULT]
 #	ie: file_env 'XYZ_DB_PASSWORD' 'example'
@@ -57,6 +58,8 @@ fi
 DATADIR="$(_get_config 'datadir')"
 
 if [ ! -d "$DATADIR/mysql" ]; then
+	file_env 'MYSQL_ROOT_PASSWORD'
+
 	mkdir -p "$DATADIR"
 
 	echo 'Initializing database'
@@ -103,11 +106,17 @@ if [ ! -d "$DATADIR/mysql" ]; then
 		-- or products like mysql-fabric won't work
 		SET @@SESSION.SQL_LOG_BIN=0;
 		DELETE FROM mysql.user WHERE user NOT IN ('mysql.sys', 'root') OR host NOT IN ('localhost') ;
-		CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY '' ;
+		SET PASSWORD FOR 'root'@'localhost'=PASSWORD('${MYSQL_ROOT_PASSWORD}') ;
+		GRANT ALL ON *.* TO 'root'@'localhost' WITH GRANT OPTION ;
+		CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}' ;
 		GRANT ALL ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION ;
 		DROP DATABASE IF EXISTS test ;
 		FLUSH PRIVILEGES ;
 	EOSQL
+
+	if [ ! -z "$MYSQL_ROOT_PASSWORD" ]; then
+		mysql+=( -p"${MYSQL_ROOT_PASSWORD}" )
+	fi
 
 	file_env 'MYSQL_REPL_PASSWORD' 'Repl_123'
 	echo "GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to 'qc_repl'@'%' IDENTIFIED BY '$MYSQL_REPL_PASSWORD' ;" | "${mysql[@]}"

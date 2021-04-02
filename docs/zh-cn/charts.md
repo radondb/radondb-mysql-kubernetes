@@ -48,16 +48,18 @@ kubectl delete pvc data-my-release-krypton-2
 
 下表列出了 krypton chart 的配置参数及对应的默认值。
 
-| 参数                                          | 描述                                                     |  默认值                                   |
-| -------------------------------------------- | -------------------------------------------------------- | ---------------------------------------- |
-| `imagePullPolicy`                            | 镜像拉取策略                                               | `IfNotPresent`                          |
-| `fullnameOverride`                           | 自定义全名覆盖                                             |                                          |
-| `nameOverride`                               | 自定义名称覆盖                                             |                                          |
-| `replicaCount`                               | Pod 数目                                                 | `3`                                      |
-| `busybox.image`                              | `busybox` 镜像库地址                                       | `busybox`                                |
-| `busybox.tag`                                | `busybox` 镜像标签                                        | `1.32`                                    |
-| `mysql.image`                                | `mysql` 镜像库地址                                         | `zhyass/percona57`                       |
-| `mysql.tag`                                  | `mysql` 镜像标签                                          | `beta0.1.0`                             |
+| 参数                                          | 描述                                                     |  默认值                                 |
+| -------------------------------------------- | -------------------------------------------------------- | -------------------------------------- |
+| `imagePullPolicy`                            | 镜像拉取策略                                               | `IfNotPresent`                         |
+| `fullnameOverride`                           | 自定义全名覆盖                                             |                                         |
+| `nameOverride`                               | 自定义名称覆盖                                             |                                         |
+| `replicaCount`                               | Pod 数目                                                 | `3`                                     |
+| `busybox.image`                              | `busybox` 镜像库地址                                       | `busybox`                               |
+| `busybox.tag`                                | `busybox` 镜像标签                                        | `1.32`                                   |
+| `mysql.image`                                | `mysql` 镜像库地址                                         | `kryptondb/percona`                     |
+| `mysql.tag`                                  | `mysql` 镜像标签                                          | `5.7.33`                                |
+| `mysql.allowEmptyRootPassword`               | 如果为 `true`，允许 root 账号密码为空                       | `true`                                  |
+| `mysql.mysqlRootPassword`                    | `root` 用户密码                                          |                                          |
 | `mysql.mysqlReplicationPassword`             | `qc_repl` 用户密码                                         | `Repl_123`, 如果没有设置则随机12个字符      |
 | `mysql.mysqlUser`                            | 新建用户的用户名                                           | `qingcloud`                              |
 | `mysql.mysqlPassword`                        | 新建用户的密码                                             | `Qing@123`, 如果没有设置则随机12个字符      |
@@ -68,30 +70,30 @@ kubectl delete pvc data-my-release-krypton-2
 | `mysql.livenessProbe.initialDelaySeconds`    | Pod 启动后首次进行存活检查的等待时间                          | 30                                      |
 | `mysql.livenessProbe.periodSeconds`          | 存活检查的间隔时间                                           | 10                                      |
 | `mysql.livenessProbe.timeoutSeconds`         | 存活探针执行检测请求后，等待响应的超时时间                       | 5                                       |
-| `mysql.livenessProbe.successThreshold`       | 存活探针检测失败后认为成功的最小连接成功次数                     | 1                                        |
+| `mysql.livenessProbe.successThreshold`       | 存活探针检测失败后认为成功的最小连接成功次数                     | 1                                       |
 | `mysql.livenessProbe.failureThreshold`       | 存活探测失败的重试次数，重试一定次数后将认为容器不健康             | 3                                       |
-| `mysql.readinessProbe.initialDelaySeconds`   | Pod 启动后首次进行就绪检查的等待时间                           | 10                                       |
-| `mysql.readinessProbe.periodSeconds`         | 就绪检查的间隔时间                                           | 10                                       |
-| `mysql.readinessProbe.timeoutSeconds`        | 就绪探针执行检测请求后，等待响应的超时时间                       | 1                                        |
-| `mysql.readinessProbe.successThreshold`      | 就绪探针检测失败后认为成功的最小连接成功次数                      | 1                                       |
+| `mysql.readinessProbe.initialDelaySeconds`   | Pod 启动后首次进行就绪检查的等待时间                           | 10                                      |
+| `mysql.readinessProbe.periodSeconds`         | 就绪检查的间隔时间                                           | 10                                      |
+| `mysql.readinessProbe.timeoutSeconds`        | 就绪探针执行检测请求后，等待响应的超时时间                       | 1                                       |
+| `mysql.readinessProbe.successThreshold`      | 就绪探针检测失败后认为成功的最小连接成功次数                      | 1                                      |
 | `mysql.readinessProbe.failureThreshold`      | 就绪探测失败的重试次数，重试一定次数后将认为容器未就绪              | 3                                      |
 | `mysql.extraEnvVars`                         | 其他作为字符串传递给 `tpl` 函数的环境变量                       |                                         |
 | `mysql.resources`                            | `MySQL` 的资源请求/限制                                      | 内存: `256Mi`, CPU: `100m`              |
-| `krypton.image`                              | `krypton` 镜像库地址                                        | `zhyass/krypton`                       |
-| `krypton.tag`                                | `krypton` 镜像标签                                          | `beta0.1.0`                            |
-| `krypton.args`                               | 要传递到 krypton 容器的其他参数                               | `[]`                                   |
-| `krypton.extraEnvVars`                       | 其他作为字符串传递给 `tpl` 函数的环境变量                        |                                        |
-| `krypton.livenessProbe.initialDelaySeconds`  | Pod 启动后首次进行存活检查的等待时间                             | 30                                     |
-| `krypton.livenessProbe.periodSeconds`        | 存活检查的间隔时间                                            | 10                                     |
-| `krypton.livenessProbe.timeoutSeconds`       | 存活探针执行检测请求后，等待响应的超时时间                        | 5                                      |
-| `krypton.livenessProbe.successThreshold`     | 存活探针检测失败后认为成功的最小连接成功次数                      | 1                                      |
-| `krypton.livenessProbe.failureThreshold`     | 存活探测失败的重试次数，重试一定次数后将认为容器不健康              | 3                                      |
-| `krypton.readinessProbe.initialDelaySeconds` | Pod 启动后首次进行就绪检查的等待时间                            | 10                                     |
-| `krypton.readinessProbe.periodSeconds`       | 就绪检查的间隔时间                                            | 10                                     |
-| `krypton.readinessProbe.timeoutSeconds`      | 就绪探针执行检测请求后，等待响应的超时时间                        | 1                                      |
-| `krypton.readinessProbe.successThreshold`    | 就绪探针检测失败后认为成功的最小连接成功次数                       | 1                                      |
-| `krypton.readinessProbe.failureThreshold`    | 就绪探测失败的重试次数，重试一定次数后将认为容器未就绪              | 3                                      |
-| `krypton.resources`                          | `krypton` 的资源请求/限制                                    | 内存: `128Mi`, CPU: `50m`               |
+| `xenon.image`                                | `xenon` 镜像库地址                                          | `kryptondb/xenon`                       |
+| `xenon.tag`                                  | `xenon` 镜像标签                                            | `1.1.5-alpha`                          |
+| `xenon.args`                                 | 要传递到 xenon 容器的其他参数                                 | `[]`                                   |
+| `xenon.extraEnvVars`                         | 其他作为字符串传递给 `tpl` 函数的环境变量                        |                                        |
+| `xenon.livenessProbe.initialDelaySeconds`    | Pod 启动后首次进行存活检查的等待时间                             | 30                                     |
+| `xenon.livenessProbe.periodSeconds`          | 存活检查的间隔时间                                            | 10                                     |
+| `xenon.livenessProbe.timeoutSeconds`         | 存活探针执行检测请求后，等待响应的超时时间                        | 5                                      |
+| `xenon.livenessProbe.successThreshold`       | 存活探针检测失败后认为成功的最小连接成功次数                      | 1                                      |
+| `xenon.livenessProbe.failureThreshold`       | 存活探测失败的重试次数，重试一定次数后将认为容器不健康              | 3                                      |
+| `xenon.readinessProbe.initialDelaySeconds`   | Pod 启动后首次进行就绪检查的等待时间                            | 10                                     |
+| `xenon.readinessProbe.periodSeconds`         | 就绪检查的间隔时间                                            | 10                                     |
+| `xenon.readinessProbe.timeoutSeconds`        | 就绪探针执行检测请求后，等待响应的超时时间                        | 1                                      |
+| `xenon.readinessProbe.successThreshold`      | 就绪探针检测失败后认为成功的最小连接成功次数                       | 1                                      |
+| `xenon.readinessProbe.failureThreshold`      | 就绪探测失败的重试次数，重试一定次数后将认为容器未就绪              | 3                                      |
+| `xenon.resources`                            | `xenon` 的资源请求/限制                                      | 内存: `128Mi`, CPU: `50m`               |
 | `metrics.enabled`                            | 以 side-car 模式开启 Prometheus Exporter                     | `true`                                 |
 | `metrics.image`                              | Exporter 镜像地址                                            | `prom/mysqld-exporter`                 |
 | `metrics.tag`                                | Exporter 标签                                               | `v0.12.1`                              |
@@ -100,12 +102,12 @@ kubectl delete pvc data-my-release-krypton-2
 | `metrics.livenessProbe.timeoutSeconds`       | 存活探针执行检测请求后，等待响应的超时时间                        | 5                                      |
 | `metrics.readinessProbe.initialDelaySeconds` | Pod 启动后首次进行就绪检查的等待时间                            | 5                                      |
 | `metrics.readinessProbe.timeoutSeconds`      | 就绪探针执行检测请求后，等待响应的超时时间                        | 1                                      |
-| `metrics.serviceMonitor.enabled`             | 若设置为 `true`, 将为 Prometheus operator 创建 ServiceMonitor | `false`                                 |
+| `metrics.serviceMonitor.enabled`             | 若设置为 `true`, 将为 Prometheus operator 创建 ServiceMonitor | `true`                                 |
 | `metrics.serviceMonitor.namespace`           | 创建 ServiceMonitor 时，可指定命名空间                         | `nil`                                   |
 | `metrics.serviceMonitor.interval`            | 数据采集间隔，若未指定，将使用 Prometheus 默认设置                | 10s                                     |
 | `metrics.serviceMonitor.scrapeTimeout`       | 数据采集超时时间，若未指定，将使用 Prometheus 默认设置             | `nil`                                   |
 | `metrics.serviceMonitor.selector`            | 默认为 kube-prometheus                                       | `{ prometheus: kube-prometheus }`       |
-| `slowLogTail`                                | 若设置为 `true`，将启动一个容器用来查看 mysql-slow.log           | `false`                                 |
+| `slowLogTail`                                | 若设置为 `true`，将启动一个容器用来查看 mysql-slow.log           | `true`                                 |
 | `resources`                                  | 资源 请求/限制                                               | 内存: `32Mi`, CPU: `10m`                |
 | `service.annotations`                        | Kubernetes 服务注释                                         | {}                                     |
 | `service.type`                               | Kubernetes 服务类型                                         | NodePort                                |

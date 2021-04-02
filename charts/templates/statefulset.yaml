@@ -54,6 +54,8 @@ spec:
             cat /mnt/config-map/server-id.cnf | sed s/@@SERVER_ID@@/$((100 + $ordinal))/g > /mnt/conf.d/server-id.cnf
             # Copy appropriate conf.d files from config-map to config mount.
             cp -f /mnt/config-map/node.cnf /mnt/conf.d/
+            cp -f /mnt/config-map/*.sh /mnt/scripts/
+            chmod +x /mnt/scripts/*
             {{- if .Values.persistence.enabled }}
             # remove lost+found.
             rm -rf /mnt/data/lost+found
@@ -66,6 +68,8 @@ spec:
         volumeMounts:
           - name: conf
             mountPath: /mnt/conf.d
+          - name: scripts
+            mountPath: /mnt/scripts
           - name: config-map
             mountPath: /mnt/config-map
           {{- if .Values.persistence.enabled }}
@@ -89,16 +93,13 @@ spec:
         resources:
 {{ toYaml .Values.mysql.resources | indent 10 }}
         env:
-#        {{- if .Values.mysql.allowEmptyRootPassword }}
-#        - name: MYSQL_ALLOW_EMPTY_ROOT_PASSWORD
-#          value: "true"
-#        {{- else }}
-#        - name: MYSQL_ROOT_PASSWORD
-#          valueFrom:
-#            secretKeyRef:
-#              name: {{ template "fullname" . }}
-#              key: mysql-root-password
-#        {{- end }}
+        {{- if not .Values.mysql.allowEmptyRootPassword }}
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}
+              key: mysql-root-password
+        {{- end }}
         - name: MYSQL_REPL_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -137,9 +138,15 @@ spec:
         livenessProbe:
           exec:
             command:
-            - /bin/sh
-            - "-c"
-            - mysqladmin ping -h 127.0.0.1 -u root
+            {{- if .Values.mysql.allowEmptyRootPassword }}
+            - sh
+            - -c
+            - mysqladmin ping -uroot
+            {{- else }}
+            - sh
+            - -c
+            - mysqladmin ping -uroot -p${MYSQL_ROOT_PASSWORD}
+            {{- end }}
           initialDelaySeconds: {{ .Values.mysql.livenessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.mysql.livenessProbe.periodSeconds }}
           timeoutSeconds: {{ .Values.mysql.livenessProbe.timeoutSeconds }}
@@ -148,18 +155,24 @@ spec:
         readinessProbe:
           exec:
             command:
-            - /bin/sh
-            - "-c"
-            - mysql -h 127.0.0.1 -u root -e "SELECT 1"
+            {{- if .Values.mysql.allowEmptyRootPassword }}
+            - sh
+            - -c
+            - mysql -uroot -e "SELECT 1"
+            {{- else }}
+            - sh
+            - -c
+            - mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1"
+            {{- end }}
           initialDelaySeconds: {{ .Values.mysql.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.mysql.readinessProbe.periodSeconds }}
           timeoutSeconds: {{ .Values.mysql.readinessProbe.timeoutSeconds }}
           successThreshold: {{ .Values.mysql.readinessProbe.successThreshold }}
           failureThreshold: {{ .Values.mysql.readinessProbe.failureThreshold }}
-      - name: krypton
-        image: "{{ .Values.krypton.image }}:{{ .Values.krypton.tag }}"
+      - name: xenon
+        image: "{{ .Values.xenon.image }}:{{ .Values.xenon.tag }}"
         imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
-        {{- with .Values.krypton.args }}
+        {{- with .Values.xenon.args }}
         args:
         {{- range . }}
           - {{ . | quote }}
@@ -169,23 +182,23 @@ spec:
           postStart:
             exec:
               {{- if lt 1 (.Values.replicaCount | int64) }}
-              command: ['sh', '-c', 'until /krypton/kryptoncli xenon ping > /dev/null 2>&1; do sleep 2; done && /krypton/kryptoncli mysql stopmonitor && /krypton/kryptoncli cluster add "$(/bin/bash /create-peers.sh)"']
+              command: ['sh', '-c', 'until xenoncli xenon ping > /dev/null 2>&1; do sleep 2; done && xenoncli cluster add "$(/scripts/create-peers.sh)"']
               {{- else }}
-              command: ['sh', '-c', 'until /krypton/kryptoncli xenon ping > /dev/null 2>&1; do sleep 2; done && /krypton/kryptoncli mysql stopmonitor && /krypton/kryptoncli raft trytoleader']
+              command: ['sh', '-c', 'until xenoncli xenon ping > /dev/null 2>&1; do sleep 2; done && xenoncli raft trytoleader']
               {{- end }}
         resources:
-{{ toYaml .Values.krypton.resources | indent 10 }}
+{{ toYaml .Values.xenon.resources | indent 10 }}
         volumeMounts:
-        - name: config-map
-          mountPath: /create-peers.sh
-          subPath: create-peers.sh
-        - name: config-map
-          mountPath: /leader-start.sh
-          subPath: leader-start.sh
-        - name: config-map
-          mountPath: /leader-stop.sh
-          subPath: leader-stop.sh
+        - name: scripts
+          mountPath: /scripts
         env:
+        {{- if not .Values.mysql.allowEmptyRootPassword }}
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}
+              key: mysql-root-password
+        {{- end }}
         - name: MYSQL_REPL_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -198,43 +211,53 @@ spec:
         - name: HOST
           value: $(POD_HOSTNAME).{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
         - name: LEADER_START_CMD
-          value: "/bin/bash /leader-start.sh"
+          value: "/scripts/leader-start.sh"
         - name: LEADER_STOP_CMD
-          value: "/bin/bash /leader-stop.sh"
-        {{- if .Values.krypton.extraEnvVars }}
-{{ tpl .Values.krypton.extraEnvVars . | indent 8 }}
+          value: "/scripts/leader-stop.sh"
+        {{- if .Values.xenon.extraEnvVars }}
+{{ tpl .Values.xenon.extraEnvVars . | indent 8 }}
         {{- end }}
         ports:
-        - name: krypton
+        - name: xenon
           containerPort: 8801
         livenessProbe:
           exec:
             command:
               - pgrep
-              - krypton
-          initialDelaySeconds: {{ .Values.krypton.livenessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.krypton.livenessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.krypton.livenessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.krypton.livenessProbe.successThreshold }}
-          failureThreshold: {{ .Values.krypton.livenessProbe.failureThreshold }}
+              - xenon
+          initialDelaySeconds: {{ .Values.xenon.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.xenon.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.xenon.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.xenon.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.xenon.livenessProbe.failureThreshold }}
         readinessProbe:
           exec:
             command:
             - sh
             - -c
-            - "/krypton/kryptoncli xenon ping"
-          initialDelaySeconds: {{ .Values.krypton.readinessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.krypton.readinessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.krypton.readinessProbe.timeoutSeconds }}
-          successThreshold: {{ .Values.krypton.readinessProbe.successThreshold }}
-          failureThreshold: {{ .Values.krypton.readinessProbe.failureThreshold }}
+            - "xenoncli xenon ping"
+          initialDelaySeconds: {{ .Values.xenon.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.xenon.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.xenon.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.xenon.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.xenon.readinessProbe.failureThreshold }}
       {{- if .Values.metrics.enabled }}
       - name: metrics
         image: "{{ .Values.metrics.image }}:{{ .Values.metrics.tag }}"
         imagePullPolicy: {{ .Values.imagePullPolicy | quote }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
+        {{- if not .Values.mysql.allowEmptyRootPassword }}
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "fullname" . }}
+              key: mysql-root-password
+        command: ['sh', '-c', 'DATA_SOURCE_NAME="root:$MYSQL_ROOT_PASSWORD@(localhost:3306)/" /bin/mysqld_exporter' ]
+        {{- else }}
         command: ['sh', '-c', 'DATA_SOURCE_NAME="root@(localhost:3306)/" /bin/mysqld_exporter' ]
+        {{- end }}
         ports:
         - name: metrics
           containerPort: 9104
@@ -267,6 +290,8 @@ spec:
       {{- end }}
       volumes:
       - name: conf
+        emptyDir: {}
+      - name: scripts
         emptyDir: {}
       - name: logs
         emptyDir: {}

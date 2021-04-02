@@ -8,13 +8,14 @@
 ## Always IfNotPresent Never
 imagePullPolicy: IfNotPresent
 
-## String to partially override orangehrm.fullname template (will maintain the release name)
+## String to partially override fullname template (will maintain the release name)
 ##
 # nameOverride: ""
-## String to fully override orangehrm.fullname template
+## String to fully override fullname template
 ##
 # fullnameOverride: ""
 
+# Please donot modify `replicaCount`, after the cluster is created. 
 replicaCount: 3
 
 busybox:
@@ -22,9 +23,11 @@ busybox:
   tag: 1.32
 
 mysql:
-  image: zhyass/percona57
-  tag: beta0.1.1
+  image: kryptondb/percona
+  tag: 5.7.33
 
+  allowEmptyRootPassword: true
+  # mysqlRootPassword:
   mysqlReplicationPassword: Repl_123
 
   mysqlUser: qingcloud
@@ -73,9 +76,9 @@ mysql:
       memory: 1Gi
       cpu: 500m
 
-krypton:
-  image: zhyass/krypton
-  tag: beta0.1.2
+xenon:
+  image: kryptondb/xenon
+  tag: 1.1.5-alpha
   args: []
 
   ## A string to add extra environment variables
@@ -123,7 +126,7 @@ metrics:
 
   # Enable this if you're using https://github.com/coreos/prometheus-operator
   serviceMonitor:
-    enabled: false
+    enabled: true
     ## Specify a namespace if needed
     # namespace: monitoring
     # fallback to the prometheus default unless specified
@@ -136,7 +139,7 @@ metrics:
     #  prometheus: kube-prometheus
 
 ## When set to true will create sidecar to tail mysql slow log.
-slowLogTail: false
+slowLogTail: true
 
 resources:
   limits:
