@@ -1,13 +1,19 @@
 
 # 简介  
 
-[MySQL](https://hub.docker.com/repository/docker/zhyass/percona57) 镜像已经发布到 docker hub 中， 当前可用版本为：
+[MySQL](https://hub.docker.com/repository/docker/kryptondb/percona) 镜像已经发布到 docker hub 中， 当前可用版本为：
 
-    zhyass/percona57 (tag: beta0.1.0)
+    kryptondb/percona (tag: 5.7.33)
 
 发布新版本时会在此更新。
 
 # 环境变量
+
+## `MYSQL_ROOT_PASSWORD`
+
+指定 root 超级账户密码，可以为空。
+
+**注意**: 在命令行上设置 MySQL root 用户密码是不安全的。
 
 ## `MYSQL_REPL_PASSWORD`
 

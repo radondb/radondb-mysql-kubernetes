@@ -9,6 +9,15 @@ RUN set -ex; \
     --no-create-home \
     --gid mysql \
     mysql; \
+    # replace the source list.
+    echo "deb http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" > /etc/apt/sources.list; \
+    echo "# deb-src http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list; \
+    echo "deb http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list; \
+    echo "# deb-src http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list; \
+    echo "deb http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list; \
+    echo "# deb-src http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list; \
+    echo "deb http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list; \
+    echo "#deb-src http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list; \
     apt-get update; \
     if ! which gpg; then \
         apt-get install -y --no-install-recommends gnupg; \
@@ -17,6 +26,10 @@ RUN set -ex; \
         apt-get install -y --no-install-recommends dirmngr; \
     fi; \
     rm -rf /var/lib/apt/lists/*
+
+ENV PS_VERSION 5.7.33-36-1
+ENV OS_VER focal
+ENV FULL_PERCONA_VERSION "$PS_VERSION.$OS_VER"
 
 RUN set -ex; \
     key='9334A25F8507EFA5'; \
@@ -30,17 +43,17 @@ RUN set -ex; \
     apt-get update; \
     export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true; \
     { \
-        echo percona-server-server-5.7 percona-server-server-5.7/root-pass password ''; \
-        echo percona-server-server-5.7 percona-server-server-5.7/re-root-pass password ''; \
+        echo percona-server-server-5.7=${FULL_PERCONA_VERSION} percona-server-server-5.7=${FULL_PERCONA_VERSION}/root-pass password ''; \
+        echo percona-server-server-5.7=${FULL_PERCONA_VERSION} percona-server-server-5.7=${FULL_PERCONA_VERSION}/re-root-pass password ''; \
         echo tzdata tzdata/Areas select Asia; \
         echo tzdata tzdata/Zones/Asia select Shanghai; \
     } | debconf-set-selections; \
     # install "tzdata" for /usr/share/zoneinfo/
     apt-get install -y --no-install-recommends libjemalloc1 libmecab2 tzdata; \
     apt-get install -y --no-install-recommends \
-        percona-server-server-5.7 \
-        percona-server-common-5.7 \
-        percona-server-tokudb-5.7; \
+        percona-server-server-5.7=${FULL_PERCONA_VERSION} \
+        percona-server-common-5.7=${FULL_PERCONA_VERSION} \
+        percona-server-tokudb-5.7=${FULL_PERCONA_VERSION}; \
     # TokuDB modifications
     echo "LD_PRELOAD=/usr/lib64/libjemalloc.so.1" >> /etc/default/mysql; \
     echo "THP_SETTING=never" >> /etc/default/mysql; \

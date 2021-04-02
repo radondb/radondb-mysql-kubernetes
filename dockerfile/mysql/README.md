@@ -1,12 +1,18 @@
 # Introduction
 
-The [mysql](https://hub.docker.com/repository/docker/zhyass/percona57) image has been pushed into docker hub. The available versions are:
+The [MySQL](https://hub.docker.com/repository/docker/kryptondb/percona) image has been pushed into docker hub. The available versions are:
 
-    zhyass/percona57 (tag: beta0.1.0)
+    kryptondb/percona (tag: 5.7.33)
 
 Images are updated when new releases are published. 
 
 # Environment Variables
+
+## `MYSQL_ROOT_PASSWORD`
+
+This variable specifies a password that will be set for the root superuser account.
+
+**Notice**: Setting the MySQL root user password on the command line is insecure.
 
 ## `MYSQL_REPL_PASSWORD`
 
