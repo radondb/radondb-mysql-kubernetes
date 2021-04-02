@@ -11,10 +11,10 @@
 
 ## Dockerfile
 
-### Krypton
+### Xenon
 
-- [简体中文](docs/zh-cn/krypton.md)
-- [English](dockerfile/krypton/README.md)
+- [简体中文](docs/zh-cn/xenon.md)
+- [English](dockerfile/xenon/README.md)
 
 ### MySQL
 
