@@ -214,6 +214,17 @@ spec:
           value: "/scripts/leader-start.sh"
         - name: LEADER_STOP_CMD
           value: "/scripts/leader-stop.sh"
+        {{- if .Values.mysql.initTokudb }}
+        - name: Master_SysVars
+          value: "tokudb_fsync_log_period=default;sync_binlog=default;innodb_flush_log_at_trx_commit=default"
+        - name: Slave_SysVars
+          value: "tokudb_fsync_log_period=1000;sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
+        {{- else }}
+        - name: Master_SysVars
+          value: "sync_binlog=default;innodb_flush_log_at_trx_commit=default"
+        - name: Slave_SysVars
+          value: "sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
+        {{- end }}
         {{- if .Values.xenon.extraEnvVars }}
 {{ tpl .Values.xenon.extraEnvVars . | indent 8 }}
         {{- end }}
