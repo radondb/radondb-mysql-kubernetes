@@ -2,7 +2,7 @@
 
 The [MySQL](https://hub.docker.com/repository/docker/kryptondb/percona) image has been pushed into docker hub. The available versions are:
 
-    kryptondb/percona (tag: 5.7.33)
+    kryptondb/percona (tag: 5.7)
 
 Images are updated when new releases are published. 
 

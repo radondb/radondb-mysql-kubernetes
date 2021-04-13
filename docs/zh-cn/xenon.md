@@ -3,7 +3,7 @@
 
 [Xenon](https://hub.docker.com/repository/docker/kryptondb/xenon) 镜像已经发布在 docker hub，当前可用版本：
 
-    kryptondb/xenon (tag: 1.1.5-alpha)
+    kryptondb/xenon (tag: 1.1.5)
 
 发布新版本时会在此更新。
 
@@ -20,6 +20,14 @@
 ## `HOST`
 
 指定 kubenetes 集群中的 endpoint。
+
+## `Master_SysVars`
+
+在 master 节点上执行的 MySQL 配置参数.
+
+## `Slave_SysVars`
+
+在 slave 节点上执行的 MySQL 配置参数.
 
 ## `LEADER_START_CMD`
 

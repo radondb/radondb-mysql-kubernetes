@@ -2,7 +2,7 @@
 
 The [Xenon](https://hub.docker.com/repository/docker/kryptondb/xenon) image has been pushed into docker hub. The available versions are:
 
-    kryptondb/xenon (tag: 1.1.5-alpha)
+    kryptondb/xenon (tag: 1.1.5)
 
 Images are updated when new releases are published. 
 
@@ -19,6 +19,14 @@ This variable specifies a replication password that will be set in the configura
 ## `HOST`
 
 This variable is used to specify the endpoint in the kubenetes cluster.
+
+## `Master_SysVars`
+
+The variable is used to configure master system variables.
+
+## `Slave_SysVars`
+
+The variable is used to configure slave system variables.
 
 ## `LEADER_START_CMD`
 
