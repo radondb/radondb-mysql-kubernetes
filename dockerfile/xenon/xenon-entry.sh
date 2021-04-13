@@ -34,6 +34,8 @@ file_env 'HOST' $(hostname)
 
 file_env 'MYSQL_REPL_PASSWORD' 'Repl_123'
 file_env 'MYSQL_ROOT_PASSWORD' ''
+file_env 'Master_SysVars' ''
+file_env 'Slave_SysVars' ''
 file_env 'LEADER_START_CMD' ':'
 file_env 'LEADER_STOP_CMD' ':'
 
@@ -58,8 +60,8 @@ printf '{
   "passwd": "%s",
   "host": "localhost",
   "version": "mysql57",
-  "master-sysvars": "tokudb_fsync_log_period=default;sync_binlog=default;innodb_flush_log_at_trx_commit=default",
-  "slave-sysvars": "tokudb_fsync_log_period=1000;sync_binlog=1000;innodb_flush_log_at_trx_commit=1",
+  "master-sysvars": "%s",
+  "slave-sysvars": "%s",
   "port": 3306,
   "monitor-disabled": true
  },
@@ -74,6 +76,6 @@ printf '{
   "purge-binlog-disabled": true,
   "super-idle": false
  }
-}' "$HOST" "$MYSQL_REPL_PASSWORD" "$MYSQL_ROOT_PASSWORD" "$LEADER_START_CMD" "$LEADER_STOP_CMD" > /etc/xenon/xenon.json
+}' "$HOST" "$MYSQL_REPL_PASSWORD" "$MYSQL_ROOT_PASSWORD" "$Master_SysVars" "$Slave_SysVars" "$LEADER_START_CMD" "$LEADER_STOP_CMD" > /etc/xenon/xenon.json
 
 exec "$@"
