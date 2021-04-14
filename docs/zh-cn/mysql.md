@@ -3,7 +3,7 @@
 
 [MySQL](https://hub.docker.com/repository/docker/kryptondb/percona) 镜像已经发布到 docker hub 中， 当前可用版本为：
 
-    kryptondb/percona (tag: 5.7.33)
+    kryptondb/percona (tag: 5.7)
 
 发布新版本时会在此更新。
 

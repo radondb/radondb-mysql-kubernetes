@@ -24,7 +24,7 @@ busybox:
 
 mysql:
   image: kryptondb/percona
-  tag: 5.7.33
+  tag: 5.7
 
   allowEmptyRootPassword: true
   # mysqlRootPassword:
@@ -78,7 +78,7 @@ mysql:
 
 xenon:
   image: kryptondb/xenon
-  tag: 1.1.5-alpha
+  tag: 1.1.5
   args: []
 
   ## A string to add extra environment variables
