@@ -8,14 +8,16 @@ metadata:
     chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-    {{- if .Values.service.annotations }}
+  {{- if .Values.service.annotations }}
+  annotations:
 {{ toYaml .Values.service.annotations | indent 4 }}
-    {{- end }}
+  {{- end }}
 spec:
   ports:
   - name: {{ template "fullname" . }}
     port: 3306
   clusterIP: None
+  publishNotReadyAddresses: true
   selector:
     app: {{ template "fullname" . }}
     release: {{ .Release.Name | quote }}
@@ -92,9 +94,10 @@ metadata:
     chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
-    {{- if .Values.metrics.annotations }}
+  {{- if .Values.metrics.annotations }}
+  annotations:
 {{ toYaml .Values.metrics.annotations | indent 4 }}
-    {{- end }}
+  {{- end }}
 spec:
   clusterIP: None
   ports:

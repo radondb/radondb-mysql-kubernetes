@@ -26,7 +26,8 @@ RUN set -ex \
     && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 \
     && echo "/etc/xenon/xenon.json" > /config.path \
     # allow to change config files
-    && chown -R 777:777 /etc/xenon /var/lib/xenon
+    && chown -R 777:777 /etc/xenon /var/lib/xenon \
+    && chmod u+s /bin/ping
 
 COPY --from=builder --chown=777:777 /go/src/github.com/radondb/xenon/bin/xenon /usr/local/bin/xenon
 COPY --from=builder --chown=777:777 /go/src/github.com/radondb/xenon/bin/xenoncli /usr/local/bin/xenoncli
