@@ -78,7 +78,7 @@ mysql:
 
 xenon:
   image: kryptondb/xenon
-  tag: 1.1.5
+  tag: 1.1.5-alpha
   args: []
 
   ## A string to add extra environment variables

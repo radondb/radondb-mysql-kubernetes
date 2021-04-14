@@ -182,9 +182,9 @@ spec:
           postStart:
             exec:
               {{- if lt 1 (.Values.replicaCount | int64) }}
-              command: ['sh', '-c', 'until xenoncli xenon ping > /dev/null 2>&1; do sleep 2; done && xenoncli cluster add "$(/scripts/create-peers.sh)"']
+              command: ['sh', '-c', 'until (xenoncli xenon ping && xenoncli cluster add "$(/scripts/create-peers.sh)") > /dev/null 2>&1; do sleep 2; done']
               {{- else }}
-              command: ['sh', '-c', 'until xenoncli xenon ping > /dev/null 2>&1; do sleep 2; done && xenoncli raft trytoleader']
+              command: ['sh', '-c', 'until (xenoncli xenon ping > /dev/null 2>&1 && xenoncli raft trytoleader) > /dev/null 2>&1; do sleep 2; done']
               {{- end }}
         resources:
 {{ toYaml .Values.xenon.resources | indent 10 }}
@@ -209,7 +209,7 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         - name: HOST
-          value: $(POD_HOSTNAME).{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+          value: $(POD_HOSTNAME).{{ template "fullname" . }}.{{ .Release.Namespace }}
         - name: LEADER_START_CMD
           value: "/scripts/leader-start.sh"
         - name: LEADER_STOP_CMD
