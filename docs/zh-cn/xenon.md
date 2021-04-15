@@ -3,7 +3,7 @@
 
 [Xenon](https://hub.docker.com/repository/docker/kryptondb/xenon) 镜像已经发布在 docker hub，当前可用版本：
 
-    kryptondb/xenon (tag: 1.1.5)
+    kryptondb/xenon (tag: 1.1.5-alpha)
 
 发布新版本时会在此更新。
 

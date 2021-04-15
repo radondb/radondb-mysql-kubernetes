@@ -56,7 +56,7 @@ The following table lists the configurable parameters of the krypton chart and t
 | `busybox.image`                              | `busybox` image repository.                                                                       | `busybox`                                   |
 | `busybox.tag`                                | `busybox` image tag.                                                                              | `1.32`                                      |
 | `mysql.image`                                | `mysql` image repository.                                                                         | `kryptondb/percona`                         |
-| `mysql.tag`                                  | `mysql` image tag.                                                                                | `5.7.33`                                    |
+| `mysql.tag`                                  | `mysql` image tag.                                                                                | `5.7`                                       |
 | `mysql.allowEmptyRootPassword`               | If set true, allow a empty root password.                                                         | `true`                                      |
 | `mysql.mysqlRootPassword`                    | Password for the `root` user.                                                                     |                                             |
 | `mysql.mysqlReplicationPassword`             | Password for the `qc_repl` user.                                                                  | `Repl_123`, random 12 characters if not set |
