@@ -8,12 +8,12 @@ Expand the name of the chart.
 
 {{/*
 Create a default fully qualified app name.
-The format of host is "fullname"-0."fullname"."namespace".svc.cluster.local, 
+The format of host is "fullname"-0."fullname"."namespace" (podname.servicename.namespace), 
 and the MySQL limits the total length of master_host to 60 byte, 
-so the length of "fullname" must be limited to '(60-22-len(namespace))/2'.
+so the length of "fullname" must be limited to '(60-4-len(namespace))/2'.
 */}}
 {{- define "fullname" -}}
-{{- $length := div (sub 38 (len .Release.Namespace )) 2 | int }}
+{{- $length := div (sub 56 (len .Release.Namespace )) 2 | int }}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc $length | trimSuffix "-" -}}
 {{- else -}}

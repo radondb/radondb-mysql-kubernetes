@@ -57,7 +57,7 @@ kubectl delete pvc data-my-release-krypton-2
 | `busybox.image`                              | `busybox` 镜像库地址                                       | `busybox`                               |
 | `busybox.tag`                                | `busybox` 镜像标签                                        | `1.32`                                   |
 | `mysql.image`                                | `mysql` 镜像库地址                                         | `kryptondb/percona`                     |
-| `mysql.tag`                                  | `mysql` 镜像标签                                          | `5.7.33`                                |
+| `mysql.tag`                                  | `mysql` 镜像标签                                          | `5.7`                                   |
 | `mysql.allowEmptyRootPassword`               | 如果为 `true`，允许 root 账号密码为空                       | `true`                                  |
 | `mysql.mysqlRootPassword`                    | `root` 用户密码                                          |                                          |
 | `mysql.mysqlReplicationPassword`             | `qc_repl` 用户密码                                         | `Repl_123`, 如果没有设置则随机12个字符      |

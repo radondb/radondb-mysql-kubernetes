@@ -20,9 +20,9 @@ data:
     do
       if [ $i = 0 ]
       then
-        echo -n "{{ template "fullname" . }}-${i}.{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:8801"
+        echo -n "{{ template "fullname" . }}-${i}.{{ template "fullname" . }}.{{ .Release.Namespace }}:8801"
       else
-        echo -n ",{{ template "fullname" . }}-${i}.{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:8801"
+        echo -n ",{{ template "fullname" . }}-${i}.{{ template "fullname" . }}.{{ .Release.Namespace }}:8801"
       fi
       i=$((i+1))
     done
