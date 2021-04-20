@@ -1,8 +1,8 @@
 # Introduction
 
-The [MySQL](https://hub.docker.com/repository/docker/kryptondb/percona) image has been pushed into docker hub. The available versions are:
+The [MySQL](https://hub.docker.com/repository/docker/xenondb/percona) image has been pushed into docker hub. The available versions are:
 
-    kryptondb/percona (tag: 5.7)
+    xenondb/percona (tag: 5.7.33)
 
 Images are updated when new releases are published. 
 
