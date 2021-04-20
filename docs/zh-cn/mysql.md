@@ -1,9 +1,9 @@
 
 # 简介  
 
-[MySQL](https://hub.docker.com/repository/docker/kryptondb/percona) 镜像已经发布到 docker hub 中， 当前可用版本为：
+[MySQL](https://hub.docker.com/repository/docker/xenondb/percona) 镜像已经发布到 docker hub 中， 当前可用版本为：
 
-    kryptondb/percona (tag: 5.7)
+    xenondb/percona (tag: 5.7.33)
 
 发布新版本时会在此更新。
 
