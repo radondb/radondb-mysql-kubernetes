@@ -55,8 +55,8 @@ The following table lists the configurable parameters of the krypton chart and t
 | `replicaCount`                               | The number of pods                                                                                | `3`                                         |
 | `busybox.image`                              | `busybox` image repository.                                                                       | `busybox`                                   |
 | `busybox.tag`                                | `busybox` image tag.                                                                              | `1.32`                                      |
-| `mysql.image`                                | `mysql` image repository.                                                                         | `kryptondb/percona`                         |
-| `mysql.tag`                                  | `mysql` image tag.                                                                                | `5.7`                                       |
+| `mysql.image`                                | `mysql` image repository.                                                                         | `xenondb/percona`                           |
+| `mysql.tag`                                  | `mysql` image tag.                                                                                | `5.7.33`                                    |
 | `mysql.allowEmptyRootPassword`               | If set true, allow a empty root password.                                                         | `true`                                      |
 | `mysql.mysqlRootPassword`                    | Password for the `root` user.                                                                     |                                             |
 | `mysql.mysqlReplicationPassword`             | Password for the `qc_repl` user.                                                                  | `Repl_123`, random 12 characters if not set |
@@ -78,7 +78,7 @@ The following table lists the configurable parameters of the krypton chart and t
 | `mysql.readinessProbe.failureThreshold`      | Minimum consecutive failures for the mysql probe to be considered failed after having succeeded.  | 3                                           |
 | `mysql.extraEnvVars`                         | Additional environment variables as a string to be passed to the `tpl` function                   |                                             |
 | `mysql.resources`                            | CPU/Memory resource requests/limits for mysql.                                                    | Memory: `256Mi`, CPU: `100m`                |
-| `xenon.image`                                | `xenon` image repository.                                                                         | `kryptondb/xenon`                           |
+| `xenon.image`                                | `xenon` image repository.                                                                         | `xenondb/xenon`                             |
 | `xenon.tag`                                  | `xenon` image tag.                                                                                | `1.1.5-alpha`                               |
 | `xenon.args`                                 | Additional arguments to pass to the xenon container.                                              | `[]`                                        |
 | `xenon.extraEnvVars`                         | Additional environment variables as a string to be passed to the `tpl` function                   |                                             |

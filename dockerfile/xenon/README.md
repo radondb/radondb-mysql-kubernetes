@@ -1,8 +1,8 @@
 # Introduction
 
-The [Xenon](https://hub.docker.com/repository/docker/kryptondb/xenon) image has been pushed into docker hub. The available versions are:
+The [Xenon](https://hub.docker.com/repository/docker/xenondb/xenon) image has been pushed into docker hub. The available versions are:
 
-    kryptondb/xenon (tag: 1.1.5-alpha)
+    xenondb/xenon (tag: 1.1.5-alpha)
 
 Images are updated when new releases are published. 
 
