@@ -27,9 +27,8 @@ XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。�
 - 查看集群日志
 - 账户管理
 ## 快速部署
-Kubernetes 平台部署（制作中）
-
-KubeSphere 应用商店部署【链接补充】
+- [Kubernetes 平台部署](docs/Kubernetes/deploy_xenondb_on_kubernetes.md)
+- [KubeSphere 应用商店部署](docs/KubeSphere/deploy_xenondb_on_kubesphere.md)
 ## 文档
 待补充
 ## 产品路线
