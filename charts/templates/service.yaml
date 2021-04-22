@@ -5,7 +5,7 @@ metadata:
   name: {{ template "fullname" . }}
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
   {{- if .Values.service.annotations }}
@@ -26,10 +26,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "fullname" . }}-leader
+  name: {{ template "fullname" . }}-master
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 spec:
@@ -50,17 +50,17 @@ spec:
   selector:
     app: {{ template "fullname" . }}
     release: {{ .Release.Name | quote }}
-    role: leader
+    role: master
 {{- if lt 1 (.Values.replicaCount | int64) }}
 ---
 # Client service for connecting to any MySQL instance for reads.
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "fullname" . }}-follower
+  name: {{ template "fullname" . }}-slave
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 spec:
@@ -81,7 +81,7 @@ spec:
   selector:
     app: {{ template "fullname" . }}
     release: {{ .Release.Name | quote }}
-    role: follower
+    role: slave
 {{- end }}
 {{ if .Values.metrics.enabled }}
 ---
@@ -91,7 +91,7 @@ metadata:
   name: "{{ template "fullname" . }}-metrics"
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
   {{- if .Values.metrics.annotations }}

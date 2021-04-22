@@ -1,6 +1,6 @@
 # Introduction
 
-This chart bootstraps a single leader and multiple followers [MySQL](https://MySQL.org) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps a single master and multiple slave [MySQL](https://MySQL.org) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 # Prerequisites
 
@@ -35,16 +35,16 @@ $ helm delete my-release
 To delete the pvc:
 
 ```
-kubectl delete pvc data-my-release-xenondb-0
-kubectl delete pvc data-my-release-xenondb-1
-kubectl delete pvc data-my-release-xenondb-2
+kubectl delete pvc data-my-release-krypton-0
+kubectl delete pvc data-my-release-krypton-1
+kubectl delete pvc data-my-release-krypton-2
 ```
 
 The commands remove all the Kubernetes components associated with the chart and deletes the release completely.
 
 # Configuration
 
-The following table lists the configurable parameters of the xenondb chart and their default values.
+The following table lists the configurable parameters of the krypton chart and their default values.
 
 
 | Parameter                                    | Description                                                                                       | Default                                     |

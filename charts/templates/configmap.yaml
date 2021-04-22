@@ -4,7 +4,7 @@ metadata:
   name: {{ template "fullname" . }}
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 data:
@@ -30,9 +30,9 @@ data:
     #!/usr/bin/env bash
     curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
     --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/{{ .Release.Namespace }}/pods/$HOSTNAME \
-    -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "leader"}]'
+    -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "master"}]'
   leader-stop.sh: |
     #!/usr/bin/env bash
     curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
     --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/{{ .Release.Namespace }}/pods/$HOSTNAME \
-    -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
+    -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "slave"}]'

@@ -1,7 +1,7 @@
 apiVersion: v2
-name: xenondb
+name: krypton
 description: Fast, reliable, scalable, and easy to use open-source relational database system.
-home: https://github.com/radondb/xenondb
+home: https://github.com/radondb/krypton
 
 # A chart can be either an 'application' or a 'library' chart.
 #

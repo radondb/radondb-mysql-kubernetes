@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "krypton.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
   {{- with .Values.statefulsetAnnotations }}
