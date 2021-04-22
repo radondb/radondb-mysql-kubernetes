@@ -8,7 +8,7 @@ metadata:
   {{- end }}
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "krypton.chart" . }}
+    chart: {{ template "xenondb.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
   {{- if .Values.metrics.serviceMonitor.selector }}
