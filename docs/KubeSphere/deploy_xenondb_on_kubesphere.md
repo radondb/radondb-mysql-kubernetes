@@ -10,7 +10,8 @@ XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。�
 
 可选择如下安装方式：
 
-- 在 [青云QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 上安装 Kubersphere。
+- 在 [青云 QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 上安装 Kubersphere。
+
 - [在 Kubernetes 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-kubernetes/)。
 - [在 Linux 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
 
@@ -22,7 +23,8 @@ XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。�
 
 > 说明：如下示例适用于 KubeSphere 安装在 [青云QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 的场景。
 
-- 通过[青云QingCloud 控制台](https://console.qingcloud.com/) 直接连接客户端节点。
+- 通过[青云 QingCloud 控制台](https://console.qingcloud.com/) 直接连接客户端节点。
+
 
    ![连接客户端节点](png/连接客户端节点.png)
 
