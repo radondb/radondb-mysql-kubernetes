@@ -1,3 +1,20 @@
+# XenonDB
+XenonDB is a open-source, cloud-native, highly available cluster solutions that is based on database. 
+
+# Github
+
+https://github.com/radondb/xenondb
+# Features
+- High availability MySQL database
+    - Non-centralized automatic leader election
+    - Second level switch leader to follower 
+    - Strongly consistent data for cluster switching
+- Cluster management
+- Monitoring and alerting
+- Logs
+- Account management
+
+
 # Introduction
 
 This chart bootstraps a single leader and multiple followers [MySQL](https://MySQL.org) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.

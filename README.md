@@ -5,7 +5,7 @@ English | [中文](README_zh.md)
 
 ## What is XenonDB？
 
-[XnenoDB](https://github.com/radondb/xenondb) is a open-source, cloud-native, highly available cluster solutions that is based on [MySQL](https://MySQL.org) database. With the Raft protocol，XenonDB provide the faster failover performance without losing any transactions. 
+[XenonDB](https://github.com/radondb/xenondb) is a open-source, cloud-native, highly available cluster solutions that is based on [MySQL](https://MySQL.org) database. With the Raft protocol，XenonDB provide the faster failover performance without losing any transactions. 
 
 At present, XenonDB has supported the deployment of MySQL high availability clusters on kubernetes and kubesphere platforms.
 
