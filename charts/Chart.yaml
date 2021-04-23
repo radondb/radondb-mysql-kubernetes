@@ -34,13 +34,17 @@ keywords:
 - kubernetes
 
 maintainers:
-- email: zhiangli029@gmail.com
+- email: andyli@yunify.com
   name: andy
-- email: mytesla@live.com
-  name: zhyass
-- email: gaoriyao@126.com
-  name: hustjieke
-- email: 362753231@qq.com
-  name: KID-G
+- email: changlongguan@yunify.com
+  name: guanchanglong
+- email: zuqianzhang@yunify.com
+  name: zhangzuqian
+- email: jasongao@yunify.com
+  name: jason
+- email: runkecheng@yunify.com
+  name: rinker
+- email: runkecheng@yunify.com
+  name: rinker
 
-icon: https://www.mysql.com/common/logos/powered-by-mysql-167x86.png
+icon: https://github.com/KID-G/krypton-helm/blob/feature_add_xenondb_logo/docs/images/logo_xenondb.png

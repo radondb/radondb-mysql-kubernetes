@@ -112,7 +112,7 @@ xenon:
 #      cpu: 100m
 
 metrics:
-  enabled: true
+  enabled: false
   image: prom/mysqld-exporter
   tag: v0.12.1
   annotations: {}
@@ -126,7 +126,7 @@ metrics:
 
   # Enable this if you're using https://github.com/coreos/prometheus-operator
   serviceMonitor:
-    enabled: true
+    enabled: false
     ## Specify a namespace if needed
     # namespace: monitoring
     # fallback to the prometheus default unless specified
@@ -208,3 +208,4 @@ podLabels: {}
 nodeSelector: {}
 hardAntiAffinity: true
 additionalAffinities: {}
+affinity: {}

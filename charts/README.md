@@ -30,11 +30,9 @@ To install the chart with the release name `my-release`:
 
 ```bash
 ## For Helm v2
-$ cd charts
 $ helm install . --name my-release
 
 ## For Helm v3
-$ cd charts
 $ helm install --name my-release .
 ```
 
