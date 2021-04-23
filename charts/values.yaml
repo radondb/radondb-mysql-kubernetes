@@ -68,13 +68,13 @@ mysql:
   ## Configure resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-    limits:
-      memory: 1Gi
-      cpu: 500m
+  resources: {}
+#    requests:
+#      memory: 256Mi
+#      cpu: 100m
+#    limits:
+#      memory: 1Gi
+#      cpu: 500m
 
 xenon:
   image: xenondb/xenon
@@ -103,16 +103,16 @@ xenon:
     successThreshold: 1
     failureThreshold: 3
 
-  resources:
-    requests:
-      memory: 128Mi
-      cpu: 50m
-    limits:
-      memory: 256Mi
-      cpu: 100m
+  resources: {}
+#    requests:
+#      memory: 128Mi
+#      cpu: 50m
+#    limits:
+#      memory: 256Mi
+#      cpu: 100m
 
 metrics:
-  enabled: true
+  enabled: false
   image: prom/mysqld-exporter
   tag: v0.12.1
   annotations: {}
@@ -126,7 +126,7 @@ metrics:
 
   # Enable this if you're using https://github.com/coreos/prometheus-operator
   serviceMonitor:
-    enabled: true
+    enabled: false
     ## Specify a namespace if needed
     # namespace: monitoring
     # fallback to the prometheus default unless specified
@@ -141,13 +141,13 @@ metrics:
 ## When set to true will create sidecar to tail mysql slow log.
 slowLogTail: true
 
-resources:
-  limits:
-    cpu:     100m
-    memory:  128Mi
-  requests:
-    cpu:     10m
-    memory:  32Mi
+resources: {}
+#  limits:
+#    cpu:     100m
+#    memory:  128Mi
+#  requests:
+#    cpu:     10m
+#    memory:  32Mi
 
 ## Configure the service
 ## ref: http://kubernetes.io/docs/user-guide/services/
@@ -155,7 +155,7 @@ service:
   annotations: {}
   ## Specify a service type, NodePort|ClusterIP|LoadBalancer
   ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types
-  type: NodePort
+  type: ClusterIP
   # clusterIP: None
   port: 3306
   # nodePort: 32000
@@ -188,6 +188,7 @@ persistence:
   - ReadWriteOnce
   size: 10Gi
   annotations: {}
+  reclaimPolicy: ""
 
 ## Set pod priorityClassName
 # priorityClassName: {}
@@ -203,3 +204,8 @@ statefulsetAnnotations: {}
 # To be added to the database server pod(s)
 podAnnotations: {}
 podLabels: {}
+
+nodeSelector: {}
+hardAntiAffinity: true
+additionalAffinities: {}
+affinity: {}
