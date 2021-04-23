@@ -44,7 +44,9 @@ maintainers:
   name: jason
 - email: runkecheng@yunify.com
   name: rinker
-- email: runkecheng@yunify.com
-  name: rinker
+- email: molliezhang@yunify.com
+  name: molliezhang
+- email: dingyuan@yunify.com
+  name: dingyuan
 
 icon: https://github.com/radondb/xenondb/blob/main/docs/images/XenonDBLogo-F.svg
