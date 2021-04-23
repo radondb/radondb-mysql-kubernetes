@@ -68,13 +68,13 @@ mysql:
   ## Configure resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-    limits:
-      memory: 1Gi
-      cpu: 500m
+  resources: {}
+#    requests:
+#      memory: 256Mi
+#      cpu: 100m
+#    limits:
+#      memory: 1Gi
+#      cpu: 500m
 
 xenon:
   image: xenondb/xenon
@@ -103,13 +103,13 @@ xenon:
     successThreshold: 1
     failureThreshold: 3
 
-  resources:
-    requests:
-      memory: 128Mi
-      cpu: 50m
-    limits:
-      memory: 256Mi
-      cpu: 100m
+  resources: {}
+#    requests:
+#      memory: 128Mi
+#      cpu: 50m
+#    limits:
+#      memory: 256Mi
+#      cpu: 100m
 
 metrics:
   enabled: true
@@ -141,13 +141,13 @@ metrics:
 ## When set to true will create sidecar to tail mysql slow log.
 slowLogTail: true
 
-resources:
-  limits:
-    cpu:     100m
-    memory:  128Mi
-  requests:
-    cpu:     10m
-    memory:  32Mi
+resources: {}
+#  limits:
+#    cpu:     100m
+#    memory:  128Mi
+#  requests:
+#    cpu:     10m
+#    memory:  32Mi
 
 ## Configure the service
 ## ref: http://kubernetes.io/docs/user-guide/services/
@@ -188,6 +188,7 @@ persistence:
   - ReadWriteOnce
   size: 10Gi
   annotations: {}
+  reclaimPolicy: ""
 
 ## Set pod priorityClassName
 # priorityClassName: {}
@@ -203,3 +204,7 @@ statefulsetAnnotations: {}
 # To be added to the database server pod(s)
 podAnnotations: {}
 podLabels: {}
+
+nodeSelector: {}
+hardAntiAffinity: true
+additionalAffinities: {}

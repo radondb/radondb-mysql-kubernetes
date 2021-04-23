@@ -1,7 +1,7 @@
 apiVersion: v2
 name: xenondb
 description: Fast, reliable, scalable, and easy to use open-source relational database system.
-home: https://github.com/radondb/xenondb
+home: https://github.com/radondb/xenondb.git
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -23,3 +23,22 @@ version: 1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "5.7.33"
+
+kubeVersion: ">=1.17.0-0"
+sources:
+- https://github.com/radondb/xenondb
+keywords:
+- xenondb
+- MySQL HA
+- database
+- kubernetes
+
+maintainers:
+- email: zhiangli029@gmail.com
+  name: andy
+- email: mytesla@live.com
+  name: zhyass
+- email: gaoriyao@126.com
+  name: hustjieke
+- email: 362753231@qq.com
+  name: KID-G
