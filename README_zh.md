@@ -1,6 +1,6 @@
 # XenonDB
 
-[English](README.md)| 中文 
+> [English](README.md)| 中文 
 
 ## 什么是 XenonDB？
 
@@ -50,7 +50,11 @@ XenonDB 基于 Apache 2.0 协议，详见[LICENSE](./LICENSE)。
 
 ## 欢迎加入社区话题互动
 
-- 论坛：【KubeSphere 开发者社区 | XenonDB 专题 】(链接待补充)
-- 微信群: 
+- 论坛：
+  
+  欢迎请加入 [Kubesphere 开发者社区](https://github.com/kubesphere/community)XenonDB 技术专区。
+
+- 微信群
+  
    ![](docs/images/wechat_group.png)
  

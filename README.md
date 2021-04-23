@@ -1,7 +1,7 @@
 
 # XenonDB
 
-English | [中文](README_zh.md) 
+> English | [中文](README_zh.md) 
 
 ## What is XenonDB
 
@@ -52,9 +52,11 @@ XenonDB is released under the Apache 2.0, see [LICENSE](./LICENSE).
 ## Discussion and Community
 
 - Forum
+  
   The XenonDB topic in [Kubesphere Community](https://github.com/kubesphere/community).
 
 - WeChat group
+   
    ![](docs/images/wechat_group.png)
 
 Please submit any XenonDB bugs, issues, and feature requests to XenonDB GitHub Issue.
