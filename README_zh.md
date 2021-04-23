@@ -1,7 +1,8 @@
-# XenonDB
+#  XenonDB
+ ![](docs/images/logo_xenondb.png)  <br>
 
 [English](README.md) | 中文 
-## 什么是 XenonDB？
+## 什么是 XenonDB
 
 XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。支持一主多从高可用架构，并具备安全、自动备份、监控告警、自动扩容等全套管理功能。
 
@@ -49,10 +50,12 @@ XenonDB 基于 Apache 2.0 协议，详见 [LICENSE](./LICENSE)。
 ## 欢迎加入社区话题互动
 
 - 论坛
-  请加入[Kubesphere 开发者社区](https://kubesphere.com.cn/forum/) XenonDB 话题专区。
+
+请加入[Kubesphere 开发者社区](https://kubesphere.com.cn/forum/) XenonDB 话题专区。
 
 - 微信群 
- ![](docs/images/wechat_group.png)
+
+![](docs/images/wechat_group.png)
 
 有任何 XenonDB 错误、问题和功能，请您提交在 XenonDB GitHub 提交 Issue。
 
