@@ -14,7 +14,6 @@ https://github.com/radondb/xenondb
 - Logs
 - Account management
 
-
 # Introduction
 
 This chart bootstraps a single leader and multiple followers [MySQL](https://MySQL.org) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
