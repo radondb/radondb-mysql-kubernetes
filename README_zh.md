@@ -1,4 +1,4 @@
-# XenonDB
+# ![](docs/images/powered-by-mysql-167x86.png) XenonDB
 
 [English](README.md) | 中文 
 ## 什么是 XenonDB？
