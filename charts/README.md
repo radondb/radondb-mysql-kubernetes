@@ -1,5 +1,5 @@
 # XenonDB
-XenonDB is a open-source, cloud-native, highly available cluster solutions that is based on database. 
+XenonDB is a open-source, cloud-native, High-Availability cluster solutions that is based on MySQL. 
 
 # Github
 
