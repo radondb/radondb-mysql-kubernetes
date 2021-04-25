@@ -1,6 +1,6 @@
 apiVersion: v2
 name: xenondb
-description: Fast, reliable, scalable, and easy to use open-source relational database system.
+description: XenonDB is a MySQL high availability cluster, open source.
 home: https://github.com/radondb/xenondb.git
 
 # A chart can be either an 'application' or a 'library' chart.
@@ -49,4 +49,4 @@ maintainers:
 - email: dingyuan@yunify.com
   name: dingyuan
 
-icon: https://github.com/radondb/xenondb/blob/main/docs/images/XenonDBLogo-F.svg
+icon: https://github.com/radondb/xenondb/blob/main/docs/images/XenonDB-shape.svg
