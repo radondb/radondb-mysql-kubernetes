@@ -50,6 +50,7 @@ XenonDB is released under the Apache 2.0, see [LICENSE](./LICENSE).
 The XenonDB topic in [Kubesphere Community](https://kubesphere.com.cn/forum/).
 
 - WeChat group
- ![](docs/images/wechat_group.png)
+
+![](docs/images/wechat_group.png)
 
 Please submit any XenonDB bugs, issues, and feature requests to XenonDB GitHub Issue.
