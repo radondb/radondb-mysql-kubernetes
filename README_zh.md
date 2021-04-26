@@ -51,7 +51,7 @@ XenonDB 基于 Apache 2.0 协议，详见 [LICENSE](./LICENSE)。
 
 - 论坛
 
-请加入[Kubesphere 开发者社区](https://kubesphere.com.cn/forum/) XenonDB 话题专区。
+请加入[Kubesphere 开发者社区](https://kubesphere.com.cn/forum/t/XenonDB) XenonDB 话题专区。
 
 - 微信群 
 

@@ -47,7 +47,7 @@ XenonDB is released under the Apache 2.0, see [LICENSE](./LICENSE).
 ## Discussion and Community
 - Forum
 
-The XenonDB topic in [Kubesphere Community](https://kubesphere.com.cn/forum/).
+The XenonDB topic in [Kubesphere Community](https://kubesphere.com.cn/forum/t/XenonDB).
 
 - WeChat group
 
