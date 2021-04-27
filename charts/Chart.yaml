@@ -1,6 +1,6 @@
 apiVersion: v2
 name: radondb-mysql
-description: RadonDB MySQL is a High-Availability MySQL cluster, open source.
+description: High Availability MySQL Cluster, Open Source
 home: https://github.com/radondb/radondb-mysql-kubernetes.git
 
 # A chart can be either an 'application' or a 'library' chart.
