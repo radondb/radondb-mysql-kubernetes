@@ -1,19 +1,21 @@
-#  XenonDB
- ![](docs/images/logo_xenondb.png)  <br>
+#  RadonDB MySQL
+
+ ![](docs/images/logo_radondb-mysql.png)  <br>
 
 [English](README.md) | 中文 
-## 什么是 XenonDB
 
-XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。支持一主多从高可用架构，并具备安全、自动备份、监控告警、自动扩容等全套管理功能。
+## 什么是 RadonDB MySQL
 
-目前 XenonDB 已支持 Kubernetes 和 KubeSphere 平台部署 MySQL 高可用集群。 
+[RadonDB MySQL](https://github.com/radondb/radondb-mysql-kubernetes) 是基于 MySQL 的开源、高可用、云原生集群解决方案。支持一主多从高可用架构，并具备安全、自动备份、监控告警、自动扩容等全套管理功能。
+
+目前 RadonDB MySQL 已支持 Kubernetes 和 KubeSphere 平台部署 MySQL 高可用集群。
 
 ## 架构图
 
 - 通过 Raft 协议实现无中心化选主
 - 通过 Semi-Sync 基于 GTID 模式同步数据
 
-![](docs/images/XenonDB_Architecture_1.png)
+![](docs/images/radondb-mysql_Architecture_1.png)
 
 ## 核心功能
 
@@ -27,10 +29,9 @@ XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。�
 - 账户管理
 
 ## 快速部署
-目前已支持在 Kubernetes 和 KubeSphere 平台的部署。
 
-- [ 在 Kubernetes 上部署 XenonDB 集群](docs/Kubernetes/deploy_xenondb_on_kubernetes.md)
-- [ 在 Kubesphere 上部署 XenonDB 集群 ](docs/KubeSphere/deploy_xenondb_on_kubesphere.md)
+- [ 在 Kubernetes 上部署 RadonDB MySQL 集群](docs/Kubernetes/deploy_radondb-mysql_on_kubernetes.md)
+- [ 在 Kubesphere 上部署 RadonDB MySQL 集群 ](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere.md)
 
 ## 版本路线
 
@@ -43,21 +44,22 @@ XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。�
 ## 用户案例
 
 ![](docs/images/users.png)
+
 ## 协议
 
-XenonDB 基于 Apache 2.0 协议，详见 [LICENSE](./LICENSE)。
+RadonDB MySQL 基于 Apache 2.0 协议，详见 [LICENSE](./LICENSE)。
 
 ## 欢迎加入社区话题互动
 
 - 论坛
 
-请加入[Kubesphere 开发者社区](https://kubesphere.com.cn/forum/t/XenonDB) XenonDB 话题专区。
+   请加入[Kubesphere 开发者社区](https://kubesphere.com.cn/forum/t/radondb-mysql) RadonDB MySQL 话题专区。
 
 - 微信群 
 
-![](docs/images/wechat_group.png)
+   ![](docs/images/wechat_group.png)
 
-有任何 XenonDB 错误、问题和功能，请您提交在 XenonDB GitHub 提交 Issue。
+有任何 RadonDB MySQL 错误、问题和功能，请您提交在 RadonDB MySQL GitHub 提交 Issue。
 
 
  
