@@ -5,7 +5,7 @@ metadata:
   name: {{ template "fullname" . }}
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "radondb-mysql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 rules:
@@ -23,7 +23,7 @@ metadata:
   name: {{ template "fullname" . }}
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "radondb-mysql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 roleRef:
