@@ -1,10 +1,13 @@
-# RadonDB-MySQL
-RadonDB-MySQL is a open-source, cloud-native, High-Availability cluster solutions that is based on MySQL.
+# RadonDB MySQL
+
+RadonDB MySQL is an open-source, cloud-native, High-Availability cluster solutions based on MySQL.
 
 # Github
 
-https://github.com/radondb/radondb-mysql-kubernetes
+https://github.com/radondb/radondb-mysql-kubernetes.git
+
 # Features
+
 - High availability MySQL database
     - Non-centralized automatic leader election
     - Second level switch leader to follower 
@@ -49,17 +52,16 @@ $ helm delete my-release
 To delete the pvc:
 
 ```
-kubectl delete pvc data-my-release-mysql-0
-kubectl delete pvc data-my-release-mysql-1
-kubectl delete pvc data-my-release-mysql-2
+kubectl delete pvc data-my-release-radondb-mysql-0
+kubectl delete pvc data-my-release-radondb-mysql-1
+kubectl delete pvc data-my-release-radondb-mysql-2
 ```
 
 The commands remove all the Kubernetes components associated with the chart and deletes the release completely.
 
 # Configuration
 
-The following table lists the configurable parameters of the xenondb chart and their default values.
-
+The following table lists the configurable parameters of the RadonDB MySQL chart and their default values.
 
 | Parameter                                    | Description                                                                                       | Default                                     |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------- |

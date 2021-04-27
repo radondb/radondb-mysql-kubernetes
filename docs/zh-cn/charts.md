@@ -1,8 +1,8 @@
-# XenonDB Charts
+# RadonDB MySQL Charts
 
 ## 简介
 
-XenonDB chart 使用 [Helm](https://helm.sh) 包管理器在 [Kubernetes](http://kubernetes.io) 集群上部署一主多从 [MySQL](https://MySQL.org) 集群。
+RadonDB MySQL chart 使用 [Helm](https://helm.sh) 包管理器在 [Kubernetes](http://kubernetes.io) 集群上部署一主多从 [MySQL](https://MySQL.org) 集群。
 
 ## 先决条件
 
@@ -37,16 +37,16 @@ $ helm delete my-release
 删除持久化存储卷:
 
 ```
-kubectl delete pvc data-my-release-xenondb-0
-kubectl delete pvc data-my-release-xenondb-1
-kubectl delete pvc data-my-release-xenondb-2
+kubectl delete pvc data-my-release-radondb-mysql-0
+kubectl delete pvc data-my-release-radondb-mysql-1
+kubectl delete pvc data-my-release-radondb-mysql-2
 ```
 
 以上指令会删除所有与该 Chart 关联的 Kubernets 组件，并彻底删除该 release。  
 
 ## 配置
 
-下表列出了 xenondb chart 的配置参数及对应的默认值。
+下表列出了 RadonDB MySQL chart 的配置参数及对应的默认值。
 
 | 参数                                          | 描述                                                     |  默认值                                 |
 | -------------------------------------------- | -------------------------------------------------------- | -------------------------------------- |

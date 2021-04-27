@@ -5,7 +5,7 @@ metadata:
   name: {{ template "fullname" . }}
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "radondb-mysql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
   {{- if .Values.service.annotations }}
@@ -29,7 +29,7 @@ metadata:
   name: {{ template "fullname" . }}-leader
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "radondb-mysql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 spec:
@@ -60,7 +60,7 @@ metadata:
   name: {{ template "fullname" . }}-follower
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "radondb-mysql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 spec:
@@ -91,7 +91,7 @@ metadata:
   name: "{{ template "fullname" . }}-metrics"
   labels:
     app: {{ template "fullname" . }}
-    chart: {{ template "xenondb.chart" . }}
+    chart: {{ template "radondb-mysql.chart" . }}
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
   {{- if .Values.metrics.annotations }}
