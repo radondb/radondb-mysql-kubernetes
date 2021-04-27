@@ -44,7 +44,11 @@ RadonDB-MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 2. 执行如下命令，将 RadonDB-MySQL Chart 克隆到 KubeSphere 客户端节点中。
 
    ```bash
+<<<<<<< HEAD:docs/KubeSphere/deploy_randondb-mysql_on_kubesphere.md
    git clone https://github.com/radondb/radondb-mysql.git
+=======
+   git clone https://github.com/radondb/radondb-mysql-kubernetes.git
+>>>>>>> Rename xenondb to randondb-mysql:docs/KubeSphere/deploy_xenondb_on_kubesphere.md
    ```
 
 > Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
@@ -52,7 +56,11 @@ RadonDB-MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 #### **步骤 2：部署**
 
 1. 通过第三方 SSH 客户端，连接 KubeSphere 客户端节点。
+<<<<<<< HEAD:docs/KubeSphere/deploy_randondb-mysql_on_kubesphere.md
 2. 在 RadonDB-MySQL 目录路径下，选择如下方式，部署 release 实例。
+=======
+2. 在 radondb-mysql-kubernetes 目录路径下，选择如下方式，部署 release 实例。
+>>>>>>> Rename xenondb to randondb-mysql:docs/KubeSphere/deploy_xenondb_on_kubesphere.md
 
 > release 是运行在 Kubernetes 集群中的 Chart 的实例。通过命令方式部署，需指定 release 名称。
   
@@ -108,13 +116,21 @@ RadonDB-MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 拉取 RadonDB-MySQL Chart。
 
 ```bash
+<<<<<<< HEAD:docs/KubeSphere/deploy_randondb-mysql_on_kubesphere.md
 git clone https://github.com/radondb/radondb-mysql.git
+=======
+git clone https://github.com/radondb/radondb-mysql-kubernetes.git
+>>>>>>> Rename xenondb to randondb-mysql:docs/KubeSphere/deploy_xenondb_on_kubesphere.md
 ```
 
 打包生成 tgz 或 tar.gz 文件。
 
 ```bash
+<<<<<<< HEAD:docs/KubeSphere/deploy_randondb-mysql_on_kubesphere.md
 cd radondb-mysql
+=======
+cd radondb-mysql-kubernetes
+>>>>>>> Rename xenondb to randondb-mysql:docs/KubeSphere/deploy_xenondb_on_kubesphere.md
 helm package charts
 ```
 
@@ -142,13 +158,21 @@ helm package charts
 
 （5）部署新应用。
 
+<<<<<<< HEAD:docs/KubeSphere/deploy_randondb-mysql_on_kubesphere.md
   点击 **项目管理**，进入已创建的 `radondb-mysql-deploy` 项目管理中心。
+=======
+  点击 **项目管理**，进入已创建的 `randondb-mysql-deploy` 项目管理中心。
+>>>>>>> Rename xenondb to randondb-mysql:docs/KubeSphere/deploy_xenondb_on_kubesphere.md
   
   选择 **应用负载 > 应用**，进入项目应用管理页面。
 
 ![应用负载](png/应用负载.png)
 
+<<<<<<< HEAD:docs/KubeSphere/deploy_randondb-mysql_on_kubesphere.md
   点击 **部署新应用**，在 **来自应用模板**窗口中选择 `radondb-mysql`。
+=======
+  点击 **部署新应用**，在 **来自应用模板**窗口中选择 `randondb-mysql`。
+>>>>>>> Rename xenondb to randondb-mysql:docs/KubeSphere/deploy_xenondb_on_kubesphere.md
 
 ![部署新应用](png/部署新应用.png)
 
@@ -201,7 +225,11 @@ apt-get update && apt-get install mysql-client -y
 一般默认用户名为 `qingcloud`，默认密码为 `Qing@123`。
 
 ```bash
+<<<<<<< HEAD:docs/KubeSphere/deploy_randondb-mysql_on_kubesphere.md
 kubectl get secret -n <namespace> my-release-radondb-mysql -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
+=======
+kubectl get secret -n <namespace> my-release-randondb-mysql -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
+>>>>>>> Rename xenondb to randondb-mysql:docs/KubeSphere/deploy_xenondb_on_kubesphere.md
 ```
 
 ### **步骤 4：连接主节点**
@@ -209,7 +237,11 @@ kubectl get secret -n <namespace> my-release-radondb-mysql -o jsonpath="{.data.m
 使用默认用户名连接主节点。
 
 ```bash
+<<<<<<< HEAD:docs/KubeSphere/deploy_randondb-mysql_on_kubesphere.md
 mysql -h my-release-radondb-mysql-leader -u <用户名> -p
+=======
+mysql -h my-release-randondb-mysql-leader -u <用户名> -p
+>>>>>>> Rename xenondb to randondb-mysql:docs/KubeSphere/deploy_xenondb_on_kubesphere.md
 ```
 
 ### **步骤 5：连接从节点**
@@ -217,7 +249,11 @@ mysql -h my-release-radondb-mysql-leader -u <用户名> -p
 使用默认用户名，密码连接从节点。
 
 ```bash
+<<<<<<< HEAD:docs/KubeSphere/deploy_randondb-mysql_on_kubesphere.md
 mysql -h my-release-radondb-mysql-follower -u <用户名> -p<密码>
+=======
+mysql -h my-release-randondb-mysql-follower -u <用户名> -p<密码>
+>>>>>>> Rename xenondb to randondb-mysql:docs/KubeSphere/deploy_xenondb_on_kubesphere.md
 ```
 
 >说明：从节点为只读节点。

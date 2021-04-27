@@ -17,14 +17,22 @@ RadonDB-MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 执行如下命令，将 RadonDB-MySQL Chart 克隆到 Kubernetes 中。
 
 ```bash
+<<<<<<< HEAD:docs/Kubernetes/deploy_randondb-mysql_on_kubernetes.md
 git clone https://github.com/radondb/radondb-mysql.git
+=======
+git clone https://github.com/radondb/radondb-mysql-kubernetes.git
+>>>>>>> Rename xenondb to randondb-mysql:docs/Kubernetes/deploy_xenondb_on_kubernetes.md
 ```
 
 > Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
 
 ### **步骤 2：部署**
 
+<<<<<<< HEAD:docs/Kubernetes/deploy_randondb-mysql_on_kubernetes.md
 在 RadonDB-MySQL 目录路径下，选择如下方式，部署 release 实例。
+=======
+在 radondb-mysql-kubernetes 目录路径下，选择如下方式，部署 release 实例。
+>>>>>>> Rename xenondb to randondb-mysql:docs/Kubernetes/deploy_xenondb_on_kubernetes.md
 
 > release 是运行在 Kubernetes 集群中的 Chart 的实例。通过命令方式部署，需指定 release 名称。
 
@@ -81,12 +89,20 @@ kubectl get statefulset,pod,svc
 
 - 连接主节点。
    ```bash
+<<<<<<< HEAD:docs/Kubernetes/deploy_randondb-mysql_on_kubernetes.md
    mysql -h <release名称>-radondb-mysql-leader -u <用户名> -p
+=======
+   mysql -h <release名称>-randondb-mysql-leader -u <用户名> -p
+>>>>>>> Rename xenondb to randondb-mysql:docs/Kubernetes/deploy_xenondb_on_kubernetes.md
    ```
 
 - 连接从节点。
   ```bash
+<<<<<<< HEAD:docs/Kubernetes/deploy_randondb-mysql_on_kubernetes.md
   mysql -h <release名称>-radondb-mysql-follower -u <用户名> -p
+=======
+  mysql -h <release名称>-randondb-mysql-follower -u <用户名> -p
+>>>>>>> Rename xenondb to randondb-mysql:docs/Kubernetes/deploy_xenondb_on_kubernetes.md
   ```
 
 ### **客户端和 RadonDB-MySQL 不在同一项目中**
