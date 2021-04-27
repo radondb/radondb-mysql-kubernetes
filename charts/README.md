@@ -1,9 +1,9 @@
-# XenonDB
-XenonDB is a open-source, cloud-native, High-Availability cluster solutions that is based on MySQL. 
+# RadonDB-MySQL
+RadonDB-MySQL is a open-source, cloud-native, High-Availability cluster solutions that is based on MySQL.
 
 # Github
 
-https://github.com/radondb/xenondb
+https://github.com/radondb/radondb-mysql-kubernetes
 # Features
 - High availability MySQL database
     - Non-centralized automatic leader election
@@ -49,9 +49,9 @@ $ helm delete my-release
 To delete the pvc:
 
 ```
-kubectl delete pvc data-my-release-xenondb-0
-kubectl delete pvc data-my-release-xenondb-1
-kubectl delete pvc data-my-release-xenondb-2
+kubectl delete pvc data-my-release-mysql-0
+kubectl delete pvc data-my-release-mysql-1
+kubectl delete pvc data-my-release-mysql-2
 ```
 
 The commands remove all the Kubernetes components associated with the chart and deletes the release completely.
