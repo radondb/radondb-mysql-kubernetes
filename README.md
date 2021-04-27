@@ -1,22 +1,24 @@
 
-# XenonDB
- ![](docs/images/logo_xenondb.png) <br>
+# RadonDB-MySQL
+ ![](docs/images/logo_radondb-mysql.png) <br>
 
 English | [中文](README_zh.md) 
 
-## What is XenonDB?
+## What is RadonDB-MySQL
 
-[XenonDB](https://github.com/radondb/xenondb) is a open-source, cloud-native, highly available cluster solutions that is based on [MySQL](https://MySQL.org) database. With the Raft protocol，XenonDB provide the faster failover performance without losing any transactions. 
+[RadonDB-MySQL](https://github.com/radondb/radondb-mysql-kubernetes) is a open-source, cloud-native, highly available cluster solutions that is based on [MySQL](https://MySQL.org) database. With the Raft protocol，RadonDB-MySQL provide the faster failover performance without losing any transactions. 
 
-At present, XenonDB has supported the deployment of MySQL high availability clusters on kubernetes and kubesphere platforms.
+At present, RadonDB-MySQL has supported the deployment of MySQL high availability clusters on kubernetes and kubesphere platforms.
 
 ## Architecture
 
 - Achieving decentralized selection through the Raft protocol.
 - Synchronize data based on GTID mode through Semi-Sync.
 
-![](docs/images/XenonDB_Architecture_1.png)
+![](docs/images/radondb-mysql_Architecture_1.png)
+
 ## Features
+
 - High availability MySQL database
     - Non-centralized automatic leader selection
     - Second level switch leader to follower 
@@ -27,30 +29,33 @@ At present, XenonDB has supported the deployment of MySQL high availability clus
 - Account management
 
 ## Installation
-There are support that depoy XneonDB on the Kubernetes or Kubesphere platforms.
 
-- [Deploy xenonDB on Kubernetes](docs/Kubernetes/deploy_xenondb_on_kubernetes.md) 
-- [Deploy xenonDB on the appstore of KubeSphere](docs/KubeSphere/deploy_xenondb_on_kubesphere.md)
+- [Deploy RadonDB-MySQL on Kubernetes](docs/Kubernetes/deploy_radondb-mysql_on_kubernetes.md) 
+- [Deploy RadonDB-MySQL on the appstore of KubeSphere](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere.md)
 
 ## Release
+
 | Release | Features  | Mode |
 |------|--------|--------|
 | 1.0 | High availability <br>  Non-centralized automatic leader election <br>  Second level switch <br>  Strongly consistent data <br> Cluster management <br> Monitoring and alerting <br> Logs <br> Account management | Helm |
 | 2.0 | Node management <br> Automatic expansion and shrinkage capacity <br> Upgrade <br> Backups and Restorations <br> Automatic failover <br> Automatic rebuild node <br> Automatic restart service（all or signal node）<br> Account management（API）<br> Migrating Data online | Operator |
 | 3.0 | Automatic O&M <br> Multiple node roles <br> Disaster Recovery <br> SSL transmission encryption  | Operator |
-## Who are using XenonDB?
+
+## Who are using RadonDB-MySQL
 
 ![](docs/images/users.png)
+
 ## License
 
-XenonDB is released under the Apache 2.0, see [LICENSE](./LICENSE).
+RadonDB-MySQL is released under the Apache 2.0, see [LICENSE](./LICENSE).
 ## Discussion and Community
+
 - Forum
 
-The XenonDB topic in [Kubesphere Community](https://kubesphere.com.cn/forum/t/XenonDB).
+   The RadonDB-MySQL topic in [Kubesphere Community](https://kubesphere.com.cn/forum/t/radondb-mysql).
 
 - WeChat group
 
-![](docs/images/wechat_group.png)
+   ![](docs/images/wechat_group.png)
 
-Please submit any XenonDB bugs, issues, and feature requests to XenonDB GitHub Issue.
+Please submit any RadonDB-MySQL bugs, issues, and feature requests to RadonDB-MySQL GitHub Issue.

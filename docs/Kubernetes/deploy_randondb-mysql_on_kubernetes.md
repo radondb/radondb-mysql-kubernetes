@@ -1,10 +1,10 @@
-# **在 Kubernetes 上部署 XenonDB 集群**
+# **在 Kubernetes 上部署 RandonDB-MySQL 集群**
 
 ## **简介**
 
-XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。通过使用 Raft 协议，XenonDB 可以快速进行故障转移，且不会丢失任何事务。
+RadonDB-MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方案。通过使用 Raft 协议，RadonDB-MySQL 可以快速进行故障转移，且不会丢失任何事务。
 
-本教程演示如何使用命令行在 Kubernetes 上部署 XenonDB。
+本教程演示如何使用命令行在 Kubernetes 上部署 RadonDB-MySQL。
 
 ## **部署准备**
 
@@ -12,19 +12,19 @@ XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。�
 
 ## **部署步骤**
 
-### **步骤 1：克隆 XenonDB Chart**
+### **步骤 1：克隆 RadonDB-MySQL Chart**
 
-执行如下命令，将 XenonDB Chart 克隆到 Kubernetes 中。
+执行如下命令，将 RadonDB-MySQL Chart 克隆到 Kubernetes 中。
 
 ```bash
-git clone https://github.com/radondb/xenondb.git
+git clone https://github.com/radondb/radondb-mysql.git
 ```
 
 > Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
 
 ### **步骤 2：部署**
 
-在 xenondb 目录路径下，选择如下方式，部署 release 实例。
+在 RadonDB-MySQL 目录路径下，选择如下方式，部署 release 实例。
 
 > release 是运行在 Kubernetes 集群中的 Chart 的实例。通过命令方式部署，需指定 release 名称。
 
@@ -65,33 +65,33 @@ git clone https://github.com/radondb/xenondb.git
 
 ### **步骤 3：部署校验**
 
-部署指令执行完成后，查看 XenonDB 有状态副本集，pod 状态及服务。可查看到相关信息，则 XenonDB 部署成功。
+部署指令执行完成后，查看 RadonDB-MySQL 有状态副本集，pod 状态及服务。可查看到相关信息，则 RadonDB-MySQL 部署成功。
 
 ```bash
 kubectl get statefulset,pod,svc
 ```
 
-## **连接 XenonDB**
+## **连接 RadonDB-MySQL**
 
-您需要准备一个用于连接 XenonDB 的客户端。
+您需要准备一个用于连接 RadonDB-MySQL 的客户端。
 
-### **客户端和 XenonDB 在同一项目中**
+### **客户端和 RadonDB-MySQL 在同一项目中**
 
-当客户端和 XenonDB 集群在同一个项目中时，可使用 leader/follower 代替具体的 ip 和端口。
+当客户端和 RadonDB-MySQL 集群在同一个项目中时，可使用 leader/follower 代替具体的 ip 和端口。
 
 - 连接主节点。
    ```bash
-   mysql -h <release名称>-xenondb-leader -u <用户名> -p
+   mysql -h <release名称>-radondb-mysql-leader -u <用户名> -p
    ```
 
 - 连接从节点。
   ```bash
-  mysql -h <release名称>-xenondb-follower -u <用户名> -p
+  mysql -h <release名称>-radondb-mysql-follower -u <用户名> -p
   ```
 
-### **客户端和 XenonDB 不在同一项目中**
+### **客户端和 RadonDB-MySQL 不在同一项目中**
 
-当客户端和 XenonDB 集群不在同一个项目中时，需先分别获取连接所需的节点地址、节点端口、服务名称。
+当客户端和 RadonDB-MySQL 集群不在同一个项目中时，需先分别获取连接所需的节点地址、节点端口、服务名称。
 
 1. 查询 pod 列表和服务列表，分别获取 pod 名称和服务名称。
 
@@ -121,7 +121,7 @@ kubectl get statefulset,pod,svc
 
 ## **配置**
 
-下表列出了 XenonDB Chart 的配置参数及对应的默认值。
+下表列出了 RadonDB-MySQL Chart 的配置参数及对应的默认值。
 
 | 参数                                          | 描述                                                     |  默认值                                 |
 | -------------------------------------------- | -------------------------------------------------------- | -------------------------------------- |
@@ -131,7 +131,7 @@ kubectl get statefulset,pod,svc
 | `replicaCount`                               | Pod 数目                                                 | `3`                                     |
 | `busybox.image`                              | `busybox` 镜像库地址                                       | `busybox`                               |
 | `busybox.tag`                                | `busybox` 镜像标签                                        | `1.32`                                   |
-| `mysql.image`                                | `mysql` 镜像库地址                                         | `xenondb/percona`                     |
+| `mysql.image`                                | `mysql` 镜像库地址                                         | `radondb-mysql/percona`                     |
 | `mysql.tag`                                  | `mysql` 镜像标签                                          | `5.7.33`                               |
 | `mysql.allowEmptyRootPassword`               | 如果为 `true`，允许 root 账号密码为空                       | `true`                                  |
 | `mysql.mysqlRootPassword`                    | `root` 用户密码                                          |                                          |
@@ -154,7 +154,7 @@ kubectl get statefulset,pod,svc
 | `mysql.readinessProbe.failureThreshold`      | 就绪探测失败的重试次数，重试一定次数后将认为容器未就绪              | 3                                      |
 | `mysql.extraEnvVars`                         | 其他作为字符串传递给 `tpl` 函数的环境变量                       |                                         |
 | `mysql.resources`                            | `MySQL` 的资源请求/限制                                      | 内存: `256Mi`, CPU: `100m`              |
-| `xenon.image`                                | `xenon` 镜像库地址                                          | `xenondb/xenon`                       |
+| `xenon.image`                                | `xenon` 镜像库地址                                          | `radondb-mysql/xenon`                       |
 | `xenon.tag`                                  | `xenon` 镜像标签                                            | `1.1.5-alpha`                          |
 | `xenon.args`                                 | 要传递到 xenon 容器的其他参数                                 | `[]`                                   |
 | `xenon.extraEnvVars`                         | 其他作为字符串传递给 `tpl` 函数的环境变量                        |                                        |
