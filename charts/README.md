@@ -1,9 +1,10 @@
-# RadonDB-MySQL
-RadonDB-MySQL is a open-source, cloud-native, High-Availability cluster solutions that is based on MySQL.
+# RadonDB MySQL
+RadonDB MySQL is a open-source, cloud-native, High-Availability cluster solutions that is based on MySQL.
 
 # Github
 
 https://github.com/radondb/radondb-mysql-kubernetes
+
 # Features
 - High availability MySQL database
     - Non-centralized automatic leader election
