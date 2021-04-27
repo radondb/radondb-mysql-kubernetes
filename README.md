@@ -52,10 +52,12 @@ RadonDB MySQL is released under the Apache 2.0, see [LICENSE](./LICENSE).
 
 - Forum
 
-   The RadonDB MySQL topic in [Kubesphere Community](https://kubesphere.com.cn/forum/t/radondb-mysql).
+The RadonDB MySQL topic in [Kubesphere Community](https://kubesphere.com.cn/forum/t/radondb).
 
 - WeChat group
 
-   ![](docs/images/wechat_group.png)
+To enter the wechat group of radondb community, please add administrator wechat.
+
+![](docs/images/wechat_admin.jpg)
 
 Please submit any RadonDB MySQL bugs, issues, and feature requests to RadonDB MySQL GitHub Issue.
