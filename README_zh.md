@@ -53,9 +53,11 @@ XenonDB 基于 Apache 2.0 协议，详见 [LICENSE](./LICENSE)。
 
 请加入[Kubesphere 开发者社区](https://kubesphere.com.cn/forum/t/XenonDB) XenonDB 话题专区。
 
-- 微信群 
+- 微信群
 
-![](docs/images/wechat_group.png)
+XenonDB 开源社区 ，添加以下客户微信入群
+
+![](docs/images/wechat_admin.jpg)
 
 有任何 XenonDB 错误、问题和功能，请您提交在 XenonDB GitHub 提交 Issue。
 

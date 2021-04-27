@@ -51,6 +51,8 @@ The XenonDB topic in [Kubesphere Community](https://kubesphere.com.cn/forum/t/Xe
 
 - WeChat group
 
-![](docs/images/wechat_group.png)
+XenonDB community, add the following customer  into our wechat group
+
+![](docs/images/wechat_admin.jpg)
 
 Please submit any XenonDB bugs, issues, and feature requests to XenonDB GitHub Issue.
