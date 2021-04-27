@@ -1,38 +1,66 @@
-# **在 Kubernetes 上部署 XenonDB 集群**
+# **在 Kubesphere 上部署 RadonDB MySQL 集群**
 
 ## **简介**
 
-XenonDB 是基于 MySQL 的开源、高可用、云原生集群解决方案。通过使用 Raft 协议，XenonDB 可以快速进行故障转移，且不会丢失任何事务。
-
-本教程演示如何使用命令行在 Kubernetes 上部署 XenonDB。
+RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方案。通过使用 Raft 协议，RadonDB MySQL 可以快速进行故障转移，且不会丢失任何事务。
 
 ## **部署准备**
 
-- 已成功部署 Kubernetes 集群。
+### **安装 KubeSphere**
+
+可选择如下安装方式：
+
+- 在 [青云 QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 上安装 Kubersphere。
+
+- [在 Kubernetes 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-kubernetes/)。
+- [在 Linux 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
+
+### **创建 KubeSphere 多租户系统**
+
+参考 KubeSphere 官方文档：[创建企业空间、项目、帐户和角色](https://kubesphere.io/zh/docs/quick-start/create-workspace-and-project/)。
+
+### **连接 KubeSphere 客户端节点**
+
+> 说明：如下示例适用于 KubeSphere 安装在 [青云QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 的场景。
+
+- 通过[青云 QingCloud 控制台](https://console.qingcloud.com/) 直接连接客户端节点。
+
+
+   ![连接客户端节点](png/连接客户端节点.png)
+
+- 配置 KubeSphere的 SSH 公钥参数，可通过第三方 SSH 工具连接客户端节点。
+
+   ![ssh公钥](png/ssh公钥.png)
 
 ## **部署步骤**
 
-### **步骤 1：克隆 XenonDB Chart**
+可选择 [命令行](#通过命令行部署-RadonDB-MySQL-集群) 或 [控制台](#通过控制台部署-RadonDB-MySQL-集群) 两种方式部署 RadonDB MySQL 集群。
 
-执行如下命令，将 XenonDB Chart 克隆到 Kubernetes 中。
+### **通过命令行部署 RadonDB MySQL 集群**
 
-```bash
-git clone https://github.com/radondb/xenondb.git
-```
+#### **步骤 1：克隆 RadonDB MySQL Chart**
+
+1. 通过第三方 SSH 客户端，连接 KubeSphere 客户端节点。
+2. 执行如下命令，将 RadonDB MySQL Chart 克隆到 KubeSphere 客户端节点中。
+
+   ```bash
+   git clone https://github.com/radondb/radondb-mysql-kubernetes.git
+   ```
 
 > Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
 
-### **步骤 2：部署**
+#### **步骤 2：部署**
 
-在 xenondb 目录路径下，选择如下方式，部署 release 实例。
+1. 通过第三方 SSH 客户端，连接 KubeSphere 客户端节点。
+2. 在 radondb-mysql-kubernetes 目录路径下，选择如下方式，部署 release 实例。
 
 > release 是运行在 Kubernetes 集群中的 Chart 的实例。通过命令方式部署，需指定 release 名称。
-
+  
 以下命令指定 release 名为 `my-release`。
 
 * **默认部署方式**
 
-   ```bash
+  ```bash
    <For Helm v2>
     cd charts
     helm install . --name my-release
@@ -53,7 +81,6 @@ git clone https://github.com/radondb/xenondb.git
   helm install my-release \
   --set mysql.mysqlUser=my-user,mysql.mysqlPassword=my-password,mysql.database=my-database .
   ```
-
 * **配置 yaml 参数方式**
 
   执行如下命令，可通过 value.yaml 配置文件，在安装时配置指定参数。更多安装过程中可配置的参数，请参考 [配置](#配置) 。
@@ -63,65 +90,141 @@ git clone https://github.com/radondb/xenondb.git
   helm install my-release -f values.yaml .
   ```
 
-### **步骤 3：部署校验**
+#### **步骤 3：部署校验**
 
-部署指令执行完成后，查看 XenonDB 有状态副本集，pod 状态及服务。可查看到相关信息，则 XenonDB 部署成功。
+- **默认部署方式**
+
+  执行完成后，回显如下提示信息，则部署指令执行成功。
+  ![部署成功](png/部署成功.png)
+
+- 登录 KubeSphere 管理工作台，在**工作负载**中选择**有状态副本集**页签，可查看到目标副本集，则 RadonDB MySQL 集群部署成功。
+
+  ![控制台部署成功](png/控制台部署成功.png)
+
+### **通过控制台部署 RadonDB MySQL 集群**
+
+#### **步骤 1：创建 RadonDB MySQL Chart 压缩包**
+
+拉取 RadonDB MySQL Chart。
 
 ```bash
-kubectl get statefulset,pod,svc
+git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 ```
 
-## **连接 XenonDB**
+打包生成 tgz 或 tar.gz 文件。
 
-您需要准备一个用于连接 XenonDB 的客户端。
+```bash
+cd radondb-mysql-kubernetes
+helm package charts
+```
 
-### **客户端和 XenonDB 在同一项目中**
+![打包chart](png/打包chart.png)
 
-当客户端和 XenonDB 集群在同一个项目中时，可使用 leader/follower 代替具体的 ip 和端口。
+#### **步骤 2：部署**
 
-- 连接主节点。
-   ```bash
-   mysql -h <release名称>-xenondb-leader -u <用户名> -p
-   ```
+（1）登录 KubeSphere 的 Web 控制台。
 
-- 连接从节点。
-  ```bash
-  mysql -h <release名称>-xenondb-follower -u <用户名> -p
-  ```
+（2）选择 **平台管理 > 访问控制** ，进入平台级的访问控制页面。
 
-### **客户端和 XenonDB 不在同一项目中**
+（3）选择**企业空间**，并点击已创建的 `radondb-mysql-workspace` 企业空间名称，进入企业空间管理页面。
 
-当客户端和 XenonDB 集群不在同一个项目中时，需先分别获取连接所需的节点地址、节点端口、服务名称。
+![企业空间](png/企业空间.png)
 
-1. 查询 pod 列表和服务列表，分别获取 pod 名称和服务名称。
+（4）上传压缩包。
 
-   ```bash
-   kubectl get pod,svc
-   ```
+  选择 **应用管理 > 应用模板**，进入应用模板配置页面。
 
-2. 获取节点地址。
+![应用管理](png/应用管理.png)
 
-   ```bash
-   kubectl describe <pod名称>
-   ```
+  点击 **创建** ，在弹窗中上传步骤一创建的 RadonDB MySQL Chart 压缩包。
 
-3. 获取节点端口。
+![上传](png/上传.png)
 
-   ```bash
-   kubectl describe <服务名称>
-   ```
+（5）部署新应用。
 
-4. 连接节点。
+  点击 **项目管理**，进入已创建的 `radondb-mysql-deploy` 项目管理中心。
+  
+  选择 **应用负载 > 应用**，进入项目应用管理页面。
 
-   ```bash
-   mysql -p <节点地址> -u <用户名> -P <节点端口> -p
-   ```
+![应用负载](png/应用负载.png)
 
-> 说明：使用外网主机连接可能会出现 `SSL connection error`，需要在加上 `--ssl-mode=DISABLE` 参数，关闭 SSL。
+  点击 **部署新应用**，在 **来自应用模板**窗口中选择 `radondb-mysql`。
+
+![部署新应用](png/部署新应用.png)
+
+  编辑应用模板基本信息。
+  
+![基本信息](png/基本信息.png)
+
+  编辑应用配置，点击**部署** 即可完成部署。
+
+![应用配置](png/应用配置.png)
+
+  >说明：示例使用默认参数部署。
+
+#### **步骤 3：部署校验**
+
+在**项目管理**管理中心，选择 **应用负载 > 工作负载**，并选择**有状态副本集**页签，可查看到release 名为 `my-release` 的副本集，则 radondb-mysql 集群已成功部署。
+
+![控制台部署成功](png/控制台部署成功.png)
+
+## **访问 RadonDB MySQL 节点**
+
+RadonDB MySQL 由一个主节点和两个从节点组成，可通过如下命令访问每个 RadonDB MySQL 节点：
+
+```txt
+<pod-name>.my-release-radondb-mysql
+```
+
+## **连接数据库**
+
+### **步骤 1：创建 Client**
+
+创建一个用于连接 RadonDB MySQL 集群的客户端主机。
+
+```bash
+kubectl run ubuntu -n <namespace> --image=ubuntu:focal -it --rm --restart='Never' -- bash -il
+```
+
+### **步骤 2：安装 mysql-client**
+
+在客户端主机中安装 mysql-client。
+
+```bash
+apt-get update && apt-get install mysql-client -y
+```
+
+### **步骤 3：获取密码**
+
+获取 MySQL 用户密码。
+
+一般默认用户名为 `qingcloud`，默认密码为 `Qing@123`。
+
+```bash
+kubectl get secret -n <namespace> my-release-radondb-mysql -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
+```
+
+### **步骤 4：连接主节点**
+
+使用默认用户名连接主节点。
+
+```bash
+mysql -h my-release-radondb-mysql-leader -u <用户名> -p
+```
+
+### **步骤 5：连接从节点**
+
+使用默认用户名，密码连接从节点。
+
+```bash
+mysql -h my-release-radondb-mysql-follower -u <用户名> -p<密码>
+```
+
+>说明：从节点为只读节点。
 
 ## **配置**
 
-下表列出了 XenonDB Chart 的配置参数及对应的默认值。
+下表列出了 RadonDB MySQL Chart 的配置参数及对应的默认值。
 
 | 参数                                          | 描述                                                     |  默认值                                 |
 | -------------------------------------------- | -------------------------------------------------------- | -------------------------------------- |
@@ -208,7 +311,7 @@ kubectl get statefulset,pod,svc
 
 [MySQL](https://hub.docker.com/repository/docker/zhyass/percona57) 镜像在容器路径 `/var/lib/mysql` 中存储 MYSQL 数据和配置。
 
-默认情况下，会创建一个 PersistentVolumeClaim 并将其挂载到指定目录中。 若想禁用此功能，您可以更改 `values.yaml` 禁用持久化，改用 emptyDir。 
+默认情况下，会创建一个 PersistentVolumeClaim 并将其挂载到指定目录中。 若想禁用此功能，您可以更改 `values.yaml` 禁用持久化，改用 emptyDir。
 
 > *"当 Pod 分配给节点时，将首先创建一个 emptyDir 卷，只要该 Pod 在该节点上运行，该卷便存在。 当 Pod 从节点中删除时，emptyDir 中的数据将被永久删除."*
 
