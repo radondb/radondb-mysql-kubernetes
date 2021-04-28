@@ -59,7 +59,7 @@ RadonDB MySQL 基于 Apache 2.0 协议，详见 [LICENSE](./LICENSE)。
 
 进入 RadonDB 社区微信群，请添加管理员微信。
 
-![](docs/images/wechat_admin.png)
+![](docs/images/wechat_admin.jpg)
 
 有任何 RadonDB MySQL 错误、问题和功能，请您提交在 RadonDB MySQL GitHub 提交 Issue。
 
