@@ -12,8 +12,9 @@ At present, RadonDB MySQL has supported the deployment of MySQL high availabilit
 
 ## Architecture
 
-- Achieving decentralized selection through the Raft protocol.
-- Synchronize data based on GTID mode through Semi-Sync.
+- Achieving decentralized election through the Raft protocol.
+- Synchronizing data based on GTID mode through Semi-Sync.
+- Supporting high-availability through [Xenon](https://github.com/radondb/xenon.git).
 
 ![](docs/images/radondb-mysql_Architecture_1.png)
 
