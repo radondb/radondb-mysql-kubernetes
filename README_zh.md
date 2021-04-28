@@ -14,6 +14,7 @@
 
 - 通过 Raft 协议实现无中心化选主
 - 通过 Semi-Sync 基于 GTID 模式同步数据
+- 通过 [Xenon](https://github.com/radondb/xenon.git) 提供高可用能力
 
 ![](docs/images/radondb-mysql_Architecture_1.png)
 
@@ -62,6 +63,3 @@ RadonDB MySQL 基于 Apache 2.0 协议，详见 [LICENSE](./LICENSE)。
 ![](docs/images/wechat_admin.jpg)
 
 有任何 RadonDB MySQL 错误、问题和功能，请您提交在 RadonDB MySQL GitHub 提交 Issue。
-
-
- 
