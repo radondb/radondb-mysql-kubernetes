@@ -1,6 +1,6 @@
 apiVersion: v2
 name: radondb-mysql
-description: High Availability MySQL Cluster, Open Source
+description: High Availability MySQL Cluster, Open Source.
 home: https://github.com/radondb/radondb-mysql-kubernetes.git
 
 # A chart can be either an 'application' or a 'library' chart.
@@ -49,4 +49,6 @@ maintainers:
 - email: dingyuan@yunify.com
   name: dingyuan
 
-icon: https://xenondb.pek3b.qingstor.com/icons/XenonDB-shape.svg
+icon: https://xenondb.pek3b.qingstor.com/icons/radondb-mysql.svg
+annotations:
+  "app.kubesphere.io/category": "Database & Cache"
