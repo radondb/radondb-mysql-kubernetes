@@ -34,9 +34,76 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
 ## **部署步骤**
 
-可选择 [命令行](#通过命令行部署-RadonDB-MySQL-集群) 或 [控制台](#通过控制台部署-RadonDB-MySQL-集群) 两种方式部署 RadonDB MySQL 集群。
+可通过如下三种方式部署 RadonDB MySQL 集群。
 
-### **通过命令行部署 RadonDB MySQL 集群**
+- [通过 Helm repo 部署 RadonDB MySQL 集群](#通过-Helm-repo-部署-RadonDB-MySQL-集群)
+- [通过 Git 部署 RadonDB MySQL 集群](#通过-Git-部署-RadonDB-MySQL-集群)
+- [通过控制台部署 RadonDB MySQL 集群](#通过控制台部署-RadonDB-MySQL-集群)
+
+### **通过 Helm repo 部署 RadonDB MySQL 集群**
+
+#### **步骤 1 : 添加仓库**
+
+添加并更新 helm 仓库。
+
+```bash
+$ helm repo add test https://charts.kubesphere.io/test
+$ helm repo update
+```
+
+#### **步骤 2 : 部署**
+
+以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
+
+```bash
+$ helm install demo test/radondb-mysql
+NAME: demo
+LAST DEPLOYED: Wed Apr 28 08:08:15 2021
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The cluster is comprised of 3 pods: 1 leader and 2 followers. Each instance is accessible within the cluster through:
+
+    <pod-name>.demo-radondb-mysql
+
+To connect to your database:
+
+1. Get mysql user `qingcloud`s password:
+
+    kubectl get secret -n default demo-radondb-mysql -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
+
+2. Run an Ubuntu pod that you can use as a client:
+
+    kubectl run ubuntu -n default --image=ubuntu:focal -it --rm --restart='Never' -- bash -il
+
+3. Install the mysql client:
+
+    apt-get update && apt-get install mysql-client -y
+
+4. To connect to leader service in the Ubuntu pod:
+
+    mysql -h demo-radondb-mysql-leader -u qingcloud -p
+
+5. To connect to follower service (read-only) in the Ubuntu pod:
+
+    mysql -h demo-radondb-mysql-follower -u qingcloud -p
+```
+
+分别执行如下指令，查看到 `release` 名为 `demo` 的有状态副本集 `demo-radondb-mysql`，则 RadonDB MySQL 部署成功。
+
+```bash
+$ helm list
+NAME        NAMESPACE REVISION UPDATED                                 STATUS   CHART               APP VERSION
+demo        default   1        2021-04-28 08:08:15.828384203 +0000 UTC deployed radondb-mysql-1.0.0 5.7.33   
+
+$ kubectl get statefulset
+NAME                 READY   AGE
+demo-radondb-mysql   3/3     25h
+```
+
+### **通过 Git 部署 RadonDB MySQL 集群**
 
 #### **步骤 1：克隆 RadonDB MySQL Chart**
 

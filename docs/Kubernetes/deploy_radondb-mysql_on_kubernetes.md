@@ -12,7 +12,9 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
 ## **部署步骤**
 
-### **步骤 1：克隆 RadonDB MySQL Chart**
+### **通过 Git 部署**
+
+#### **步骤 1：克隆 RadonDB MySQL Chart**
 
 执行如下命令，将 RadonDB MySQL Chart 克隆到 Kubernetes 中。
 
@@ -22,7 +24,7 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 
 > Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
 
-### **步骤 2：部署**
+#### **步骤 2：部署**
 
 在 radondb-mysql-kubernetes 目录路径下，选择如下方式，部署 release 实例。
 
@@ -70,21 +72,61 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 添加并更新 helm 仓库。
 
 ```bash
-helm repo add <repo 名称> https://charts.kubesphere.io/test
-helm repo update
+$ helm repo add test https://charts.kubesphere.io/test
+$ helm repo update
 ```
-
-> repo 名称为远程仓库的本地名称，需用户自拟。
 
 #### **步骤 2 : 部署**
 
 以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
 
 ```bash
-helm install demo <repo 名称>/radondb-mysql
+$ helm install demo test/radondb-mysql
+NAME: demo
+LAST DEPLOYED: Wed Apr 28 08:08:15 2021
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The cluster is comprised of 3 pods: 1 leader and 2 followers. Each instance is accessible within the cluster through:
+
+    <pod-name>.demo-radondb-mysql
+
+To connect to your database:
+
+1. Get mysql user `qingcloud`s password:
+
+    kubectl get secret -n default demo-radondb-mysql -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
+
+2. Run an Ubuntu pod that you can use as a client:
+
+    kubectl run ubuntu -n default --image=ubuntu:focal -it --rm --restart='Never' -- bash -il
+
+3. Install the mysql client:
+
+    apt-get update && apt-get install mysql-client -y
+
+4. To connect to leader service in the Ubuntu pod:
+
+    mysql -h demo-radondb-mysql-leader -u qingcloud -p
+
+5. To connect to follower service (read-only) in the Ubuntu pod:
+
+    mysql -h demo-radondb-mysql-follower -u qingcloud -p
 ```
 
-> 指定参数部署的方式与通过 Git 部署相同。
+分别执行如下指令，查看到 `release` 名为 `demo` 的有状态副本集 `demo-radondb-mysql`，则 RadonDB MySQL 部署成功。
+
+```bash
+$ helm list
+NAME        NAMESPACE REVISION UPDATED                                 STATUS   CHART               APP VERSION
+demo        default   1        2021-04-28 08:08:15.828384203 +0000 UTC deployed radondb-mysql-1.0.0 5.7.33   
+
+$ kubectl get statefulset
+NAME                 READY   AGE
+demo-radondb-mysql   3/3     25h
+```
 
 ### **部署校验**
 
