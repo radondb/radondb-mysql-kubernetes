@@ -14,6 +14,7 @@
 
 - 通过 Raft 协议实现无中心化选主
 - 通过 Semi-Sync 基于 GTID 模式同步数据
+- 高可用与复制功能由 [Xenon](https://github.com/radondb/xenon) 工具提供技术支持
 
 ![](docs/images/radondb-mysql_Architecture_1.png)
 
