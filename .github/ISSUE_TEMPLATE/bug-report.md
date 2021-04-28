@@ -24,6 +24,11 @@ labels: 'bug'
 
 **Environment:**
 
-- Kubernetes version [e.g. v1.19.5]
-- Helm version [e.g. v3.4.2]
-- RadonDB MySQL version [e.g. https://github.com/radondb/radondb-mysql-kubernetes/commit/56896cd119d9a6017e7f15f1dc0b37b83a720278]
+<!--
+e.g.
+- Kubernetes version: v1.19.5
+- Helm version: v3.4.2
+- RadonDB MySQL version: https://github.com/radondb/radondb-mysql-kubernetes/commit/56896cd119d9a6017e7f15f1dc0b37b83a720278
+-->
+
+- RadonDB MySQL version:
