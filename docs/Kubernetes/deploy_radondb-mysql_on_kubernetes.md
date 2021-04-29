@@ -12,7 +12,9 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
 ## **部署步骤**
 
-### **步骤 1：克隆 RadonDB MySQL Chart**
+### **通过 Git 部署**
+
+#### **步骤 1：克隆 RadonDB MySQL Chart**
 
 执行如下命令，将 RadonDB MySQL Chart 克隆到 Kubernetes 中。
 
@@ -22,24 +24,24 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 
 > Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
 
-### **步骤 2：部署**
+#### **步骤 2：部署**
 
 在 radondb-mysql-kubernetes 目录路径下，选择如下方式，部署 release 实例。
 
 > release 是运行在 Kubernetes 集群中的 Chart 的实例。通过命令方式部署，需指定 release 名称。
 
-以下命令指定 release 名为 `my-release`。
+以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
 
 * **默认部署方式**
 
    ```bash
    <For Helm v2>
     cd charts
-    helm install . --name my-release
+    helm install . --name demo
 
    <For Helm v3>
     cd charts
-    helm install my-release .
+    helm install demo .
   ```
 
 * **指定参数部署方式**
@@ -50,7 +52,7 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 
   ```bash
   cd charts
-  helm install my-release \
+  helm install demo \
   --set mysql.mysqlUser=my-user,mysql.mysqlPassword=my-password,mysql.database=my-database .
   ```
 
@@ -60,10 +62,73 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 
   ```bash
   cd charts
-  helm install my-release -f values.yaml .
+  helm install demo -f values.yaml .
   ```
 
-### **步骤 3：部署校验**
+### **通过 repo 部署**
+
+#### **步骤 1 : 添加仓库**
+
+添加并更新 helm 仓库。
+
+```bash
+$ helm repo add test https://charts.kubesphere.io/test
+$ helm repo update
+```
+
+#### **步骤 2 : 部署**
+
+以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
+
+```bash
+$ helm install demo test/radondb-mysql
+NAME: demo
+LAST DEPLOYED: Wed Apr 28 08:08:15 2021
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The cluster is comprised of 3 pods: 1 leader and 2 followers. Each instance is accessible within the cluster through:
+
+    <pod-name>.demo-radondb-mysql
+
+To connect to your database:
+
+1. Get mysql user `qingcloud`s password:
+
+    kubectl get secret -n default demo-radondb-mysql -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
+
+2. Run an Ubuntu pod that you can use as a client:
+
+    kubectl run ubuntu -n default --image=ubuntu:focal -it --rm --restart='Never' -- bash -il
+
+3. Install the mysql client:
+
+    apt-get update && apt-get install mysql-client -y
+
+4. To connect to leader service in the Ubuntu pod:
+
+    mysql -h demo-radondb-mysql-leader -u qingcloud -p
+
+5. To connect to follower service (read-only) in the Ubuntu pod:
+
+    mysql -h demo-radondb-mysql-follower -u qingcloud -p
+```
+
+分别执行如下指令，查看到 `release` 名为 `demo` 的有状态副本集 `demo-radondb-mysql`，则 RadonDB MySQL 部署成功。
+
+```bash
+$ helm list
+NAME        NAMESPACE REVISION UPDATED                                 STATUS   CHART               APP VERSION
+demo        default   1        2021-04-28 08:08:15.828384203 +0000 UTC deployed radondb-mysql-1.0.0 5.7.33   
+
+$ kubectl get statefulset
+NAME                 READY   AGE
+demo-radondb-mysql   3/3     25h
+```
+
+### **部署校验**
 
 部署指令执行完成后，查看 RadonDB MySQL 有状态副本集，pod 状态及服务。可查看到相关信息，则 RadonDB MySQL 部署成功。
 
@@ -75,23 +140,23 @@ kubectl get statefulset,pod,svc
 
 您需要准备一个用于连接 RadonDB MySQL 的客户端。
 
-### **客户端和 RadonDB MySQL 在同一项目中**
+### **客户端与 RadonDB MySQL 在同一 NameSpace 中**
 
-当客户端和 RadonDB MySQL 集群在同一个项目中时，可使用 leader/follower 代替具体的 ip 和端口。
+当客户端与 RadonDB MySQL 集群在同一个 NameSpace 中时，可使用 leader/follower service 名称代替具体的 ip 和端口。
 
-- 连接主节点。
+- 连接主节点(读写节点)。
    ```bash
-   mysql -h <release名称>-radondb-mysql-leader -u <用户名> -p
+   mysql -h <leader service 名称> -u <用户名> -p
    ```
 
-- 连接从节点。
+- 连接从节点(只读节点)。
   ```bash
-  mysql -h <release名称>-radondb-mysql-follower -u <用户名> -p
+  mysql -h <follower service 名称> -u <用户名> -p
   ```
 
-### **客户端和 RadonDB MySQL 不在同一项目中**
+### **客户端与 RadonDB MySQL 不在同一 NameSpace 中**
 
-当客户端和 RadonDB MySQL 集群不在同一个项目中时，需先分别获取连接所需的节点地址、节点端口、服务名称。
+当客户端与 RadonDB MySQL 集群不在同一个 NameSpace 中时，需先分别获取连接所需的节点地址、节点端口、服务名称。
 
 1. 查询 pod 列表和服务列表，分别获取 pod 名称和服务名称。
 
@@ -99,16 +164,22 @@ kubectl get statefulset,pod,svc
    kubectl get pod,svc
    ```
 
-2. 获取节点地址。
+2. 开启服务网络访问。
+
+   执行如下命令，打开服务配置文件，将 spec 下 type 参数设置为 `NodePort`。
+
+      ```bash
+      kubectl edit svc <服务名称>
+      ```
+
+3. 分别获取 pod 所在的节点地址和节点端口。
 
    ```bash
-   kubectl describe <pod名称>
+   kubectl describe pod <pod名称>
    ```
 
-3. 获取节点端口。
-
    ```bash
-   kubectl describe <服务名称>
+   kubectl describe svc <服务名称>
    ```
 
 4. 连接节点。
@@ -117,7 +188,7 @@ kubectl get statefulset,pod,svc
    mysql -p <节点地址> -u <用户名> -P <节点端口> -p
    ```
 
-> 说明：使用外网主机连接可能会出现 `SSL connection error`，需要在加上 `--ssl-mode=DISABLE` 参数，关闭 SSL。
+> 说明：使用外网主机连接可能会出现 `SSL connection error`，需要加上 `--ssl-mode=DISABLE` 参数，关闭 SSL。
 
 ## **配置**
 
