@@ -142,21 +142,21 @@ kubectl get statefulset,pod,svc
 
 ### **客户端与 RadonDB MySQL 在同一 NameSpace 中**
 
-当客户端和 RadonDB MySQL 集群在同一个 NameSpace 中时，可使用 leader/follower service 名称代替具体的 ip 和端口。
+当客户端与 RadonDB MySQL 集群在同一个 NameSpace 中时，可使用 leader/follower service 名称代替具体的 ip 和端口。
 
-- 连接主节点。
+- 连接主节点(读写节点)。
    ```bash
    mysql -h <leader service 名称> -u <用户名> -p
    ```
 
-- 连接从节点。
+- 连接从节点(只读节点)。
   ```bash
   mysql -h <follower service 名称> -u <用户名> -p
   ```
 
 ### **客户端与 RadonDB MySQL 不在同一 NameSpace 中**
 
-当客户端和 RadonDB MySQL 集群不在同一个 NameSpace 中时，需先分别获取连接所需的节点地址、节点端口、服务名称。
+当客户端与 RadonDB MySQL 集群不在同一个 NameSpace 中时，需先分别获取连接所需的节点地址、节点端口、服务名称。
 
 1. 查询 pod 列表和服务列表，分别获取 pod 名称和服务名称。
 

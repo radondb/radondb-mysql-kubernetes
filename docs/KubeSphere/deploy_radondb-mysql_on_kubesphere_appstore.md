@@ -1,15 +1,15 @@
-# **在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群**
+# **在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群**
 
 ## **简介**
 
 RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方案。通过使用 Raft 协议，RadonDB MySQL 可以快速进行故障转移，且不会丢失任何事务。
 
-本教程演示如何在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群。
+本教程演示如何在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群。
 
 您还可以通过如下方式在 KubeSphere 上部署 RadonDB MySQL 集群：
 
 - [在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere_repo.md)
-- [在 KubeSphere 上通过 应用商店 部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere_appstore.md)
+- [在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere.md)
 
 ## **部署准备**
 
@@ -18,86 +18,40 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 可选择如下安装方式：
 
 - 在 [青云 QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 上安装 Kubersphere。
-
+  
 - [在 Kubernetes 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-kubernetes/)。
   
 - [在 Linux 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
+
+> KubeSphere 版本需更新到 3.1。
 
 ### **创建 KubeSphere 多租户系统**
 
 参考 KubeSphere 官方文档：[创建企业空间、项目、帐户和角色](https://kubesphere.io/zh/docs/quick-start/create-workspace-and-project/)。
 
-### **连接 KubeSphere 客户端节点**
+### **部署步骤**
 
-> 说明：如下示例适用于 KubeSphere 安装在 [青云QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 的场景。
+1. 打开 KubeSphere 控制台，在 `demo-project` 项目的**概览**页面，点击左上角的**应用商店**。
 
-通过[青云 QingCloud 控制台](https://console.qingcloud.com/) 直接连接客户端节点。
+   ![应用商店](png/应用商店.png)
 
-   ![连接客户端节点](png/连接客户端节点.png)
+2. 找到 RadonDB MySQL，点击**应用信息**页面上的**部署**。
 
-> - 默认 root 用户密码为 KubeSphere 集群 ID。
-> - 通过第三方 SSH 工具连接客户端节点，需要在配置参数中填写 KubeSphere 的 `用户 SSH 公钥` 参数。
+   ![应用商店中的 RadonDB MySQL](png/应用商店中的%20RadonDB%20MySQL.png)
 
-## **部署步骤**
+   ![部署 RadonDB MySQL](png/部署%20RadonDB%20MySQL.png)
 
-### **步骤 1：克隆 RadonDB MySQL Chart**
+3. 设置名称并选择应用版本。请确保将 RadonDB MySQL 部署在 `demo-project` 中，点击**下一步**。
 
-在 KubeSphere 客户端节点执行如下命令，将 RadonDB MySQL Chart 克隆到 KubeSphere 客户端节点中。
+   ![确认部署](png/确认部署.png)
 
-   ```bash
-   git clone https://github.com/radondb/radondb-mysql-kubernetes.git
-   ```
+4. 在**应用配置**页面，取消对 `mysqlRootPassword` 的注释并设置 Root 账户密码，可参考[配置](#配置)定义其他 RadonDB MySQL 配置参数。操作完成后，点击**部署**。
 
-> Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
+   ![应用配置界面](png/应用配置界面.png)
 
-### **步骤 2：部署**
+5. 稍等片刻待 RadonDB MySQL 启动并运行。
 
-在 radondb-mysql-kubernetes 目录路径下，选择如下方式，部署 RadonDB MySQL 实例。
-
-> release 是运行在 Kubernetes 集群中的 Chart 的实例。
-> 
-* **默认部署方式**
-
-  以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
-
-  ```bash
-   <For Helm v2>
-    cd charts
-    helm install . --name demo
-
-   <For Helm v3>
-    cd charts
-    helm install demo .
-  ```
-
-* **指定参数部署方式**
-
-  在 `helm install` 时使用 `--set key=value[,key=value]` ，可指定参数部署。
-  
-  以下示例将创建一个用户名为 `my-user` ，密码为 `my-password` 的标准数据库用户，可访问名为 `my-database` 的数据库。
-
-  ```bash
-  cd charts
-  helm install demo \
-  --set mysql.mysqlUser=my-user,mysql.mysqlPassword=my-password,mysql.database=my-database .
-  ```
-
-   > 更多安装过程中可配置的参数，请参考 [配置](#配置) 。
-
-* **配置 yaml 参数方式**
-
-  执行如下命令，可通过 value.yaml 配置文件，在安装时配置指定参数。
-
-  ```bash
-  cd charts
-  helm install demo -f values.yaml .
-  ```
-  
-#### **步骤 3：部署校验**
-
-在**项目管理**管理中心，选择 **应用负载 > 工作负载**，并选择**有状态副本集**页签，可查看到名为 `demo-radondb-mysql` 的副本集，则 RadonDB MySQL 集群已成功部署。
-
-![控制台部署成功](png/控制台部署成功.png)
+   ![RadonDB MySQL 运行中](png/RadonDB%20MySQL运行中.png)
 
 ## **访问 RadonDB MySQL**
 
@@ -161,7 +115,7 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
   ```bash
   mysql -h <follower service 名称> -u <用户名> -p
   ```
-  
+
 > 使用外网主机连接可能会出现 `SSL connection error`，需要加上 `--ssl-mode=DISABLE` 参数，关闭 SSL。
 
 ## **配置**
