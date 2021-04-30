@@ -32,8 +32,9 @@ At present, RadonDB MySQL has supported the deployment of MySQL high availabilit
 ## Installation
 
 - [Deploy RadonDB MySQL on Kubernetes](docs/Kubernetes/deploy_radondb-mysql_on_kubernetes.md)
-- [Deploy RadonDB MySQL on the appstore of KubeSphere](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere.md)
-
+- [Deploy RadonDB MySQL through git on Kubesphere](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere.md)
+- [Deploy RadonDB MySQL through helm repo on Kubesphere](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere_repo.md)
+- [Deploy RadonDB MySQL through Appstore of KubeSphere](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere_appstore.md)
 ## Release
 
 | Release | Features  | Mode |
