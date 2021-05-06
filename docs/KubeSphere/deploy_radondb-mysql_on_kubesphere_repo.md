@@ -1,6 +1,26 @@
-# **在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群**
+Contents
+=================
 
-## **简介**
+   * [在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群](#在-kubesphere-上通过-helm-repo-部署-radondb-mysql-集群)
+      * [简介](#简介)
+      * [部署准备](#部署准备)
+	 * [安装 KubeSphere](#安装-kubesphere)
+	 * [创建 KubeSphere 多租户系统](#创建-kubesphere-多租户系统)
+	 * [连接 KubeSphere 客户端节点](#连接-kubesphere-客户端节点)
+	 * [部署步骤](#部署步骤)
+	    * [步骤 1 : 添加仓库](#步骤-1--添加仓库)
+	    * [步骤 2 : 部署](#步骤-2--部署)
+	 * [部署校验](#部署校验)
+      * [访问 RadonDB MySQL](#访问-radondb-mysql)
+	 * [开启服务网络访问](#开启服务网络访问)
+	 * [连接节点](#连接节点)
+      * [配置](#配置)
+      * [持久化](#持久化)
+      * [自定义 MYSQL 配置](#自定义-mysql-配置)
+
+# 在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群
+
+## 简介
 
 RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方案。通过使用 Raft 协议，RadonDB MySQL 可以快速进行故障转移，且不会丢失任何事务。
 
@@ -11,9 +31,9 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 - [在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere_appstore.md)
 - [在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere.md)
 
-## **部署准备**
+## 部署准备
 
-### **安装 KubeSphere**
+### 安装 KubeSphere
 
 可选择如下安装方式：
 
@@ -23,11 +43,11 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
   
 - [在 Linux 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
 
-### **创建 KubeSphere 多租户系统**
+### 创建 KubeSphere 多租户系统
 
 参考 KubeSphere 官方文档：[创建企业空间、项目、帐户和角色](https://kubesphere.io/zh/docs/quick-start/create-workspace-and-project/)。
 
-### **连接 KubeSphere 客户端节点**
+### 连接 KubeSphere 客户端节点
 
 > 说明：如下示例适用于 KubeSphere 安装在 [青云QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 的场景。
 
@@ -38,9 +58,9 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 > - 默认 root 用户密码为 KubeSphere 集群 ID。
 > - 通过第三方 SSH 工具连接客户端节点，需要在配置参数中填写 KubeSphere 的 `用户 SSH 公钥` 参数。
 
-### **部署步骤**
+### 部署步骤
 
-#### **步骤 1 : 添加仓库**
+#### 步骤 1 : 添加仓库
 
 添加并更新 helm 仓库。
 
@@ -49,7 +69,7 @@ $ helm repo add test https://charts.kubesphere.io/test
 $ helm repo update
 ```
 
-#### **步骤 2 : 部署**
+#### 步骤 2 : 部署
 
 以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
 
@@ -89,7 +109,7 @@ To connect to your database:
     mysql -h demo-radondb-mysql-follower -u qingcloud -p
 ```
 
-### **部署校验**
+### 部署校验
 
 分别执行如下指令，查看到 `release` 名为 `demo` 的有状态副本集 `demo-radondb-mysql`，则 RadonDB MySQL 部署成功。
 
@@ -103,13 +123,13 @@ NAME                 READY   AGE
 demo-radondb-mysql   3/3     25h
 ```
 
-## **访问 RadonDB MySQL**
+## 访问 RadonDB MySQL
 
 您需准备一个用于连接 RadonDB MySQL 的客户端。
 
 > **注意：** 建议通过使用在同一 VPC 下主机或青云 VPN 服务来访问 RadonDB MySQL。不要通过端口转发的方式将服务暴露到公网，避免对数据库服务造成重大影响！
 
-### **开启服务网络访问**
+### 开启服务网络访问
 
 1. 在 **项目管理** 界面中，选择 **应用负载** > **服务**，查看当前项目中的服务列表。
 
@@ -144,7 +164,7 @@ demo-radondb-mysql   3/3     25h
 
       ![负载均衡端口](png/负载均衡端口.png)
 
-### **连接节点**
+### 连接节点
 
 使用如下命令连接节点。
 
@@ -168,7 +188,7 @@ demo-radondb-mysql   3/3     25h
 
 > 使用外网主机连接可能会出现 `SSL connection error`，需要加上 `--ssl-mode=DISABLE` 参数，关闭 SSL。
 
-## **配置**
+## 配置
 
 下表列出了 RadonDB MySQL Chart 的配置参数及对应的默认值。
 

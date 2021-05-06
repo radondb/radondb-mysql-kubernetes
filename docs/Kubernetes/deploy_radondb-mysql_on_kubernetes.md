@@ -1,20 +1,41 @@
-# **在 Kubernetes 上部署 RadonDB MySQL 集群**
+Contents
+=================
 
-## **简介**
+   * [在 Kubernetes 上部署 RadonDB MySQL 集群](#在-kubernetes-上部署-radondb-mysql-集群)
+      * [简介](#简介)
+      * [部署准备](#部署准备)
+      * [部署步骤](#部署步骤)
+         * [通过 Git 部署](#通过-git-部署)
+            * [步骤 1：克隆 RadonDB MySQL Chart](#步骤-1克隆-radondb-mysql-chart)
+            * [步骤 2：部署](#步骤-2部署)
+         * [通过 repo 部署](#通过-repo-部署)
+            * [步骤 1 : 添加仓库](#步骤-1--添加仓库)
+            * [步骤 2 : 部署](#步骤-2--部署)
+         * [部署校验](#部署校验)
+      * [连接 RadonDB MySQL](#连接-radondb-mysql)
+         * [客户端与 RadonDB MySQL 在同一 NameSpace 中](#客户端与-radondb-mysql-在同一-namespace-中)
+         * [客户端与 RadonDB MySQL 不在同一 NameSpace 中](#客户端与-radondb-mysql-不在同一-namespace-中)
+      * [配置](#配置)
+      * [持久化](#持久化)
+      * [自定义 MYSQL 配置](#自定义-mysql-配置)
+
+# 在 Kubernetes 上部署 RadonDB MySQL 集群
+
+## 简介
 
 RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方案。通过使用 Raft 协议，RadonDB MySQL 可以快速进行故障转移，且不会丢失任何事务。
 
 本教程演示如何使用命令行在 Kubernetes 上部署 RadonDB MySQL。
 
-## **部署准备**
+## 部署准备
 
 - 已成功部署 Kubernetes 集群。
 
-## **部署步骤**
+## 部署步骤
 
-### **通过 Git 部署**
+### 通过 Git 部署
 
-#### **步骤 1：克隆 RadonDB MySQL Chart**
+#### 步骤 1：克隆 RadonDB MySQL Chart
 
 执行如下命令，将 RadonDB MySQL Chart 克隆到 Kubernetes 中。
 
@@ -24,7 +45,7 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 
 > Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
 
-#### **步骤 2：部署**
+#### 步骤 2：部署
 
 在 radondb-mysql-kubernetes 目录路径下，选择如下方式，部署 release 实例。
 
@@ -65,9 +86,9 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
   helm install demo -f values.yaml .
   ```
 
-### **通过 repo 部署**
+### 通过 repo 部署
 
-#### **步骤 1 : 添加仓库**
+#### 步骤 1 : 添加仓库
 
 添加并更新 helm 仓库。
 
@@ -76,7 +97,7 @@ $ helm repo add test https://charts.kubesphere.io/test
 $ helm repo update
 ```
 
-#### **步骤 2 : 部署**
+#### 步骤 2 : 部署
 
 以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
 
@@ -128,7 +149,7 @@ NAME                 READY   AGE
 demo-radondb-mysql   3/3     25h
 ```
 
-### **部署校验**
+### 部署校验
 
 部署指令执行完成后，查看 RadonDB MySQL 有状态副本集，pod 状态及服务。可查看到相关信息，则 RadonDB MySQL 部署成功。
 
@@ -136,11 +157,11 @@ demo-radondb-mysql   3/3     25h
 kubectl get statefulset,pod,svc
 ```
 
-## **连接 RadonDB MySQL**
+## 连接 RadonDB MySQL
 
 您需要准备一个用于连接 RadonDB MySQL 的客户端。
 
-### **客户端与 RadonDB MySQL 在同一 NameSpace 中**
+### 客户端与 RadonDB MySQL 在同一 NameSpace 中
 
 当客户端与 RadonDB MySQL 集群在同一个 NameSpace 中时，可使用 leader/follower service 名称代替具体的 ip 和端口。
 
@@ -154,7 +175,7 @@ kubectl get statefulset,pod,svc
   mysql -h <follower service 名称> -u <用户名> -p
   ```
 
-### **客户端与 RadonDB MySQL 不在同一 NameSpace 中**
+### 客户端与 RadonDB MySQL 不在同一 NameSpace 中
 
 当客户端与 RadonDB MySQL 集群不在同一个 NameSpace 中时，需先分别获取连接所需的节点地址、节点端口、服务名称。
 
@@ -190,7 +211,7 @@ kubectl get statefulset,pod,svc
 
 > 说明：使用外网主机连接可能会出现 `SSL connection error`，需要加上 `--ssl-mode=DISABLE` 参数，关闭 SSL。
 
-## **配置**
+## 配置
 
 下表列出了 RadonDB MySQL Chart 的配置参数及对应的默认值。
 

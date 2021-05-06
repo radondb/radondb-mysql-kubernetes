@@ -1,3 +1,13 @@
+Contents
+=================
+
+   * [setup service for client to read/write](#setup-service-for-client-to-readwrite)
+      * [1. Get the pod about leader](#1-get-the-pod-about-leader)
+      * [2. Label role to the pod of the leader](#2-label-role-to-the-pod-of-the-leader)
+      * [3. Edit the demo.yaml](#3-edit-the-demoyaml)
+      * [4. Apply the service](#4-apply-the-service)
+      * [5. Check the service](#5-check-the-service)
+
 # setup service for client to read/write
 
 ## 1. Get the pod about leader
