@@ -36,7 +36,7 @@ COPY xenon-entry.sh /usr/local/bin/docker-entrypoint
 USER 777
 WORKDIR /
 EXPOSE 8801
-VOLUME ["/var/lib/xenon"]
+VOLUME ["/var/lib/xenon", "/etc/xenon"]
 
 ENTRYPOINT ["docker-entrypoint"]
 CMD ["xenon", "-c", "/etc/xenon/xenon.json"]

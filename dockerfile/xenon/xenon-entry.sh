@@ -31,6 +31,10 @@ file_env() {
 }
 
 build_conf() {
+	if [ -f /etc/xenon/xenon.json ]; then
+		return
+	fi
+
 	file_env 'HOST' $(hostname)
 	file_env 'MYSQL_REPL_PASSWORD' 'Repl_123'
 	file_env 'MYSQL_ROOT_PASSWORD' ''
