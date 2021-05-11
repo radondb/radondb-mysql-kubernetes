@@ -16,7 +16,7 @@ RadonDB MySQL Kubernetes supports deployment and management of RaodnDB MySQL clu
 - Synchronizing data based on GTID mode through Semi-Sync.
 - Supporting high-availability through [Xenon](https://github.com/radondb/xenon.git).
 
-![](docs/images/radondb-mysql_Architecture_1.png)
+![](docs/images/radondb-mysql_Architecture.png)
 
 ## Features
 

@@ -16,7 +16,7 @@ RadonDB MySQL Kubernetes支持在[Kubernetes](https://kubernetes.io)和[KubeSphe
 - 通过 Semi-Sync基于GTID 模式同步数据
 - 通过 [Xenon](https://github.com/radondb/xenon.git) 提供高可用能力
 
-![](docs/images/radondb-mysql_Architecture_1.png)
+![](docs/images/radondb-mysql_Architecture.png)
 
 ## 核心功能
 
