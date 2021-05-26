@@ -58,10 +58,8 @@ RadonDB MySQL 基于 Apache 2.0 协议，详见 [LICENSE](./LICENSE)。
 
     请加入[Kubesphere 开发者社区](https://kubesphere.com.cn/forum/t/radondb) RadonDB MySQL 话题专区。
     
-- 微信群 
-    
-    进入 RadonDB 社区微信群，请添加管理员微信。
+- 请关注我们的微信公众号
 
-    ![](docs/images/wechat_admin.jpg)
+    ![](docs/images/qrcode_for_gh_ffb9d7c5dc1f_258.jpg)
 
 有任何 RadonDB MySQL 错误、问题和功能，请您在 RadonDB MySQL GitHub 上提交Issue。
