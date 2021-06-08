@@ -62,4 +62,10 @@ RadonDB MySQL is released under the Apache 2.0, see [LICENSE](./LICENSE).
 
     ![](docs/images/qrcode_for_gh_ffb9d7c5dc1f_258.jpg)
 
+---
+<p align="center">
+<br/><br/>
 Please submit any RadonDB MySQL bugs, issues, and feature requests to RadonDB MySQL GitHub Issue.
+<br/>
+</a>
+</p>
