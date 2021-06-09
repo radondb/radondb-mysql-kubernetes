@@ -1,5 +1,5 @@
 domain: radondb.com
-repo: github.com/radondb/radondb-mysql-operator
+repo: github.com/radondb/radondb-mysql-kubernetes
 resources:
 - group: mysql
   kind: Cluster

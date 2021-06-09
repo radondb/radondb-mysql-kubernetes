@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	mysqlv1alpha1 "github.com/radondb/radondb-mysql-operator/api/v1alpha1"
+	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
