@@ -26,8 +26,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	mysqlv1alpha1 "github.com/radondb/radondb-mysql-operator/api/v1alpha1"
-	"github.com/radondb/radondb-mysql-operator/controllers"
+	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
+	"github.com/radondb/radondb-mysql-kubernetes/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
