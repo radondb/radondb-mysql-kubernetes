@@ -1,5 +1,5 @@
 /*
-
+Copyright 2021 RadonDB.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ type ClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Cluster. Edit Cluster_types.go to remove/update
+	// Foo is an example field of Cluster. Edit cluster_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
 }
 
@@ -38,7 +38,8 @@ type ClusterStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-// +kubebuilder:object:root=true
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 // Cluster is the Schema for the clusters API
 type Cluster struct {
@@ -49,7 +50,7 @@ type Cluster struct {
 	Status ClusterStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:object:root=true
+//+kubebuilder:object:root=true
 
 // ClusterList contains a list of Cluster
 type ClusterList struct {
