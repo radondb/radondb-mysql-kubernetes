@@ -1,7 +1,76 @@
 apiVersion: mysql.radondb.com/v1alpha1
 kind: Cluster
 metadata:
-  name: cluster-sample
+  name: sample
 spec:
-  # Add fields here
-  foo: bar
+  replicas: 3
+  mysqlVersion: "5.7"
+
+  mysqlOpts:
+    rootPassword: ""
+    user: qc_usr
+    password: Qing@123
+    database: qingcloud
+    initTokuDB: true
+
+    mysqlConf: {}
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+  xenonOpts:
+    image: zhyass/xenon:1.1.5-alpha
+    admitDefeatHearbeatCount: 5
+    electionTimeout: 10000
+
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 100m
+        memory: 256Mi
+
+  metricsOpts:
+    enabled: false
+    image: prom/mysqld-exporter:v0.12.1
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+
+  podSpec:
+    imagePullPolicy: IfNotPresent
+    sidecarImage: zhyass/sidecar:0.1
+    busyboxImage: busybox:1.32
+
+    slowLogTail: false
+    auditLogTail: false
+
+    labels: {}
+    annotations: {}
+    affinity: {}
+    priorityClassName: ""
+    tolerations: []
+    schedulerName: ""
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+
+  persistence:
+    enabled: true
+    accessModes:
+    - ReadWriteOnce
+    #storageClass: ""
+    size: 10Gi
