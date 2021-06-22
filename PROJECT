@@ -13,4 +13,9 @@ resources:
   kind: Cluster
   path: github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1
   version: v1alpha1
+- controller: true
+  domain: radondb.com
+  group: mysql
+  kind: Status
+  version: v1alpha1
 version: "3"
