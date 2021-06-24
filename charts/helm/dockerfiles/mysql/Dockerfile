@@ -8,38 +8,17 @@ RUN set -ex; \
     --home-dir /var/lib/mysql \
     --no-create-home \
     --gid mysql \
-    mysql; \
-    # replace the source list.
-    echo "deb http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" > /etc/apt/sources.list; \
-    echo "# deb-src http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse" >> /etc/apt/sources.list; \
-    echo "deb http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list; \
-    echo "# deb-src http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse" >> /etc/apt/sources.list; \
-    echo "deb http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list; \
-    echo "# deb-src http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse" >> /etc/apt/sources.list; \
-    echo "deb http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list; \
-    echo "#deb-src http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse" >> /etc/apt/sources.list; \
-    apt-get update; \
-    if ! which gpg; then \
-        apt-get install -y --no-install-recommends gnupg; \
-    fi; \
-    if ! gpg --version | grep -q '^gpg (GnuPG) 1\.'; then \
-        apt-get install -y --no-install-recommends dirmngr; \
-    fi; \
-    rm -rf /var/lib/apt/lists/*
+    mysql
 
-ENV PS_VERSION 5.7.33-36-1
+ENV PS_VERSION 5.7.34-37-1
 ENV OS_VER focal
 ENV FULL_PERCONA_VERSION "$PS_VERSION.$OS_VER"
 
 RUN set -ex; \
-    key='9334A25F8507EFA5'; \
-    export GNUPGHOME="$(mktemp -d)"; \
-    gpg --batch --keyserver keys.gnupg.net --recv-keys "$key"; \
-    gpg --batch --export $key > /etc/apt/trusted.gpg.d/mysql.gpg; \
-    command -v gpgconf > /dev/null && gpgconf --kill all || :; \
-    rm -r "$GNUPGHOME"; \
-    apt-key list > /dev/null; \
-    echo "deb http://repo.percona.com/apt focal main\ndeb-src http://repo.percona.com/apt focal main">> /etc/apt/sources.list.d/mysql.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl; \
+    wget -P /tmp --no-check-certificate https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb; \
+    dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb; \
     apt-get update; \
     export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true; \
     { \
@@ -60,7 +39,7 @@ RUN set -ex; \
     \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/lib/mysql /etc/alternatives/my.cnf /etc/mysql/*; \
-    mkdir -p /var/lib/mysql /var/log/mysql /var/run/mysqld /etc/mysql/conf.d; \
+    mkdir -p /var/lib/mysql /var/log/mysql /var/run/mysqld /etc/mysql/conf.d /docker-entrypoint-initdb.d; \
     # allow to change config files
     chown -R mysql:mysql /var/lib/mysql /var/log/mysql /var/run/mysqld /etc/mysql; \
     # ensure that /var/run/mysqld (used for socket and lock files) is writable regardless of the UID our mysqld instance ends up having at runtime

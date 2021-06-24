@@ -33,9 +33,9 @@ process_init_file() {
 	local mysql=( "$@" )
 
 	case "$f" in
-		*.sh)	 echo "$0: running $f"; . "$f" ;;
-		*.sql)	echo "$0: running $f"; "${mysql[@]}" < "$f"; echo ;;
-		*.sql.gz) echo "$0: running $f"; gunzip -c "$f" | "${mysql[@]}"; echo ;;
+		*.sh)		echo "$0: running $f"; . "$f" ;;
+		*.sql)		echo "$0: running $f"; "${mysql[@]}" < "$f"; echo ;;
+		*.sql.gz)	echo "$0: running $f"; gunzip -c "$f" | "${mysql[@]}"; echo ;;
 		*)		echo "$0: ignoring $f" ;;
 	esac
 	echo
@@ -143,6 +143,12 @@ if [ ! -d "$DATADIR/mysql" ]; then
 	fi
 	echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
 	echo 'reset master;' | "${mysql[@]}"
+
+	echo
+	ls /docker-entrypoint-initdb.d/ > /dev/null
+	for f in /docker-entrypoint-initdb.d/*; do
+		process_init_file "$f" "${mysql[@]}"
+	done
 
 	if ! kill -s TERM "$pid" || ! wait "$pid"; then
 		echo >&2 'MySQL init process failed.'
