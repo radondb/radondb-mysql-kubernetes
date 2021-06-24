@@ -24,7 +24,7 @@ busybox:
 
 mysql:
   image: xenondb/percona
-  tag: 5.7.33
+  tag: 5.7.34
 
   allowEmptyRootPassword: true
   # mysqlRootPassword:
