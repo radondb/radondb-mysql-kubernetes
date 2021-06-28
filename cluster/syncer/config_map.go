@@ -25,7 +25,6 @@ import (
 	"github.com/presslabs/controller-util/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/radondb/radondb-mysql-kubernetes/cluster"
@@ -69,11 +68,10 @@ func buildMysqlConf(c *cluster.Cluster) (string, error) {
 
 	c.EnsureMysqlConf()
 
-	addKVConfigsToSection(sec, convertMapToKVConfig(mysqlSysConfigs), convertMapToKVConfig(mysqlCommonConfigs),
-		convertMapToKVConfig(mysqlStaticConfigs), c.Spec.MysqlOpts.MysqlConf)
+	addKVConfigsToSection(sec, mysqlSysConfigs, mysqlCommonConfigs, mysqlStaticConfigs, c.Spec.MysqlOpts.MysqlConf)
 
 	if c.Spec.MysqlOpts.InitTokuDB {
-		addKVConfigsToSection(sec, convertMapToKVConfig(mysqlTokudbConfigs))
+		addKVConfigsToSection(sec, mysqlTokudbConfigs)
 	}
 
 	for _, key := range mysqlBooleanConfigs {
@@ -91,7 +89,7 @@ func buildMysqlConf(c *cluster.Cluster) (string, error) {
 }
 
 // addKVConfigsToSection add a map[string]string to a ini.Section
-func addKVConfigsToSection(s *ini.Section, extraMysqld ...map[string]intstr.IntOrString) {
+func addKVConfigsToSection(s *ini.Section, extraMysqld ...map[string]string) {
 	for _, extra := range extraMysqld {
 		keys := []string{}
 		for key := range extra {
@@ -103,22 +101,11 @@ func addKVConfigsToSection(s *ini.Section, extraMysqld ...map[string]intstr.IntO
 
 		for _, k := range keys {
 			value := extra[k]
-			if _, err := s.NewKey(k, value.String()); err != nil {
+			if _, err := s.NewKey(k, value); err != nil {
 				log.Error(err, "failed to add key to config section", "key", k, "value", extra[k], "section", s)
 			}
 		}
 	}
-}
-
-// convertMapToKVConfig convert map to kv config.
-func convertMapToKVConfig(m map[string]string) map[string]intstr.IntOrString {
-	config := make(map[string]intstr.IntOrString)
-
-	for key, value := range m {
-		config[key] = intstr.FromString(value)
-	}
-
-	return config
 }
 
 // writeConfigs write to string ini.File

@@ -19,13 +19,15 @@ package cluster
 import (
 	"fmt"
 	"math"
+	"strconv"
+	"strings"
+	"unicode"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
@@ -34,8 +36,8 @@ import (
 
 // nolint: megacheck, deadcode, varcheck
 const (
-	_        = iota // ignore first value by assigning to blank identifier
-	kb int64 = 1 << (10 * iota)
+	_         = iota // ignore first value by assigning to blank identifier
+	kb uint64 = 1 << (10 * iota)
 	mb
 	gb
 )
@@ -257,26 +259,59 @@ func (c *Cluster) EnsureMysqlConf() {
 		c.Spec.MysqlOpts.MysqlConf = make(apiv1alpha1.MysqlConf)
 	}
 
-	var defaultSize, maxSize, innodbBufferPoolSize int64
+	var defaultSize, maxSize, innodbBufferPoolSize uint64
 	innodbBufferPoolSize = 128 * mb
-	conf, ok := c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"]
-	mem := c.Spec.MysqlOpts.Resources.Requests.Memory().Value()
+	mem := uint64(c.Spec.MysqlOpts.Resources.Requests.Memory().Value())
 	cpu := c.Spec.PodSpec.Resources.Limits.Cpu().MilliValue()
 	if mem <= 1*gb {
-		defaultSize = int64(0.45 * float64(mem))
-		maxSize = int64(0.6 * float64(mem))
+		defaultSize = uint64(0.45 * float64(mem))
+		maxSize = uint64(0.6 * float64(mem))
 	} else {
-		defaultSize = int64(0.6 * float64(mem))
-		maxSize = int64(0.8 * float64(mem))
+		defaultSize = uint64(0.6 * float64(mem))
+		maxSize = uint64(0.8 * float64(mem))
 	}
 
+	conf, ok := c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"]
 	if !ok {
 		innodbBufferPoolSize = utils.Max(defaultSize, innodbBufferPoolSize)
 	} else {
-		innodbBufferPoolSize = utils.Min(utils.Max(int64(conf.IntVal), innodbBufferPoolSize), maxSize)
+		if nums, err := sizeToBytes(conf); err != nil {
+			innodbBufferPoolSize = utils.Max(defaultSize, innodbBufferPoolSize)
+		} else {
+			innodbBufferPoolSize = utils.Min(utils.Max(nums, innodbBufferPoolSize), maxSize)
+		}
 	}
 
 	instances := math.Max(math.Min(math.Ceil(float64(cpu)/float64(1000)), math.Floor(float64(innodbBufferPoolSize)/float64(gb))), 1)
-	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = intstr.FromInt(int(innodbBufferPoolSize))
-	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"] = intstr.FromInt(int(instances))
+	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = strconv.FormatUint(innodbBufferPoolSize, 10)
+	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"] = strconv.Itoa(int(instances))
+}
+
+// sizeToBytes parses a string formatted by ByteSize as bytes.
+// K = 1024
+// M = 1024 * K
+// G = 1024 * M
+func sizeToBytes(s string) (uint64, error) {
+	s = strings.TrimSpace(s)
+	s = strings.ToUpper(s)
+
+	idx := strings.IndexFunc(s, unicode.IsLetter)
+	if idx == -1 {
+		return strconv.ParseUint(s, 10, 64)
+	}
+
+	nums, err := strconv.ParseUint(s[:idx], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	switch s[idx:] {
+	case "K":
+		return nums * kb, nil
+	case "M":
+		return nums * mb, nil
+	case "G":
+		return nums * gb, nil
+	}
+	return 0, fmt.Errorf("'%s' format error, must be a positive integer with a unit of measurement like K, M or G", s)
 }
