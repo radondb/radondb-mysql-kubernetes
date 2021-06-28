@@ -13,6 +13,10 @@ spec:
     database: qingcloud
     initTokuDB: true
 
+    # A simple map between string and string.
+    # Such as:
+    #    mysqlConf:
+    #      expire_logs_days: "7"
     mysqlConf: {}
 
     resources:

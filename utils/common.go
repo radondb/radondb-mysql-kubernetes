@@ -17,7 +17,7 @@ limitations under the License.
 package utils
 
 // Min returns the smallest int64 that was passed in the arguments.
-func Min(a, b int64) int64 {
+func Min(a, b uint64) uint64 {
 	if a < b {
 		return a
 	}
@@ -25,7 +25,7 @@ func Min(a, b int64) int64 {
 }
 
 // Max returns the largest int64 that was passed in the arguments.
-func Max(a, b int64) int64 {
+func Max(a, b uint64) uint64 {
 	if a > b {
 		return a
 	}
