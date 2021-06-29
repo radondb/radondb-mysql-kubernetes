@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	"github.com/blang/semver"
+	"github.com/go-ini/ini"
 
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
@@ -108,4 +109,24 @@ func NewConfig() *Config {
 		AdmitDefeatHearbeatCount: int32(admitDefeatHearbeatCount),
 		ElectionTimeout:          int32(electionTimeout),
 	}
+}
+
+// buildExtraConfig build a ini file for mysql.
+func (cfg *Config) buildExtraConfig(filePath string) (*ini.File, error) {
+	conf := ini.Empty()
+	sec := conf.Section("mysqld")
+
+	id, err := generateServerID(cfg.HostName)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := sec.NewKey("server-id", strconv.Itoa(id)); err != nil {
+		return nil, err
+	}
+
+	if _, err := sec.NewKey("init-file", filePath); err != nil {
+		return nil, err
+	}
+
+	return conf, nil
 }

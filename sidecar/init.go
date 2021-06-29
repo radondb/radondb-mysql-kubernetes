@@ -25,7 +25,6 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/go-ini/ini"
 	"github.com/spf13/cobra"
 
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
@@ -87,14 +86,19 @@ func runInitCommand(cfg *Config) error {
 		}
 	}
 
+	// Run reset master in init-mysql container.
+	if err = ioutil.WriteFile(initFilePath+"/reset.sql", []byte("reset master;"), 0644); err != nil {
+		return fmt.Errorf("failed to write reset.sql: %s", err)
+	}
+
 	// build init.sql.
-	initSqlPath := path.Join(initFilePath, "init.sql")
+	initSqlPath := path.Join(extraConfPath, "init.sql")
 	if err = ioutil.WriteFile(initSqlPath, buildInitSql(cfg), 0644); err != nil {
 		return fmt.Errorf("failed to write init.sql: %s", err)
 	}
 
 	// build extra.cnf.
-	extraConfig, err := buildExtraConfig(cfg)
+	extraConfig, err := cfg.buildExtraConfig(initSqlPath)
 	if err != nil {
 		return fmt.Errorf("failed to build extra.cnf: %s", err)
 	}
@@ -153,22 +157,6 @@ func checkIfPathExists(path string) (bool, error) {
 
 	err = f.Close()
 	return true, err
-}
-
-// buildExtraConfig build a ini file for mysql.
-func buildExtraConfig(cfg *Config) (*ini.File, error) {
-	conf := ini.Empty()
-	sec := conf.Section("mysqld")
-	id, err := generateServerID(cfg.HostName)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := sec.NewKey("server-id", strconv.Itoa(id)); err != nil {
-		return nil, err
-	}
-
-	return conf, nil
 }
 
 // buildXenonConf build a config file for xenon.
@@ -245,8 +233,7 @@ func buildXenonConf(cfg *Config) []byte {
 
 // buildInitSql used to build init.sql. The file run after the mysql init.
 func buildInitSql(cfg *Config) []byte {
-	sql := fmt.Sprintf(`RESET MASTER;
-SET @@SESSION.SQL_LOG_BIN=0;
+	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
 DELETE FROM mysql.user WHERE user='%s';
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
 DELETE FROM mysql.user WHERE user='%s';
