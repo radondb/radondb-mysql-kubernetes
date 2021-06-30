@@ -2,12 +2,14 @@
 #  Build Sidecar
 ###############################################################################
 # Build the manager binary
-FROM golang:1.16 as builder
+FROM golang:1.15 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY go.mod go.mod
 COPY go.sum go.sum
+
+
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN go env -w GOPROXY=https://goproxy.cn,direct; \
@@ -19,17 +21,39 @@ COPY sidecar/ sidecar/
 COPY utils/ utils/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/sidecar cmd/sidecar/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/sidecar cmd/sidecar/main.go
 
 ###############################################################################
 #  Docker image for Sidecar
 ###############################################################################
-FROM alpine:3.13
+FROM ubuntu:focal
 
-# Create a group and user
-RUN addgroup -g 1001 mysql && adduser -u 1001 -g 1001 -S mysql
+RUN set -ex; \
+    groupadd --gid 1001 --system mysql; \
+    useradd \
+    --uid 1001 \
+    --system \
+    --home-dir /var/lib/mysql \
+    --no-create-home \
+    --gid mysql \
+    mysql;
 
+ENV PS_VERSION 5.7.33-36-1
+ENV OS_VER focal
+ENV FULL_PERCONA_VERSION "$PS_VERSION.$OS_VER"
+
+ARG XTRABACKUP_PKG=percona-xtrabackup-24
+RUN set -ex; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl; \
+    wget -P /tmp --no-check-certificate https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb; \
+    dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ${XTRABACKUP_PKG}
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
-
+COPY ./hack/restore.sh /restore.sh
+RUN set -ex; \
+    chmod +x /restore.sh; \
+    chown mysql.mysql /restore.sh
 ENTRYPOINT ["sidecar"]

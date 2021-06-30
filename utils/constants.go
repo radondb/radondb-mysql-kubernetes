@@ -42,7 +42,10 @@ const (
 	ContainerMetricsName  = "metrics"
 	ContainerSlowLogName  = "slowlog"
 	ContainerAuditLogName = "auditlog"
+	ContainerBackupName   = "backup"
 
+	XBackupPortName = "xtrabackup"
+	XBackupPort     = 8082
 	// MySQL port.
 	MysqlPortName = "mysql"
 	MysqlPort     = 3306
@@ -83,6 +86,7 @@ const (
 	ScriptsVolumeMountPath  = "/scripts"
 	XenonVolumeMountPath    = "/etc/xenon"
 	InitFileVolumeMountPath = "/docker-entrypoint-initdb.d"
+	SideCarImage            = "acekingke/sidecar:v01"
 )
 
 // ResourceName is the type for aliasing resources that will be created.
@@ -100,7 +104,8 @@ const (
 	// FollowerService is the name of a service that points healthy followers (excludes leader).
 	FollowerService ResourceName = "follower-service"
 	// Secret is the name of the secret that contains operator related credentials.
-	Secret ResourceName = "secret"
+	Secret       ResourceName = "secret"
+	BackupSecret ResourceName = "backup-secret"
 	// Role is the alias of the role resource.
 	Role ResourceName = "role"
 	// RoleBinding is the alias of the rolebinding resource.

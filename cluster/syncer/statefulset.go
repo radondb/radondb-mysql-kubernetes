@@ -90,7 +90,8 @@ func ensurePodSpec(c *cluster.Cluster) corev1.PodSpec {
 
 	mysql := container.EnsureContainer(utils.ContainerMysqlName, c)
 	xenon := container.EnsureContainer(utils.ContainerXenonName, c)
-	containers := []corev1.Container{mysql, xenon}
+	backup := container.EnsureContainer(utils.ContainerBackupName, c)
+	containers := []corev1.Container{mysql, xenon, backup}
 	if c.Spec.MetricsOpts.Enabled {
 		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, c))
 	}
