@@ -51,6 +51,7 @@ func (c *initSidecar) getCommand() []string {
 // getEnvVars get the container env.
 func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 	sctName := c.GetNameForResource(utils.Secret)
+	sctNamebackup := c.GetNameForResource(utils.BackupSecret)
 	envs := []corev1.EnvVar{
 		{
 			Name: "POD_HOSTNAME",
@@ -81,6 +82,16 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Name:  "MY_MYSQL_VERSION",
 			Value: c.GetMySQLVersion(),
 		},
+		{
+			Name:  "RESTORE_FROM",
+			Value: c.Spec.RestoreFrom,
+		},
+
+		getEnvVarFromSecret(sctNamebackup, "S3_ENDPOINT", "s3-endpoint", false),
+		getEnvVarFromSecret(sctNamebackup, "S3_ACCESSKEY", "s3-access-key", true),
+		getEnvVarFromSecret(sctNamebackup, "S3_SECRETKEY", "s3-secret-key", true),
+		getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
+
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
 		getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true),
 		getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true),

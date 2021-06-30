@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-ini/ini v1.62.0
+	github.com/go-logr/logr v0.4.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/imdario/mergo v0.3.11
 	github.com/onsi/ginkgo v1.15.0

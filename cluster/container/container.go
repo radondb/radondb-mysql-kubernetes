@@ -55,6 +55,8 @@ func EnsureContainer(name string, c *cluster.Cluster) corev1.Container {
 		ctr = &slowLog{c, name}
 	case utils.ContainerAuditLogName:
 		ctr = &auditLog{c, name}
+	case utils.ContainerBackupName:
+		ctr = &backupSidecar{c, name}
 	}
 
 	return corev1.Container{
