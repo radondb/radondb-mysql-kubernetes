@@ -5,7 +5,8 @@ metadata:
 spec:
   replicas: 3
   mysqlVersion: "5.7"
-
+  backupSecretName: backup-secret
+  restoreFrom: "backup_202162874118"
   mysqlOpts:
     rootPassword: ""
     user: qc_usr
@@ -53,8 +54,8 @@ spec:
         memory: 128Mi
 
   podSpec:
-    imagePullPolicy: IfNotPresent
-    sidecarImage: zhyass/sidecar:0.1
+    imagePullPolicy: Always
+    sidecarImage: acekingke/sidecar:v01
     busyboxImage: busybox:1.32
 
     slowLogTail: false

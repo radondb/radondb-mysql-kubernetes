@@ -66,6 +66,15 @@ type ClusterSpec struct {
 	// +optional
 	// +kubebuilder:default:={enabled: true, accessModes: {"ReadWriteOnce"}, size: "10Gi"}
 	Persistence Persistence `json:"persistence,omitempty"`
+
+	// Represents the name of the secret that contains credentials to connect to
+	// the storage provider to store backups.
+	// +optional
+	BackupSecretName string `json:"backupSecretName,omitempty"`
+
+	// Represents the name of the cluster restore from backup path
+	// +optional
+	RestoreFrom string `json:"restoreFrom,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.
