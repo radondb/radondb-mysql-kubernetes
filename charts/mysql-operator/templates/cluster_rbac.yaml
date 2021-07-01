@@ -99,6 +99,32 @@ rules:
   - get
   - patch
   - update
+  - apiGroups:
+  - mysql.radondb.com
+  resources:
+  - mysqlbackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.radondb.com
+  resources:
+  - mysqlbackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.radondb.com
+  resources:
+  - mysqlbackups/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:

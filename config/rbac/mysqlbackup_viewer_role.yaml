@@ -5,7 +5,7 @@ metadata:
   name: mysqlbackup-viewer-role
 rules:
 - apiGroups:
-  - mysql.radondb.io
+  - mysql.radondb.com
   resources:
   - mysqlbackups
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - mysql.radondb.io
+  - mysql.radondb.com
   resources:
   - mysqlbackups/status
   verbs:
