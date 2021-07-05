@@ -45,37 +45,37 @@ const maxStatusesQuantity = 10
 // The retry time for check node status.
 const checkNodeStatusRetry = 3
 
-// StatusUpdater used to update the status.
-type StatusUpdater struct {
+// StatusSyncer used to update the status.
+type StatusSyncer struct {
 	*cluster.Cluster
 
 	cli client.Client
 }
 
-// NewStatusUpdater returns a pointer to StatusUpdater.
-func NewStatusUpdater(c *cluster.Cluster, cli client.Client) *StatusUpdater {
-	return &StatusUpdater{
+// NewStatusSyncer returns a pointer to StatusSyncer.
+func NewStatusSyncer(c *cluster.Cluster, cli client.Client) *StatusSyncer {
+	return &StatusSyncer{
 		Cluster: c,
 		cli:     cli,
 	}
 }
 
 // Object returns the object for which sync applies.
-func (s *StatusUpdater) Object() interface{} { return nil }
+func (s *StatusSyncer) Object() interface{} { return nil }
 
 // GetObject returns the object for which sync applies
 // Deprecated: use github.com/presslabs/controller-util/syncer.Object() instead.
-func (s *StatusUpdater) GetObject() interface{} { return nil }
+func (s *StatusSyncer) GetObject() interface{} { return nil }
 
 // Owner returns the object owner or nil if object does not have one.
-func (s *StatusUpdater) ObjectOwner() runtime.Object { return s.Cluster }
+func (s *StatusSyncer) ObjectOwner() runtime.Object { return s.Cluster }
 
 // GetOwner returns the object owner or nil if object does not have one.
 // Deprecated: use github.com/presslabs/controller-util/syncer.ObjectOwner() instead.
-func (s *StatusUpdater) GetOwner() runtime.Object { return s.Cluster }
+func (s *StatusSyncer) GetOwner() runtime.Object { return s.Cluster }
 
 // Sync persists data into the external store.
-func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
+func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	clusterCondition := apiv1alpha1.ClusterCondition{
 		Type:               apiv1alpha1.ClusterInit,
 		Status:             corev1.ConditionTrue,
@@ -143,7 +143,7 @@ func (s *StatusUpdater) Sync(ctx context.Context) (syncer.SyncResult, error) {
 }
 
 // updateNodeStatus update the node status.
-func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client, pods []corev1.Pod) error {
+func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, pods []corev1.Pod) error {
 	sctName := s.GetNameForResource(utils.Secret)
 	svcName := s.GetNameForResource(utils.HeadlessSVC)
 	port := utils.MysqlPort
@@ -233,7 +233,7 @@ func (s *StatusUpdater) updateNodeStatus(ctx context.Context, cli client.Client,
 }
 
 // getNodeStatusIndex get the node index in the status.
-func (s *StatusUpdater) getNodeStatusIndex(name string) int {
+func (s *StatusSyncer) getNodeStatusIndex(name string) int {
 	len := len(s.Status.Nodes)
 	for i := 0; i < len; i++ {
 		if s.Status.Nodes[i].Name == name {
@@ -272,7 +272,7 @@ func (s *StatusUpdater) getNodeStatusIndex(name string) int {
 }
 
 // updateNodeCondition update the node condition.
-func (s *StatusUpdater) updateNodeCondition(node *apiv1alpha1.NodeStatus, idx int, status corev1.ConditionStatus) {
+func (s *StatusSyncer) updateNodeCondition(node *apiv1alpha1.NodeStatus, idx int, status corev1.ConditionStatus) {
 	if node.Conditions[idx].Status != status {
 		t := time.Now()
 		log.V(3).Info(fmt.Sprintf("Found status change for node %q condition %q: %q -> %q; setting lastTransitionTime to %v",
