@@ -82,11 +82,11 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
   ```bash
    <For Helm v2>
-    cd charts
-    helm install . --name demo
+    cd charts/helm
+    helm install . demo
 
    <For Helm v3>
-    cd charts
+    cd charts/helm
     helm install demo .
   ```
 
@@ -97,7 +97,7 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
   以下示例将创建一个用户名为 `my-user` ，密码为 `my-password` 的标准数据库用户，可访问名为 `my-database` 的数据库。
 
   ```bash
-  cd charts
+  cd charts/helm
   helm install demo \
   --set mysql.mysqlUser=my-user,mysql.mysqlPassword=my-password,mysql.database=my-database .
   ```
@@ -109,7 +109,7 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
   执行如下命令，可通过 value.yaml 配置文件，在安装时配置指定参数。
 
   ```bash
-  cd charts
+  cd charts/helm
   helm install demo -f values.yaml .
   ```
   

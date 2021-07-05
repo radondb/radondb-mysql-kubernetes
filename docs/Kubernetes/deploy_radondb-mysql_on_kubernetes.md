@@ -57,11 +57,11 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 
    ```bash
    <For Helm v2>
-    cd charts
-    helm install . --name demo
+    cd charts/helm
+    helm install . demo
 
    <For Helm v3>
-    cd charts
+    cd charts/helm
     helm install demo .
   ```
 
@@ -72,7 +72,7 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
   以下示例以创建一个用户名为 `my-user` ，密码为 `my-password` 的标准数据库用户，可访问名为 `my-database` 的数据库。
 
   ```bash
-  cd charts
+  cd charts/helm
   helm install demo \
   --set mysql.mysqlUser=my-user,mysql.mysqlPassword=my-password,mysql.database=my-database .
   ```
@@ -82,7 +82,7 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
   执行如下命令，可通过 value.yaml 配置文件，在安装时配置指定参数。更多安装过程中可配置的参数，请参考 [配置](#配置) 。
 
   ```bash
-  cd charts
+  cd charts/helm
   helm install demo -f values.yaml .
   ```
 
