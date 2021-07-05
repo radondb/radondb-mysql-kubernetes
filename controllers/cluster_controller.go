@@ -97,6 +97,9 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
+	cmRev := configMapSyncer.Object().(*corev1.ConfigMap).ResourceVersion
+	sctRev := secretSyncer.Object().(*corev1.Secret).ResourceVersion
+
 	// run the syncers for services, pdb and statefulset
 	syncers := []syncer.Interface{
 		clustersyncer.NewRoleSyncer(r.Client, instance),
@@ -105,7 +108,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		clustersyncer.NewHeadlessSVCSyncer(r.Client, instance),
 		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
 		clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
-		clustersyncer.NewStatefulSetSyncer(r.Client, instance),
+		clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev),
 	}
 
 	// run the syncers
