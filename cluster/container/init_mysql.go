@@ -116,6 +116,11 @@ func (c *initMysql) getVolumeMounts() []corev1.VolumeMount {
 			MountPath: utils.ConfVolumeMountPath,
 		},
 		{
+			Name:      utils.ConfMapVolumeName,
+			MountPath: utils.MyCnfMountPath,
+			SubPath:   "my.cnf",
+		},
+		{
 			Name:      utils.DataVolumeName,
 			MountPath: utils.DataVolumeMountPath,
 		},

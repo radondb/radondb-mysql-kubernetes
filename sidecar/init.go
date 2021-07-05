@@ -75,14 +75,9 @@ func runInitCommand(cfg *Config) error {
 		}
 	}
 
-	// copy appropriate my.cnf from config-map to config mount.
-	if err = copyFile(path.Join(configMapPath, "my.cnf"), path.Join(configPath, "my.cnf")); err != nil {
-		return fmt.Errorf("failed to copy my.cnf: %s", err)
-	}
-
-	if err = os.Mkdir(extraConfPath, os.FileMode(0755)); err != nil {
+	if err = os.Mkdir(configPath, os.FileMode(0755)); err != nil {
 		if !os.IsExist(err) {
-			return fmt.Errorf("error mkdir %s: %s", extraConfPath, err)
+			return fmt.Errorf("error mkdir %s: %s", configPath, err)
 		}
 	}
 
@@ -92,7 +87,7 @@ func runInitCommand(cfg *Config) error {
 	}
 
 	// build init.sql.
-	initSqlPath := path.Join(extraConfPath, "init.sql")
+	initSqlPath := path.Join(configPath, "init.sql")
 	if err = ioutil.WriteFile(initSqlPath, buildInitSql(cfg), 0644); err != nil {
 		return fmt.Errorf("failed to write init.sql: %s", err)
 	}
@@ -103,7 +98,7 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to build extra.cnf: %s", err)
 	}
 	// save extra.cnf to conf.d.
-	if err := extraConfig.SaveTo(path.Join(extraConfPath, "extra.cnf")); err != nil {
+	if err := extraConfig.SaveTo(path.Join(configPath, "extra.cnf")); err != nil {
 		return fmt.Errorf("failed to save extra.cnf: %s", err)
 	}
 

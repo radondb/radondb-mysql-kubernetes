@@ -74,7 +74,8 @@ const (
 	InitFileVolumeName = "init-mysql"
 
 	// volumes mount path.
-	ConfVolumeMountPath     = "/etc/mysql"
+	MyCnfMountPath          = "/etc/mysql/my.cnf"
+	ConfVolumeMountPath     = "/etc/mysql/conf.d"
 	ConfMapVolumeMountPath  = "/mnt/config-map"
 	LogsVolumeMountPath     = "/var/log/mysql"
 	DataVolumeMountPath     = "/var/lib/mysql"

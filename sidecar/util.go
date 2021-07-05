@@ -37,9 +37,6 @@ var (
 	// configPath is the mysql configs path.
 	configPath = utils.ConfVolumeMountPath
 
-	// extraConfPath is the mysql extra configs path.
-	extraConfPath = utils.ConfVolumeMountPath + "/conf.d"
-
 	// configMapPath is the mounted configmap.
 	configMapPath = utils.ConfMapVolumeMountPath
 
