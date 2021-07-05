@@ -1,4 +1,5 @@
 # do not has RESTORE_FROM env variable
+
 if [ -z "$RESTORE_FROM" ]; then
     echo "nothing to do"
 	exit 0

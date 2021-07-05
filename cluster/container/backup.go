@@ -27,7 +27,7 @@ func (c *backupSidecar) getCommand() []string {
 }
 
 func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
-	sctName := c.GetNameForResource(utils.BackupSecret)
+	sctName := c.Spec.BackupSecretName
 
 	envs := []corev1.EnvVar{
 

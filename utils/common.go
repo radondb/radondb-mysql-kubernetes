@@ -16,6 +16,11 @@ limitations under the License.
 
 package utils
 
+import (
+	"fmt"
+	"time"
+)
+
 // Min returns the smallest int64 that was passed in the arguments.
 func Min(a, b uint64) uint64 {
 	if a < b {
@@ -30,4 +35,9 @@ func Max(a, b uint64) uint64 {
 		return a
 	}
 	return b
+}
+func BuildBackupName() string {
+	cur_time := time.Now()
+	return fmt.Sprintf("backup_%v%v%v%v%v%v", cur_time.Year(), int(cur_time.Month()),
+		cur_time.Day(), cur_time.Hour(), cur_time.Minute(), cur_time.Second())
 }

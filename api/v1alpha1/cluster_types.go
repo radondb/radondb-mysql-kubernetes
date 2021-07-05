@@ -75,6 +75,10 @@ type ClusterSpec struct {
 	// Represents the name of the cluster restore from backup path
 	// +optional
 	RestoreFrom string `json:"restoreFrom,omitempty"`
+
+	// Represents the name of the cluster restore from PV
+	// +optional
+	RestoreFromPVC string `json:"restoreFromPVC,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.
