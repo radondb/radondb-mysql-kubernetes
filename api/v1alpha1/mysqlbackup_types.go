@@ -34,6 +34,9 @@ type MysqlBackupSpec struct {
 	// HostName represents the host for which to take backup
 	HostName    string `json:"hostname"`
 	ClusterName string `json:"clustname"`
+	// Represents the name of backup to PVC
+	// +optional
+	BackupToPVC string `json:"backupToPVC,omitempty"`
 }
 
 // MysqlBackupStatus defines the observed state of MysqlBackup
@@ -44,6 +47,7 @@ type MysqlBackupStatus struct {
 
 	// Conditions represents the backup resource conditions list.
 	Conditions []BackupCondition `json:"conditions,omitempty"`
+	//BackupDir  string            `json:"backupdir,omitempty"`
 }
 
 //+kubebuilder:object:root=true

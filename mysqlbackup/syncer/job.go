@@ -100,10 +100,40 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 
 	in.Containers[0].Name = "backup"
 	in.Containers[0].Image = utils.SideCarImage
-	//in.Containers[0].ImagePullPolicy = s.opt.ImagePullPolicy
-	in.Containers[0].Args = []string{
-		"request_a_backup",
-		s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName),
+	if len(s.backup.Spec.BackupToPVC) != 0 {
+		//add volumn about pvc
+		in.Volumes = []corev1.Volume{
+			{
+				Name: utils.XtrabackupPV,
+				VolumeSource: corev1.VolumeSource{
+					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+						ClaimName: s.backup.Spec.BackupToPVC,
+					},
+				},
+			},
+		}
+		//"rm -rf /backup/*;curl --user sys_backups:sys_backups sample-mysql-0.sample-mysql.default:8082/download|xbstream -x -C /backup"
+		in.Containers[0].Command = []string{
+			"/bin/bash", "-c", "--",
+		}
+		var backupToDir string = utils.BuildBackupName()
+		in.Containers[0].Args = []string{
+			fmt.Sprintf("mkdir -p /backup/%s;curl --user sys_backups:sys_backups %s/download|xbstream -x -C /backup/%s",
+				backupToDir, s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName), backupToDir),
+		}
+		in.Containers[0].VolumeMounts = []corev1.VolumeMount{
+			{
+				Name:      utils.XtrabackupPV,
+				MountPath: utils.XtrabckupLocal,
+			},
+		}
+	} else {
+		//in.Containers[0].ImagePullPolicy = s.opt.ImagePullPolicy
+		in.Containers[0].Args = []string{
+			"request_a_backup",
+			s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName),
+		}
+
 	}
 
 	in.Containers[0].Env = []corev1.EnvVar{
@@ -121,5 +151,6 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 			Value: s.backup.Spec.HostName,
 		},
 	}
+
 	return in
 }

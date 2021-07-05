@@ -51,7 +51,7 @@ func (c *initSidecar) getCommand() []string {
 // getEnvVars get the container env.
 func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 	sctName := c.GetNameForResource(utils.Secret)
-	sctNamebackup := c.GetNameForResource(utils.BackupSecret)
+	sctNamebackup := c.Spec.BackupSecretName
 	envs := []corev1.EnvVar{
 		{
 			Name: "POD_HOSTNAME",

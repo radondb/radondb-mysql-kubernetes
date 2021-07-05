@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/blang/semver"
 	"github.com/go-ini/ini"
@@ -170,8 +169,9 @@ func (cfg *Config) XtrabackupArgs() []string {
 
 	return append(xtrabackupArgs, cfg.XtrabackupExtraArgs...)
 }
+
 func (cfg *Config) XCloudArgs() []string {
-	cur_time := time.Now()
+
 	xcloudArgs := []string{
 		"put",
 		"--storage=S3",
@@ -180,8 +180,7 @@ func (cfg *Config) XCloudArgs() []string {
 		fmt.Sprintf("--s3-secret-key=%s", cfg.XCloudS3SecretKey),
 		fmt.Sprintf("--s3-bucket=%s", cfg.XCloudS3Bucket),
 		"--parallel=10",
-		fmt.Sprintf("backup_%v%v%v%v%v%v", cur_time.Year(), int(cur_time.Month()),
-			cur_time.Day(), cur_time.Hour(), cur_time.Minute(), cur_time.Second()),
+		utils.BuildBackupName(),
 		"--insecure",
 	}
 	return xcloudArgs

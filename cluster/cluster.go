@@ -248,8 +248,6 @@ func (c *Cluster) GetNameForResource(name utils.ResourceName) string {
 		return fmt.Sprintf("%s-follower", c.Name)
 	case utils.Secret:
 		return fmt.Sprintf("%s-secret", c.Name)
-	case utils.BackupSecret:
-		return fmt.Sprintf("%s-backup-secret", c.Name)
 	default:
 		return c.Name
 	}

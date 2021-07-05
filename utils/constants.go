@@ -76,6 +76,8 @@ const (
 	XenonVolumeName    = "xenon"
 	InitFileVolumeName = "init-mysql"
 
+	XtrabackupPV = "backup"
+
 	// volumes mount path.
 	MyCnfMountPath          = "/etc/mysql/my.cnf"
 	ConfVolumeMountPath     = "/etc/mysql/conf.d"
@@ -87,6 +89,8 @@ const (
 	XenonVolumeMountPath    = "/etc/xenon"
 	InitFileVolumeMountPath = "/docker-entrypoint-initdb.d"
 	SideCarImage            = "acekingke/sidecar:v01"
+
+	XtrabckupLocal = "/backup"
 )
 
 // ResourceName is the type for aliasing resources that will be created.
@@ -104,8 +108,8 @@ const (
 	// FollowerService is the name of a service that points healthy followers (excludes leader).
 	FollowerService ResourceName = "follower-service"
 	// Secret is the name of the secret that contains operator related credentials.
-	Secret       ResourceName = "secret"
-	BackupSecret ResourceName = "backup-secret"
+	Secret ResourceName = "secret"
+
 	// Role is the alias of the role resource.
 	Role ResourceName = "role"
 	// RoleBinding is the alias of the rolebinding resource.
