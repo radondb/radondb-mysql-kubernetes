@@ -39,12 +39,16 @@ func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
 			Name:  "SERVICE_NAME",
 			Value: c.GetNameForResource(utils.HeadlessSVC),
 		},
-		getEnvVarFromSecret(sctName, "S3_ENDPOINT", "s3-endpoint", false),
-		getEnvVarFromSecret(sctName, "S3_ACCESSKEY", "s3-access-key", true),
-		getEnvVarFromSecret(sctName, "S3_SECRETKEY", "s3-secret-key", true),
-		getEnvVarFromSecret(sctName, "S3_BUCKET", "s3-bucket", true),
 	}
+	if len(sctName) != 0 {
+		envs = append(envs, []corev1.EnvVar{
 
+			getEnvVarFromSecret(sctName, "S3_ENDPOINT", "s3-endpoint", false),
+			getEnvVarFromSecret(sctName, "S3_ACCESSKEY", "s3-access-key", true),
+			getEnvVarFromSecret(sctName, "S3_SECRETKEY", "s3-secret-key", true),
+			getEnvVarFromSecret(sctName, "S3_BUCKET", "s3-bucket", true),
+		}...)
+	}
 	return envs
 }
 

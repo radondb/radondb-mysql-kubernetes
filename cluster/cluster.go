@@ -197,7 +197,16 @@ func (c *Cluster) EnsureVolumes() []corev1.Volume {
 			},
 		},
 	)
-
+	if len(c.Spec.RestoreFromPVC) != 0 {
+		volumes = append(volumes, corev1.Volume{
+			Name: utils.XtrabackupPV,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: c.Spec.RestoreFromPVC,
+				},
+			},
+		})
+	}
 	return volumes
 }
 

@@ -87,11 +87,6 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Value: c.Spec.RestoreFrom,
 		},
 
-		getEnvVarFromSecret(sctNamebackup, "S3_ENDPOINT", "s3-endpoint", false),
-		getEnvVarFromSecret(sctNamebackup, "S3_ACCESSKEY", "s3-access-key", true),
-		getEnvVarFromSecret(sctNamebackup, "S3_SECRETKEY", "s3-secret-key", true),
-		getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
-
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
 		getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true),
 		getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true),
@@ -100,7 +95,20 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 		getEnvVarFromSecret(sctName, "OPERATOR_USER", "operator-user", true),
 		getEnvVarFromSecret(sctName, "OPERATOR_PASSWORD", "operator-password", true),
 	}
-
+	if len(c.Spec.BackupSecretName) != 0 {
+		envs = append(envs, []corev1.EnvVar{
+			getEnvVarFromSecret(sctNamebackup, "S3_ENDPOINT", "s3-endpoint", false),
+			getEnvVarFromSecret(sctNamebackup, "S3_ACCESSKEY", "s3-access-key", true),
+			getEnvVarFromSecret(sctNamebackup, "S3_SECRETKEY", "s3-secret-key", true),
+			getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
+		}...)
+	}
+	if len(c.Spec.RestoreFromPVC) != 0 {
+		envs = append(envs, corev1.EnvVar{
+			Name:  "RESTORE_FROM_PVC",
+			Value: c.Spec.RestoreFromPVC,
+		})
+	}
 	if c.Spec.MysqlOpts.InitTokuDB {
 		envs = append(envs, corev1.EnvVar{
 			Name:  "INIT_TOKUDB",
@@ -169,7 +177,14 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			},
 		)
 	}
-
+	if len(c.Spec.RestoreFromPVC) != 0 {
+		volumeMounts = append(volumeMounts,
+			corev1.VolumeMount{
+				Name:      utils.XtrabackupPV,
+				MountPath: utils.XtrabckupLocal,
+			},
+		)
+	}
 	if c.Spec.Persistence.Enabled {
 		volumeMounts = append(volumeMounts,
 			corev1.VolumeMount{

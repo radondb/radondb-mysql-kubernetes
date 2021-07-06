@@ -118,7 +118,7 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 		}
 		var backupToDir string = utils.BuildBackupName()
 		in.Containers[0].Args = []string{
-			fmt.Sprintf("mkdir -p /backup/%s;curl --user sys_backups:sys_backups %s/download|xbstream -x -C /backup/%s",
+			fmt.Sprintf("mkdir -p /backup/%s;curl --user sys_backups:sys_backups %s/download|xbstream -x -C /backup/%s; exit ${PIPESTATUS[0]}",
 				backupToDir, s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName), backupToDir),
 		}
 		in.Containers[0].VolumeMounts = []corev1.VolumeMount{
