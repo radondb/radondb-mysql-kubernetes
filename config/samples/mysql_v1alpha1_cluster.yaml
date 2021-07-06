@@ -5,8 +5,9 @@ metadata:
 spec:
   replicas: 3
   mysqlVersion: "5.7"
-  backupSecretName: sample-backup-secret
-  # restoreFrom: "backup_202162874118"
+ # backupSecretName: sample-backup-secret
+  restoreFrom: "backup_20217610738"
+  restoreFromPVC: neosan1
   mysqlOpts:
     rootPassword: ""
     user: qc_usr

@@ -4,9 +4,24 @@ if [ -z "$RESTORE_FROM" ]; then
     echo "nothing to do"
 	exit 0
 fi
+if [ -n "$RESTORE_FROM_PVC" ]; then
+   if [ ! -d "/var/lib/mysql"] ; then
+        echo "is not exist the var lib mysql"
+        mkdir /var/lib/mysql
+        chown -R mysql.mysql /var/lib/mysql
+    fi
+    rm -rf /var/lib/mysql/*
+    xtrabackup --defaults-file=/etc/mysql/my.cnf --use-memory=3072M --prepare --apply-log-only --target-dir=/backup/$RESTORE_FROM
+    xtrabackup --defaults-file=/etc/mysql/my.cnf --use-memory=3072M --prepare --target-dir=/backup/$RESTORE_FROM
+    chown -R mysql.mysql /backup/$RESTORE_FROM
+    xtrabackup --defaults-file=/etc/mysql/my.cnf --datadir=/var/lib/mysql --copy-back --target-dir=/backup/$RESTORE_FROM
+    exit_code=$?
+    chown -R mysql.mysql /var/lib/mysql
+    exit $exit_code
+fi
 if [ -z "$S3_ENDPOINT" ] || [ -z "$S3_ACCESSKEY"] || [ -z "$S3_SECRETKEY"] || [ -z "$S3_BUCKET"] ; then
-	echo "nothing to do "
-    exit 0
+	echo "nothing to do"
+	exit 0
 fi
 if [ ! -d "/var/lib/mysql"] ; then
     echo "is not exist the var lib mysql"
