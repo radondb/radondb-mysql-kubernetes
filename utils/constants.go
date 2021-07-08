@@ -74,8 +74,7 @@ const (
 	InitFileVolumeName = "init-mysql"
 
 	// volumes mount path.
-	MyCnfMountPath          = "/etc/mysql/my.cnf"
-	ConfVolumeMountPath     = "/etc/mysql/conf.d"
+	ConfVolumeMountPath     = "/etc/mysql"
 	ConfMapVolumeMountPath  = "/mnt/config-map"
 	LogsVolumeMountPath     = "/var/log/mysql"
 	DataVolumeMountPath     = "/var/lib/mysql"
@@ -83,6 +82,10 @@ const (
 	ScriptsVolumeMountPath  = "/scripts"
 	XenonVolumeMountPath    = "/etc/xenon"
 	InitFileVolumeMountPath = "/docker-entrypoint-initdb.d"
+
+	// The path to the client MySQL client configuration.
+	// The file used to liveness and readiness check.
+	ConfClientPath = "/etc/mysql/client.conf"
 )
 
 // ResourceName is the type for aliasing resources that will be created.

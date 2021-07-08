@@ -17,6 +17,8 @@ limitations under the License.
 package container
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/radondb/radondb-mysql-kubernetes/cluster"
@@ -86,7 +88,11 @@ func (c *mysql) getLivenessProbe() *corev1.Probe {
 	return &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "mysqladmin ping -uroot -p${MYSQL_ROOT_PASSWORD}"},
+				Command: []string{
+					"sh",
+					"-c",
+					fmt.Sprintf("mysqladmin --defaults-file=%s ping", utils.ConfClientPath),
+				},
 			},
 		},
 		InitialDelaySeconds: 30,
@@ -102,7 +108,11 @@ func (c *mysql) getReadinessProbe() *corev1.Probe {
 	return &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", `mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1"`},
+				Command: []string{
+					"sh",
+					"-c",
+					fmt.Sprintf(`test $(mysql --defaults-file=%s -NB -e "SELECT 1") -eq 1`, utils.ConfClientPath),
+				},
 			},
 		},
 		InitialDelaySeconds: 10,
@@ -119,11 +129,6 @@ func (c *mysql) getVolumeMounts() []corev1.VolumeMount {
 		{
 			Name:      utils.ConfVolumeName,
 			MountPath: utils.ConfVolumeMountPath,
-		},
-		{
-			Name:      utils.ConfMapVolumeName,
-			MountPath: utils.MyCnfMountPath,
-			SubPath:   "my.cnf",
 		},
 		{
 			Name:      utils.DataVolumeName,
