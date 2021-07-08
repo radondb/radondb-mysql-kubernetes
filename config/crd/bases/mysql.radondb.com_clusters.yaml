@@ -118,6 +118,7 @@ spec:
                     requests:
                       cpu: 100m
                       memory: 256Mi
+                  rootHost: 127.0.0.1
                   rootPassword: ""
                   user: qc_usr
                 description: MysqlOpts is the options of MySQL container.
@@ -173,6 +174,10 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                     type: object
+                  rootHost:
+                    default: 127.0.0.1
+                    description: The root user's host.
+                    type: string
                   rootPassword:
                     default: ""
                     description: Password for the root user.

@@ -229,15 +229,15 @@ func buildXenonConf(cfg *Config) []byte {
 // buildInitSql used to build init.sql. The file run after the mysql init.
 func buildInitSql(cfg *Config) []byte {
 	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
-DELETE FROM mysql.user WHERE user='%s';
-GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
-DELETE FROM mysql.user WHERE user='%s';
-GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
-DELETE FROM mysql.user WHERE user='%s';
-GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
+CREATE DATABASE IF NOT EXISTS %s;
+DELETE FROM mysql.user WHERE user in ('%s', '%s', '%s', '%s');
+GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
+GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
+GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
+GRANT ALL ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s';
 FLUSH PRIVILEGES;
-`, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword, cfg.MetricsUser, cfg.MetricsUser,
-		cfg.MetricsPassword, cfg.OperatorUser, cfg.OperatorUser, cfg.OperatorPassword)
+`, cfg.Database, cfg.ReplicationUser, cfg.MetricsUser, cfg.OperatorUser, cfg.User, cfg.ReplicationUser, cfg.ReplicationPassword,
+		cfg.MetricsUser, cfg.MetricsPassword, cfg.OperatorUser, cfg.OperatorPassword, cfg.Database, cfg.User, cfg.Password)
 
 	return utils.StringToBytes(sql)
 }

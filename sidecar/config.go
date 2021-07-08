@@ -37,6 +37,13 @@ type Config struct {
 	// The password of the root user.
 	RootPassword string
 
+	// Username of new user to create.
+	User string
+	// Password for the new user.
+	Password string
+	// Name for new database to create.
+	Database string
+
 	// The name of replication user.
 	ReplicationUser string
 	// The password of the replication user.
@@ -92,6 +99,10 @@ func NewConfig() *Config {
 		ServiceName: getEnvValue("SERVICE_NAME"),
 
 		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
+
+		Database: getEnvValue("MYSQL_DATABASE"),
+		User:     getEnvValue("MYSQL_USER"),
+		Password: getEnvValue("MYSQL_PASSWORD"),
 
 		ReplicationUser:     getEnvValue("MYSQL_REPL_USER"),
 		ReplicationPassword: getEnvValue("MYSQL_REPL_PASSWORD"),
