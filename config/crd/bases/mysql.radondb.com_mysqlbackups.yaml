@@ -36,7 +36,7 @@ spec:
           spec:
             description: MysqlBackupSpec defines the desired state of MysqlBackup
             properties:
-              backupToPVC:
+              BackupToNFS:
                 description: Represents the name of backup to PVC
                 type: string
               clustname:
