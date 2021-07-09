@@ -36,7 +36,7 @@ type MysqlBackupSpec struct {
 	ClusterName string `json:"clustname"`
 	// Represents the name of backup to PVC
 	// +optional
-	BackupToPVC string `json:"backupToPVC,omitempty"`
+	BackupToNFS string `json:"BackupToNFS,omitempty"`
 }
 
 // MysqlBackupStatus defines the observed state of MysqlBackup

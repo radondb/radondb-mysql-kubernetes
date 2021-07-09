@@ -100,14 +100,15 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 
 	in.Containers[0].Name = "backup"
 	in.Containers[0].Image = utils.SideCarImage
-	if len(s.backup.Spec.BackupToPVC) != 0 {
+	if len(s.backup.Spec.BackupToNFS) != 0 {
 		//add volumn about pvc
 		in.Volumes = []corev1.Volume{
 			{
 				Name: utils.XtrabackupPV,
 				VolumeSource: corev1.VolumeSource{
-					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: s.backup.Spec.BackupToPVC,
+					NFS: &corev1.NFSVolumeSource{
+						Server: s.backup.Spec.BackupToNFS,
+						Path:   "/",
 					},
 				},
 			},
