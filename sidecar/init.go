@@ -115,22 +115,28 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to save extra.cnf: %s", err)
 	}
 
-	// copy leader-start.sh from config-map to scripts mount.
-	leaderStartPath := path.Join(scriptsPath, "leader-start.sh")
-	if err = copyFile(path.Join(configMapPath, "leader-start.sh"), leaderStartPath); err != nil {
-		return fmt.Errorf("failed to copy scripts: %s", err)
+	// build post-start.sh.
+	bashPostStartPath := path.Join(scriptsPath, "post-start.sh")
+	bashPostStart, err := cfg.buildPostStart()
+	if err != nil {
+		return fmt.Errorf("failed to build post-start.sh: %s", err)
 	}
-	if err = os.Chmod(leaderStartPath, os.FileMode(0755)); err != nil {
-		return fmt.Errorf("failed to chmod scripts: %s", err)
+	if err = ioutil.WriteFile(bashPostStartPath, bashPostStart, os.FileMode(0755)); err != nil {
+		return fmt.Errorf("failed to write post-start.sh: %s", err)
 	}
 
-	// copy leader-stop.sh from config-map to scripts mount.
-	leaderStopPath := path.Join(scriptsPath, "leader-stop.sh")
-	if err = copyFile(path.Join(configMapPath, "leader-stop.sh"), leaderStopPath); err != nil {
-		return fmt.Errorf("failed to copy scripts: %s", err)
+	// build leader-start.sh.
+	bashLeaderStart := cfg.buildLeaderStart()
+	leaderStartPath := path.Join(scriptsPath, "leader-start.sh")
+	if err = ioutil.WriteFile(leaderStartPath, bashLeaderStart, os.FileMode(0755)); err != nil {
+		return fmt.Errorf("failed to write leader-start.sh: %s", err)
 	}
-	if err = os.Chmod(leaderStopPath, os.FileMode(0755)); err != nil {
-		return fmt.Errorf("failed to chmod scripts: %s", err)
+
+	// build leader-stop.sh.
+	bashLeaderStop := cfg.buildLeaderStop()
+	leaderStopPath := path.Join(scriptsPath, "leader-stop.sh")
+	if err = ioutil.WriteFile(leaderStopPath, bashLeaderStop, os.FileMode(0755)); err != nil {
+		return fmt.Errorf("failed to write leader-stop.sh: %s", err)
 	}
 
 	// for install tokudb.
@@ -151,18 +157,4 @@ func runInitCommand(cfg *Config) error {
 
 	log.Info("init command success")
 	return nil
-}
-
-// checkIfPathExists check if the path exists.
-func checkIfPathExists(path string) (bool, error) {
-	f, err := os.Open(path)
-	if os.IsNotExist(err) {
-		return false, nil
-	} else if err != nil {
-		log.Error(err, "failed to open file", "file", path)
-		return false, err
-	}
-
-	err = f.Close()
-	return true, err
 }

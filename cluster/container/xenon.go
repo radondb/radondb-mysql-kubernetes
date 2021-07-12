@@ -17,8 +17,6 @@ limitations under the License.
 package container
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/radondb/radondb-mysql-kubernetes/cluster"
@@ -55,11 +53,10 @@ func (c *xenon) getEnvVars() []corev1.EnvVar {
 
 // getLifecycle get the container lifecycle.
 func (c *xenon) getLifecycle() *corev1.Lifecycle {
-	arg := fmt.Sprintf("until (xenoncli xenon ping && xenoncli cluster add %s) > /dev/null 2>&1; do sleep 2; done", c.CreatePeers())
 	return &corev1.Lifecycle{
 		PostStart: &corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", arg},
+				Command: []string{"sh", "-c", "/scripts/post-start.sh"},
 			},
 		},
 	}

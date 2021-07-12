@@ -52,9 +52,7 @@ func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 		}
 
 		cm.Data = map[string]string{
-			"my.cnf":          data,
-			"leader-start.sh": buildLeaderStart(c),
-			"leader-stop.sh":  buildLeaderStop(c),
+			"my.cnf": data,
 		}
 
 		return nil
@@ -116,22 +114,4 @@ func writeConfigs(cfg *ini.File) (string, error) {
 		return "", err
 	}
 	return buf.String(), nil
-}
-
-// buildLeaderStart build the leader-start.sh.
-func buildLeaderStart(c *cluster.Cluster) string {
-	return fmt.Sprintf(`#!/usr/bin/env bash
-curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
---cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
--d '[{"op": "replace", "path": "/metadata/labels/role", "value": "leader"}]'
-`, c.Namespace)
-}
-
-// buildLeaderStop build the leader-stop.sh.
-func buildLeaderStop(c *cluster.Cluster) string {
-	return fmt.Sprintf(`#!/usr/bin/env bash
-curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
---cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
--d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
-`, c.Namespace)
 }
