@@ -32,7 +32,9 @@ type MysqlBackupSpec struct {
 	// Foo is an example field of MysqlBackup. Edit mysqlbackup_types.go to remove/update
 
 	// HostName represents the host for which to take backup
-	HostName    string `json:"hostname"`
+	// +optional
+	HostName string `json:"hostname,omitempty"`
+	//clustName , as same as Release in helm
 	ClusterName string `json:"clustname"`
 	// Represents the name of backup to PVC
 	// +optional
