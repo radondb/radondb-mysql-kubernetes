@@ -34,6 +34,10 @@ type Config struct {
 	NameSpace string
 	// The name of the headless service.
 	ServiceName string
+	// The name of the statefulset.
+	StatefulSetName string
+	// Replicas is the number of pods.
+	Replicas int32
 
 	// The password of the root user.
 	RootPassword string
@@ -70,6 +74,9 @@ type Config struct {
 	AdmitDefeatHearbeatCount int32
 	// The parameter in xenon means election timeout(ms)。
 	ElectionTimeout int32
+
+	// Whether the MySQL data exists.
+	existMySQLData bool
 }
 
 // NewConfig returns a pointer to Config.
@@ -78,6 +85,11 @@ func NewConfig() *Config {
 	if err != nil {
 		log.Info("MYSQL_VERSION is not a semver version")
 		mysqlVersion, _ = semver.Parse(utils.MySQLDefaultVersion)
+	}
+
+	replicas, err := strconv.ParseInt(getEnvValue("REPLICAS"), 10, 32)
+	if err != nil {
+		panic(err)
 	}
 
 	initTokuDB := false
@@ -94,10 +106,14 @@ func NewConfig() *Config {
 		electionTimeout = 10000
 	}
 
+	existMySQLData, _ := checkIfPathExists(fmt.Sprintf("%s/mysql", dataPath))
+
 	return &Config{
-		HostName:    getEnvValue("POD_HOSTNAME"),
-		NameSpace:   getEnvValue("NAMESPACE"),
-		ServiceName: getEnvValue("SERVICE_NAME"),
+		HostName:        getEnvValue("POD_HOSTNAME"),
+		NameSpace:       getEnvValue("NAMESPACE"),
+		ServiceName:     getEnvValue("SERVICE_NAME"),
+		StatefulSetName: getEnvValue("STATEFULSET_NAME"),
+		Replicas:        int32(replicas),
 
 		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
 
@@ -120,6 +136,8 @@ func NewConfig() *Config {
 
 		AdmitDefeatHearbeatCount: int32(admitDefeatHearbeatCount),
 		ElectionTimeout:          int32(electionTimeout),
+
+		existMySQLData: existMySQLData,
 	}
 }
 
@@ -128,11 +146,11 @@ func (cfg *Config) buildExtraConfig(filePath string) (*ini.File, error) {
 	conf := ini.Empty()
 	sec := conf.Section("mysqld")
 
-	id, err := generateServerID(cfg.HostName)
+	ordinal, err := getOrdinal(cfg.HostName)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := sec.NewKey("server-id", strconv.Itoa(id)); err != nil {
+	if _, err := sec.NewKey("server-id", strconv.Itoa(mysqlServerIDOffset+ordinal)); err != nil {
 		return nil, err
 	}
 
@@ -259,4 +277,80 @@ func (cfg *Config) buildClientConfig() (*ini.File, error) {
 	}
 
 	return conf, nil
+}
+
+func (cfg *Config) buildPostStart() ([]byte, error) {
+	ordinal, err := getOrdinal(cfg.HostName)
+	if err != nil {
+		return nil, err
+	}
+
+	nums := ordinal
+	if cfg.existMySQLData {
+		nums = int(cfg.Replicas)
+	}
+
+	host := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
+
+	str := fmt.Sprintf(`#!/bin/sh
+while true; do
+	info=$(curl -i -X GET -u root:%s http://%s:%d/v1/xenon/ping)
+	code=$(echo $info|grep "HTTP"|awk '{print $2}')
+	if [ "$code" -eq "200" ]; then
+		break
+	fi
+done
+`, cfg.RootPassword, host, utils.XenonPeerPort)
+
+	if !cfg.existMySQLData && ordinal == 0 {
+		str = fmt.Sprintf(`%s
+for i in $(seq 12); do
+	curl -i -X POST -u root:%s http://%s:%d/v1/raft/trytoleader
+	sleep 5
+	curl -i -X GET -u root:%s http://%s:%d/v1/raft/status | grep LEADER
+	if [ $? -eq 0 ] ; then
+		echo "trytoleader success"
+		break
+	fi
+	if [ $i -eq 12 ]; then
+		echo "wait trytoleader failed"
+	fi
+done
+`, str, cfg.RootPassword, host, utils.XenonPeerPort, cfg.RootPassword, host, utils.XenonPeerPort)
+	} else {
+		str = fmt.Sprintf(`%s
+i=0
+while [ $i -lt %d ]; do
+	if [ $i -ne %d ]; then
+		curl -i -X POST -d '{"address": "%s-'$i'.%s.%s:%d"}' -u root:%s http://%s:%d/v1/cluster/add
+		curl -i -X POST -d '{"address": "%s:%d"}' -u root:%s http://%s-$i.%s.%s:%d/v1/cluster/add
+	fi
+	i=$((i+1))
+done
+`, str, nums, ordinal, cfg.StatefulSetName, cfg.ServiceName, cfg.NameSpace, utils.XenonPort,
+			cfg.RootPassword, host, utils.XenonPeerPort, host, utils.XenonPort, cfg.RootPassword,
+			cfg.StatefulSetName, cfg.ServiceName, cfg.NameSpace, utils.XenonPeerPort)
+	}
+
+	return utils.StringToBytes(str), nil
+}
+
+// buildLeaderStart build the leader-start.sh.
+func (cfg *Config) buildLeaderStart() []byte {
+	str := fmt.Sprintf(`#!/usr/bin/env bash
+curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
+--cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
+-d '[{"op": "replace", "path": "/metadata/labels/role", "value": "leader"}]'
+`, cfg.NameSpace)
+	return utils.StringToBytes(str)
+}
+
+// buildLeaderStop build the leader-stop.sh.
+func (cfg *Config) buildLeaderStop() []byte {
+	str := fmt.Sprintf(`#!/usr/bin/env bash
+curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
+--cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
+-d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
+`, cfg.NameSpace)
+	return utils.StringToBytes(str)
 }

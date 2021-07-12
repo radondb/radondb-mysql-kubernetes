@@ -102,8 +102,7 @@ func getEnvValue(key string) string {
 	return value
 }
 
-// Generate mysql server-id from pod ordinal index.
-func generateServerID(name string) (int, error) {
+func getOrdinal(name string) (int, error) {
 	idx := strings.LastIndexAny(name, "-")
 	if idx == -1 {
 		return -1, fmt.Errorf("failed to extract ordinal from hostname: %s", name)
@@ -114,5 +113,19 @@ func generateServerID(name string) (int, error) {
 		log.Error(err, "failed to extract ordinal form hostname", "hostname", name)
 		return -1, fmt.Errorf("failed to extract ordinal from hostname: %s", name)
 	}
-	return mysqlServerIDOffset + ordinal, nil
+	return ordinal, nil
+}
+
+// checkIfPathExists check if the path exists.
+func checkIfPathExists(path string) (bool, error) {
+	f, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		log.Error(err, "failed to open file", "file", path)
+		return false, err
+	}
+
+	err = f.Close()
+	return true, err
 }

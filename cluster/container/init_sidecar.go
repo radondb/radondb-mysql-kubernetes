@@ -17,6 +17,7 @@ limitations under the License.
 package container
 
 import (
+	"fmt"
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
@@ -68,6 +69,14 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 		{
 			Name:  "SERVICE_NAME",
 			Value: c.GetNameForResource(utils.HeadlessSVC),
+		},
+		{
+			Name:  "STATEFULSET_NAME",
+			Value: c.GetNameForResource(utils.StatefulSet),
+		},
+		{
+			Name:  "REPLICAS",
+			Value: fmt.Sprintf("%d", *c.Spec.Replicas),
 		},
 		{
 			Name:  "ADMIT_DEFEAT_HEARBEAT_COUNT",
