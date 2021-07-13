@@ -266,6 +266,16 @@ type NodeCondition struct {
 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
 }
 
+// The index of the NodeStatus.Conditions.
+type NodeConditionsIndex uint8
+
+const (
+	IndexLagged NodeConditionsIndex = iota
+	IndexLeader
+	IndexReadOnly
+	IndexReplicating
+)
+
 // NodeConditionType defines type for node condition type.
 type NodeConditionType string
 
