@@ -86,6 +86,10 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Name:  "RESTORE_FROM",
 			Value: c.Spec.RestoreFrom,
 		},
+		{
+			Name:  "CLUSTER_NAME",
+			Value: c.Name,
+		},
 
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
 		getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true),

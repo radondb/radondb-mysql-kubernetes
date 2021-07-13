@@ -5,7 +5,7 @@ if [ -z "$RESTORE_FROM" ]; then
 	exit 0
 fi
 if [ -n "$RESTORE_FROM_NFS" ]; then
-   if [ ! -d "/var/lib/mysql"] ; then
+   if [ ! -d "/var/lib/mysql" ]; then
         echo "is not exist the var lib mysql"
         mkdir /var/lib/mysql
         chown -R mysql.mysql /var/lib/mysql

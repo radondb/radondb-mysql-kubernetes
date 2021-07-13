@@ -133,7 +133,7 @@ func NewConfig() *Config {
 		AdmitDefeatHearbeatCount: int32(admitDefeatHearbeatCount),
 		ElectionTimeout:          int32(electionTimeout),
 
-		ClusterName:                getEnvValue("SERVICE_NAME"),
+		ClusterName:                getEnvValue("CLUSTER_NAME"),
 		BackupUser:                 "sys_backups", //getEnvValue("BACKUP_USER"),
 		BackupPassword:             "sys_backups", //getEnvValue("BACKUP_PASSWORD"),
 		XbstreamExtraArgs:          strings.Fields(getEnvValue("XBSTREAM_EXTRA_ARGS")),
