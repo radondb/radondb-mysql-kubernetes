@@ -6,7 +6,7 @@ spec:
   replicas: 3
   mysqlVersion: "5.7"
   backupSecretName: sample-backup-secret
- # restoreFrom: "backup_20217813472"
+  restoreFrom: "backup_202171385743"
  # restoreFromNFS: 10.10.131.170
   mysqlOpts:
     rootPassword: ""

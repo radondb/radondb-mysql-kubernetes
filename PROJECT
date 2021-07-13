@@ -26,5 +26,5 @@ resources:
   group: mysql
   kind: MysqlBackup
   path: github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1
-  version: v1
+  version: v1alpha1
 version: "3"

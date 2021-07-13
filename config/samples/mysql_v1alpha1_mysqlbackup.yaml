@@ -1,11 +1,11 @@
 apiVersion: mysql.radondb.com/v1alpha1
 kind: MysqlBackup
 metadata:
-  name: mysqlbackup-sample2
+  name: mysqlbackup-sample1
 spec:
   # Add fields here
   # hostname: sample-mysql-0
   clustname: sample
-  BackupToNFS: 10.10.131.145
+  #BackupToNFS: 10.10.131.170
 
 

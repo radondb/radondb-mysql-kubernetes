@@ -78,10 +78,13 @@ const (
 	XenonVolumeName    = "xenon"
 	InitFileVolumeName = "init-mysql"
 
-	XtrabackupPV = "backup"
+	// volumes mount path.
+	MyCnfMountPath      = "/etc/mysql/my.cnf"
+	ConfVolumeMountPath = "/etc/mysql/conf.d"
+	XtrabackupPV        = "backup"
 
 	// volumes mount path.
-	ConfVolumeMountPath     = "/etc/mysql"
+
 	ConfMapVolumeMountPath  = "/mnt/config-map"
 	LogsVolumeMountPath     = "/var/log/mysql"
 	DataVolumeMountPath     = "/var/lib/mysql"
