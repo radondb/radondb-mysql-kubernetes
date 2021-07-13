@@ -142,7 +142,7 @@ To connect to your database:
 ```bash
 $ helm list
 NAME        NAMESPACE REVISION UPDATED                                 STATUS   CHART               APP VERSION
-demo        default   1        2021-04-28 08:08:15.828384203 +0000 UTC deployed radondb-mysql-1.0.0 5.7.33   
+demo        default   1        2021-04-28 08:08:15.828384203 +0000 UTC deployed radondb-mysql-1.0.0 5.7.34   
 
 $ kubectl get statefulset
 NAME                 READY   AGE
@@ -224,7 +224,7 @@ kubectl get statefulset,pod,svc
 | `busybox.image`                              | `busybox` 镜像库地址                                       | `busybox`                               |
 | `busybox.tag`                                | `busybox` 镜像标签                                        | `1.32`                                   |
 | `mysql.image`                                | `mysql` 镜像库地址                                         | `xenondb/percona`                     |
-| `mysql.tag`                                  | `mysql` 镜像标签                                          | `5.7.33`                               |
+| `mysql.tag`                                  | `mysql` 镜像标签                                          | `5.7.34`                               |
 | `mysql.allowEmptyRootPassword`               | 如果为 `true`，允许 root 账号密码为空                       | `true`                                  |
 | `mysql.mysqlRootPassword`                    | `root` 用户密码                                          |                                          |
 | `mysql.mysqlReplicationPassword`             | `qc_repl` 用户密码                                         | `Repl_123`, 如果没有设置则随机12个字符      |

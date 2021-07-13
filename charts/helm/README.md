@@ -72,7 +72,7 @@ The following table lists the configurable parameters of the RadonDB MySQL chart
 | `busybox.image`                              | `busybox` image repository.                                                                       | `busybox`                                   |
 | `busybox.tag`                                | `busybox` image tag.                                                                              | `1.32`                                      |
 | `mysql.image`                                | `mysql` image repository.                                                                         | `xenondb/percona`                           |
-| `mysql.tag`                                  | `mysql` image tag.                                                                                | `5.7.33`                                    |
+| `mysql.tag`                                  | `mysql` image tag.                                                                                | `5.7.34`                                    |
 | `mysql.allowEmptyRootPassword`               | If set true, allow a empty root password.                                                         | `true`                                      |
 | `mysql.mysqlRootPassword`                    | Password for the `root` user.                                                                     |                                             |
 | `mysql.mysqlReplicationPassword`             | Password for the `qc_repl` user.                                                                  | `Repl_123`, random 12 characters if not set |
