@@ -168,9 +168,42 @@ func (s *SQLRunner) RunQuery(query string, args ...interface{}) error {
 }
 
 // GetGlobalVariable used to get the global variable by param.
-func (sr *SQLRunner) GetGlobalVariable(param string, val interface{}) error {
+func (s *SQLRunner) GetGlobalVariable(param string, val interface{}) error {
 	query := fmt.Sprintf("select @@global.%s", param)
-	return sr.db.QueryRow(query).Scan(val)
+	return s.db.QueryRow(query).Scan(val)
+}
+
+func (s *SQLRunner) CheckProcesslist() (bool, error) {
+	var rows *sql.Rows
+	rows, err := s.db.Query("show processlist;")
+	if err != nil {
+		return false, err
+	}
+
+	defer rows.Close()
+
+	var cols []string
+	cols, err = rows.Columns()
+	if err != nil {
+		return false, err
+	}
+
+	scanArgs := make([]interface{}, len(cols))
+	for i := range scanArgs {
+		scanArgs[i] = &sql.RawBytes{}
+	}
+
+	for rows.Next() {
+		if err = rows.Scan(scanArgs...); err != nil {
+			return false, err
+		}
+
+		state := columnValue(scanArgs, cols, "State")
+		if strings.Contains(state, "Master has sent all binlog to slave") {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // Close closes the database and prevents new queries from starting.
