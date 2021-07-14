@@ -40,13 +40,13 @@ spec:
                 description: Represents the name of backup to PVC
                 type: string
               clustname:
+                description: clustName , as same as Release in helm
                 type: string
               hostname:
                 description: HostName represents the host for which to take backup
                 type: string
             required:
             - clustname
-            - hostname
             type: object
           status:
             description: MysqlBackupStatus defines the observed state of MysqlBackup

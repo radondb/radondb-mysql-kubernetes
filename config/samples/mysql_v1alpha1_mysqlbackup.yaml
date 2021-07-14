@@ -4,8 +4,8 @@ metadata:
   name: mysqlbackup-sample2
 spec:
   # Add fields here
-  hostname: sample-mysql-0
+  # hostname: sample-mysql-0
   clustname: sample
-  BackupToNFS: 10.10.131.145
+  # BackupToNFS: 10.10.131.145
 
 
