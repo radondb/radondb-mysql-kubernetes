@@ -71,7 +71,7 @@ The following table lists the configurable parameters of the RadonDB MySQL chart
 | `replicaCount`                               | The number of pods                                                                                | `3`                                         |
 | `busybox.image`                              | `busybox` image repository.                                                                       | `busybox`                                   |
 | `busybox.tag`                                | `busybox` image tag.                                                                              | `1.32`                                      |
-| `mysql.image`                                | `mysql` image repository.                                                                         | `xenondb/percona`                           |
+| `mysql.image`                                | `mysql` image repository.                                                                         | `radondb/percona`                           |
 | `mysql.tag`                                  | `mysql` image tag.                                                                                | `5.7.34`                                    |
 | `mysql.allowEmptyRootPassword`               | If set true, allow a empty root password.                                                         | `true`                                      |
 | `mysql.mysqlRootPassword`                    | Password for the `root` user.                                                                     |                                             |
@@ -94,7 +94,7 @@ The following table lists the configurable parameters of the RadonDB MySQL chart
 | `mysql.readinessProbe.failureThreshold`      | Minimum consecutive failures for the mysql probe to be considered failed after having succeeded.  | 3                                           |
 | `mysql.extraEnvVars`                         | Additional environment variables as a string to be passed to the `tpl` function                   |                                             |
 | `mysql.resources`                            | CPU/Memory resource requests/limits for mysql.                                                    | Memory: `256Mi`, CPU: `100m`                |
-| `xenon.image`                                | `xenon` image repository.                                                                         | `xenondb/xenon`                             |
+| `xenon.image`                                | `xenon` image repository.                                                                         | `radondb/xenon`                             |
 | `xenon.tag`                                  | `xenon` image tag.                                                                                | `1.1.5-alpha`                               |
 | `xenon.args`                                 | Additional arguments to pass to the xenon container.                                              | `[]`                                        |
 | `xenon.extraEnvVars`                         | Additional environment variables as a string to be passed to the `tpl` function                   |                                             |

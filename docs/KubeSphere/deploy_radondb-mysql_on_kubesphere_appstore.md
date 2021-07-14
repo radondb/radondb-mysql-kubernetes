@@ -146,7 +146,7 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 | `replicaCount`                               | Pod 数目                                                 | `3`                                     |
 | `busybox.image`                              | `busybox` 镜像库地址                                       | `busybox`                               |
 | `busybox.tag`                                | `busybox` 镜像标签                                        | `1.32`                                   |
-| `mysql.image`                                | `mysql` 镜像库地址                                         | `xenondb/percona`                     |
+| `mysql.image`                                | `mysql` 镜像库地址                                         | `radondb/percona`                     |
 | `mysql.tag`                                  | `mysql` 镜像标签                                          | `5.7.34`                               |
 | `mysql.allowEmptyRootPassword`               | 如果为 `true`，允许 root 账号密码为空                       | `true`                                  |
 | `mysql.mysqlRootPassword`                    | `root` 用户密码                                          |                                          |
@@ -169,7 +169,7 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 | `mysql.readinessProbe.failureThreshold`      | 就绪探测失败的重试次数，重试一定次数后将认为容器未就绪              | 3                                      |
 | `mysql.extraEnvVars`                         | 其他作为字符串传递给 `tpl` 函数的环境变量                       |                                         |
 | `mysql.resources`                            | `MySQL` 的资源请求/限制                                      | 内存: `256Mi`, CPU: `100m`              |
-| `xenon.image`                                | `xenon` 镜像库地址                                          | `xenondb/xenon`                       |
+| `xenon.image`                                | `xenon` 镜像库地址                                          | `radondb/xenon`                       |
 | `xenon.tag`                                  | `xenon` 镜像标签                                            | `1.1.5-alpha`                          |
 | `xenon.args`                                 | 要传递到 xenon 容器的其他参数                                 | `[]`                                   |
 | `xenon.extraEnvVars`                         | 其他作为字符串传递给 `tpl` 函数的环境变量                        |                                        |
