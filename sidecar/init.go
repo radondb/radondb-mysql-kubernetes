@@ -17,8 +17,10 @@ limitations under the License.
 package sidecar
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/user"
@@ -36,14 +38,81 @@ func NewInitCommand(cfg *Config) *cobra.Command {
 		Use:   "init",
 		Short: "do some initialization operations.",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := runInitCommand(cfg); err != nil {
-				log.Error(err, "init command failed")
-				os.Exit(1)
+			if err := runCloneAndInit(cfg); err != nil {
+				log.Info("InitCommand", "clone error", err)
+				if err2 := runInitCommand(cfg); err2 != nil {
+					log.Error(err, "init command failed")
+					os.Exit(1)
+				}
 			}
+
 		},
 	}
 
 	return cmd
+}
+
+func CheckServiceExist(cfg *Config, service string) bool {
+	serviceURl := fmt.Sprintf("http://%s-%s:%v%s", cfg.ClusterName, service, utils.XBackupPort, "/health")
+	req, err := http.NewRequest("GET", serviceURl, nil)
+	if err != nil {
+		log.Info("failed to check available service", "service", serviceURl, "error", err)
+		return false
+	}
+
+	client := &http.Client{}
+	client.Transport = transportWithTimeout(serverConnectTimeout)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Info("service was not available", "service", serviceURl, "error", err)
+		return false
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != 200 {
+		log.Info("service not available", "service", serviceURl, "HTTP status code", resp.StatusCode)
+		return false
+	}
+
+	return true
+}
+
+// clone from leader or follower
+func runCloneAndInit(cfg *Config) error {
+	//check leader is exist?
+	serviceURL := ""
+	if len(serviceURL) == 0 && CheckServiceExist(cfg, "leader") {
+		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "leader", utils.XBackupPort)
+	}
+	//check follower is exists?
+	if len(serviceURL) == 0 && CheckServiceExist(cfg, "follower") {
+		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "follower", utils.XBackupPort)
+	}
+	if len(serviceURL) != 0 {
+		//1. backup
+		Args := fmt.Sprintf("mkdir -p /backup/initbackup;curl --user sys_backups:sys_backups %s/download|xbstream -x -C /backup/initbackup; exit ${PIPESTATUS[0]}",
+			serviceURL)
+		cmd := exec.Command("/bin/bash", "-c", "--", Args)
+		log.Info("runCloneAndInit", "cmd", Args)
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to disable the run restore: %s", err)
+		}
+		// //2. restore
+		// cmd = exec.Command("sh", "-c", "/restore.sh")
+		// newEnv := append(os.Environ(), []string{"RESTORE_FROM=initbackup", "RESTORE_FROM_NFS=fake"}...)
+		// cmd.Env = newEnv
+		// cmd.Stderr = os.Stderr
+		// if err := cmd.Run(); err != nil {
+		// 	return fmt.Errorf("failed to disable the run restore: %s", err)
+		// }
+		cfg.XRestoreFrom = "initbackup"
+		os.Setenv("RESTORE_FROM", "initbackup")
+		os.Setenv("RESTORE_FROM_NFS", "fake")
+		return runInitCommand(cfg)
+	}
+	return errors.New("Not exist leader or follower")
 }
 
 // runInitCommand do some initialization operations.
