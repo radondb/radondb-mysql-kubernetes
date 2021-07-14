@@ -5,7 +5,7 @@ if [ -z "$RESTORE_FROM" ]; then
 	exit 0
 fi
 if [ -n "$RESTORE_FROM_NFS" ]; then
-   if [ ! -d "/var/lib/mysql"] ; then
+   if [ ! -d "/var/lib/mysql" ]; then
         echo "is not exist the var lib mysql"
         mkdir /var/lib/mysql
         chown -R mysql.mysql /var/lib/mysql
@@ -19,7 +19,7 @@ if [ -n "$RESTORE_FROM_NFS" ]; then
     chown -R mysql.mysql /var/lib/mysql
     exit $exit_code
 fi
-if [ -z "$S3_ENDPOINT" ] || [ -z "$S3_ACCESSKEY"] || [ -z "$S3_SECRETKEY"] || [ -z "$S3_BUCKET"] ; then
+if [ -z "$S3_ENDPOINT" ] || [ -z "$S3_ACCESSKEY" ] || [ -z "$S3_SECRETKEY" ] || [ -z "$S3_BUCKET" ] ; then
 	echo "nothing to do"
 	exit 0
 fi
