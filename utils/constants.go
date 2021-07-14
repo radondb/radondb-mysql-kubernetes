@@ -44,8 +44,10 @@ const (
 	ContainerAuditLogName = "auditlog"
 	ContainerBackupName   = "backup"
 
+	// BackupPort
 	XBackupPortName = "xtrabackup"
 	XBackupPort     = 8082
+
 	// MySQL port.
 	MysqlPortName = "mysql"
 	MysqlPort     = 3306
