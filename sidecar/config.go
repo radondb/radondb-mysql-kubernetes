@@ -322,8 +322,21 @@ done
 i=0
 while [ $i -lt %d ]; do
 	if [ $i -ne %d ]; then
-		curl -i -X POST -d '{"address": "%s-'$i'.%s.%s:%d"}' -u root:%s http://%s:%d/v1/cluster/add
-		curl -i -X POST -d '{"address": "%s:%d"}' -u root:%s http://%s-$i.%s.%s:%d/v1/cluster/add
+		while true; do
+			res=$(curl -i -X POST -d '{"address": "%s-'$i'.%s.%s:%d"}' -u root:%s http://%s:%d/v1/cluster/add)
+			code=$(echo $res|grep "HTTP"|awk '{print $2}')
+			if [ "$code" -eq "200" ]; then
+				break
+			fi
+		done
+
+		while true; do
+			res=$(curl -i -X POST -d '{"address": "%s:%d"}' -u root:%s http://%s-$i.%s.%s:%d/v1/cluster/add)
+			code=$(echo $res|grep "HTTP"|awk '{print $2}')
+			if [ "$code" -eq "200" ]; then
+				break
+			fi
+		done
 	fi
 	i=$((i+1))
 done
@@ -333,6 +346,42 @@ done
 	}
 
 	return utils.StringToBytes(str), nil
+}
+
+func (cfg *Config) buildPreStop() []byte {
+	host := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
+
+	str := fmt.Sprintf(`#!/bin/sh
+while true; do
+	info=$(curl -i -X GET -u root:%s http://%s:%d/v1/xenon/ping)
+	code=$(echo $info|grep "HTTP"|awk '{print $2}')
+	if [ "$code" -eq "200" ]; then
+		break
+	fi
+done
+
+curl -i -X PUT -u root:%s http://%s:%d/v1/raft/disable
+for line in $(curl -X GET -u root:%s http://%s:%d/v1/raft/status | jq -r .nodes[] | cut -d : -f 1)
+do
+	if [ "$line" != "%s" ]; then
+		for i in $(seq 12); do
+			info=$(curl -i -X POST -d '{"address": "%s:%d"}' -u root:%s http://$line:%d/v1/cluster/remove)
+			code=$(echo $info|grep "HTTP"|awk '{print $2}')
+			if [ "$code" -eq "200" ]; then
+				break
+			fi
+			if [ $i -eq 12 ]; then
+				echo "remove node failed"
+				break
+			fi
+			sleep 5
+		done
+	fi
+done
+`, cfg.RootPassword, host, utils.XenonPeerPort, cfg.RootPassword, host, utils.XenonPeerPort, cfg.RootPassword,
+		host, utils.XenonPeerPort, host, host, utils.XenonPort, cfg.RootPassword, utils.XenonPeerPort)
+
+	return utils.StringToBytes(str)
 }
 
 // buildLeaderStart build the leader-start.sh.
