@@ -19,6 +19,7 @@ package sidecar
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/blang/semver"
 	"github.com/go-ini/ini"
@@ -77,6 +78,28 @@ type Config struct {
 
 	// Whether the MySQL data exists.
 	existMySQLData bool
+	//for mysql backup
+	// backup user and password for http endpoint
+	ClusterName    string
+	BackupUser     string
+	BackupPassword string
+	// XbstreamExtraArgs is a list of extra command line arguments to pass to xbstream.
+	XbstreamExtraArgs []string
+
+	// XtrabackupExtraArgs is a list of extra command line arguments to pass to xtrabackup.
+	XtrabackupExtraArgs []string
+
+	// XtrabackupPrepareExtraArgs is a list of extra command line arguments to pass to xtrabackup
+	// during --prepare.
+	XtrabackupPrepareExtraArgs []string
+
+	// XtrabackupTargetDir is a backup destination directory for xtrabackup.
+	XtrabackupTargetDir string
+	XCloudS3EndPoint    string
+	XCloudS3AccessKey   string
+	XCloudS3SecretKey   string
+	XCloudS3Bucket      string
+	XRestoreFrom        string
 }
 
 // NewConfig returns a pointer to Config.
@@ -139,8 +162,57 @@ func NewConfig() *Config {
 		AdmitDefeatHearbeatCount: int32(admitDefeatHearbeatCount),
 		ElectionTimeout:          int32(electionTimeout),
 
-		existMySQLData: existMySQLData,
+		existMySQLData:             existMySQLData,
+		ClusterName:                getEnvValue("SERVICE_NAME"),
+		BackupUser:                 "sys_backups", //getEnvValue("BACKUP_USER"),
+		BackupPassword:             "sys_backups", //getEnvValue("BACKUP_PASSWORD"),
+		XbstreamExtraArgs:          strings.Fields(getEnvValue("XBSTREAM_EXTRA_ARGS")),
+		XtrabackupExtraArgs:        strings.Fields(getEnvValue("XTRABACKUP_EXTRA_ARGS")),
+		XtrabackupPrepareExtraArgs: strings.Fields(getEnvValue("XTRABACKUP_PREPARE_EXTRA_ARGS")),
+		XtrabackupTargetDir:        getEnvValue("XTRABACKUP_TARGET_DIR"),
+		//TODO
+		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
+		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
+		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
+		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
+		XRestoreFrom:      getEnvValue("RESTORE_FROM"),
 	}
+}
+func (cfg *Config) XtrabackupArgs() []string {
+	// xtrabackup --backup <args> --target-dir=<backup-dir> <extra-args>
+	user := "root"
+	if len(cfg.ReplicationUser) != 0 {
+		user = cfg.ReplicationUser
+	}
+
+	tmpdir := "/root/backup/"
+	if len(cfg.XtrabackupTargetDir) != 0 {
+		tmpdir = cfg.XtrabackupTargetDir
+	}
+	xtrabackupArgs := []string{
+		"--backup",
+		"--stream=xbstream",
+		"--host=127.0.0.1",
+		fmt.Sprintf("--user=%s", user),
+		fmt.Sprintf("--target-dir=%s", tmpdir),
+	}
+
+	return append(xtrabackupArgs, cfg.XtrabackupExtraArgs...)
+}
+
+func (cfg *Config) XCloudArgs() []string {
+	xcloudArgs := []string{
+		"put",
+		"--storage=S3",
+		fmt.Sprintf("--s3-endpoint=%s", cfg.XCloudS3EndPoint),
+		fmt.Sprintf("--s3-access-key=%s", cfg.XCloudS3AccessKey),
+		fmt.Sprintf("--s3-secret-key=%s", cfg.XCloudS3SecretKey),
+		fmt.Sprintf("--s3-bucket=%s", cfg.XCloudS3Bucket),
+		"--parallel=10",
+		utils.BuildBackupName(),
+		"--insecure",
+	}
+	return xcloudArgs
 }
 
 // buildExtraConfig build a ini file for mysql.

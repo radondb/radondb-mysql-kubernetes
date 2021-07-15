@@ -56,7 +56,9 @@ var (
 	xenonPath = utils.XenonVolumeMountPath
 
 	// initFilePath is the init files path for mysql.
-	initFilePath = utils.InitFileVolumeMountPath
+	initFilePath      = utils.InitFileVolumeMountPath
+	xtrabackupCommand = "xtrabackup"
+	xcloudCommand     = "xbcloud"
 )
 
 // copyFile the src file to dst.

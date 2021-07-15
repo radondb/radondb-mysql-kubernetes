@@ -52,6 +52,7 @@ func (c *initSidecar) getCommand() []string {
 // getEnvVars get the container env.
 func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 	sctName := c.GetNameForResource(utils.Secret)
+	sctNamebackup := c.Spec.BackupSecretName
 	envs := []corev1.EnvVar{
 		{
 			Name: "POD_HOSTNAME",
@@ -90,6 +91,16 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Name:  "MYSQL_VERSION",
 			Value: c.GetMySQLVersion(),
 		},
+		{
+			Name:  "RESTORE_FROM",
+			Value: c.Spec.RestoreFrom,
+		},
+
+		getEnvVarFromSecret(sctNamebackup, "S3_ENDPOINT", "s3-endpoint", false),
+		getEnvVarFromSecret(sctNamebackup, "S3_ACCESSKEY", "s3-access-key", true),
+		getEnvVarFromSecret(sctNamebackup, "S3_SECRETKEY", "s3-secret-key", true),
+		getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
+
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
 		getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true),
 		getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true),
@@ -100,6 +111,15 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 		getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
 		getEnvVarFromSecret(sctName, "OPERATOR_USER", "operator-user", true),
 		getEnvVarFromSecret(sctName, "OPERATOR_PASSWORD", "operator-password", true),
+	}
+
+	if len(c.Spec.BackupSecretName) != 0 {
+		envs = append(envs,
+			getEnvVarFromSecret(sctNamebackup, "S3_ENDPOINT", "s3-endpoint", false),
+			getEnvVarFromSecret(sctNamebackup, "S3_ACCESSKEY", "s3-access-key", true),
+			getEnvVarFromSecret(sctNamebackup, "S3_SECRETKEY", "s3-secret-key", true),
+			getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
+		)
 	}
 
 	if c.Spec.MysqlOpts.InitTokuDB {

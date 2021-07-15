@@ -161,7 +161,27 @@ func runInitCommand(cfg *Config) error {
 	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
 	}
+	//add the init sql
+	if len(cfg.XRestoreFrom) != 0 {
+		cmd := exec.Command("sh", "-c", "/restore.sh")
+		cmd.Stderr = os.Stderr
+		if err = cmd.Run(); err != nil {
+			return fmt.Errorf("failed to disable the run restore: %s", err)
+		}
+	}
 
 	log.Info("init command success")
 	return nil
+}
+
+/*start the backup http server*/
+func RunHttpServer(cfg *Config, stop <-chan struct{}) error {
+	srv := newServer(cfg, stop)
+	return srv.ListenAndServe()
+}
+
+/*request a backup command*/
+func RunRequestBackup(cfg *Config, host string) error {
+	_, err := requestABackup(cfg, host, serverBackupEndpoint)
+	return err
 }

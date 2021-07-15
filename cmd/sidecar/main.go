@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -51,10 +52,61 @@ func main() {
 	logf.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	cfg := sidecar.NewConfig()
-
+	stop := make(chan struct{})
 	initCmd := sidecar.NewInitCommand(cfg)
 	cmd.AddCommand(initCmd)
+	takeBackupCmd := &cobra.Command{
+		Use:   "backup",
+		Short: "Take a backup from node and push it to rclone path.",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return fmt.Errorf("require one arguments. source host and destination bucket")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			//TODO: make backup cmd
+			err := sidecar.RunTakeBackupCommand(cfg, args[0])
+			if err != nil {
+				log.Error(err, "take backup command failed")
+				os.Exit(1)
 
+			}
+		},
+	}
+	cmd.AddCommand(takeBackupCmd)
+	httpCmd := &cobra.Command{
+		Use:   "http",
+		Short: "start http server",
+
+		Run: func(cmd *cobra.Command, args []string) {
+			//TODO: make backup cmd
+
+			if err := sidecar.RunHttpServer(cfg, stop); err != nil {
+				log.Error(err, "run command failed")
+				os.Exit(1)
+			}
+		},
+	}
+	cmd.AddCommand(httpCmd)
+	reqBackupCmd := &cobra.Command{
+		Use:   "request_a_backup",
+		Short: "start request a backup",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return fmt.Errorf("require one arguments. ")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			//TODO request a backup
+			if err := sidecar.RunRequestBackup(cfg, args[0]); err != nil {
+				log.Error(err, "run command failed")
+				os.Exit(1)
+			}
+		},
+	}
+	cmd.AddCommand(reqBackupCmd)
 	if err := cmd.Execute(); err != nil {
 		log.Error(err, "failed to execute command", "cmd", cmd)
 		os.Exit(1)
