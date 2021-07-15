@@ -125,6 +125,13 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to write post-start.sh: %s", err)
 	}
 
+	// build pre-stop.sh.
+	bashPreStopPath := path.Join(scriptsPath, "pre-stop.sh")
+	bashPreStop := cfg.buildPreStop()
+	if err = ioutil.WriteFile(bashPreStopPath, bashPreStop, os.FileMode(0755)); err != nil {
+		return fmt.Errorf("failed to write pre-stop.sh: %s", err)
+	}
+
 	// build leader-start.sh.
 	bashLeaderStart := cfg.buildLeaderStart()
 	leaderStartPath := path.Join(scriptsPath, "leader-start.sh")

@@ -21,7 +21,7 @@ FROM alpine:3.13
 
 RUN set -ex \
     && addgroup -g 1001 mysql && adduser -u 1001 -g 1001 -S mysql \
-    && apk add --no-cache curl bash \
+    && apk add --no-cache curl bash jq \
     && mkdir -p /etc/xenon /var/lib/xenon /lib64 \
     && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 \
     && echo "/etc/xenon/xenon.json" > /config.path \

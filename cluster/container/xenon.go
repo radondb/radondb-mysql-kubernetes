@@ -59,6 +59,11 @@ func (c *xenon) getLifecycle() *corev1.Lifecycle {
 				Command: []string{"sh", "-c", "/scripts/post-start.sh"},
 			},
 		},
+		PreStop: &corev1.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{"sh", "-c", "/scripts/pre-stop.sh"},
+			},
+		},
 	}
 }
 
