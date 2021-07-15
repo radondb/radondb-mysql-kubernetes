@@ -1,0 +1,9 @@
+apiVersion: mysql.radondb.com/v1alpha1
+kind: Backup
+metadata:
+  name: backup-sample1
+spec:
+  # Add fields here
+  image: acekingke/sidecar:0.1
+  hostname: sample-mysql-0
+  clustname: sample

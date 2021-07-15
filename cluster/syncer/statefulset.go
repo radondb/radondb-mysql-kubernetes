@@ -403,7 +403,8 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 
 	mysql := container.EnsureContainer(utils.ContainerMysqlName, s.Cluster)
 	xenon := container.EnsureContainer(utils.ContainerXenonName, s.Cluster)
-	containers := []corev1.Container{mysql, xenon}
+	backup := container.EnsureContainer(utils.ContainerBackupName, s.Cluster)
+	containers := []corev1.Container{mysql, xenon, backup}
 	if s.Spec.MetricsOpts.Enabled {
 		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, s.Cluster))
 	}

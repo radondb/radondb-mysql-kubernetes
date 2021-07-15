@@ -15,6 +15,7 @@ COPY cmd/manager/main.go cmd/manager/main.go
 COPY api/ api/
 COPY cluster/ cluster/
 COPY controllers/ controllers/
+COPY backup/ backup/
 COPY internal/ internal/
 COPY utils/ utils/
 

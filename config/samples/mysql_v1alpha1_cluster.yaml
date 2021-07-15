@@ -5,7 +5,8 @@ metadata:
 spec:
   replicas: 3
   mysqlVersion: "5.7"
-
+  backupSecretName: sample-backup-secret
+  restoreFrom: "backup_20217157"
   mysqlOpts:
     rootPassword: ""
     rootHost: localhost
@@ -78,4 +79,4 @@ spec:
     accessModes:
     - ReadWriteOnce
     #storageClass: ""
-    size: 10Gi
+    size: 20Gi
