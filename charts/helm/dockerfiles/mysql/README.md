@@ -1,8 +1,8 @@
 # Introduction
 
-The [MySQL](https://hub.docker.com/repository/docker/xenondb/percona) image has been pushed into docker hub. The available versions are:
+The [MySQL](https://hub.docker.com/repository/docker/radondb/percona) image has been pushed into docker hub. The available versions are:
 
-    xenondb/percona (tag: 5.7.34)
+    radondb/percona (tag: 5.7.34)
 
 Images are updated when new releases are published. 
 

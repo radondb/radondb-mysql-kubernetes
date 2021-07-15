@@ -14,9 +14,9 @@ Contents
 
 # 简介
 
-[Xenon](https://hub.docker.com/repository/docker/xenondb/xenon) 镜像已经发布在 docker hub，当前可用版本：
+[Xenon](https://hub.docker.com/repository/docker/radondb/xenon) 镜像已经发布在 docker hub，当前可用版本：
 
-    xenondb/xenon (tag: 1.1.5-alpha)
+    radondb/xenon (tag: 1.1.5-alpha)
 
 发布新版本时会在此更新。
 
