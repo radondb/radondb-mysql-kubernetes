@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/presslabs/controller-util/syncer"
-	batch "k8s.io/api/batch/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,20 +29,19 @@ import (
 
 	v1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/backup"
-	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
 var log = logf.Log.WithName("backup.syncer.job")
 
 //TODO: sync job
 type jobSyncer struct {
-	job    *batch.Job
+	job    *batchv1.Job
 	backup *backup.Backup
 }
 
 // NewJobSyncer returns a syncer for backup jobs
 func NewJobSyncer(c client.Client, s *runtime.Scheme, backup *backup.Backup) syncer.Interface {
-	obj := &batch.Job{
+	obj := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      backup.GetNameForJob(),
 			Namespace: backup.Namespace,
@@ -56,6 +55,7 @@ func NewJobSyncer(c client.Client, s *runtime.Scheme, backup *backup.Backup) syn
 
 	return syncer.NewObjectSyncer("Job", backup.Unwrap(), obj, c, sync.SyncFn)
 }
+
 func (s *jobSyncer) SyncFn() error {
 	if s.backup.Status.Completed {
 		log.V(1).Info("backup already completed", "backup", s.backup)
@@ -76,9 +76,10 @@ func (s *jobSyncer) SyncFn() error {
 	s.job.Spec.Template.Spec = s.ensurePodSpec(s.job.Spec.Template.Spec)
 	return nil
 }
-func (s *jobSyncer) updateStatus(job *batch.Job) {
+
+func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 	// check for completion condition
-	if cond := jobCondition(batch.JobComplete, job); cond != nil {
+	if cond := jobCondition(batchv1.JobComplete, job); cond != nil {
 		s.backup.UpdateStatusCondition(v1alpha1.BackupComplete, cond.Status, cond.Reason, cond.Message)
 
 		if cond.Status == corev1.ConditionTrue {
@@ -87,7 +88,7 @@ func (s *jobSyncer) updateStatus(job *batch.Job) {
 	}
 
 	// check for failed condition
-	if cond := jobCondition(batch.JobFailed, job); cond != nil {
+	if cond := jobCondition(batchv1.JobFailed, job); cond != nil {
 		s.backup.UpdateStatusCondition(v1alpha1.BackupFailed, cond.Status, cond.Reason, cond.Message)
 
 		if cond.Status == corev1.ConditionTrue {
@@ -96,7 +97,7 @@ func (s *jobSyncer) updateStatus(job *batch.Job) {
 	}
 }
 
-func jobCondition(condType batch.JobConditionType, job *batch.Job) *batch.JobCondition {
+func jobCondition(condType batchv1.JobConditionType, job *batchv1.Job) *batchv1.JobCondition {
 	for _, c := range job.Status.Conditions {
 		if c.Type == condType {
 			return &c
@@ -105,19 +106,16 @@ func jobCondition(condType batch.JobConditionType, job *batch.Job) *batch.JobCon
 
 	return nil
 }
+
 func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 	if len(in.Containers) == 0 {
 		in.Containers = make([]corev1.Container, 1)
 	}
 
 	in.RestartPolicy = corev1.RestartPolicyNever
-	// in.ImagePullSecrets = []corev1.LocalObjectReference{
-	// 	{Name: s.opt.ImagePullSecretName},
-	// }
 
 	in.Containers[0].Name = "backup"
-	in.Containers[0].Image = utils.SideCarImage
-	//in.Containers[0].ImagePullPolicy = s.opt.ImagePullPolicy
+	in.Containers[0].Image = s.backup.Spec.Image
 	in.Containers[0].Args = []string{
 		"request_a_backup",
 		s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName),

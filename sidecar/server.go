@@ -77,7 +77,6 @@ func (s *server) healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
-
 	w.Header().Set("Connection", "keep-alive")
 	if !s.isAuthenticated(r) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
@@ -102,8 +101,9 @@ func maxClients(h http.Handler, n int) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sema <- struct{}{}
-		defer func() { <-sema }()
-
+		defer func() {
+			<-sema
+		}()
 		h.ServeHTTP(w, r)
 	})
 }

@@ -96,11 +96,6 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Value: c.Spec.RestoreFrom,
 		},
 
-		getEnvVarFromSecret(sctNamebackup, "S3_ENDPOINT", "s3-endpoint", false),
-		getEnvVarFromSecret(sctNamebackup, "S3_ACCESSKEY", "s3-access-key", true),
-		getEnvVarFromSecret(sctNamebackup, "S3_SECRETKEY", "s3-secret-key", true),
-		getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
-
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
 		getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true),
 		getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true),

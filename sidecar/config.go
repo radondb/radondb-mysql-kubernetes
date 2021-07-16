@@ -18,8 +18,10 @@ package sidecar
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/blang/semver"
 	"github.com/go-ini/ini"
@@ -80,9 +82,14 @@ type Config struct {
 	existMySQLData bool
 	//for mysql backup
 	// backup user and password for http endpoint
-	ClusterName    string
-	BackupUser     string
+	ClusterName string
+
+	//Backup user name to http Server
+	BackupUser string
+
+	//Backup Password to htpp Server
 	BackupPassword string
+
 	// XbstreamExtraArgs is a list of extra command line arguments to pass to xbstream.
 	XbstreamExtraArgs []string
 
@@ -95,11 +102,21 @@ type Config struct {
 
 	// XtrabackupTargetDir is a backup destination directory for xtrabackup.
 	XtrabackupTargetDir string
-	XCloudS3EndPoint    string
-	XCloudS3AccessKey   string
-	XCloudS3SecretKey   string
-	XCloudS3Bucket      string
-	XRestoreFrom        string
+
+	//S3 endpoint domain name
+	XCloudS3EndPoint string
+
+	//S3 access key
+	XCloudS3AccessKey string
+
+	//S3 secrete key
+	XCloudS3SecretKey string
+
+	//S3 Bucket names
+	XCloudS3Bucket string
+
+	// directory in S3 bucket for cluster restore from
+	XRestoreFrom string
 }
 
 // NewConfig returns a pointer to Config.
@@ -170,7 +187,7 @@ func NewConfig() *Config {
 		XtrabackupExtraArgs:        strings.Fields(getEnvValue("XTRABACKUP_EXTRA_ARGS")),
 		XtrabackupPrepareExtraArgs: strings.Fields(getEnvValue("XTRABACKUP_PREPARE_EXTRA_ARGS")),
 		XtrabackupTargetDir:        getEnvValue("XTRABACKUP_TARGET_DIR"),
-		//TODO
+
 		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
 		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
 		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
@@ -178,6 +195,8 @@ func NewConfig() *Config {
 		XRestoreFrom:      getEnvValue("RESTORE_FROM"),
 	}
 }
+
+//build Xtrabackup arguments
 func (cfg *Config) XtrabackupArgs() []string {
 	// xtrabackup --backup <args> --target-dir=<backup-dir> <extra-args>
 	user := "root"
@@ -200,6 +219,7 @@ func (cfg *Config) XtrabackupArgs() []string {
 	return append(xtrabackupArgs, cfg.XtrabackupExtraArgs...)
 }
 
+//Build xbcloud arguments
 func (cfg *Config) XCloudArgs() []string {
 	xcloudArgs := []string{
 		"put",
@@ -476,4 +496,66 @@ curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/ser
 -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
 `, cfg.NameSpace)
 	return utils.StringToBytes(str)
+}
+
+// build S3 restore shell script
+func (cfg *Config) buildS3Restore(path string) error {
+	if len(cfg.XRestoreFrom) == 0 {
+		return fmt.Errorf("Do not have restore from")
+	}
+	if len(cfg.XCloudS3EndPoint) == 0 ||
+		len(cfg.XCloudS3AccessKey) == 0 ||
+		len(cfg.XCloudS3SecretKey) == 0 ||
+		len(cfg.XCloudS3Bucket) == 0 {
+		return fmt.Errorf("Do not have S3 information")
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("create restore.sh fail : %s", err)
+	}
+	defer func() {
+		f.Close()
+	}()
+
+	restoresh := `#!/bin/sh
+if [ ! -d {{.DataDir}} ] ; then
+    echo "is not exist the var lib mysql"
+    mkdir {{.DataDir}} 
+    chown -R mysql.mysql {{.DataDir}} 
+fi
+mkdir /root/backup
+xbcloud get --storage=S3 \
+--s3-endpoint="{{.XCloudS3EndPoint}}" \
+--s3-access-key="{{.XCloudS3AccessKey}}" \
+--s3-secret-key="{{.XCloudS3SecretKey}}" \
+--s3-bucket="{{.XCloudS3Bucket}}" \
+--parallel=10 {{.XRestoreFrom}} \
+--insecure |xbstream -xv -C /root/backup
+# prepare redolog
+xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --apply-log-only --target-dir=/root/backup
+# prepare data
+xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --target-dir=/root/backup
+chown -R mysql.mysql /root/backup
+xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-back --target-dir=/root/backup
+chown -R mysql.mysql {{.DataDir}}
+rm -rf /root/backup	
+`
+	template_restore := template.New("restore.sh")
+	template_restore, err = template_restore.Parse(restoresh)
+	if err != nil {
+		return err
+	}
+	err2 := template_restore.Execute(f, struct {
+		Config
+		DataDir        string
+		MyCnfMountPath string
+	}{
+		*cfg,
+		utils.DataVolumeMountPath,
+		utils.MyCnfMountPath,
+	})
+	if err2 != nil {
+		return err2
+	}
+	return nil
 }

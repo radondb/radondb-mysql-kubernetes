@@ -91,12 +91,6 @@ rules:
 - apiGroups:
   - mysql.radondb.com
   resources:
-  - backups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - mysql.radondb.com
-  resources:
   - backups/status
   verbs:
   - get
