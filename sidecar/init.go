@@ -161,9 +161,17 @@ func runInitCommand(cfg *Config) error {
 	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
 	}
-	//add the init sql
+	// run the restore
 	if len(cfg.XRestoreFrom) != 0 {
-		cmd := exec.Command("sh", "-c", "/restore.sh")
+		var restoreName string = "/restore.sh"
+		err_f := cfg.buildS3Restore(restoreName)
+		if err_f != nil {
+			return fmt.Errorf("build restore.sh fail : %s", err_f)
+		}
+		if err = os.Chmod(restoreName, os.FileMode(0755)); err != nil {
+			return fmt.Errorf("failed to chmod scripts: %s", err)
+		}
+		cmd := exec.Command("sh", "-c", restoreName)
 		cmd.Stderr = os.Stderr
 		if err = cmd.Run(); err != nil {
 			return fmt.Errorf("failed to disable the run restore: %s", err)
@@ -180,7 +188,7 @@ func RunHttpServer(cfg *Config, stop <-chan struct{}) error {
 	return srv.ListenAndServe()
 }
 
-/*request a backup command*/
+// request a backup command
 func RunRequestBackup(cfg *Config, host string) error {
 	_, err := requestABackup(cfg, host, serverBackupEndpoint)
 	return err

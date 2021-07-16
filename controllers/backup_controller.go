@@ -22,7 +22,6 @@ import (
 	"reflect"
 
 	"github.com/presslabs/controller-util/syncer"
-	backupSyncer "github.com/radondb/radondb-mysql-kubernetes/backup/syncer"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -33,6 +32,7 @@ import (
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/backup"
+	backupSyncer "github.com/radondb/radondb-mysql-kubernetes/backup/syncer"
 )
 
 // BackupReconciler reconciles a Backup object
@@ -40,14 +40,11 @@ type BackupReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
-	//Opt      *options.Options
 }
 
 //+kubebuilder:rbac:groups=mysql.radondb.com,resources=backups,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update
 //+kubebuilder:rbac:groups=mysql.radondb.com,resources=backups/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=mysql.radondb.com,resources=backups/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -78,13 +75,11 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	// save the backup for later check for diff
 	savedBackup := backup.Unwrap().DeepCopy()
 
-	syncers := []syncer.Interface{
-		backupSyncer.NewJobSyncer(r.Client, r.Scheme, backup),
-	}
-
-	if err = r.sync(context.TODO(), syncers); err != nil {
+	jobSyncer := backupSyncer.NewJobSyncer(r.Client, r.Scheme, backup)
+	if err := syncer.Sync(ctx, jobSyncer, r.Recorder); err != nil {
 		return reconcile.Result{}, err
 	}
+
 	if err = r.updateBackup(savedBackup, backup); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -117,6 +112,7 @@ func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup 
 	}
 	return nil
 }
+
 func (r *BackupReconciler) sync(ctx context.Context, syncers []syncer.Interface) error {
 	for _, s := range syncers {
 		if err := syncer.Sync(ctx, s, r.Recorder); err != nil {

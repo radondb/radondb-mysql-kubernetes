@@ -5,8 +5,14 @@ metadata:
 spec:
   replicas: 3
   mysqlVersion: "5.7"
-  backupSecretName: sample-backup-secret
-  restoreFrom: "backup_20217157"
+  
+  # the backupSecretName specify the secret file name which store S3 information,
+  # if you want S3 backup or restore, please create backup_secret.yaml, uncomment bellow and fill secret name:
+  # backupSecretName: 
+  
+  # if you want create cluster from S3 , uncomment and fill the directory of S3 bucket bellow:
+  # restoreFrom: 
+  
   mysqlOpts:
     rootPassword: ""
     rootHost: localhost

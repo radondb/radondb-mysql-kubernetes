@@ -33,7 +33,8 @@ type BackupSpec struct {
 	// +kubebuilder:default:="acekingke/sidecar:0.1"
 	Image string `json:"image"`
 	// HostName represents the host for which to take backup
-	HostName    string `json:"hostname"`
+	HostName string `json:"hostname"`
+	// Cluster represents the cluster name to backup
 	ClusterName string `json:"clustname"`
 }
 
