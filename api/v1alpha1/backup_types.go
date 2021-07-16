@@ -65,7 +65,6 @@ type BackupCondition struct {
 	Type BackupConditionType `json:"type"`
 	// Status of the condition, one of (\"True\", \"False\", \"Unknown\")
 	Status corev1.ConditionStatus `json:"status"`
-
 	// LastTransitionTime
 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
 	// Reason
