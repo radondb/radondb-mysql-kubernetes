@@ -9,7 +9,7 @@ if [ -z "$S3_ENDPOINT" ] || [ -z "$S3_ACCESSKEY" ] || [ -z "$S3_SECRETKEY" ] || 
 	echo "nothing to do "
     exit 0
 fi
-if [ ! -d "/var/lib/mysql"] ; then
+if [ ! -d "/var/lib/mysql" ] ; then
     echo "is not exist the var lib mysql"
     mkdir /var/lib/mysql
     chown -R mysql.mysql /var/lib/mysql
