@@ -73,9 +73,12 @@ func TestGetXenonLifecycle(t *testing.T) {
 	lifecycle := &corev1.Lifecycle{
 		PostStart: &corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c",
-					"until (xenoncli xenon ping && xenoncli cluster add sample-mysql-0.sample-mysql.default:8801) > /dev/null 2>&1; do sleep 2; done",
-				},
+				Command: []string{"sh", "-c", "/scripts/post-start.sh"},
+			},
+		},
+		PreStop: &corev1.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{"sh", "-c", "/scripts/pre-stop.sh"},
 			},
 		},
 	}
