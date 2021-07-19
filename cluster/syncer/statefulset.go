@@ -133,7 +133,7 @@ func (s *StatefulSetSyncer) Sync(ctx context.Context) (syncer.SyncResult, error)
 }
 
 // createOrUpdate creates or updates the statefulset in the Kubernetes cluster.
-// see https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/controller/controllerutil?utm_source=gopls#CreateOrUpdate
+// see https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/controller/controllerutil?utm_source=gopls#CreateOrUpdate
 func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.OperationResult, error) {
 	var err error
 	if err = s.cli.Get(ctx, client.ObjectKeyFromObject(s.sfs), s.sfs); err != nil {
