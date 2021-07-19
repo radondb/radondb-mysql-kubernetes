@@ -15,6 +15,7 @@
 # vendor/
 
 bin/
+testbin/
 
 # ide
 .idea
