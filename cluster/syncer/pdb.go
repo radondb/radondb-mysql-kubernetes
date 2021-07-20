@@ -18,39 +18,32 @@ package syncer
 
 import (
 	"github.com/presslabs/controller-util/syncer"
-	rbacv1 "k8s.io/api/rbac/v1"
+	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/radondb/radondb-mysql-kubernetes/cluster"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
-// NewRoleBindingSyncer returns rolebinding syncer.
-func NewRoleBindingSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
-	roleBinding := &rbacv1.RoleBinding{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "rbac.authorization.k8s.io/v1",
-			Kind:       "RoleBinding",
-		},
+// NewPDBSyncer returns podDisruptionBudget syncer.
+func NewPDBSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+	pdb := &policyv1beta1.PodDisruptionBudget{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(utils.RoleBinding),
+			Name:      c.GetNameForResource(utils.PodDisruptionBudget),
 			Namespace: c.Namespace,
-			Labels:    c.GetLabels(),
 		},
 	}
-	return syncer.NewObjectSyncer("RoleBinding", c.Unwrap(), roleBinding, cli, func() error {
-		roleBinding.RoleRef = rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "Role",
-			Name:     c.GetNameForResource(utils.Role),
+
+	return syncer.NewObjectSyncer("PDB", c.Unwrap(), pdb, cli, func() error {
+		if pdb.Spec.MinAvailable != nil {
+			// this mean that pdb is created and should return because spec is imutable
+			return nil
 		}
-		roleBinding.Subjects = []rbacv1.Subject{
-			{
-				Kind: "ServiceAccount",
-				Name: c.GetNameForResource(utils.ServiceAccount),
-			},
-		}
+		ma := intstr.FromString(c.Spec.MinAvailable)
+		pdb.Spec.MinAvailable = &ma
+		pdb.Spec.Selector = metav1.SetAsLabelSelector(c.GetSelectorLabels())
 		return nil
 	})
 }
