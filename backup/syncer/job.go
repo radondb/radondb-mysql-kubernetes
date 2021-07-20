@@ -33,7 +33,6 @@ import (
 
 var log = logf.Log.WithName("backup.syncer.job")
 
-//TODO: sync job
 type jobSyncer struct {
 	job    *batchv1.Job
 	backup *backup.Backup

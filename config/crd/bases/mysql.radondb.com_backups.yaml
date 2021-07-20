@@ -44,9 +44,7 @@ spec:
                 type: string
               image:
                 default: acekingke/sidecar:0.1
-                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                  Important: Run "make" to regenerate code after modifying this file
-                  To specify the image that will be used for sidecar container.'
+                description: To specify the image that will be used for sidecar container.
                 type: string
             required:
             - clustname
@@ -56,9 +54,7 @@ spec:
             description: BackupStatus defines the observed state of Backup
             properties:
               completed:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
+                description: Completed represents the backup has finished
                 type: boolean
               conditions:
                 description: Conditions represents the backup resource conditions

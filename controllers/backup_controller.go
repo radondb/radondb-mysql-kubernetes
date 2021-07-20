@@ -112,12 +112,3 @@ func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup 
 	}
 	return nil
 }
-
-func (r *BackupReconciler) sync(ctx context.Context, syncers []syncer.Interface) error {
-	for _, s := range syncers {
-		if err := syncer.Sync(ctx, s, r.Recorder); err != nil {
-			return err
-		}
-	}
-	return nil
-}

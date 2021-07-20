@@ -47,16 +47,20 @@ func RunTakeBackupCommand(cfg *Config, name string) error {
 		log.Error(err, "fail start xcloud ")
 		return err
 	}
-	//xbcloud may be fail
-	if err := xcloud.Wait(); err != nil {
-		log.Error(err, "failed waiting for xcloud to finish")
-		return err
-	}
-	// xtrabackup fail rarely
-	if err := xtrabackup.Wait(); err != nil {
-		log.Error(err, "failed waiting for xtrabackup to finish")
-		return err
-	}
 
+	// pipe command fail one, whole things fail
+	errorChannel := make(chan error, 2)
+	go func() {
+		errorChannel <- xcloud.Wait()
+	}()
+	go func() {
+		errorChannel <- xtrabackup.Wait()
+	}()
+
+	for i := 0; i < 2; i++ {
+		if err = <-errorChannel; err != nil {
+			return err
+		}
+	}
 	return nil
 }
