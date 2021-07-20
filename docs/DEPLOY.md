@@ -75,10 +75,10 @@ spec:
   backupSecretName: sample-backup-secret
   ...
 ```
-now create backup yaml file mysql_v1_backup.yaml like this:
+now create backup yaml file mysql_v1apha1_backup.yaml like this:
 
 ```yaml
-apiVersion: mysql.radondb.io/v1
+apiVersion: mysql.radondb.com/v1alpha1
 kind: Backup
 metadata:
   name: backup-sample1

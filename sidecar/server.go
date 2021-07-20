@@ -28,9 +28,6 @@ import (
 )
 
 const (
-	backupStatusTrailer  = "X-Backup-Status"
-	backupSuccessful     = "Success"
-	backupFailed         = "Failed"
 	serverPort           = utils.XBackupPort
 	serverProbeEndpoint  = "/health"
 	serverBackupEndpoint = "/xbackup"
@@ -155,22 +152,4 @@ func requestABackup(cfg *Config, host string, endpoint string) (*http.Response, 
 	}
 
 	return resp, nil
-}
-
-func checkBackupTrailers(resp *http.Response) error {
-	if values, ok := resp.Trailer[backupStatusTrailer]; !ok || !stringInSlice(backupSuccessful, values) {
-		// backup is failed, remove from remote
-		return fmt.Errorf("backup failed to be taken: no 'Success' trailer found")
-	}
-
-	return nil
-}
-
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
 }

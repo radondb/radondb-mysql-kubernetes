@@ -28,12 +28,15 @@ import (
 type BackupSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
 	// To specify the image that will be used for sidecar container.
 	// +optional
 	// +kubebuilder:default:="acekingke/sidecar:0.1"
 	Image string `json:"image"`
+
 	// HostName represents the host for which to take backup
 	HostName string `json:"hostname"`
+
 	// Cluster represents the cluster name to backup
 	ClusterName string `json:"clustname"`
 }
@@ -42,6 +45,8 @@ type BackupSpec struct {
 type BackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// Completed represents the backup has finished
 	Completed bool `json:"completed,omitempty"`
 
 	// Conditions represents the backup resource conditions list.
