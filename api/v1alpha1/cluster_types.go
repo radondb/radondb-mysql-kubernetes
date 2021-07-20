@@ -35,6 +35,12 @@ type ClusterSpec struct {
 	// +kubebuilder:default:=3
 	Replicas *int32 `json:"replicas,omitempty"`
 
+	// The number of pods from that set that must still be available after the
+	// eviction, even in the absence of the evicted pod
+	// +optional
+	// +kubebuilder:default:="50%"
+	MinAvailable string `json:"minAvailable,omitempty"`
+
 	// MysqlOpts is the options of MySQL container.
 	// +optional
 	// +kubebuilder:default:={rootPassword: "", rootHost: "127.0.0.1", user: "qc_usr", password: "Qing@123", database: "qingcloud", initTokuDB: true, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}

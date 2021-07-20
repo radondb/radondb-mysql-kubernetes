@@ -248,7 +248,7 @@ func (c *Cluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]corev1.P
 // GetNameForResource returns the name of a resource from above
 func (c *Cluster) GetNameForResource(name utils.ResourceName) string {
 	switch name {
-	case utils.StatefulSet, utils.ConfigMap, utils.HeadlessSVC:
+	case utils.StatefulSet, utils.ConfigMap, utils.HeadlessSVC, utils.PodDisruptionBudget:
 		return fmt.Sprintf("%s-mysql", c.Name)
 	case utils.LeaderService:
 		return fmt.Sprintf("%s-leader", c.Name)

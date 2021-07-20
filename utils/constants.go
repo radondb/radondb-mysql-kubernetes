@@ -110,4 +110,6 @@ const (
 	RoleBinding ResourceName = "rolebinding"
 	// ServiceAccount is the alias of the serviceaccount resource.
 	ServiceAccount ResourceName = "service-account"
+	// PodDisruptionBudget is the name of pod disruption budget for the statefulset.
+	PodDisruptionBudget ResourceName = "pdb"
 )
