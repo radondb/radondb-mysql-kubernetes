@@ -98,6 +98,24 @@ After cluster has started, if you want backup:
 ```shell
  kubectl apply -f config/samples/mysql_v1_backup.yaml
  ```
+## restore cluster from backup copy
+check your s3 bucket, get the directory where your backup to， such as `backup_2021720827`.
+add  it to RestoreFrom in yaml file
+```yaml
+...
+spec:
+  replicas: 3
+  mysqlVersion: "5.7"
+  backupSecretName: sample-backup-secret
+  restoreFrom: "backup_2021720827"
+...
+```
+Then you use:
+```shell
+kubectl apply -f config/samples/mysql_v1alpha1_cluster.yaml     
+```
+could restore a cluster from the `backup_2021720827 ` copy in the S3 bucket. 
+
 
  ## build your own image
  such as :
