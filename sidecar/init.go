@@ -88,7 +88,7 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to save client.conf: %s", err)
 	}
 
-	if err = os.Mkdir(extraConfPath, os.FileMode(0755)); err != nil {
+	if err = os.Mkdir(extraConfPath, os.FileMode(0644)); err != nil {
 		if !os.IsExist(err) {
 			return fmt.Errorf("error mkdir %s: %s", extraConfPath, err)
 		}

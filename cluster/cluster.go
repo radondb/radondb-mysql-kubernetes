@@ -59,6 +59,14 @@ func (c *Cluster) Unwrap() *apiv1alpha1.Cluster {
 	return c.Cluster
 }
 
+func (c *Cluster) Validate() error {
+	if utils.StringInArray(c.Spec.MysqlOpts.User, []string{"root", utils.ReplicationUser, utils.OperatorUser, utils.MetricsUser}) {
+		return fmt.Errorf("spec.mysqlOpts.user cannot be root|%s|%s|%s", utils.ReplicationUser, utils.OperatorUser, utils.MetricsUser)
+	}
+
+	return nil
+}
+
 // GetLabels returns cluster labels
 func (c *Cluster) GetLabels() labels.Set {
 	instance := c.Name
