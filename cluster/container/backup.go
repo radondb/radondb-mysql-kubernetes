@@ -42,7 +42,8 @@ func (c *backupSidecar) getCommand() []string {
 }
 
 func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
-	sctName := c.Spec.BackupSecretName
+	sctNameBakup := c.Spec.BackupSecretName
+	sctName := c.GetNameForResource(utils.Secret)
 	envs := []corev1.EnvVar{
 		{
 			Name:  "NAMESPACE",
@@ -52,13 +53,17 @@ func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
 			Name:  "SERVICE_NAME",
 			Value: c.GetNameForResource(utils.HeadlessSVC),
 		},
+
+		//backup user password for sidecar http server
+		getEnvVarFromSecret(sctName, "BACKUP_USER", "backup-user", true),
+		getEnvVarFromSecret(sctName, "BACKUP_PASSWORD", "backup-password", true),
 	}
-	if len(sctName) != 0 {
+	if len(sctNameBakup) != 0 {
 		envs = append(envs,
-			getEnvVarFromSecret(sctName, "S3_ENDPOINT", "s3-endpoint", false),
-			getEnvVarFromSecret(sctName, "S3_ACCESSKEY", "s3-access-key", true),
-			getEnvVarFromSecret(sctName, "S3_SECRETKEY", "s3-secret-key", true),
-			getEnvVarFromSecret(sctName, "S3_BUCKET", "s3-bucket", true),
+			getEnvVarFromSecret(sctNameBakup, "S3_ENDPOINT", "s3-endpoint", false),
+			getEnvVarFromSecret(sctNameBakup, "S3_ACCESSKEY", "s3-access-key", true),
+			getEnvVarFromSecret(sctNameBakup, "S3_SECRETKEY", "s3-secret-key", true),
+			getEnvVarFromSecret(sctNameBakup, "S3_BUCKET", "s3-bucket", true),
 		)
 	}
 	return envs

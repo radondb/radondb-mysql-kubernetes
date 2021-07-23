@@ -181,8 +181,8 @@ func NewConfig() *Config {
 
 		existMySQLData:             existMySQLData,
 		ClusterName:                getEnvValue("SERVICE_NAME"),
-		BackupUser:                 "sys_backups", //getEnvValue("BACKUP_USER"),
-		BackupPassword:             "sys_backups", //getEnvValue("BACKUP_PASSWORD"),
+		BackupUser:                 getEnvValue("BACKUP_USER"),
+		BackupPassword:             getEnvValue("BACKUP_PASSWORD"),
 		XbstreamExtraArgs:          strings.Fields(getEnvValue("XBSTREAM_EXTRA_ARGS")),
 		XtrabackupExtraArgs:        strings.Fields(getEnvValue("XTRABACKUP_EXTRA_ARGS")),
 		XtrabackupPrepareExtraArgs: strings.Fields(getEnvValue("XTRABACKUP_PREPARE_EXTRA_ARGS")),

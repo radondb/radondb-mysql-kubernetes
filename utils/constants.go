@@ -66,6 +66,9 @@ const (
 	// The MySQL user used for operator to connect to the mysql node for configuration.
 	OperatorUser = "qc_operator"
 
+	//xtrabackup http server user
+	BackupUser = "sys_backup"
+
 	// volumes names.
 	ConfVolumeName     = "conf"
 	ConfMapVolumeName  = "config-map"
