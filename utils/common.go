@@ -16,6 +16,8 @@ limitations under the License.
 
 package utils
 
+import "sort"
+
 // Min returns the smallest int64 that was passed in the arguments.
 func Min(a, b uint64) uint64 {
 	if a < b {
@@ -30,4 +32,11 @@ func Max(a, b uint64) uint64 {
 		return a
 	}
 	return b
+}
+
+// StringInArray check whether the str is in the strArray.
+func StringInArray(str string, strArray []string) bool {
+	sort.Strings(strArray)
+	index := sort.SearchStrings(strArray, str)
+	return index < len(strArray) && strArray[index] == str
 }

@@ -19,13 +19,14 @@ package internal
 import (
 	"database/sql"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
 var (
@@ -118,7 +119,7 @@ func (s *SQLRunner) checkSlaveStatus() (isLagged, isReplicating corev1.Condition
 	lastSQLError := columnValue(scanArgs, cols, "Last_SQL_Error")
 	secondsBehindMaster := columnValue(scanArgs, cols, "Seconds_Behind_Master")
 
-	if stringInArray(slaveIOState, errorConnectionStates) {
+	if utils.StringInArray(slaveIOState, errorConnectionStates) {
 		return isLagged, corev1.ConditionFalse, fmt.Errorf("Slave_IO_State: %s", slaveIOState)
 	}
 
@@ -226,11 +227,4 @@ func columnValue(scanArgs []interface{}, slaveCols []string, colName string) str
 	}
 
 	return string(*scanArgs[columnIndex].(*sql.RawBytes))
-}
-
-// stringInArray check whether the str is in the strArray.
-func stringInArray(str string, strArray []string) bool {
-	sort.Strings(strArray)
-	index := sort.SearchStrings(strArray, str)
-	return index < len(strArray) && strArray[index] == str
 }
