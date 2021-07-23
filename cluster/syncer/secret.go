@@ -57,6 +57,12 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 			return err
 		}
 
+		//xtrabackup http server user and password
+		secret.Data["backup-user"] = []byte(utils.BackupUser)
+		if err := addRandomPassword(secret.Data, "backup-password"); err != nil {
+			return err
+		}
+
 		secret.Data["metrics-user"] = []byte(utils.MetricsUser)
 		if err := addRandomPassword(secret.Data, "metrics-password"); err != nil {
 			return err

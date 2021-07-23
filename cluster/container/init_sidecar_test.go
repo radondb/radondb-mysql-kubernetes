@@ -104,6 +104,10 @@ var (
 			Value: "5.7.33",
 		},
 		{
+			Name:  "RESTORE_FROM",
+			Value: "",
+		},
+		{
 			Name: "MYSQL_ROOT_PASSWORD",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
@@ -219,6 +223,31 @@ var (
 						Name: sctName,
 					},
 					Key:      "operator-password",
+					Optional: &optTrue,
+				},
+			},
+		},
+		{
+			Name: "BACKUP_USER",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "backup-user",
+					Optional: &optTrue,
+				},
+			},
+		},
+		{
+			Name: "BACKUP_PASSWORD",
+
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "backup-password",
 					Optional: &optTrue,
 				},
 			},

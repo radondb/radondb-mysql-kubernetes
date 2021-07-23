@@ -22,6 +22,7 @@ import (
 	"reflect"
 
 	"github.com/presslabs/controller-util/syncer"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -91,6 +92,7 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&apiv1alpha1.Backup{}).
+		Owns(&batchv1.Job{}).
 		Complete(r)
 }
 

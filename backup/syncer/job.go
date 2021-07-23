@@ -112,14 +112,14 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 	}
 
 	in.RestartPolicy = corev1.RestartPolicyNever
-
+	sctName := fmt.Sprintf("%s-secret", s.backup.Spec.ClusterName)
 	in.Containers[0].Name = "backup"
 	in.Containers[0].Image = s.backup.Spec.Image
 	in.Containers[0].Args = []string{
 		"request_a_backup",
 		s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName),
 	}
-
+	var optTrue bool = true
 	in.Containers[0].Env = []corev1.EnvVar{
 		{
 			Name:  "NAMESPACE",
@@ -133,6 +133,33 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 			Name: "HOST_NAME",
 
 			Value: s.backup.Spec.HostName,
+		},
+
+		//backup user  for sidecar http server
+		{
+			Name: "BACKUP_USER",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "backup-user",
+					Optional: &optTrue,
+				},
+			},
+		},
+		//backup user  for sidecar http server
+		{
+			Name: "BACKUP_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "backup-password",
+					Optional: &optTrue,
+				},
+			},
 		},
 	}
 	return in
