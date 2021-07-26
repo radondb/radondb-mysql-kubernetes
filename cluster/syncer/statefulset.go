@@ -169,6 +169,10 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 		return controllerutil.OperationResultNone, err
 	}
 
+	if err := s.updatePVC(ctx); err != nil {
+		return controllerutil.OperationResultNone, err
+	}
+
 	return controllerutil.OperationResultUpdated, nil
 }
 
@@ -397,12 +401,52 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 	}
 }
 
+func (s *StatefulSetSyncer) updatePVC(ctx context.Context) error {
+	pvcs := corev1.PersistentVolumeClaimList{}
+	if err := s.cli.List(ctx,
+		&pvcs,
+		&client.ListOptions{
+			Namespace:     s.sfs.Namespace,
+			LabelSelector: s.GetLabels().AsSelector(),
+		},
+	); err != nil {
+		return err
+	}
+
+	for _, item := range pvcs.Items {
+		if item.DeletionTimestamp != nil {
+			log.Info("pvc is being deleted", "pvc", item.Name, "key", s.Unwrap())
+			continue
+		}
+
+		ordinal, err := utils.GetOrdinal(item.Name)
+		if err != nil {
+			log.Error(err, "pvc deletion error", "key", s.Unwrap())
+			continue
+		}
+
+		if ordinal >= int(*s.Spec.Replicas) {
+			log.Info("cleaning up pvc", "pvc", item.Name, "key", s.Unwrap())
+			if err := s.cli.Delete(ctx, &item); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) error {
 	if pod.ObjectMeta.Labels["controller-revision-hash"] == s.sfs.Status.UpdateRevision {
 		log.Info("pod is already updated", "pod name", pod.Name)
 	} else {
-		if err := s.cli.Delete(ctx, pod); err != nil {
-			return err
+		log.Info("updating pod", "pod", pod.Name, "key", s.Unwrap())
+		if pod.DeletionTimestamp != nil {
+			log.Info("pod is being deleted", "pod", pod.Name, "key", s.Unwrap())
+		} else {
+			if err := s.cli.Delete(ctx, pod); err != nil {
+				return err
+			}
 		}
 	}
 

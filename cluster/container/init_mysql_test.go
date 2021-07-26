@@ -42,7 +42,7 @@ var (
 			},
 			MysqlVersion: "5.7",
 			MysqlOpts: mysqlv1alpha1.MysqlOpts{
-				RootHost:   "127.0.0.1",
+				RootHost:   "localhost",
 				InitTokuDB: false,
 			},
 		},
@@ -78,7 +78,7 @@ var (
 		},
 		{
 			Name:  "MYSQL_ROOT_HOST",
-			Value: "127.0.0.1",
+			Value: "localhost",
 		},
 		{
 			Name:  "MYSQL_INIT_ONLY",

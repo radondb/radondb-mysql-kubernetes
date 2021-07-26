@@ -123,7 +123,7 @@ spec:
                     requests:
                       cpu: 100m
                       memory: 256Mi
-                  rootHost: 127.0.0.1
+                  rootHost: localhost
                   rootPassword: ""
                   user: qc_usr
                 description: MysqlOpts is the options of MySQL container.
@@ -184,7 +184,7 @@ spec:
                         type: object
                     type: object
                   rootHost:
-                    default: 127.0.0.1
+                    default: localhost
                     description: The root user's host.
                     type: string
                   rootPassword:

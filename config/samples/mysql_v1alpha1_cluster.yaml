@@ -8,7 +8,7 @@ spec:
 
   mysqlOpts:
     rootPassword: ""
-    rootHost: "127.0.0.1"
+    rootHost: localhost
     user: qc_usr
     password: Qing@123
     database: qingcloud
