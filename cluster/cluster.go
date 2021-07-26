@@ -64,6 +64,10 @@ func (c *Cluster) Validate() error {
 		return fmt.Errorf("spec.mysqlOpts.user cannot be root|%s|%s|%s", utils.ReplicationUser, utils.OperatorUser, utils.MetricsUser)
 	}
 
+	if c.Spec.MysqlOpts.RootHost == "127.0.0.1" {
+		return fmt.Errorf("spec.mysqlOpts.rootHost cannot be 127.0.0.1")
+	}
+
 	return nil
 }
 

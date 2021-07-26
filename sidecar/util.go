@@ -17,11 +17,8 @@ limitations under the License.
 package sidecar
 
 import (
-	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"strings"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -100,20 +97,6 @@ func getEnvValue(key string) string {
 	}
 
 	return value
-}
-
-func getOrdinal(name string) (int, error) {
-	idx := strings.LastIndexAny(name, "-")
-	if idx == -1 {
-		return -1, fmt.Errorf("failed to extract ordinal from hostname: %s", name)
-	}
-
-	ordinal, err := strconv.Atoi(name[idx+1:])
-	if err != nil {
-		log.Error(err, "failed to extract ordinal form hostname", "hostname", name)
-		return -1, fmt.Errorf("failed to extract ordinal from hostname: %s", name)
-	}
-	return ordinal, nil
 }
 
 // checkIfPathExists check if the path exists.

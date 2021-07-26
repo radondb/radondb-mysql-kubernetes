@@ -146,7 +146,7 @@ func (cfg *Config) buildExtraConfig(filePath string) (*ini.File, error) {
 	conf := ini.Empty()
 	sec := conf.Section("mysqld")
 
-	ordinal, err := getOrdinal(cfg.HostName)
+	ordinal, err := utils.GetOrdinal(cfg.HostName)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func (cfg *Config) buildClientConfig() (*ini.File, error) {
 }
 
 func (cfg *Config) buildPostStart() ([]byte, error) {
-	ordinal, err := getOrdinal(cfg.HostName)
+	ordinal, err := utils.GetOrdinal(cfg.HostName)
 	if err != nil {
 		return nil, err
 	}
