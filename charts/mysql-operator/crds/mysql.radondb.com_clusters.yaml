@@ -118,6 +118,7 @@ spec:
                     requests:
                       cpu: 100m
                       memory: 256Mi
+                  rootHost: 127.0.0.1
                   rootPassword: ""
                   user: qc_usr
                 description: MysqlOpts is the options of MySQL container.
@@ -138,7 +139,11 @@ spec:
                     type: object
                   password:
                     default: Qing@123
-                    description: Password for the new user.
+                    description: 'Password for the new user, must be 8~32 characters
+                      long. Only be a combination of uppercase letters, lowercase
+                      letters, numbers or special characters. Special characters are
+                      supported: @#$%^&*_+-=.'
+                    pattern: ^[A-Za-z0-9@#$%^&*_+\-=]{8,32}$
                     type: string
                   resources:
                     default:
@@ -173,13 +178,24 @@ spec:
                           to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
                         type: object
                     type: object
+                  rootHost:
+                    default: 127.0.0.1
+                    description: The root user's host.
+                    type: string
                   rootPassword:
                     default: ""
-                    description: Password for the root user.
+                    description: 'Password for the root user, can be empty or 8~32
+                      characters long. Only be a combination of uppercase letters,
+                      lowercase letters, numbers or special characters. Special characters
+                      are supported: @#$%^&*_+-=.'
+                    pattern: ^$|^[A-Za-z0-9@#$%^&*_+\-=]{8,32}$
                     type: string
                   user:
                     default: qc_usr
-                    description: Username of new user to create.
+                    description: Username of new user to create. Only be a combination
+                      of letters, numbers or underlines. The length can not exceed
+                      26 characters.
+                    pattern: ^[A-Za-z0-9_]{2,26}$
                     type: string
                 type: object
               mysqlVersion:

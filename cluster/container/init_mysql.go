@@ -56,7 +56,7 @@ func (c *initMysql) getEnvVars() []corev1.EnvVar {
 		},
 		{
 			Name:  "MYSQL_ROOT_HOST",
-			Value: "127.0.0.1",
+			Value: c.Spec.MysqlOpts.RootHost,
 		},
 		{
 			Name:  "MYSQL_INIT_ONLY",
@@ -68,9 +68,6 @@ func (c *initMysql) getEnvVars() []corev1.EnvVar {
 	envs = append(
 		envs,
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
-		getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true),
-		getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true),
-		getEnvVarFromSecret(sctName, "MYSQL_PASSWORD", "mysql-password", true),
 	)
 
 	if c.Spec.MysqlOpts.InitTokuDB {
@@ -114,11 +111,6 @@ func (c *initMysql) getVolumeMounts() []corev1.VolumeMount {
 		{
 			Name:      utils.ConfVolumeName,
 			MountPath: utils.ConfVolumeMountPath,
-		},
-		{
-			Name:      utils.ConfMapVolumeName,
-			MountPath: utils.MyCnfMountPath,
-			SubPath:   "my.cnf",
 		},
 		{
 			Name:      utils.DataVolumeName,

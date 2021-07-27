@@ -18,12 +18,10 @@ package syncer
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"time"
 
 	"github.com/presslabs/controller-util/syncer"
@@ -186,7 +184,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 			node.Message = err.Error()
 		}
 		// update apiv1alpha1.NodeConditionLeader.
-		s.updateNodeCondition(node, 1, isLeader)
+		s.updateNodeCondition(node, int(apiv1alpha1.IndexLeader), isLeader)
 
 		isLagged, isReplicating, isReadOnly := corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown
 		runner, err := internal.NewSQLRunner(utils.BytesToString(user), utils.BytesToString(password), host, port)
@@ -218,13 +216,13 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		}
 
 		// update apiv1alpha1.NodeConditionLagged.
-		s.updateNodeCondition(node, 0, isLagged)
+		s.updateNodeCondition(node, int(apiv1alpha1.IndexLagged), isLagged)
 		// update apiv1alpha1.NodeConditionReplicating.
-		s.updateNodeCondition(node, 3, isReplicating)
+		s.updateNodeCondition(node, int(apiv1alpha1.IndexReplicating), isReplicating)
 		// update apiv1alpha1.NodeConditionReadOnly.
-		s.updateNodeCondition(node, 2, isReadOnly)
+		s.updateNodeCondition(node, int(apiv1alpha1.IndexReadOnly), isReadOnly)
 
-		if err = setPodHealthy(ctx, cli, &pod, node); err != nil {
+		if err = s.setPodHealthy(ctx, &pod, node); err != nil {
 			log.Error(err, "cannot update pod", "name", podName, "namespace", pod.Namespace)
 		}
 	}
@@ -284,28 +282,14 @@ func (s *StatusSyncer) updateNodeCondition(node *apiv1alpha1.NodeStatus, idx int
 
 // checkRole used to check whether the mysql role is leader.
 func checkRole(host string, rootPasswd []byte) (corev1.ConditionStatus, error) {
-	status := corev1.ConditionUnknown
-
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://%s:%d/v1/raft/status", host, utils.XenonPeerPort), nil)
+	body, err := xenonHttpRequest(host, "GET", "/v1/raft/status", rootPasswd, nil)
 	if err != nil {
-		return status, err
-	}
-	encoded := base64.StdEncoding.EncodeToString(append([]byte("root:"), rootPasswd...))
-	req.Header.Set("Authorization", "Basic "+encoded)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return status, err
-	}
-
-	if resp.StatusCode != 200 {
-		return status, fmt.Errorf("get raft status failed, status code is %d", resp.StatusCode)
+		return corev1.ConditionUnknown, err
 	}
 
 	var out map[string]interface{}
-	if err = unmarshalJSON(resp.Body, &out); err != nil {
-		return status, err
+	if err = unmarshalJSON(body, &out); err != nil {
+		return corev1.ConditionUnknown, err
 	}
 
 	if out["state"] == "LEADER" {
@@ -316,27 +300,27 @@ func checkRole(host string, rootPasswd []byte) (corev1.ConditionStatus, error) {
 		return corev1.ConditionFalse, nil
 	}
 
-	return status, nil
+	return corev1.ConditionUnknown, nil
 }
 
 // setPodHealthy set the pod lable healthy.
-func setPodHealthy(ctx context.Context, cli client.Client, pod *corev1.Pod, node *apiv1alpha1.NodeStatus) error {
+func (s *StatusSyncer) setPodHealthy(ctx context.Context, pod *corev1.Pod, node *apiv1alpha1.NodeStatus) error {
 	healthy := "no"
-	if node.Conditions[0].Status == corev1.ConditionFalse {
-		if node.Conditions[1].Status == corev1.ConditionFalse &&
-			node.Conditions[2].Status == corev1.ConditionTrue &&
-			node.Conditions[3].Status == corev1.ConditionTrue {
+	if node.Conditions[apiv1alpha1.IndexLagged].Status == corev1.ConditionFalse {
+		if node.Conditions[apiv1alpha1.IndexLeader].Status == corev1.ConditionFalse &&
+			node.Conditions[apiv1alpha1.IndexReadOnly].Status == corev1.ConditionTrue &&
+			node.Conditions[apiv1alpha1.IndexReplicating].Status == corev1.ConditionTrue {
 			healthy = "yes"
-		} else if node.Conditions[1].Status == corev1.ConditionTrue &&
-			node.Conditions[2].Status == corev1.ConditionFalse &&
-			node.Conditions[3].Status == corev1.ConditionFalse {
+		} else if node.Conditions[apiv1alpha1.IndexLeader].Status == corev1.ConditionTrue &&
+			node.Conditions[apiv1alpha1.IndexReplicating].Status == corev1.ConditionFalse &&
+			node.Conditions[apiv1alpha1.IndexReadOnly].Status == corev1.ConditionFalse {
 			healthy = "yes"
 		}
 	}
 
 	if pod.Labels["healthy"] != healthy {
 		pod.Labels["healthy"] = healthy
-		if err := cli.Update(ctx, pod); client.IgnoreNotFound(err) != nil {
+		if err := s.cli.Update(ctx, pod); client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}

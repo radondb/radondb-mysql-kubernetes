@@ -26,8 +26,6 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
-
-	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
 // NewInitCommand return a pointer to cobra.Command.
@@ -75,9 +73,24 @@ func runInitCommand(cfg *Config) error {
 		}
 	}
 
-	if err = os.Mkdir(configPath, os.FileMode(0755)); err != nil {
+	// copy appropriate my.cnf from config-map to config mount.
+	if err = copyFile(path.Join(configMapPath, "my.cnf"), path.Join(configPath, "my.cnf")); err != nil {
+		return fmt.Errorf("failed to copy my.cnf: %s", err)
+	}
+
+	// build client.conf.
+	clientConfig, err := cfg.buildClientConfig()
+	if err != nil {
+		return fmt.Errorf("failed to build client.conf: %s", err)
+	}
+	// save client.conf to /etc/mysql.
+	if err := clientConfig.SaveTo(path.Join(clientConfPath)); err != nil {
+		return fmt.Errorf("failed to save client.conf: %s", err)
+	}
+
+	if err = os.Mkdir(extraConfPath, os.FileMode(0644)); err != nil {
 		if !os.IsExist(err) {
-			return fmt.Errorf("error mkdir %s: %s", configPath, err)
+			return fmt.Errorf("error mkdir %s: %s", extraConfPath, err)
 		}
 	}
 
@@ -87,8 +100,8 @@ func runInitCommand(cfg *Config) error {
 	}
 
 	// build init.sql.
-	initSqlPath := path.Join(configPath, "init.sql")
-	if err = ioutil.WriteFile(initSqlPath, buildInitSql(cfg), 0644); err != nil {
+	initSqlPath := path.Join(extraConfPath, "init.sql")
+	if err = ioutil.WriteFile(initSqlPath, cfg.buildInitSql(), 0644); err != nil {
 		return fmt.Errorf("failed to write init.sql: %s", err)
 	}
 
@@ -98,7 +111,7 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to build extra.cnf: %s", err)
 	}
 	// save extra.cnf to conf.d.
-	if err := extraConfig.SaveTo(path.Join(configPath, "extra.cnf")); err != nil {
+	if err := extraConfig.SaveTo(path.Join(extraConfPath, "extra.cnf")); err != nil {
 		return fmt.Errorf("failed to save extra.cnf: %s", err)
 	}
 
@@ -132,7 +145,7 @@ func runInitCommand(cfg *Config) error {
 
 	// build xenon.json.
 	xenonFilePath := path.Join(xenonPath, "xenon.json")
-	if err = ioutil.WriteFile(xenonFilePath, buildXenonConf(cfg), 0644); err != nil {
+	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
 	}
 
@@ -152,92 +165,4 @@ func checkIfPathExists(path string) (bool, error) {
 
 	err = f.Close()
 	return true, err
-}
-
-// buildXenonConf build a config file for xenon.
-func buildXenonConf(cfg *Config) []byte {
-	pingTimeout := cfg.ElectionTimeout / cfg.AdmitDefeatHearbeatCount
-	heartbeatTimeout := cfg.ElectionTimeout / cfg.AdmitDefeatHearbeatCount
-	requestTimeout := cfg.ElectionTimeout / cfg.AdmitDefeatHearbeatCount
-
-	version := "mysql80"
-	if cfg.MySQLVersion.Major == 5 {
-		if cfg.MySQLVersion.Minor == 6 {
-			version = "mysql56"
-		} else {
-			version = "mysql57"
-		}
-	}
-
-	var masterSysVars, slaveSysVars string
-	if cfg.InitTokuDB {
-		masterSysVars = "tokudb_fsync_log_period=default;sync_binlog=default;innodb_flush_log_at_trx_commit=default"
-		slaveSysVars = "tokudb_fsync_log_period=1000;sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
-	} else {
-		masterSysVars = "sync_binlog=default;innodb_flush_log_at_trx_commit=default"
-		slaveSysVars = "sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
-	}
-
-	hostName := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
-
-	str := fmt.Sprintf(`{
-    "log": {
-        "level": "INFO"
-    },
-    "server": {
-        "endpoint": "%s:%d",
-        "peer-address": "%s:%d",
-        "enable-apis": true
-    },
-    "replication": {
-        "passwd": "%s",
-        "user": "%s"
-    },
-    "rpc": {
-        "request-timeout": %d
-    },
-    "mysql": {
-        "admit-defeat-ping-count": 3,
-        "admin": "root",
-        "ping-timeout": %d,
-        "passwd": "%s",
-        "host": "localhost",
-        "version": "%s",
-        "master-sysvars": "%s",
-        "slave-sysvars": "%s",
-        "port": 3306,
-        "monitor-disabled": true
-    },
-    "raft": {
-        "election-timeout": %d,
-        "admit-defeat-hearbeat-count": %d,
-        "heartbeat-timeout": %d,
-        "meta-datadir": "/var/lib/xenon/",
-        "leader-start-command": "/scripts/leader-start.sh",
-        "leader-stop-command": "/scripts/leader-stop.sh",
-        "semi-sync-degrade": true,
-        "purge-binlog-disabled": true,
-        "super-idle": false
-    }
-}
-`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser, requestTimeout,
-		pingTimeout, cfg.RootPassword, version, masterSysVars, slaveSysVars, cfg.ElectionTimeout,
-		cfg.AdmitDefeatHearbeatCount, heartbeatTimeout)
-	return utils.StringToBytes(str)
-}
-
-// buildInitSql used to build init.sql. The file run after the mysql init.
-func buildInitSql(cfg *Config) []byte {
-	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
-DELETE FROM mysql.user WHERE user='%s';
-GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
-DELETE FROM mysql.user WHERE user='%s';
-GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
-DELETE FROM mysql.user WHERE user='%s';
-GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* to '%s'@'%%' IDENTIFIED BY '%s';
-FLUSH PRIVILEGES;
-`, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword, cfg.MetricsUser, cfg.MetricsUser,
-		cfg.MetricsPassword, cfg.OperatorUser, cfg.OperatorUser, cfg.OperatorPassword)
-
-	return utils.StringToBytes(sql)
 }

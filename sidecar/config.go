@@ -17,6 +17,7 @@ limitations under the License.
 package sidecar
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/blang/semver"
@@ -36,6 +37,13 @@ type Config struct {
 
 	// The password of the root user.
 	RootPassword string
+
+	// Username of new user to create.
+	User string
+	// Password for the new user.
+	Password string
+	// Name for new database to create.
+	Database string
 
 	// The name of replication user.
 	ReplicationUser string
@@ -93,6 +101,10 @@ func NewConfig() *Config {
 
 		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
 
+		Database: getEnvValue("MYSQL_DATABASE"),
+		User:     getEnvValue("MYSQL_USER"),
+		Password: getEnvValue("MYSQL_PASSWORD"),
+
 		ReplicationUser:     getEnvValue("MYSQL_REPL_USER"),
 		ReplicationPassword: getEnvValue("MYSQL_REPL_PASSWORD"),
 
@@ -125,6 +137,124 @@ func (cfg *Config) buildExtraConfig(filePath string) (*ini.File, error) {
 	}
 
 	if _, err := sec.NewKey("init-file", filePath); err != nil {
+		return nil, err
+	}
+
+	return conf, nil
+}
+
+// buildXenonConf build a config file for xenon.
+func (cfg *Config) buildXenonConf() []byte {
+	pingTimeout := cfg.ElectionTimeout / cfg.AdmitDefeatHearbeatCount
+	heartbeatTimeout := cfg.ElectionTimeout / cfg.AdmitDefeatHearbeatCount
+	requestTimeout := cfg.ElectionTimeout / cfg.AdmitDefeatHearbeatCount
+
+	version := "mysql80"
+	if cfg.MySQLVersion.Major == 5 {
+		if cfg.MySQLVersion.Minor == 6 {
+			version = "mysql56"
+		} else {
+			version = "mysql57"
+		}
+	}
+
+	var masterSysVars, slaveSysVars string
+	if cfg.InitTokuDB {
+		masterSysVars = "tokudb_fsync_log_period=default;sync_binlog=default;innodb_flush_log_at_trx_commit=default"
+		slaveSysVars = "tokudb_fsync_log_period=1000;sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
+	} else {
+		masterSysVars = "sync_binlog=default;innodb_flush_log_at_trx_commit=default"
+		slaveSysVars = "sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
+	}
+
+	hostName := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
+
+	str := fmt.Sprintf(`{
+    "log": {
+        "level": "INFO"
+    },
+    "server": {
+        "endpoint": "%s:%d",
+        "peer-address": "%s:%d",
+        "enable-apis": true
+    },
+    "replication": {
+        "passwd": "%s",
+        "user": "%s"
+    },
+    "rpc": {
+        "request-timeout": %d
+    },
+    "mysql": {
+        "admit-defeat-ping-count": 3,
+        "admin": "root",
+        "ping-timeout": %d,
+        "passwd": "%s",
+        "host": "localhost",
+        "version": "%s",
+        "master-sysvars": "%s",
+        "slave-sysvars": "%s",
+        "port": 3306,
+        "monitor-disabled": true
+    },
+    "raft": {
+        "election-timeout": %d,
+        "admit-defeat-hearbeat-count": %d,
+        "heartbeat-timeout": %d,
+        "meta-datadir": "/var/lib/xenon/",
+        "leader-start-command": "/scripts/leader-start.sh",
+        "leader-stop-command": "/scripts/leader-stop.sh",
+        "semi-sync-degrade": true,
+        "purge-binlog-disabled": true,
+        "super-idle": false
+    }
+}
+`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser, requestTimeout,
+		pingTimeout, cfg.RootPassword, version, masterSysVars, slaveSysVars, cfg.ElectionTimeout,
+		cfg.AdmitDefeatHearbeatCount, heartbeatTimeout)
+	return utils.StringToBytes(str)
+}
+
+// buildInitSql used to build init.sql. The file run after the mysql init.
+func (cfg *Config) buildInitSql() []byte {
+	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
+CREATE DATABASE IF NOT EXISTS %s;
+DROP user IF EXISTS 'root'@'127.0.0.1';
+GRANT ALL ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '%s';
+DROP user IF EXISTS '%s'@'%%';
+GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
+DROP user IF EXISTS '%s'@'%%';
+GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
+DROP user IF EXISTS '%s'@'%%';
+GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
+DROP user IF EXISTS '%s'@'%%';
+GRANT ALL ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s';
+FLUSH PRIVILEGES;
+`, cfg.Database, cfg.RootPassword, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword,
+		cfg.MetricsUser, cfg.MetricsUser, cfg.MetricsPassword, cfg.OperatorUser, cfg.OperatorUser,
+		cfg.OperatorPassword, cfg.User, cfg.Database, cfg.User, cfg.Password)
+
+	return utils.StringToBytes(sql)
+}
+
+// buildClientConfig used to build client.conf.
+func (cfg *Config) buildClientConfig() (*ini.File, error) {
+	conf := ini.Empty()
+	sec := conf.Section("client")
+
+	if _, err := sec.NewKey("host", "127.0.0.1"); err != nil {
+		return nil, err
+	}
+
+	if _, err := sec.NewKey("port", fmt.Sprintf("%d", utils.MysqlPort)); err != nil {
+		return nil, err
+	}
+
+	if _, err := sec.NewKey("user", cfg.OperatorUser); err != nil {
+		return nil, err
+	}
+
+	if _, err := sec.NewKey("password", cfg.OperatorPassword); err != nil {
 		return nil, err
 	}
 

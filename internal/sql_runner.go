@@ -19,13 +19,14 @@ package internal
 import (
 	"database/sql"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
 var (
@@ -118,7 +119,7 @@ func (s *SQLRunner) checkSlaveStatus() (isLagged, isReplicating corev1.Condition
 	lastSQLError := columnValue(scanArgs, cols, "Last_SQL_Error")
 	secondsBehindMaster := columnValue(scanArgs, cols, "Seconds_Behind_Master")
 
-	if stringInArray(slaveIOState, errorConnectionStates) {
+	if utils.StringInArray(slaveIOState, errorConnectionStates) {
 		return isLagged, corev1.ConditionFalse, fmt.Errorf("Slave_IO_State: %s", slaveIOState)
 	}
 
@@ -168,9 +169,42 @@ func (s *SQLRunner) RunQuery(query string, args ...interface{}) error {
 }
 
 // GetGlobalVariable used to get the global variable by param.
-func (sr *SQLRunner) GetGlobalVariable(param string, val interface{}) error {
+func (s *SQLRunner) GetGlobalVariable(param string, val interface{}) error {
 	query := fmt.Sprintf("select @@global.%s", param)
-	return sr.db.QueryRow(query).Scan(val)
+	return s.db.QueryRow(query).Scan(val)
+}
+
+func (s *SQLRunner) CheckProcesslist() (bool, error) {
+	var rows *sql.Rows
+	rows, err := s.db.Query("show processlist;")
+	if err != nil {
+		return false, err
+	}
+
+	defer rows.Close()
+
+	var cols []string
+	cols, err = rows.Columns()
+	if err != nil {
+		return false, err
+	}
+
+	scanArgs := make([]interface{}, len(cols))
+	for i := range scanArgs {
+		scanArgs[i] = &sql.RawBytes{}
+	}
+
+	for rows.Next() {
+		if err = rows.Scan(scanArgs...); err != nil {
+			return false, err
+		}
+
+		state := columnValue(scanArgs, cols, "State")
+		if strings.Contains(state, "Master has sent all binlog to slave") {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // Close closes the database and prevents new queries from starting.
@@ -193,11 +227,4 @@ func columnValue(scanArgs []interface{}, slaveCols []string, colName string) str
 	}
 
 	return string(*scanArgs[columnIndex].(*sql.RawBytes))
-}
-
-// stringInArray check whether the str is in the strArray.
-func stringInArray(str string, strArray []string) bool {
-	sort.Strings(strArray)
-	index := sort.SearchStrings(strArray, str)
-	return index < len(strArray) && strArray[index] == str
 }

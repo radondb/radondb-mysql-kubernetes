@@ -37,7 +37,7 @@ type ClusterSpec struct {
 
 	// MysqlOpts is the options of MySQL container.
 	// +optional
-	// +kubebuilder:default:={rootPassword: "", user: "qc_usr", password: "Qing@123", database: "qingcloud", initTokuDB: true, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}
+	// +kubebuilder:default:={rootPassword: "", rootHost: "127.0.0.1", user: "qc_usr", password: "Qing@123", database: "qingcloud", initTokuDB: true, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}
 	MysqlOpts MysqlOpts `json:"mysqlOpts,omitempty"`
 
 	// XenonOpts is the options of xenon container.
@@ -70,19 +70,32 @@ type ClusterSpec struct {
 
 // MysqlOpts defines the options of MySQL container.
 type MysqlOpts struct {
-	// Password for the root user.
+	// Password for the root user, can be empty or 8~32 characters long.
+	// Only be a combination of uppercase letters, lowercase letters, numbers or special characters.
+	// Special characters are supported: @#$%^&*_+-=.
 	// +optional
 	// +kubebuilder:default:=""
+	// +kubebuilder:validation:Pattern="^$|^[A-Za-z0-9@#$%^&*_+\\-=]{8,32}$"
 	RootPassword string `json:"rootPassword,omitempty"`
 
+	// The root user's host.
+	// +optional
+	// +kubebuilder:default:="127.0.0.1"
+	RootHost string `json:"rootHost,omitempty"`
+
 	// Username of new user to create.
+	// Only be a combination of letters, numbers or underlines. The length can not exceed 26 characters.
 	// +optional
 	// +kubebuilder:default:="qc_usr"
+	// +kubebuilder:validation:Pattern="^[A-Za-z0-9_]{2,26}$"
 	User string `json:"user,omitempty"`
 
-	// Password for the new user.
+	// Password for the new user, must be 8~32 characters long.
+	// Only be a combination of uppercase letters, lowercase letters, numbers or special characters.
+	// Special characters are supported: @#$%^&*_+-=.
 	// +optional
 	// +kubebuilder:default:="Qing@123"
+	// +kubebuilder:validation:Pattern="^[A-Za-z0-9@#$%^&*_+\\-=]{8,32}$"
 	Password string `json:"password,omitempty"`
 
 	// Name for new database to create.
@@ -260,6 +273,16 @@ type NodeCondition struct {
 	// The last time this Condition type changed.
 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
 }
+
+// The index of the NodeStatus.Conditions.
+type NodeConditionsIndex uint8
+
+const (
+	IndexLagged NodeConditionsIndex = iota
+	IndexLeader
+	IndexReadOnly
+	IndexReplicating
+)
 
 // NodeConditionType defines type for node condition type.
 type NodeConditionType string
