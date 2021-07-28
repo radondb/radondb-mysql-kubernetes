@@ -401,6 +401,7 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 	}
 }
 
+// updatePVC used to update the pvc, check and remove the extra pvc.
 func (s *StatefulSetSyncer) updatePVC(ctx context.Context) error {
 	pvcs := corev1.PersistentVolumeClaimList{}
 	if err := s.cli.List(ctx,

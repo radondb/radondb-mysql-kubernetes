@@ -87,7 +87,7 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Value: strconv.Itoa(int(*c.Spec.XenonOpts.ElectionTimeout)),
 		},
 		{
-			Name:  "MY_MYSQL_VERSION",
+			Name:  "MYSQL_VERSION",
 			Value: c.GetMySQLVersion(),
 		},
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),

@@ -100,7 +100,7 @@ var (
 			Value: strconv.Itoa(int(*testInitSidecarCluster.Spec.XenonOpts.ElectionTimeout)),
 		},
 		{
-			Name:  "MY_MYSQL_VERSION",
+			Name:  "MYSQL_VERSION",
 			Value: "5.7.33",
 		},
 		{

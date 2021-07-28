@@ -87,8 +87,10 @@ func NewConfig() *Config {
 		mysqlVersion, _ = semver.Parse(utils.MySQLDefaultVersion)
 	}
 
-	replicas, err := strconv.ParseInt(getEnvValue("REPLICAS"), 10, 32)
+	replicaStr := getEnvValue("REPLICAS")
+	replicas, err := strconv.ParseInt(replicaStr, 10, 32)
 	if err != nil {
+		log.Error(err, "invalid environment values", "REPLICAS", replicaStr)
 		panic(err)
 	}
 

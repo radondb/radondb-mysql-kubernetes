@@ -64,6 +64,8 @@ func (c *Cluster) Validate() error {
 		return fmt.Errorf("spec.mysqlOpts.user cannot be root|%s|%s|%s", utils.ReplicationUser, utils.OperatorUser, utils.MetricsUser)
 	}
 
+	// https://github.com/percona/percona-docker/blob/main/percona-server-5.7/ps-entry.sh#L159
+	// ERROR 1396 (HY000): Operation CREATE USER failed for 'root'@'127.0.0.1'.
 	if c.Spec.MysqlOpts.RootHost == "127.0.0.1" {
 		return fmt.Errorf("spec.mysqlOpts.rootHost cannot be 127.0.0.1")
 	}
