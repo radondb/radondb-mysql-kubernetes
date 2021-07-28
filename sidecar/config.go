@@ -552,7 +552,7 @@ rm -rf /root/backup
 	}{
 		*cfg,
 		utils.DataVolumeMountPath,
-		utils.MyCnfMountPath,
+		utils.ConfVolumeMountPath + "/my.cnf",
 	})
 	if err2 != nil {
 		return err2

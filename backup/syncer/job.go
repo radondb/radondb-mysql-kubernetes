@@ -134,7 +134,10 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 
 			Value: s.backup.Spec.HostName,
 		},
-
+		{
+			Name:  "REPLICAS",
+			Value: "1",
+		},
 		//backup user  for sidecar http server
 		{
 			Name: "BACKUP_USER",

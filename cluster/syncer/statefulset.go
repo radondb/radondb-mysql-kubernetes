@@ -40,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/cluster"
 	"github.com/radondb/radondb-mysql-kubernetes/cluster/container"
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
@@ -196,6 +197,12 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 		log.Info("can't start/continue 'update': waiting for all replicas are ready")
 		return nil
 	}
+
+	if backuping, _ := s.backupIsRunning(ctx); backuping {
+		// return error, it will reconsile again
+		return fmt.Errorf("can't start/continue 'update': waiting for all backup completed")
+	}
+
 	// Get all pods.
 	pods := corev1.PodList{}
 	if err := s.cli.List(ctx,
@@ -567,4 +574,27 @@ func xenonHttpRequest(host, method, url string, rootPasswd []byte, body io.Reade
 	}
 
 	return resp.Body, nil
+}
+
+//check the backup is exist and running
+func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
+
+	backuplist := apiv1alpha1.BackupList{}
+	if err := s.cli.List(ctx,
+		&backuplist,
+		&client.ListOptions{
+			Namespace: s.sfs.Namespace,
+		},
+	); err != nil {
+		return false, err
+	}
+	for _, bcp := range backuplist.Items {
+		if bcp.ClusterName != s.ClusterName {
+			continue
+		}
+		if bcp.Status.Completed != true {
+			return true, nil
+		}
+	}
+	return false, nil
 }
