@@ -41,18 +41,32 @@ func NewFollowerSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		},
 	}
 	return syncer.NewObjectSyncer("FollowerSVC", c.Unwrap(), service, cli, func() error {
-		service.Spec.Type = "ClusterIP"
+		if service.Spec.Type == "" {
+			service.Spec.Type = "ClusterIP"
+		}	
+			
 		service.Spec.Selector = c.GetSelectorLabels()
 		service.Spec.Selector["role"] = "follower"
 		service.Spec.Selector["healthy"] = "yes"
 
-		if len(service.Spec.Ports) != 1 {
-			service.Spec.Ports = make([]corev1.ServicePort, 1)
+		svcPorts := []corev1.ServicePort{
+			{
+				Name:       utils.MysqlPortName,
+				Port:       utils.MysqlPort,
+				TargetPort: intstr.FromInt(utils.MysqlPort),
+			},
 		}
 
-		service.Spec.Ports[0].Name = utils.MysqlPortName
-		service.Spec.Ports[0].Port = utils.MysqlPort
-		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MysqlPort)
+		if c.Spec.MetricsOpts.Enabled {
+			svcPorts = append(svcPorts, corev1.ServicePort{
+				Name:       utils.MetricsPortName,
+				Port:       utils.MetricsPort,
+				TargetPort: intstr.FromInt(utils.MetricsPort),
+			})
+		}
+
+		service.Spec.Ports = svcPorts
+		
 		return nil
 	})
 }
