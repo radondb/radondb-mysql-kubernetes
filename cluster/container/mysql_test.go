@@ -107,7 +107,7 @@ func TestGetMysqlLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "mysqladmin ping -uroot -p${MYSQL_ROOT_PASSWORD}"},
+				Command: []string{"sh", "-c", "mysqladmin --defaults-file=/etc/mysql/client.conf ping"},
 			},
 		},
 		InitialDelaySeconds: 30,
@@ -123,7 +123,7 @@ func TestGetMysqlReadinessProbe(t *testing.T) {
 	readinessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", `mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "SELECT 1"`},
+				Command: []string{"sh", "-c", `test $(mysql --defaults-file=/etc/mysql/client.conf -NB -e "SELECT 1") -eq 1`},
 			},
 		},
 		InitialDelaySeconds: 10,
@@ -139,12 +139,7 @@ func TestGetMysqlVolumeMounts(t *testing.T) {
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "conf",
-			MountPath: "/etc/mysql/conf.d",
-		},
-		{
-			Name:      "config-map",
-			MountPath: "/etc/mysql/my.cnf",
-			SubPath:   "my.cnf",
+			MountPath: "/etc/mysql",
 		},
 		{
 			Name:      "data",

@@ -17,6 +17,7 @@ limitations under the License.
 package container
 
 import (
+	"fmt"
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
@@ -70,6 +71,14 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Value: c.GetNameForResource(utils.HeadlessSVC),
 		},
 		{
+			Name:  "STATEFULSET_NAME",
+			Value: c.GetNameForResource(utils.StatefulSet),
+		},
+		{
+			Name:  "REPLICAS",
+			Value: fmt.Sprintf("%d", *c.Spec.Replicas),
+		},
+		{
 			Name:  "ADMIT_DEFEAT_HEARBEAT_COUNT",
 			Value: strconv.Itoa(int(*c.Spec.XenonOpts.AdmitDefeatHearbeatCount)),
 		},
@@ -78,7 +87,7 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Value: strconv.Itoa(int(*c.Spec.XenonOpts.ElectionTimeout)),
 		},
 		{
-			Name:  "MY_MYSQL_VERSION",
+			Name:  "MYSQL_VERSION",
 			Value: c.GetMySQLVersion(),
 		},
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),

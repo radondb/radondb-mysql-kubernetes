@@ -17,6 +17,7 @@ limitations under the License.
 package container
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -32,11 +33,13 @@ import (
 var (
 	defeatCount             int32 = 1
 	electionTimeout         int32 = 5
+	replicas                int32 = 3
 	initSidecarMysqlCluster       = mysqlv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "sample",
 		},
 		Spec: mysqlv1alpha1.ClusterSpec{
+			Replicas: &replicas,
 			PodSpec: mysqlv1alpha1.PodSpec{
 				SidecarImage: "sidecar image",
 				Resources: corev1.ResourceRequirements{
@@ -81,6 +84,14 @@ var (
 			Value: "sample-mysql",
 		},
 		{
+			Name:  "STATEFULSET_NAME",
+			Value: "sample-mysql",
+		},
+		{
+			Name:  "REPLICAS",
+			Value: fmt.Sprintf("%d", *testInitSidecarCluster.Spec.Replicas),
+		},
+		{
 			Name:  "ADMIT_DEFEAT_HEARBEAT_COUNT",
 			Value: strconv.Itoa(int(*testInitSidecarCluster.Spec.XenonOpts.AdmitDefeatHearbeatCount)),
 		},
@@ -89,7 +100,7 @@ var (
 			Value: strconv.Itoa(int(*testInitSidecarCluster.Spec.XenonOpts.ElectionTimeout)),
 		},
 		{
-			Name:  "MY_MYSQL_VERSION",
+			Name:  "MYSQL_VERSION",
 			Value: "5.7.33",
 		},
 		{
@@ -101,6 +112,42 @@ var (
 					},
 					Key:      "root-password",
 					Optional: &optFalse,
+				},
+			},
+		},
+		{
+			Name: "MYSQL_DATABASE",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "mysql-database",
+					Optional: &optTrue,
+				},
+			},
+		},
+		{
+			Name: "MYSQL_USER",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "mysql-user",
+					Optional: &optTrue,
+				},
+			},
+		},
+		{
+			Name: "MYSQL_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "mysql-password",
+					Optional: &optTrue,
 				},
 			},
 		},
@@ -228,7 +275,7 @@ func TestGetInitSidecarEnvVar(t *testing.T) {
 			Cluster: &testToKuDBMysqlCluster,
 		}
 		tokudbCase := EnsureContainer("init-sidecar", &testTokuDBCluster)
-		testTokuDBEnv := make([]corev1.EnvVar, 13)
+		testTokuDBEnv := make([]corev1.EnvVar, 18)
 		copy(testTokuDBEnv, defaultInitSidecarEnvs)
 		testTokuDBEnv = append(testTokuDBEnv, corev1.EnvVar{
 			Name:  "INIT_TOKUDB",

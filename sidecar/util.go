@@ -17,11 +17,8 @@ limitations under the License.
 package sidecar
 
 import (
-	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"strings"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -102,17 +99,16 @@ func getEnvValue(key string) string {
 	return value
 }
 
-// Generate mysql server-id from pod ordinal index.
-func generateServerID(name string) (int, error) {
-	idx := strings.LastIndexAny(name, "-")
-	if idx == -1 {
-		return -1, fmt.Errorf("failed to extract ordinal from hostname: %s", name)
+// checkIfPathExists check if the path exists.
+func checkIfPathExists(path string) (bool, error) {
+	f, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		log.Error(err, "failed to open file", "file", path)
+		return false, err
 	}
 
-	ordinal, err := strconv.Atoi(name[idx+1:])
-	if err != nil {
-		log.Error(err, "failed to extract ordinal form hostname", "hostname", name)
-		return -1, fmt.Errorf("failed to extract ordinal from hostname: %s", name)
-	}
-	return mysqlServerIDOffset + ordinal, nil
+	err = f.Close()
+	return true, err
 }

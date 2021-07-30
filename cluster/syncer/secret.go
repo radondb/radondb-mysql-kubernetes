@@ -72,7 +72,7 @@ func NewSecretSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
 			return err
 		}
 
-		if c.Spec.MysqlOpts.RootHost != "127.0.0.1" && c.Spec.MysqlOpts.RootPassword == "" {
+		if c.Spec.MysqlOpts.RootHost != "localhost" && c.Spec.MysqlOpts.RootPassword == "" {
 			if err := addRandomPassword(secret.Data, "root-password"); err != nil {
 				return err
 			}

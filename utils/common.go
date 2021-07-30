@@ -16,7 +16,12 @@ limitations under the License.
 
 package utils
 
-import "sort"
+import (
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+)
 
 // Min returns the smallest int64 that was passed in the arguments.
 func Min(a, b uint64) uint64 {
@@ -39,4 +44,17 @@ func StringInArray(str string, strArray []string) bool {
 	sort.Strings(strArray)
 	index := sort.SearchStrings(strArray, str)
 	return index < len(strArray) && strArray[index] == str
+}
+
+func GetOrdinal(name string) (int, error) {
+	idx := strings.LastIndexAny(name, "-")
+	if idx == -1 {
+		return -1, fmt.Errorf("failed to extract ordinal from name: %s", name)
+	}
+
+	ordinal, err := strconv.Atoi(name[idx+1:])
+	if err != nil {
+		return -1, fmt.Errorf("failed to extract ordinal from name: %s", name)
+	}
+	return ordinal, nil
 }

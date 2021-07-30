@@ -42,6 +42,7 @@ var (
 			},
 			MysqlVersion: "5.7",
 			MysqlOpts: mysqlv1alpha1.MysqlOpts{
+				RootHost:   "localhost",
 				InitTokuDB: false,
 			},
 		},
@@ -53,11 +54,6 @@ var (
 		{
 			Name:      utils.ConfVolumeName,
 			MountPath: utils.ConfVolumeMountPath,
-		},
-		{
-			Name:      utils.ConfMapVolumeName,
-			MountPath: utils.MyCnfMountPath,
-			SubPath:   "my.cnf",
 		},
 		{
 			Name:      utils.DataVolumeName,
@@ -82,7 +78,7 @@ var (
 		},
 		{
 			Name:  "MYSQL_ROOT_HOST",
-			Value: "127.0.0.1",
+			Value: "localhost",
 		},
 		{
 			Name:  "MYSQL_INIT_ONLY",
@@ -97,42 +93,6 @@ var (
 					},
 					Key:      "root-password",
 					Optional: &optFalse,
-				},
-			},
-		},
-		{
-			Name: "MYSQL_DATABASE",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "mysql-database",
-					Optional: &optTrue,
-				},
-			},
-		},
-		{
-			Name: "MYSQL_USER",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "mysql-user",
-					Optional: &optTrue,
-				},
-			},
-		},
-		{
-			Name: "MYSQL_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "mysql-password",
-					Optional: &optTrue,
 				},
 			},
 		},
