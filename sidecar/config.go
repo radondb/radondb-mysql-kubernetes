@@ -240,7 +240,7 @@ func (cfg *Config) buildInitSql() []byte {
 	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
 CREATE DATABASE IF NOT EXISTS %s;
 DROP user IF EXISTS 'root'@'127.0.0.1';
-GRANT ALL ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '%s';
+GRANT ALL ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '%s' with grant option;
 DROP user IF EXISTS '%s'@'%%';
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
 DROP user IF EXISTS '%s'@'%%';
