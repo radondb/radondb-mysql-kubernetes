@@ -163,7 +163,7 @@ $ helm install my-release -f values.yaml .
 
 # Persistence
 
-The [MySQL](https://hub.docker.com/repository/docker/zhyass/percona57) image stores the MySQL data and configurations at the `/var/lib/mysql` path of the container.
+The [MySQL](https://hub.docker.com/repository/docker/radondb/percona) image stores the MySQL data and configurations at the `/var/lib/mysql` path of the container.
 
 By default a PersistentVolumeClaim is created and mounted into the directory. In order to disable this functionality, you can change the `values.yaml` to disable persistence and use an emptyDir instead.
 

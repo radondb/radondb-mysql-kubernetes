@@ -159,7 +159,7 @@ $ helm install my-release -f values.yaml .
 
 ## 持久化  
 
-[MySQL](https://hub.docker.com/repository/docker/zhyass/percona57) 镜像在容器路径 `/var/lib/mysql` 中存储 MYSQL 数据和配置。
+[MySQL](https://hub.docker.com/repository/docker/radondb/percona) 镜像在容器路径 `/var/lib/mysql` 中存储 MYSQL 数据和配置。
 
 默认情况下，会创建一个 PersistentVolumeClaim 并将其挂载到指定目录中。 若想禁用此功能，您可以更改 `values.yaml` 禁用持久化，改用 emptyDir。 
 

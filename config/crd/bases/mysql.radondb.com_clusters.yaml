@@ -248,7 +248,7 @@ spec:
                     requests:
                       cpu: 10m
                       memory: 32Mi
-                  sidecarImage: zhyass/sidecar:0.1
+                  sidecarImage: radondb/mysql-sidecar:0.1
                 description: Pod extra specification.
                 properties:
                   affinity:
@@ -1176,7 +1176,7 @@ spec:
                   schedulerName:
                     type: string
                   sidecarImage:
-                    default: zhyass/sidecar:0.1
+                    default: radondb/mysql-sidecar:0.1
                     description: To specify the image that will be used for sidecar
                       container.
                     type: string
@@ -1239,7 +1239,7 @@ spec:
                 default:
                   admitDefeatHearbeatCount: 5
                   electionTimeout: 10000
-                  image: zhyass/xenon:1.1.5-alpha
+                  image: radondb/xenon:1.1.5-alpha
                   resources:
                     limits:
                       cpu: 100m
@@ -1261,7 +1261,7 @@ spec:
                     format: int32
                     type: integer
                   image:
-                    default: zhyass/xenon:1.1.5-alpha
+                    default: radondb/xenon:1.1.5-alpha
                     description: To specify the image that will be used for xenon
                       container.
                     type: string
