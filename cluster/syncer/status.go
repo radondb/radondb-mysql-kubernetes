@@ -226,9 +226,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 			log.Error(err, "cannot update pod", "name", podName, "namespace", pod.Namespace)
 		}
 	}
-	if len(pods) != int(*s.Spec.Replicas) {
-		return fmt.Errorf("not all replicas do something")
-	}
+
 	return nil
 }
 
