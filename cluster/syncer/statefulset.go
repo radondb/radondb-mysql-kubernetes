@@ -185,7 +185,8 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 	log.Info("statefulSet was changed, run update")
 
 	if s.sfs.Status.ReadyReplicas < s.sfs.Status.Replicas {
-		return fmt.Errorf("can't start/continue 'update': waiting for all replicas are ready")
+		log.Info("can't start/continue 'update': waiting for all replicas are ready")
+		return nil
 	}
 
 	pods := corev1.PodList{}
