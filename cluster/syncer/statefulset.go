@@ -457,15 +457,16 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return false, err
 		}
+
 		ordinal, err := utils.GetOrdinal(pod.Name)
 		if err != nil {
 			return false, err
 		}
-
 		if ordinal >= int(*s.Spec.Replicas) {
 			log.Info("retry waiting pod", "pod", pod.Name)
 			return true, nil
 		}
+
 		if pod.Status.Phase == corev1.PodFailed {
 			return false, fmt.Errorf("pod %s is in failed phase", pod.Name)
 		}
