@@ -78,7 +78,7 @@ mysql:
 
 xenon:
   image: radondb/xenon
-  tag: 1.1.5-alpha
+  tag: 1.1.5-helm
   args: []
 
   ## A string to add extra environment variables
