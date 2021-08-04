@@ -210,7 +210,7 @@ kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.rad
 | MysqlOpts.InitTokuDB               | 是否启用TokuDB              | true                                                        |
 | MysqlOpts.MysqlConf                | MySQL 配置                  |  -                                                          |
 | MysqlOpts.Resources                | MySQL 容器配额              | 预留: cpu 100m, 内存 256Mi; </br> 限制: cpu 500m, 内存 1Gi  |
-| XenonOpts.Image                    | xenon(高可用组件)镜像       | zhyass/xenon:1.1.5-alpha                                    |
+| XenonOpts.Image                    | xenon(高可用组件)镜像       | radondb/xenon:1.1.5-alpha                                    |
 | XenonOpts.AdmitDefeatHearbeatCount | 允许的最大心跳检测失败次数    | 5                                                           |
 | XenonOpts.ElectionTimeout          | 选举超时时间(单位为毫秒)      | 10000ms                                                     |
 | XenonOpts.Resources                | xenon 容器配额              | 预留: cpu 50m, 内存 128Mi; </br> 限制: cpu 100m, 内存 256Mi |
@@ -231,7 +231,7 @@ kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.rad
 | PodSpec.Tolerations       | 节点 pod [污点容忍度](#5-容忍)列表                   |     -                |
 | PodSpec.SchedulerName     | 节点 pod [调度器](#6-调度器)名称                     | -                         |
 | PodSpec.Resources         | 节点 pod 配额                                        | 预留: cpu 10m, 内存 32Mi |
-| PodSpec.SidecarImage      | Sidecar 镜像                                        | zhyass/sidecar:0.1       |
+| PodSpec.SidecarImage      | Sidecar 镜像                                        | radondb/mysql-sidecar:0.1       |
 | PodSpec.BusyboxImage      | Busybox 镜像                                         | busybox:1.32             |
 | PodSpec.SlowLogTail       | 是否开启慢日志跟踪                                     | false                    |
 | PodSpec.AuditLogTail      | 是否开启审计日志跟踪                                    | false                    |
