@@ -463,7 +463,7 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 			return false, err
 		}
 		if ordinal >= int(*s.Spec.Replicas) {
-			log.Info("retry waiting pod", "pod", pod.Name)
+			log.Info("replicas were changed,  should skip", "pod", pod.Name)
 			return true, nil
 		}
 
