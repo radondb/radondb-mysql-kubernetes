@@ -260,6 +260,8 @@ func (c *Cluster) GetNameForResource(name utils.ResourceName) string {
 		return fmt.Sprintf("%s-leader", c.Name)
 	case utils.FollowerService:
 		return fmt.Sprintf("%s-follower", c.Name)
+	case utils.MetricsService:
+		return fmt.Sprintf("%s-metrics", c.Name)
 	case utils.Secret:
 		return fmt.Sprintf("%s-secret", c.Name)
 	default:
