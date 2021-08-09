@@ -61,7 +61,7 @@ spec:
                     requests:
                       cpu: 10m
                       memory: 32Mi
-                description: XenonOpts is the options of metrics container.
+                description: MetricsOpts is the options of metrics container.
                 properties:
                   enabled:
                     default: false
