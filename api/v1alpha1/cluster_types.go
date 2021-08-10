@@ -51,7 +51,7 @@ type ClusterSpec struct {
 	// +kubebuilder:default:={image: "radondb/xenon:1.1.5-alpha", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
 	XenonOpts XenonOpts `json:"xenonOpts,omitempty"`
 
-	// XenonOpts is the options of metrics container.
+	// MetricsOpts is the options of metrics container.
 	// +optional
 	// +kubebuilder:default:={image: "prom/mysqld-exporter:v0.12.1", resources: {limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}, enabled: false}
 	MetricsOpts MetricsOpts `json:"metricsOpts,omitempty"`
