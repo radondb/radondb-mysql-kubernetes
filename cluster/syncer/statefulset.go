@@ -402,7 +402,7 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 	if s.Spec.PodSpec.SlowLogTail {
 		containers = append(containers, container.EnsureContainer(utils.ContainerSlowLogName, s.Cluster))
 	}
-	if s.Spec.PodSpec.SlowLogTail {
+	if s.Spec.PodSpec.AuditLogTail {
 		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, s.Cluster))
 	}
 
