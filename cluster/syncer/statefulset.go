@@ -255,6 +255,11 @@ func (s *StatefulSetSyncer) preUpdate(ctx context.Context, leader, follower stri
 		return nil
 	}
 
+	// Touch a new preUpdate file ,indicate that preUpdate is going on
+	// remove it when it is finished.
+	// See https://github.com/radondb/radondb-mysql-kubernetes/issues/178
+	utils.TouchUpdateFile()
+	defer utils.RemoveUpdateFile()
 	sctName := s.GetNameForResource(utils.Secret)
 	svcName := s.GetNameForResource(utils.HeadlessSVC)
 	port := utils.MysqlPort

@@ -18,6 +18,7 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -57,4 +58,35 @@ func GetOrdinal(name string) (int, error) {
 		return -1, fmt.Errorf("failed to extract ordinal from name: %s", name)
 	}
 	return ordinal, nil
+}
+
+// Create the Update file.
+func TouchUpdateFile() error {
+	var err error
+	var file *os.File
+
+	if file, err = os.Create(FileIndicateUpdate); err != nil {
+		return err
+	}
+
+	file.Close()
+	return nil
+}
+
+// Remove the Update file.
+func RemoveUpdateFile() error {
+	return os.Remove(FileIndicateUpdate)
+}
+
+// Check update file exist.
+func ExistUpdateFile() bool {
+	f, err := os.Open(FileIndicateUpdate)
+	if os.IsNotExist(err) {
+		return false
+	} else if err != nil {
+		return true
+	}
+
+	err = f.Close()
+	return true
 }

@@ -204,7 +204,9 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 				node.Message = err.Error()
 			}
 
-			if isLeader == corev1.ConditionTrue && isReadOnly != corev1.ConditionFalse {
+			if !utils.ExistUpdateFile() &&
+				isLeader == corev1.ConditionTrue &&
+				isReadOnly != corev1.ConditionFalse {
 				log.V(1).Info("try to correct the leader writeable", "node", node.Name)
 				runner.RunQuery("SET GLOBAL read_only=off")
 				runner.RunQuery("SET GLOBAL super_read_only=off")
