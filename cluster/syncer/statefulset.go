@@ -228,7 +228,7 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 	// All followers have been updated now, then update leader.
 	if leaderPod.Name != "" {
 		// When replicas is two (one leader and one follower).
-		if len(followerPods) == 1 {
+		if *s.sfs.Spec.Replicas == 2 {
 			if err := s.preUpdate(ctx, leaderPod.Name, followerPods[0].Name); err != nil {
 				return err
 			}
@@ -251,7 +251,10 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 // 5. Check followerHost current role.
 // 6. If followerHost is not leader, switch it to leader through xenon.
 func (s *StatefulSetSyncer) preUpdate(ctx context.Context, leader, follower string) error {
-	if s.sfs.Status.Replicas != 2 {
+	// Status.Replicas indicate the number of Pod has been created.
+	// So sfs.Spec.Replicas is 2, May be sfs.Status.Replicas maybe are 3, 5 ,
+	// because it do not update the pods, so it is still the last status.
+	if *s.sfs.Spec.Replicas != 2 {
 		return nil
 	}
 
