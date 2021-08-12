@@ -193,7 +193,7 @@ kubectl delete clusters.mysql.radondb.com sample
 ### 卸载自定义资源
 
 ```shell
-kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.radondb.io
+kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.radondb.com
 ```
 
 ## 配置
