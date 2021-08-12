@@ -31,10 +31,16 @@ RadonDB MySQL Kubernetes支持在[Kubernetes](https://kubernetes.io)和[KubeSphe
 
 ## 快速开始
 
+### Helm
+
 - [ 在 Kubernetes 上部署 RadonDB MySQL 集群](docs/Kubernetes/deploy_radondb-mysql_on_kubernetes.md)
 - [在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere.md)
 - [在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere_repo.md)
 - [在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere_appstore.md)
+
+### Operator
+
+- [在 Kubernetes 上部署 RadonDB MySQL 集群](docs/Kubernetes/deploy_radondb-mysql_operator_on_k8s.md)
 
 ## 路线图
 
