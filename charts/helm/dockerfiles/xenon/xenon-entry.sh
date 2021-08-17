@@ -58,7 +58,7 @@ build_conf() {
 		"admin": "root",
 		"ping-timeout": 2000,
 		"passwd": "%s",
-		"host": "localhost",
+		"host": "127.0.0.1",
 		"version": "mysql57",
 		"master-sysvars": "%s",
 		"slave-sysvars": "%s",
