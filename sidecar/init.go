@@ -47,6 +47,19 @@ func NewInitCommand(cfg *Config) *cobra.Command {
 // runInitCommand do some initialization operations.
 func runInitCommand(cfg *Config) error {
 	var err error
+	// Get the mysql user.
+	user, err := user.Lookup("mysql")
+	if err != nil {
+		return fmt.Errorf("failed to get mysql user: %s", err)
+	}
+	uid, err := strconv.Atoi(user.Uid)
+	if err != nil {
+		return fmt.Errorf("failed to get mysql user uid: %s", err)
+	}
+	gid, err := strconv.Atoi(user.Gid)
+	if err != nil {
+		return fmt.Errorf("failed to get mysql user gid: %s", err)
+	}
 
 	if exists, _ := checkIfPathExists(dataPath); exists {
 		// remove lost+found.
@@ -54,19 +67,6 @@ func runInitCommand(cfg *Config) error {
 			return fmt.Errorf("removing lost+found: %s", err)
 		}
 
-		// Get the mysql user.
-		user, err := user.Lookup("mysql")
-		if err != nil {
-			return fmt.Errorf("failed to get mysql user: %s", err)
-		}
-		uid, err := strconv.Atoi(user.Uid)
-		if err != nil {
-			return fmt.Errorf("failed to get mysql user uid: %s", err)
-		}
-		gid, err := strconv.Atoi(user.Gid)
-		if err != nil {
-			return fmt.Errorf("failed to get mysql user gid: %s", err)
-		}
 		// chown -R mysql:mysql /var/lib/mysql.
 		if err = os.Chown(dataPath, uid, gid); err != nil {
 			return fmt.Errorf("failed to chown %s: %s", dataPath, err)
@@ -93,7 +93,24 @@ func runInitCommand(cfg *Config) error {
 			return fmt.Errorf("error mkdir %s: %s", extraConfPath, err)
 		}
 	}
+	// chown -R mysql:mysql /var/lib/mysql.
+	if err = os.Chown(extraConfPath, uid, gid); err != nil {
+		return fmt.Errorf("failed to chown %s: %s", dataPath, err)
+	}
 
+	if err = copyFile(path.Join(configMapPath, "special.cnf"), path.Join(initFilePath, "special.cnf")); err != nil {
+		return fmt.Errorf("failed to copy special.cnf: %s", err)
+	}
+
+	if err = os.Chmod(path.Join(initFilePath, "special.cnf"), 0755); err != nil {
+		return fmt.Errorf("failed to chmod special.cnf : %s", err)
+	}
+	// Create shell `cp  path.Join(initFilePath, "special.cnf") extraConfPath; chmod extraConfPath/special.cnf`
+	special_sh := "cp " + path.Join(initFilePath, "special.cnf ") + extraConfPath + "; "
+	special_sh += "chmod 755 " + extraConfPath + "/special.cnf"
+	if err = ioutil.WriteFile(initFilePath+"/special.sh", []byte(special_sh), 0755); err != nil {
+		return fmt.Errorf("failed to write special: %s", err)
+	}
 	// Run reset master in init-mysql container.
 	if err = ioutil.WriteFile(initFilePath+"/reset.sql", []byte("reset master;"), 0644); err != nil {
 		return fmt.Errorf("failed to write reset.sql: %s", err)

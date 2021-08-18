@@ -240,19 +240,39 @@ func (cfg *Config) buildInitSql() []byte {
 	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
 CREATE DATABASE IF NOT EXISTS %s;
 DROP user IF EXISTS 'root'@'127.0.0.1';
-GRANT ALL ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '%s' with grant option;
+CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY '%s';
+GRANT ALL ON *.* TO 'root'@'127.0.0.1'  with grant option;
 DROP user IF EXISTS '%s'@'%%';
-GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
+CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '%s'@'%%';
 DROP user IF EXISTS '%s'@'%%';
-GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
+CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* TO '%s'@'%%';
 DROP user IF EXISTS '%s'@'%%';
-GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
+CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%';
 DROP user IF EXISTS '%s'@'%%';
-GRANT ALL ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s';
+CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+GRANT ALL ON %s.* TO '%s'@'%%' ;
 FLUSH PRIVILEGES;
-`, cfg.Database, cfg.RootPassword, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword,
-		cfg.MetricsUser, cfg.MetricsUser, cfg.MetricsPassword, cfg.OperatorUser, cfg.OperatorUser,
-		cfg.OperatorPassword, cfg.User, cfg.Database, cfg.User, cfg.Password)
+`, cfg.Database, //database
+
+		cfg.RootPassword,
+		cfg.ReplicationUser,                          //drop user
+		cfg.ReplicationUser, cfg.ReplicationPassword, //create user
+		cfg.ReplicationUser, //grant REPLICATION
+
+		cfg.MetricsUser,                      //drop user MetricsUser
+		cfg.MetricsUser, cfg.MetricsPassword, //create user
+		cfg.MetricsUser, //grant
+
+		cfg.OperatorUser,                       //drop user
+		cfg.OperatorUser, cfg.OperatorPassword, //create
+		cfg.OperatorUser, //grant
+
+		cfg.User,               //drop user
+		cfg.User, cfg.Password, //create user
+		cfg.Database, cfg.User) //grant
 
 	return utils.StringToBytes(sql)
 }

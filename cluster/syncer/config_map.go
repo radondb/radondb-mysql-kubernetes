@@ -50,9 +50,10 @@ func NewConfigMapSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 		if err != nil {
 			return fmt.Errorf("failed to create mysql configs: %s", err)
 		}
-
+		data_special, err := buildSpecialMysqlConf(c)
 		cm.Data = map[string]string{
-			"my.cnf": data,
+			"my.cnf":      data,
+			"special.cnf": data_special,
 		}
 
 		return nil
@@ -65,6 +66,10 @@ func buildMysqlConf(c *cluster.Cluster) (string, error) {
 	sec := cfg.Section("mysqld")
 
 	c.EnsureMysqlConf()
+	if c.Spec.MysqlVersion == "8.0" {
+		delete(mysqlCommonConfigs, "query_cache_size")
+		delete(mysqlStaticConfigs, "query_cache_type")
+	}
 
 	addKVConfigsToSection(sec, mysqlSysConfigs, mysqlCommonConfigs, mysqlStaticConfigs, c.Spec.MysqlOpts.MysqlConf)
 
@@ -78,6 +83,19 @@ func buildMysqlConf(c *cluster.Cluster) (string, error) {
 		}
 	}
 
+	data, err := writeConfigs(cfg)
+	if err != nil {
+		return "", err
+	}
+
+	return data, nil
+}
+
+func buildSpecialMysqlConf(c *cluster.Cluster) (string, error) {
+	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
+	sec := cfg.Section("mysqld")
+
+	addKVConfigsToSection(sec, mysqlSpecialConfig)
 	data, err := writeConfigs(cfg)
 	if err != nil {
 		return "", err

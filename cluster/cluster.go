@@ -63,7 +63,11 @@ func (c *Cluster) Validate() error {
 	if utils.StringInArray(c.Spec.MysqlOpts.User, []string{"root", utils.ReplicationUser, utils.OperatorUser, utils.MetricsUser}) {
 		return fmt.Errorf("spec.mysqlOpts.user cannot be root|%s|%s|%s", utils.ReplicationUser, utils.OperatorUser, utils.MetricsUser)
 	}
-
+	// MySQL8 do not support TokuDB
+	// https://www.percona.com/blog/2021/05/21/tokudb-support-changes-and-future-removal-from-percona-server-for-mysql-8-0/
+	if c.Spec.MysqlVersion == "8.0" && c.Spec.MysqlOpts.InitTokuDB {
+		return fmt.Errorf("Spec.MysqlOpts.InitTokuDB do not support in MySQL8.0")
+	}
 	// https://github.com/percona/percona-docker/blob/main/percona-server-5.7/ps-entry.sh#L159
 	// ERROR 1396 (HY000): Operation CREATE USER failed for 'root'@'127.0.0.1'.
 	if c.Spec.MysqlOpts.RootHost == "127.0.0.1" {

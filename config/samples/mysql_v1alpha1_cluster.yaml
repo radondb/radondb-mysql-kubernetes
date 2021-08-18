@@ -4,7 +4,7 @@ metadata:
   name: sample
 spec:
   replicas: 3
-  mysqlVersion: "5.7"
+  mysqlVersion: "8.0"
 
   mysqlOpts:
     rootPassword: ""
@@ -55,7 +55,7 @@ spec:
 
   podSpec:
     imagePullPolicy: IfNotPresent
-    sidecarImage: radondb/mysql-sidecar:0.1
+    sidecarImage: acekingke/sidecar:0.1
     busyboxImage: busybox:1.32
 
     slowLogTail: false
