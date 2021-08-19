@@ -86,6 +86,9 @@ const (
 	// The path to the client MySQL client configuration.
 	// The file used to liveness and readiness check.
 	ConfClientPath = "/etc/mysql/client.conf"
+
+	// preUpdate file
+	FileIndicateUpdate = "PreUpdating"
 )
 
 // ResourceName is the type for aliasing resources that will be created.
