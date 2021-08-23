@@ -1,48 +1,14 @@
 # mysql-operator
 
-## Quickstart
+## Quickstart for backup
 
 Install the operator named `test`:
 
 ```shell
-helm install test https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql-operator.tgz
+helm install test charts/mysql-operator
 ```
 
-Then install the cluster named `sample`:
-```shell
-kubectl create -f config/samples/backup_secret.yaml
-```
-
-```shell
-kubectl apply -f config/samples/mysql_v1alpha1_cluster.yaml     
-```
-## backup
-After run cluster success
-```shell
-kubectl apply -f config/samples/samples/mysql_v1alpha1_backup.yaml
-```
-
-## Uninstall
-
-Uninstall the cluster named `sample`:
-
-```shell
-kubectl delete clusters.mysql.radondb.com sample
-```
-
-Uninstall the operator name `test`:
-
-```shell
-helm uninstall test
-```
-
-Uninstall the crd:
-
-```shell
-kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.radondb.com
-```
-
-## configure backup
+### configure backup
 
 add the secret file
 ```yaml
@@ -67,7 +33,7 @@ then, create the secret in k8s.
 ```
 kubectl create -f config/samples/backup_secret.yaml
 ```
-Please add the backupSecretName in mysql_v1_cluster.yaml, name as secret file:
+Please add the backupSecretName in mysql_v1apha1_cluster.yaml, name as secret file:
 ```yaml
 spec:
   replicas: 3
@@ -93,11 +59,38 @@ spec:
 |hostname|pod name in cluser|
 |clustname|cluster name|
 
-## start backup
-After cluster has started, if you want backup:
+### start cluster
+
 ```shell
- kubectl apply -f config/samples/mysql_v1_backup.yaml
- ```
+kubectl apply -f config/samples/mysql_v1alpha1_cluster.yaml     
+```
+### start backup
+After run cluster success
+```shell
+kubectl apply -f config/samples/mysql_v1alpha1_backup.yaml
+```
+
+## Uninstall
+
+Uninstall the cluster named `sample`:
+
+```shell
+kubectl delete clusters.mysql.radondb.com sample
+```
+
+Uninstall the operator name `test`:
+
+```shell
+helm uninstall test
+```
+
+Uninstall the crd:
+
+```shell
+kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.radondb.com
+```
+
+
 ## restore cluster from backup copy
 check your s3 bucket, get the directory where your backup to， such as `backup_2021720827`.
 add  it to RestoreFrom in yaml file
