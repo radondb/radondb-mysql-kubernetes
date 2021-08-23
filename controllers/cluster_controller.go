@@ -118,6 +118,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		clustersyncer.NewPDBSyncer(r.Client, instance),
 	}
 
+	if instance.Spec.MetricsOpts.Enabled {
+		syncers = append(syncers, clustersyncer.NewMetricsSVCSyncer(r.Client, instance))
+	}
+
 	// run the syncers
 	for _, sync := range syncers {
 		if err = syncer.Sync(ctx, sync, r.Recorder); err != nil {

@@ -105,6 +105,8 @@ const (
 	LeaderService ResourceName = "leader-service"
 	// FollowerService is the name of a service that points healthy followers (excludes leader).
 	FollowerService ResourceName = "follower-service"
+	//MetricsService is the name of the metrics service that points to all nodes.
+	MetricsService ResourceName = "metrics-service"
 	// Secret is the name of the secret that contains operator related credentials.
 	Secret ResourceName = "secret"
 	// Role is the alias of the role resource.
