@@ -578,7 +578,6 @@ func xenonHttpRequest(host, method, url string, rootPasswd []byte, body io.Reade
 
 //check the backup is exist and running
 func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
-
 	backuplist := apiv1alpha1.BackupList{}
 	if err := s.cli.List(ctx,
 		&backuplist,
