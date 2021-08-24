@@ -20,10 +20,12 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 
 	"github.com/presslabs/controller-util/syncer"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -59,6 +61,7 @@ type BackupReconciler struct {
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// your logic here
 	// Fetch the Backup instance
+	log := log.Log.WithName("controllers").WithName("Backup")
 	backup := backup.New(&apiv1alpha1.Backup{})
 	err := r.Get(context.TODO(), req.NamespacedName, backup.Unwrap())
 	if err != nil {
@@ -85,6 +88,38 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return reconcile.Result{}, err
 	}
 
+	// Clear the backup, Just keep historyLimit len
+	backups := batchv1.JobList{}
+	if err := r.List(context.TODO(), &backups, &client.ListOptions{
+		Namespace: req.Namespace}); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	var finishedBackups []*batchv1.Job
+	for _, job := range backups.Items {
+		if IsJobFinished(&job) {
+			finishedBackups = append(finishedBackups, &job)
+		}
+
+	}
+
+	sort.Slice(finishedBackups, func(i, j int) bool {
+		if finishedBackups[i].Status.StartTime == nil {
+			return finishedBackups[j].Status.StartTime != nil
+		}
+		return finishedBackups[i].Status.StartTime.Before(finishedBackups[j].Status.StartTime)
+	})
+
+	for i, job := range finishedBackups {
+		if int32(i) >= int32(len(finishedBackups))-*backup.Spec.HistoryLimit {
+			break
+		}
+		if err := r.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
+			log.Error(err, "unable to delete old completed job", "job", job)
+		} else {
+			log.V(0).Info("deleted old completed job", "job", job)
+		}
+	}
 	return ctrl.Result{}, nil
 }
 
@@ -96,6 +131,7 @@ func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// Update backup Object and Status
 func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup *backup.Backup) error {
 	log := log.Log.WithName("controllers").WithName("Backup")
 	if !reflect.DeepEqual(savedBackup, backup.Unwrap()) {
@@ -113,4 +149,14 @@ func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup 
 		}
 	}
 	return nil
+}
+
+// Check the job is finished.
+func IsJobFinished(job *batchv1.Job) bool {
+	for _, c := range job.Status.Conditions {
+		if c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed {
+			return true
+		}
+	}
+	return false
 }

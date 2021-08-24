@@ -39,6 +39,11 @@ type BackupSpec struct {
 
 	// Cluster represents the cluster name to backup
 	ClusterName string `json:"clustname"`
+
+	// History Limit of job
+	// +optional
+	// +kubebuilder:default:=3
+	HistoryLimit *int32 `json:"historyLimit,omitempty"`
 }
 
 // BackupStatus defines the observed state of Backup

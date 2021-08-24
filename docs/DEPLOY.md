@@ -82,6 +82,7 @@ Uninstall the operator name `test`:
 
 ```shell
 helm uninstall test
+kubectl delete -f config/samples/mysql_v1alpha1_backup.yaml
 ```
 
 Uninstall the crd:

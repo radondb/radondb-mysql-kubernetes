@@ -39,6 +39,11 @@ spec:
               clustname:
                 description: Cluster represents the cluster name to backup
                 type: string
+              historyLimit:
+                default: 3
+                description: History Limit of job
+                format: int32
+                type: integer
               hostname:
                 description: HostName represents the host for which to take backup
                 type: string
