@@ -51,7 +51,7 @@ func NewMetricsSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface
 		service.Spec.Ports[0].Name = utils.MetricsPortName
 		service.Spec.Ports[0].Port = utils.MetricsPort
 		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MetricsPort)
-		
+
 		return nil
 	})
 }
