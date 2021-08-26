@@ -24,8 +24,10 @@ import (
 
 	"github.com/presslabs/controller-util/syncer"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -36,9 +38,10 @@ import (
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/backup"
 	backupSyncer "github.com/radondb/radondb-mysql-kubernetes/backup/syncer"
+	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
-// BackupReconciler reconciles a Backup object
+// BackupReconciler reconciles a Backup object.
 type BackupReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
@@ -61,7 +64,6 @@ type BackupReconciler struct {
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// your logic here
 	// Fetch the Backup instance
-	log := log.Log.WithName("controllers").WithName("Backup")
 	backup := backup.New(&apiv1alpha1.Backup{})
 	err := r.Get(context.TODO(), req.NamespacedName, backup.Unwrap())
 	if err != nil {
@@ -89,10 +91,21 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	// Clear the backup, Just keep historyLimit len
-	backups := batchv1.JobList{}
-	if err := r.List(context.TODO(), &backups, &client.ListOptions{
-		Namespace: req.Namespace}); err != nil {
+	if err = r.clearHistoryJob(ctx, req, backup); err != nil {
 		return reconcile.Result{}, err
+	}
+	return ctrl.Result{}, nil
+}
+
+// Clear the History finished Jobs over HistoryLimit.
+func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request, backup *backup.Backup) error {
+	log := log.Log.WithName("controllers").WithName("Backup")
+	backups := batchv1.JobList{}
+	labelSet := labels.Set{"Type": utils.BackupJobTypeName}
+	if err := r.List(context.TODO(), &backups, &client.ListOptions{
+		Namespace: req.Namespace, LabelSelector: labelSet.AsSelector(),
+	}); err != nil {
+		return err
 	}
 
 	var finishedBackups []*batchv1.Job
@@ -100,7 +113,6 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		if IsJobFinished(&job) {
 			finishedBackups = append(finishedBackups, &job)
 		}
-
 	}
 
 	sort.Slice(finishedBackups, func(i, j int) bool {
@@ -120,7 +132,7 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			log.V(0).Info("deleted old completed job", "job", job)
 		}
 	}
-	return ctrl.Result{}, nil
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -131,7 +143,7 @@ func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// Update backup Object and Status
+// Update backup Object and Status.
 func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup *backup.Backup) error {
 	log := log.Log.WithName("controllers").WithName("Backup")
 	if !reflect.DeepEqual(savedBackup, backup.Unwrap()) {
@@ -140,7 +152,6 @@ func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup 
 		}
 	}
 	if !reflect.DeepEqual(savedBackup.Status, backup.Unwrap().Status) {
-
 		log.Info("update backup object status")
 		if err := r.Status().Update(context.TODO(), backup.Unwrap()); err != nil {
 			log.Error(err, fmt.Sprintf("update status backup %s/%s", backup.Name, backup.Namespace),
@@ -151,10 +162,12 @@ func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup 
 	return nil
 }
 
-// Check the job is finished.
+// IsJobFinished checks whether the given Job has finished execution.
+// It does not discriminate between successful and failed terminations.
+// See https://github.com/kubernetes/kubernetes/blob/7a0638da76cb9843def65708b661d2c6aa58ed5a/pkg/controller/job/utils.go#L26
 func IsJobFinished(job *batchv1.Job) bool {
 	for _, c := range job.Status.Conditions {
-		if c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed {
+		if (c.Type == batchv1.JobComplete || c.Type == batchv1.JobFailed) && c.Status == corev1.ConditionTrue {
 			return true
 		}
 	}

@@ -31,7 +31,7 @@ type BackupSpec struct {
 
 	// To specify the image that will be used for sidecar container.
 	// +optional
-	// +kubebuilder:default:="acekingke/sidecar:0.1"
+	// +kubebuilder:default:="radondb/mysql-sidecar:0.1.88"
 	Image string `json:"image"`
 
 	// HostName represents the host for which to take backup
@@ -51,7 +51,8 @@ type BackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Completed represents the backup has finished
+	// Completed indicates whether the backup is in a final state,
+	// no matter whether its' corresponding job failed or succeeded
 	Completed bool `json:"completed,omitempty"`
 
 	// Conditions represents the backup resource conditions list.

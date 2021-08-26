@@ -124,3 +124,6 @@ const (
 	// PodDisruptionBudget is the name of pod disruption budget for the statefulset.
 	PodDisruptionBudget ResourceName = "pdb"
 )
+
+// JobType
+const BackupJobTypeName = ContainerBackupName

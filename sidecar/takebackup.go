@@ -24,12 +24,10 @@ import (
 
 // RunTakeBackupCommand starts a backup command
 func RunTakeBackupCommand(cfg *Config, name string) error {
-	log.Info("backup mysql", "name", name)
 	// cfg->XtrabackupArgs()
 	xtrabackup := exec.Command(xtrabackupCommand, cfg.XtrabackupArgs()...)
 
 	var err error
-	//if len(cfg.XCloudS3AccessKey) == 0 || len(cfg.XCloudS3Bucket) == 0 || len(cfg.X)
 	xcloud := exec.Command(xcloudCommand, cfg.XCloudArgs()...)
 	log.Info("xargs ", "xargs", strings.Join(cfg.XCloudArgs(), " "))
 	if xcloud.Stdin, err = xtrabackup.StdoutPipe(); err != nil {

@@ -48,7 +48,7 @@ spec:
                 description: HostName represents the host for which to take backup
                 type: string
               image:
-                default: acekingke/sidecar:0.1
+                default: radondb/mysql-sidecar:0.1.88
                 description: To specify the image that will be used for sidecar container.
                 type: string
             required:
@@ -59,7 +59,8 @@ spec:
             description: BackupStatus defines the observed state of Backup
             properties:
               completed:
-                description: Completed represents the backup has finished
+                description: Completed indicates whether the backup is in a final
+                  state, no matter whether its' corresponding job failed or succeeded
                 type: boolean
               conditions:
                 description: Conditions represents the backup resource conditions

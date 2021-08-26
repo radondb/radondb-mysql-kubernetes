@@ -49,7 +49,7 @@ func (b *Backup) GetNameForJob() string {
 	return fmt.Sprintf("%s-backup", b.Name)
 }
 
+// Create the backup Domain Name.
 func (b *Backup) GetBackupURL(cluster_name string, hostname string) string {
 	return fmt.Sprintf("%s.%s-mysql.%s:%v", hostname, cluster_name, b.Namespace, utils.XBackupPort)
-
 }

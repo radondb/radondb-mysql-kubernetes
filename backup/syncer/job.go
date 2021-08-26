@@ -29,6 +29,7 @@ import (
 
 	v1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/backup"
+	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
 var log = logf.Log.WithName("backup.syncer.job")
@@ -62,7 +63,7 @@ func (s *jobSyncer) SyncFn() error {
 		return syncer.ErrIgnore
 	}
 
-	// check if job is already created an just update the status
+	// check if job is already created and just update the status
 	if !s.job.ObjectMeta.CreationTimestamp.IsZero() {
 		s.updateStatus(s.job)
 		return nil
@@ -70,6 +71,7 @@ func (s *jobSyncer) SyncFn() error {
 
 	s.job.Labels = map[string]string{
 		"Host": s.backup.Spec.HostName,
+		"Type": utils.BackupJobTypeName,
 	}
 
 	s.job.Spec.Template.Spec = s.ensurePodSpec(s.job.Spec.Template.Spec)
@@ -113,7 +115,7 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 
 	in.RestartPolicy = corev1.RestartPolicyNever
 	sctName := fmt.Sprintf("%s-secret", s.backup.Spec.ClusterName)
-	in.Containers[0].Name = "backup"
+	in.Containers[0].Name = utils.ContainerBackupName
 	in.Containers[0].Image = s.backup.Spec.Image
 	in.Containers[0].Args = []string{
 		"request_a_backup",
@@ -138,7 +140,7 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 			Name:  "REPLICAS",
 			Value: "1",
 		},
-		//backup user  for sidecar http server
+		// backup user for sidecar http server.
 		{
 			Name: "BACKUP_USER",
 			ValueFrom: &corev1.EnvVarSource{
@@ -151,7 +153,7 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 				},
 			},
 		},
-		//backup user  for sidecar http server
+		// backup password for sidecar http server.
 		{
 			Name: "BACKUP_PASSWORD",
 			ValueFrom: &corev1.EnvVarSource{

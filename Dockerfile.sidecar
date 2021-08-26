@@ -37,10 +37,6 @@ RUN set -ex; \
     --gid mysql \
     mysql;
 
-ENV PS_VERSION 5.7.33-36-1
-ENV OS_VER focal
-ENV FULL_PERCONA_VERSION "$PS_VERSION.$OS_VER"
-
 ARG XTRABACKUP_PKG=percona-xtrabackup-24
 RUN set -ex; \
     apt-get update; \

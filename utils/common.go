@@ -92,7 +92,7 @@ func ExistUpdateFile() bool {
 	return true
 }
 
-// Build the backup directory name by time
+// Build the backup directory name by time.
 func BuildBackupName() string {
 	cur_time := time.Now()
 	return fmt.Sprintf("backup_%v%v%v%v%v%v", cur_time.Year(), int(cur_time.Month()),

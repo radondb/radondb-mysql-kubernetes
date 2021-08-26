@@ -80,14 +80,14 @@ type Config struct {
 
 	// Whether the MySQL data exists.
 	existMySQLData bool
-	//for mysql backup
+	// for mysql backup
 	// backup user and password for http endpoint
 	ClusterName string
 
-	//Backup user name to http Server
+	// Backup user name to http Server
 	BackupUser string
 
-	//Backup Password to htpp Server
+	// Backup Password to htpp Server
 	BackupPassword string
 
 	// XbstreamExtraArgs is a list of extra command line arguments to pass to xbstream.
@@ -103,16 +103,16 @@ type Config struct {
 	// XtrabackupTargetDir is a backup destination directory for xtrabackup.
 	XtrabackupTargetDir string
 
-	//S3 endpoint domain name
+	// S3 endpoint domain name
 	XCloudS3EndPoint string
 
-	//S3 access key
+	// S3 access key
 	XCloudS3AccessKey string
 
-	//S3 secrete key
+	// S3 secrete key
 	XCloudS3SecretKey string
 
-	//S3 Bucket names
+	// S3 Bucket names
 	XCloudS3Bucket string
 
 	// directory in S3 bucket for cluster restore from
@@ -196,7 +196,7 @@ func NewConfig() *Config {
 	}
 }
 
-//build Xtrabackup arguments
+// build Xtrabackup arguments
 func (cfg *Config) XtrabackupArgs() []string {
 	// xtrabackup --backup <args> --target-dir=<backup-dir> <extra-args>
 	user := "root"
@@ -219,7 +219,7 @@ func (cfg *Config) XtrabackupArgs() []string {
 	return append(xtrabackupArgs, cfg.XtrabackupExtraArgs...)
 }
 
-//Build xbcloud arguments
+// Build xbcloud arguments
 func (cfg *Config) XCloudArgs() []string {
 	xcloudArgs := []string{
 		"put",

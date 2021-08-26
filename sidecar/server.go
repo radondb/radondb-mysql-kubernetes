@@ -39,6 +39,7 @@ type server struct {
 	http.Server
 }
 
+// Create new Http Server.
 func newServer(cfg *Config, stop <-chan struct{}) *server {
 	mux := http.NewServeMux()
 	srv := &server{
@@ -49,16 +50,15 @@ func newServer(cfg *Config, stop <-chan struct{}) *server {
 		},
 	}
 
-	// Add handle functions
+	// Add handle functions.
 	mux.HandleFunc(serverProbeEndpoint, srv.healthHandler)
 	mux.Handle(serverBackupEndpoint, maxClients(http.HandlerFunc(srv.backupHandler), 1))
 
-	// Shutdown gracefully the http server
+	// Shutdown gracefully the http server.
 	go func() {
 		<-stop // wait for stop signal
 		if err := srv.Shutdown(context.Background()); err != nil {
 			log.Error(err, "failed to stop http server")
-
 		}
 	}()
 
@@ -79,7 +79,7 @@ func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
 		return
 	}
-	err := RunTakeBackupCommand(s.cfg, "hello")
+	err := RunTakeBackupCommand(s.cfg, "")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
@@ -92,7 +92,7 @@ func (s *server) isAuthenticated(r *http.Request) bool {
 	return ok && user == s.cfg.BackupUser && pass == s.cfg.BackupPassword
 }
 
-// maxClients limit an http endpoint to allow just n max concurrent connections
+// maxClients limit an http endpoint to allow just n max concurrent connections.
 func maxClients(h http.Handler, n int) http.Handler {
 	sema := make(chan struct{}, n)
 
@@ -112,6 +112,7 @@ func prepareURL(svc string, endpoint string) string {
 	return fmt.Sprintf("http://%s%s", svc, endpoint)
 }
 
+// Set the timeout for HTTP.
 func transportWithTimeout(connectTimeout time.Duration) http.RoundTripper {
 	return &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
@@ -127,7 +128,7 @@ func transportWithTimeout(connectTimeout time.Duration) http.RoundTripper {
 	}
 }
 
-// requestABackup connects to specified host and endpoint and gets the backup
+// requestABackup connects to specified host and endpoint and gets the backup.
 func requestABackup(cfg *Config, host string, endpoint string) (*http.Response, error) {
 	log.Info("initialize a backup", "host", host, "endpoint", endpoint)
 

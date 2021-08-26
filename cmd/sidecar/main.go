@@ -55,26 +55,6 @@ func main() {
 	initCmd := sidecar.NewInitCommand(cfg)
 	cmd.AddCommand(initCmd)
 
-	takeBackupCmd := &cobra.Command{
-		Use:   "backup",
-		Short: "Take a backup from node and push it to rclone path.",
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
-				return fmt.Errorf("require one arguments. source host and destination bucket")
-			}
-			return nil
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-			err := sidecar.RunTakeBackupCommand(cfg, args[0])
-			if err != nil {
-				log.Error(err, "take backup command failed")
-				os.Exit(1)
-
-			}
-		},
-	}
-	cmd.AddCommand(takeBackupCmd)
-
 	httpCmd := &cobra.Command{
 		Use:   "http",
 		Short: "start http server",

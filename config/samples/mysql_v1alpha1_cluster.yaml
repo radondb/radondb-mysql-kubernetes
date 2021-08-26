@@ -7,10 +7,10 @@ spec:
   mysqlVersion: "5.7"
   
   # the backupSecretName specify the secret file name which store S3 information,
-  # if you want S3 backup or restore, please create backup_secret.yaml, uncomment bellow and fill secret name:
+  # if you want S3 backup or restore, please create backup_secret.yaml, uncomment below and fill secret name:
   # backupSecretName: 
   
-  # if you want create cluster from S3 , uncomment and fill the directory of S3 bucket bellow:
+  # if you want create cluster from S3 , uncomment and fill the directory in S3 bucket below:
   # restoreFrom: 
   
   mysqlOpts:
@@ -62,7 +62,7 @@ spec:
 
   podSpec:
     imagePullPolicy: IfNotPresent
-    sidecarImage: radondb/mysql-sidecar:0.1.88
+    sidecarImage: radondb/mysql-sidecar:latest
     busyboxImage: busybox:1.32
 
     slowLogTail: false
