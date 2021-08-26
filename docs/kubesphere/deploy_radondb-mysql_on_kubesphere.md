@@ -1,35 +1,35 @@
 Contents
 =================
 
-   * [在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群](#在-kubesphere-上通过-helm-repo-部署-radondb-mysql-集群)
+   * [在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群](#在-kubesphere-上通过-git-部署-radondb-mysql-集群)
       * [简介](#简介)
       * [部署准备](#部署准备)
-	 * [安装 KubeSphere](#安装-kubesphere)
-	 * [创建 KubeSphere 多租户系统](#创建-kubesphere-多租户系统)
-	 * [连接 KubeSphere 客户端节点](#连接-kubesphere-客户端节点)
-	 * [部署步骤](#部署步骤)
-	    * [步骤 1 : 添加仓库](#步骤-1--添加仓库)
-	    * [步骤 2 : 部署](#步骤-2--部署)
-	 * [部署校验](#部署校验)
+         * [安装 KubeSphere](#安装-kubesphere)
+         * [创建 KubeSphere 多租户系统](#创建-kubesphere-多租户系统)
+         * [连接 KubeSphere 客户端节点](#连接-kubesphere-客户端节点)
+      * [部署步骤](#部署步骤)
+         * [步骤 1：克隆 RadonDB MySQL Chart](#步骤-1克隆-radondb-mysql-chart)
+         * [步骤 2：部署](#步骤-2部署)
+         * [步骤 3：部署校验](#步骤-3部署校验)
       * [访问 RadonDB MySQL](#访问-radondb-mysql)
-	 * [开启服务网络访问](#开启服务网络访问)
-	 * [连接节点](#连接节点)
+         * [开启服务网络访问](#开启服务网络访问)
+         * [连接节点](#连接节点)
       * [配置](#配置)
       * [持久化](#持久化)
       * [自定义 MYSQL 配置](#自定义-mysql-配置)
 
-# 在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群
+# 在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群
 
 ## 简介
 
 RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方案。通过使用 Raft 协议，RadonDB MySQL 可以快速进行故障转移，且不会丢失任何事务。
 
-本教程演示如何在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群。
+本教程演示如何在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群。
 
 您还可以通过如下方式在 KubeSphere 上部署 RadonDB MySQL 集群：
 
-- [在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere_appstore.md)
-- [在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere.md)
+- [在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere_repo.md)
+- [在 KubeSphere 上通过 应用商店 部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere_appstore.md)
 
 ## 部署准备
 
@@ -38,7 +38,7 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 可选择如下安装方式：
 
 - 在 [青云 QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 上安装 Kubersphere。
-  
+
 - [在 Kubernetes 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-kubernetes/)。
   
 - [在 Linux 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
@@ -49,112 +49,111 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
 ### 连接 KubeSphere 客户端节点
 
-> 说明：如下示例适用于 KubeSphere 安装在 [青云QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 的场景。
+> **说明**
+> 
+> 如下示例适用于 KubeSphere 安装在 [青云QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 的场景。
 
 通过[青云 QingCloud 控制台](https://console.qingcloud.com/) 直接连接客户端节点。
 
-   ![连接客户端节点](png/连接客户端节点.png)
+- 默认 root 用户密码为 KubeSphere 集群 ID。
 
-> - 默认 root 用户密码为 KubeSphere 集群 ID。
-> - 通过第三方 SSH 工具连接客户端节点，需要在配置参数中填写 KubeSphere 的 `用户 SSH 公钥` 参数。
+- 通过第三方 SSH 工具连接客户端节点，需要在配置参数中填写 KubeSphere 的 `用户 SSH 公钥` 参数。
 
-### 部署步骤
+## 部署步骤
 
-#### 步骤 1 : 添加仓库
+### 步骤 1：克隆 RadonDB MySQL Chart
 
-添加并更新 helm 仓库。
+在 KubeSphere 客户端节点执行如下命令，将 RadonDB MySQL Chart 克隆到 KubeSphere 客户端节点中。
 
-```bash
-$ helm repo add test https://charts.kubesphere.io/test
-$ helm repo update
-```
+   ```bash
+   git clone https://github.com/radondb/radondb-mysql-kubernetes.git
+   ```
 
-#### 步骤 2 : 部署
+> Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
 
-以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
+### 步骤 2：部署
 
-```bash
-$ helm install demo test/radondb-mysql
-NAME: demo
-LAST DEPLOYED: Wed Apr 28 08:08:15 2021
-NAMESPACE: default
-STATUS: deployed
-REVISION: 1
-TEST SUITE: None
-NOTES:
-The cluster is comprised of 3 pods: 1 leader and 2 followers. Each instance is accessible within the cluster through:
+在 radondb-mysql-kubernetes 目录路径下，选择如下方式，部署 RadonDB MySQL 实例。
 
-    <pod-name>.demo-radondb-mysql
+> release 是运行在 Kubernetes 集群中的 Chart 的实例。
 
-To connect to your database:
+* **默认部署方式**
 
-1. Get mysql user `qingcloud`s password:
+  以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
 
-    kubectl get secret -n default demo-radondb-mysql -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
+  ```bash
+   <For Helm v2>
+    cd charts/helm
+    helm install . demo
 
-2. Run an Ubuntu pod that you can use as a client:
+   <For Helm v3>
+    cd charts/helm
+    helm install demo .
+  ```
 
-    kubectl run ubuntu -n default --image=ubuntu:focal -it --rm --restart='Never' -- bash -il
+* **指定参数部署方式**
 
-3. Install the mysql client:
+  在 `helm install` 时使用 `--set key=value[,key=value]` ，可指定参数部署。
+  
+  以下示例将创建一个用户名为 `my-user` ，密码为 `my-password` 的标准数据库用户，可访问名为 `my-database` 的数据库。
 
-    apt-get update && apt-get install mysql-client -y
+  ```bash
+  cd charts/helm
+  helm install demo \
+  --set mysql.mysqlUser=my-user,mysql.mysqlPassword=my-password,mysql.database=my-database .
+  ```
 
-4. To connect to leader service in the Ubuntu pod:
+   > 更多安装过程中可配置的参数，请参考 [配置](#配置) 。
 
-    mysql -h demo-radondb-mysql-leader -u qingcloud -p
+* **配置 yaml 参数方式**
 
-5. To connect to follower service (read-only) in the Ubuntu pod:
+  执行如下命令，可通过 value.yaml 配置文件，在安装时配置指定参数。
 
-    mysql -h demo-radondb-mysql-follower -u qingcloud -p
-```
+  ```bash
+  cd charts/helm
+  helm install demo -f values.yaml .
+  ```
+  
+### 步骤 3：部署校验
 
-### 部署校验
+在**项目管理**管理中心，选择 **应用负载 > 工作负载**，并选择**有状态副本集**页签，可查看到名为 `demo-radondb-mysql` 的副本集，则 RadonDB MySQL 集群已成功部署。
 
-分别执行如下指令，查看到 `release` 名为 `demo` 的有状态副本集 `demo-radondb-mysql`，则 RadonDB MySQL 部署成功。
-
-```bash
-$ helm list
-NAME        NAMESPACE REVISION UPDATED                                 STATUS   CHART               APP VERSION
-demo        default   1        2021-04-28 08:08:15.828384203 +0000 UTC deployed radondb-mysql-1.0.0 5.7.34   
-
-$ kubectl get statefulset
-NAME                 READY   AGE
-demo-radondb-mysql   3/3     25h
-```
+![控制台部署成功](_images/deploy_success.png)
 
 ## 访问 RadonDB MySQL
 
 您需准备一个用于连接 RadonDB MySQL 的客户端。
 
-> **注意：** 建议通过使用在同一 VPC 下主机或青云 VPN 服务来访问 RadonDB MySQL。不要通过端口转发的方式将服务暴露到公网，避免对数据库服务造成重大影响！
+> **注意** 
+> 
+> 建议通过使用在同一 VPC 下主机或 VPN 服务来访问 RadonDB MySQL。不要通过端口转发的方式将服务暴露到公网，避免对数据库服务造成重大影响！
 
 ### 开启服务网络访问
 
 1. 在 **项目管理** 界面中，选择 **应用负载** > **服务**，查看当前项目中的服务列表。
 
-   ![服务](png/服务.png)
+   ![服务](_images/service.png)
 
 
 2. 进入需要开启外网访问的服务中，选择 **更多操作** > **编辑外网访问**。
 
-   ![编辑外网访问](png/编辑外网访问.png)
+   ![编辑外网访问](_images/config_vnet.png)
 
    - **NodePort方式**
 
       选择 NodePort。
 
-      ![nodeport](png/nodeport.png)
+      ![nodeport](_images/nodeport.png)
 
       点击确定自动生成转发端口，在 KubeSphere 集群同一网络内可通过集群IP/节点IP和此端口访问服务。
 
-     ![节点端口](png/节点端口.png)
+     ![节点端口](_images/node_port.png)
 
    - **Loadbalancer方式**
 
       选择 LoadBalancer。
 
-      ![负载均衡](png/负载均衡.png)
+      ![负载均衡](_images/loadbalancer.png)
 
      在 `service.beta.kubernetes.io/qingcloud-load-balancer-eip-ids` 参数中填写可用的 EIP ID，系统会自动为 EIP 创建负载均衡器和对应的监听器。
 
@@ -162,7 +161,7 @@ demo-radondb-mysql   3/3     25h
 
      点击确定自动生成转发端口，在 KubeSphere 集群同一网络内可通过集群IP/节点IP和此端口访问服务。
 
-      ![负载均衡端口](png/负载均衡端口.png)
+      ![负载均衡端口](_images/loadbalancer_port.png)
 
 ### 连接节点
 
@@ -185,7 +184,7 @@ demo-radondb-mysql   3/3     25h
   ```bash
   mysql -h <follower service 名称> -u <用户名> -p
   ```
-
+  
 > 使用外网主机连接可能会出现 `SSL connection error`，需要加上 `--ssl-mode=DISABLE` 参数，关闭 SSL。
 
 ## 配置
@@ -279,9 +278,13 @@ demo-radondb-mysql   3/3     25h
 
 默认情况下，会创建一个 PersistentVolumeClaim 并将其挂载到指定目录中。 若想禁用此功能，您可以更改 `values.yaml` 禁用持久化，改用 emptyDir。
 
-> *"当 Pod 分配给节点时，将首先创建一个 emptyDir 卷，只要该 Pod 在该节点上运行，该卷便存在。 当 Pod 从节点中删除时，emptyDir 中的数据将被永久删除."*
+*"当 Pod 分配给节点时，将首先创建一个 emptyDir 卷，只要该 Pod 在该节点上运行，该卷便存在。 当 Pod 从节点中删除时，emptyDir 中的数据将被永久删除."*
 
-**注意**：PersistentVolumeClaim 中可以使用不同特性的 PersistentVolume，其 IO 性能会影响数据库的初始化性能。所以当使用 PersistentVolumeClaim 启用持久化存储时，可能需要调整 livenessProbe.initialDelaySeconds 的值。数据库初始化的默认限制是60秒 (livenessProbe.initialDelaySeconds + livenessProbe.periodSeconds * livenessProbe.failureThreshold)。如果初始化时间超过限制，kubelet将重启数据库容器，数据库初始化被中断，会导致持久数据不可用。
+> **注意**
+> 
+> PersistentVolumeClaim 中可以使用不同特性的 PersistentVolume，其 IO 性能会影响数据库的初始化性能。所以当使用 PersistentVolumeClaim 启用持久化存储时，可能需要调整 `livenessProbe.initialDelaySeconds` 的值。
+> 
+> 数据库初始化的默认限制是60秒 (l`ivenessProbe.initialDelaySeconds` + `livenessProbe.periodSeconds` * `livenessProbe.failureThreshold`)。如果初始化时间超过限制，kubelet 将重启数据库容器，数据库初始化被中断，会导致持久数据不可用。
 
 ## 自定义 MYSQL 配置
 
