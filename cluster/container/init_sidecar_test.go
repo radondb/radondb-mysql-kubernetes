@@ -101,7 +101,7 @@ var (
 		},
 		{
 			Name:  "MYSQL_VERSION",
-			Value: "5.7.33",
+			Value: "5.7.34",
 		},
 		{
 			Name:  "RESTORE_FROM",
