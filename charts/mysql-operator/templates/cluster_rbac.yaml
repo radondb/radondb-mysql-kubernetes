@@ -88,6 +88,26 @@ rules:
 - apiGroups:
   - mysql.radondb.com
   resources:
+  - users
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.radondb.com
+  resources:
+  - users/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - mysql.radondb.com
+  resources:
   - clusters/finalizers
   verbs:
   - update
