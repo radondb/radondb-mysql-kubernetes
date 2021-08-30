@@ -117,4 +117,8 @@ const (
 	ServiceAccount ResourceName = "service-account"
 	// PodDisruptionBudget is the name of pod disruption budget for the statefulset.
 	PodDisruptionBudget ResourceName = "pdb"
+	// UserFinalizer is the name of the user finalizer.
+	UserFinalizer ResourceName = "radondb-mysql-user"
+	// UserControllerName is the name of UserController.
+	UserControllerName ResourceName = "controller.user"
 )

@@ -168,6 +168,21 @@ func (s *SQLRunner) RunQuery(query string, args ...interface{}) error {
 	return nil
 }
 
+// RunQuery used to run the query with args.
+func (s *SQLRunner) CheckUserQuery(query string, args ...interface{}) error {
+	var result string
+	err := s.db.QueryRow(query, args...).Scan(&result)
+	if err != nil {
+		return fmt.Errorf("check user faild, err:%s", err)
+	}
+
+	if result == "" {
+		return fmt.Errorf("user is not exist")
+	}
+
+	return nil
+}
+
 // GetGlobalVariable used to get the global variable by param.
 func (s *SQLRunner) GetGlobalVariable(param string, val interface{}) error {
 	query := fmt.Sprintf("select @@global.%s", param)
