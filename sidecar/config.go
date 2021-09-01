@@ -17,6 +17,7 @@ limitations under the License.
 package sidecar
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -172,7 +173,9 @@ func (cfg *Config) buildXenonConf() []byte {
 	version := "mysql80"
 	if cfg.MySQLVersion.Major == 5 {
 		// currently we do not support mysql 5.6 or lower version.
-		log.Info("currently we do not support mysql 5.6 or lower version, default we set mysql 5.7")
+		if cfg.MySQLVersion.Minor != 7 {
+			log.Error(errors.New("uneffective mysql version."), "currently we do not support mysql 5.6 or lower version, default we set mysql 5.7")
+		}
 		version = "mysql57"
 	}
 
