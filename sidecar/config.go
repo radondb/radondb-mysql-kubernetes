@@ -72,7 +72,7 @@ type Config struct {
 
 	// The parameter in xenon means admit defeat count for hearbeat.
 	AdmitDefeatHearbeatCount int32
-	// The parameter in xenon means election timeout(ms)。
+	// The parameter in xenon means election timeout(ms).
 	ElectionTimeout int32
 
 	// Whether the MySQL data exists.
@@ -171,11 +171,9 @@ func (cfg *Config) buildXenonConf() []byte {
 
 	version := "mysql80"
 	if cfg.MySQLVersion.Major == 5 {
-		if cfg.MySQLVersion.Minor == 6 {
-			version = "mysql56"
-		} else {
-			version = "mysql57"
-		}
+		// currently we do not support mysql 5.6 or lower version.
+		log.Info("currently we do not support mysql 5.6 or lower version, default we set mysql 5.7")
+		version = "mysql57"
 	}
 
 	var masterSysVars, slaveSysVars string
