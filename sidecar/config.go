@@ -239,7 +239,7 @@ func GetContainerType() string {
 	return getEnvValue("CONTAINER_TYPE")
 }
 
-//build Xtrabackup arguments
+// build Xtrabackup arguments
 func (cfg *Config) XtrabackupArgs() []string {
 	// xtrabackup --backup <args> --target-dir=<backup-dir> <extra-args>
 	user := "root"

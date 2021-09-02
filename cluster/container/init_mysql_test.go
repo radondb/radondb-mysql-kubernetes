@@ -113,11 +113,11 @@ func TestGetInitMysqlCommand(t *testing.T) {
 }
 
 func TestGetInitMysqlEnvVar(t *testing.T) {
-	//base env
+	// base env
 	{
 		assert.Equal(t, initMysqlEnvs, initMysqlCase.Env)
 	}
-	//initTokuDB
+	// initTokuDB
 	{
 		testToKuDBMysqlCluster := initMysqlMysqlCluster
 		testToKuDBMysqlCluster.Spec.MysqlOpts.InitTokuDB = true

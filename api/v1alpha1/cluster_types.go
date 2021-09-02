@@ -236,7 +236,7 @@ type Persistence struct {
 	// +optional
 	StorageClass *string `json:"storageClass,omitempty"`
 
-	//Size of persistent volume claim.
+	// Size of persistent volume claim.
 	// +optional
 	// +kubebuilder:default:="10Gi"
 	Size string `json:"size,omitempty"`

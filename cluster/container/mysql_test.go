@@ -60,11 +60,11 @@ func TestGetMysqlCommand(t *testing.T) {
 }
 
 func TestGetMysqlEnvVar(t *testing.T) {
-	//base env
+	// base env
 	{
 		assert.Nil(t, mysqlCase.Env)
 	}
-	//initTokuDB
+	// initTokuDB
 	{
 		volumeMounts := []corev1.EnvVar{
 			{
