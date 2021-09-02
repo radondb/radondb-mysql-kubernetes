@@ -124,6 +124,10 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 	var optTrue bool = true
 	in.Containers[0].Env = []corev1.EnvVar{
 		{
+			Name:  "CONTAINER_TYPE",
+			Value: utils.ContainerBackupJobName,
+		},
+		{
 			Name:  "NAMESPACE",
 			Value: s.backup.Namespace,
 		},

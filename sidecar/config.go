@@ -20,7 +20,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
+
+	// "strings"
 	"text/template"
 
 	"github.com/blang/semver"
@@ -119,8 +120,8 @@ type Config struct {
 	XRestoreFrom string
 }
 
-// NewConfig returns a pointer to Config.
-func NewConfig() *Config {
+// NewInitConfig returns the configuration file needed for initialization.
+func NewInitConfig() *Config {
 	mysqlVersion, err := semver.Parse(getEnvValue("MYSQL_VERSION"))
 	if err != nil {
 		log.Info("MYSQL_VERSION is not a semver version")
@@ -179,24 +180,66 @@ func NewConfig() *Config {
 		AdmitDefeatHearbeatCount: int32(admitDefeatHearbeatCount),
 		ElectionTimeout:          int32(electionTimeout),
 
-		existMySQLData:             existMySQLData,
-		ClusterName:                getEnvValue("SERVICE_NAME"),
-		BackupUser:                 getEnvValue("BACKUP_USER"),
-		BackupPassword:             getEnvValue("BACKUP_PASSWORD"),
-		XbstreamExtraArgs:          strings.Fields(getEnvValue("XBSTREAM_EXTRA_ARGS")),
-		XtrabackupExtraArgs:        strings.Fields(getEnvValue("XTRABACKUP_EXTRA_ARGS")),
-		XtrabackupPrepareExtraArgs: strings.Fields(getEnvValue("XTRABACKUP_PREPARE_EXTRA_ARGS")),
-		XtrabackupTargetDir:        getEnvValue("XTRABACKUP_TARGET_DIR"),
+		existMySQLData:    existMySQLData,
+		XRestoreFrom:      getEnvValue("RESTORE_FROM"),
+		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
+		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
+		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
+		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
+	}
+}
+
+// NewBackupConfig returns the configuration file needed for backup container.
+func NewBackupConfig() *Config {
+	replicaStr := getEnvValue("REPLICAS")
+	replicas, err := strconv.ParseInt(replicaStr, 10, 32)
+	if err != nil {
+		log.Error(err, "invalid environment values", "REPLICAS", replicaStr)
+		panic(err)
+	}
+
+	return &Config{
+		NameSpace:   getEnvValue("NAMESPACE"),
+		ServiceName: getEnvValue("SERVICE_NAME"),
+		Replicas:    int32(replicas),
+		ClusterName: getEnvValue("SERVICE_NAME"),
+
+		BackupUser:     getEnvValue("BACKUP_USER"),
+		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
 
 		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
 		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
 		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
 		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
-		XRestoreFrom:      getEnvValue("RESTORE_FROM"),
 	}
 }
 
-// build Xtrabackup arguments
+// NewReqBackupConfig returns the configuration file needed for backup job.
+func NewReqBackupConfig() *Config {
+	replicaStr := getEnvValue("REPLICAS")
+	replicas, err := strconv.ParseInt(replicaStr, 10, 32)
+	if err != nil {
+		log.Error(err, "invalid environment values", "REPLICAS", replicaStr)
+		panic(err)
+	}
+
+	return &Config{
+		NameSpace:   getEnvValue("NAMESPACE"),
+		ServiceName: getEnvValue("SERVICE_NAME"),
+		Replicas:    int32(replicas),
+
+		BackupUser:     getEnvValue("BACKUP_USER"),
+		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
+	}
+}
+
+// GetContainerType returns the CONTAINER_TYPE of the currently running container.
+// CONTAINER_TYPE used to mark the container type.
+func GetContainerType() string {
+	return getEnvValue("CONTAINER_TYPE")
+}
+
+//build Xtrabackup arguments
 func (cfg *Config) XtrabackupArgs() []string {
 	// xtrabackup --backup <args> --target-dir=<backup-dir> <extra-args>
 	user := "root"
