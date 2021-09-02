@@ -48,6 +48,10 @@ func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
 	sctName := c.GetNameForResource(utils.Secret)
 	envs := []corev1.EnvVar{
 		{
+			Name:  "CONTAINER_TYPE",
+			Value: utils.ContainerBackupName,
+		},
+		{
 			Name:  "NAMESPACE",
 			Value: c.Namespace,
 		},

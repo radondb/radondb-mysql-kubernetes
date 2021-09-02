@@ -55,6 +55,10 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 	sctNamebackup := c.Spec.BackupSecretName
 	envs := []corev1.EnvVar{
 		{
+			Name:  "CONTAINER_TYPE",
+			Value: utils.ContainerInitSidecarName,
+		},
+		{
 			Name: "POD_HOSTNAME",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
