@@ -99,7 +99,10 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Name:  "RESTORE_FROM",
 			Value: c.Spec.RestoreFrom,
 		},
-
+		{
+			Name:  "CLUSTER_NAME",
+			Value: c.Name,
+		},
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
 		getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true),
 		getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true),
@@ -111,7 +114,7 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 		getEnvVarFromSecret(sctName, "OPERATOR_USER", "operator-user", true),
 		getEnvVarFromSecret(sctName, "OPERATOR_PASSWORD", "operator-password", true),
 
-		//backup user password for sidecar http server
+		// backup user password for sidecar http server
 		getEnvVarFromSecret(sctName, "BACKUP_USER", "backup-user", true),
 		getEnvVarFromSecret(sctName, "BACKUP_PASSWORD", "backup-password", true),
 	}
@@ -124,7 +127,12 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
 		)
 	}
-
+	if len(c.Spec.RestoreFromNFS) != 0 {
+		envs = append(envs, corev1.EnvVar{
+			Name:  "RESTORE_FROM_NFS",
+			Value: c.Spec.RestoreFromNFS,
+		})
+	}
 	if c.Spec.MysqlOpts.InitTokuDB {
 		envs = append(envs, corev1.EnvVar{
 			Name:  "INIT_TOKUDB",
@@ -190,6 +198,15 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			corev1.VolumeMount{
 				Name:      utils.SysVolumeName,
 				MountPath: utils.SysVolumeMountPath,
+			},
+		)
+	}
+
+	if len(c.Spec.RestoreFromNFS) != 0 {
+		volumeMounts = append(volumeMounts,
+			corev1.VolumeMount{
+				Name:      utils.XtrabackupPV,
+				MountPath: utils.XtrabckupLocal,
 			},
 		)
 	}

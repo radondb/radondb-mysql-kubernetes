@@ -81,6 +81,10 @@ type ClusterSpec struct {
 	// Represents the name of the cluster restore from backup path
 	// +optional
 	RestoreFrom string `json:"restoreFrom,omitempty"`
+
+	// Represents the name of the cluster restore from NFS
+	// +optional
+	RestoreFromNFS string `json:"restoreFromNFS,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.
@@ -236,7 +240,7 @@ type Persistence struct {
 	// +optional
 	StorageClass *string `json:"storageClass,omitempty"`
 
-	//Size of persistent volume claim.
+	// Size of persistent volume claim.
 	// +optional
 	// +kubebuilder:default:="10Gi"
 	Size string `json:"size,omitempty"`

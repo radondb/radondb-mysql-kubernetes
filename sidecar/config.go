@@ -118,6 +118,9 @@ type Config struct {
 
 	// directory in S3 bucket for cluster restore from
 	XRestoreFrom string
+
+	// NFS server which Restore from
+	XRestoreFromNFS string
 }
 
 // NewInitConfig returns the configuration file needed for initialization.
@@ -182,6 +185,7 @@ func NewInitConfig() *Config {
 
 		existMySQLData:    existMySQLData,
 		XRestoreFrom:      getEnvValue("RESTORE_FROM"),
+		XRestoreFromNFS:   getEnvValue("RESTORE_FROM_NFS"),
 		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
 		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
 		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
@@ -239,7 +243,7 @@ func GetContainerType() string {
 	return getEnvValue("CONTAINER_TYPE")
 }
 
-//build Xtrabackup arguments
+// build Xtrabackup arguments
 func (cfg *Config) XtrabackupArgs() []string {
 	// xtrabackup --backup <args> --target-dir=<backup-dir> <extra-args>
 	user := "root"
@@ -583,6 +587,57 @@ xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-bac
 chown -R mysql.mysql {{.DataDir}}
 rm -rf /root/backup	
 `
+	template_restore := template.New("restore.sh")
+	template_restore, err = template_restore.Parse(restoresh)
+	if err != nil {
+		return err
+	}
+	err2 := template_restore.Execute(f, struct {
+		Config
+		DataDir        string
+		MyCnfMountPath string
+	}{
+		*cfg,
+		utils.DataVolumeMountPath,
+		utils.ConfVolumeMountPath + "/my.cnf",
+	})
+	if err2 != nil {
+		return err2
+	}
+	return nil
+}
+
+// build nfs restore
+func (cfg *Config) buildNFSRestore(path string) error {
+	if len(cfg.XRestoreFrom) == 0 {
+		return fmt.Errorf("Do not have restore from")
+	}
+	if len(cfg.XRestoreFromNFS) == 0 {
+		return fmt.Errorf("Do not the nfs to restore")
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("create restore.sh fail : %s", err)
+	}
+	defer func() {
+		f.Close()
+	}()
+	restoresh := `#!/bin/sh
+	if [ ! -d  {{.DataDir}} ]; then
+        echo "is not exist the var lib mysql"
+        mkdir  {{.DataDir}}
+        chown -R mysql.mysql  {{.DataDir}}
+    fi
+    rm -rf  {{.DataDir}}/*
+    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --apply-log-only --target-dir=/backup/{{.XRestoreFrom}}
+    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --target-dir=/backup/{{.XRestoreFrom}}
+    chown -R mysql.mysql /backup/{{.XRestoreFromNFS}}
+    xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-back --target-dir=/backup/{{.XRestoreFrom}}
+    exit_code=$?
+    chown -R mysql.mysql {{.DataDir}}
+    exit $exit_code	
+	`
 	template_restore := template.New("restore.sh")
 	template_restore, err = template_restore.Parse(restoresh)
 	if err != nil {

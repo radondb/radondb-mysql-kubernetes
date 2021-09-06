@@ -165,7 +165,14 @@ func runInitCommand(cfg *Config) error {
 	// run the restore
 	if len(cfg.XRestoreFrom) != 0 {
 		var restoreName string = "/restore.sh"
-		err_f := cfg.buildS3Restore(restoreName)
+		var err_f error
+		// first from NFS, if not, then from S3
+		if len(cfg.XRestoreFromNFS) != 0 {
+			err_f = cfg.buildNFSRestore(restoreName)
+		} else {
+			err_f = cfg.buildS3Restore(restoreName)
+		}
+
 		if err_f != nil {
 			return fmt.Errorf("build restore.sh fail : %s", err_f)
 		}

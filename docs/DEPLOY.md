@@ -1,6 +1,6 @@
 # mysql-operator
 
-## Quickstart for backup
+## Quickstart for backup S3
 
 Install the operator named `test`:
 
@@ -8,7 +8,7 @@ Install the operator named `test`:
 helm install test charts/mysql-operator
 ```
 
-### configure backup
+### configure backup for S3
 
 add the secret file
 ```yaml
@@ -110,6 +110,47 @@ kubectl apply -f config/samples/mysql_v1alpha1_cluster.yaml
 ```
 could restore a cluster from the `backup_2021720827 ` copy in the S3 bucket. 
 
+if you want backup to NFS server or restore from NFS server, do it as follow:
+
+## Quickstart for  NFS backup
+
+### Create NFS server
+first create your PVC, such as "neosan1", fill it to `config/samples/nfs_rc.yaml ` 
+```yaml
+...
+    volumes:
+        - name: nfs-export-fast
+          persistentVolumeClaim:
+            claimName: neosan1
+```
+ ```shell
+# create the nfs pod
+kubectl apply -f config/samples/nfs_rc.yaml 
+# create the nfs service
+kubectl apply -f config/samples/nfs_server.yaml 
+ ```
+if create the nfs server successful, get the then:
+
+## config `mysql_v1alpha1_backup.yaml ` and backup
+Add field in `mysql_v1alpha1_backup.yaml ` as follow:
+```yaml
+BackupToNFS: "IP of NFS server"
+```
+use commadn as follow to backup
+```shell
+kubectl apply -f config/samples/mysql_v1alpha1_backup.yaml
+```
+ 
+ ## Restore cluster from exist NFS backup
+ first, configure the `mysql_v1alpha1_cluster.yaml`, uncomment the `restoreFromNFS` field:
+ ```yaml
+ ....
+ restoreFrom: "backup_202196152239"
+ restoreFromNFS : 10.96.253.82
+ ```
+ `backup_202196152239` is the nfs server backup path, change it to yours.
+ the `10.96.253.82` is the NFS server ip, change it to yours.
+ use command as follow to create cluster from NFS server backup copy:
 
  ## build your own image
  such as :

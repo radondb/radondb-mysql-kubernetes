@@ -36,6 +36,9 @@ spec:
           spec:
             description: BackupSpec defines the desired state of Backup
             properties:
+              BackupToNFS:
+                description: Represents the name of backup to NFS
+                type: string
               clustname:
                 description: Cluster represents the cluster name to backup
                 type: string
@@ -46,6 +49,7 @@ spec:
                 type: integer
               hostname:
                 description: HostName represents the host for which to take backup
+                  If is empty, is use leader HostName
                 type: string
               image:
                 default: radondb/mysql-sidecar:0.1.88
@@ -53,7 +57,6 @@ spec:
                 type: string
             required:
             - clustname
-            - hostname
             type: object
           status:
             description: BackupStatus defines the observed state of Backup

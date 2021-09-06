@@ -211,7 +211,18 @@ func (c *Cluster) EnsureVolumes() []corev1.Volume {
 			},
 		},
 	)
-
+	// add the nfs volumn mount
+	if len(c.Spec.RestoreFromNFS) != 0 {
+		volumes = append(volumes, corev1.Volume{
+			Name: utils.XtrabackupPV,
+			VolumeSource: corev1.VolumeSource{
+				NFS: &corev1.NFSVolumeSource{
+					Server: c.Spec.RestoreFromNFS,
+					Path:   "/",
+				},
+			},
+		})
+	}
 	return volumes
 }
 

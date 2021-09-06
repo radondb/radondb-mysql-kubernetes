@@ -35,7 +35,12 @@ type BackupSpec struct {
 	Image string `json:"image"`
 
 	// HostName represents the host for which to take backup
-	HostName string `json:"hostname"`
+	// If is empty, is use leader HostName
+	HostName string `json:"hostname,omitempty"`
+
+	// Represents the name of backup to NFS
+	// +optional
+	BackupToNFS string `json:"BackupToNFS,omitempty"`
 
 	// Cluster represents the cluster name to backup
 	ClusterName string `json:"clustname"`

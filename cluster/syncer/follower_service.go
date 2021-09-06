@@ -46,13 +46,17 @@ func NewFollowerSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		service.Spec.Selector["role"] = "follower"
 		service.Spec.Selector["healthy"] = "yes"
 
-		if len(service.Spec.Ports) != 1 {
-			service.Spec.Ports = make([]corev1.ServicePort, 1)
+		if len(service.Spec.Ports) != 2 {
+			service.Spec.Ports = make([]corev1.ServicePort, 2)
 		}
 
 		service.Spec.Ports[0].Name = utils.MysqlPortName
 		service.Spec.Ports[0].Port = utils.MysqlPort
 		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MysqlPort)
+		// xtrabackup
+		service.Spec.Ports[1].Name = utils.XBackupPortName
+		service.Spec.Ports[1].Port = utils.XBackupPort
+		service.Spec.Ports[1].TargetPort = intstr.FromInt(utils.XBackupPort)
 		return nil
 	})
 }
