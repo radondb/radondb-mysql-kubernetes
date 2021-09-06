@@ -125,6 +125,9 @@ type Config struct {
 
 	// GtidPurged is the gtid set of the slave cluster to purged.
 	GtidPurged string
+
+	// NFS server which Restore from
+	XRestoreFromNFS string
 }
 
 // NewInitConfig returns a pointer to Config.
@@ -188,6 +191,7 @@ func NewInitConfig() *Config {
 
 		existMySQLData:    existMySQLData,
 		XRestoreFrom:      getEnvValue("RESTORE_FROM"),
+		XRestoreFromNFS:   getEnvValue("RESTORE_FROM_NFS"),
 		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
 		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
 		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
@@ -263,7 +267,7 @@ func (cfg *Config) XCloudArgs() []string {
 		fmt.Sprintf("--s3-secret-key=%s", cfg.XCloudS3SecretKey),
 		fmt.Sprintf("--s3-bucket=%s", cfg.XCloudS3Bucket),
 		"--parallel=10",
-		utils.BuildBackupName(),
+		utils.BuildBackupName(cfg.ClusterName),
 		"--insecure",
 	}
 	return xcloudArgs
@@ -638,4 +642,77 @@ func GetXtrabackupGTIDPurged(backuppath string) (string, error) {
 	}
 	// Replace multi gtidset \n
 	return strings.Replace(ss[2], "\n", "", -1), nil
+}
+
+/*
+`#!/bin/sh
+	if [ ! -d  {{.DataDir}} ]; then
+        echo "is not exist the var lib mysql"
+        mkdir  {{.DataDir}}
+        chown -R mysql.mysql  {{.DataDir}}
+    fi
+    rm -rf  {{.DataDir}}/*
+    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --apply-log-only --target-dir=/backup/{{.XRestoreFrom}}
+    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --target-dir=/backup/{{.XRestoreFrom}}
+    chown -R mysql.mysql /backup/{{.XRestoreFromNFS}}
+    xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-back --target-dir=/backup/{{.XRestoreFrom}}
+    exit_code=$?
+    chown -R mysql.mysql {{.DataDir}}
+    exit $exit_code
+*/
+func (cfg *Config) ExecuteNFSRestore() error {
+	if len(cfg.XRestoreFromNFS) == 0 {
+		return fmt.Errorf("parameter XRestoreFromNFS empty, do next step")
+	}
+	if len(cfg.XRestoreFrom) == 0 {
+		return fmt.Errorf("xrestore from is empty, do next step")
+	}
+	// Restore from NFS
+
+	// Check /var/lib/mysql exists or not.
+	if _, err := os.Stat(utils.DataVolumeMountPath); os.IsNotExist(err) {
+		err = os.MkdirAll(utils.DataVolumeMountPath, 0755)
+		if err != nil {
+			return fmt.Errorf("create /var/lib/mysql fail : %s", err)
+		}
+		// Change the owner of /var/lib/mysql
+		cmd := exec.Command("chown", "mysql.mysql", utils.DataVolumeMountPath)
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to chown -R mysql.mysql : %s", err)
+		}
+	}
+	// Remove the data directory
+	cmd := exec.Command("rm", "-rf", utils.DataVolumeMountPath+"/*")
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to rm -rf %s : %s", utils.DataVolumeMountPath, err)
+	}
+	// Prepare the append-only file
+	cmd = exec.Command("xtrabackup", "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--apply-log-only", "--target-dir=/backup/"+cfg.XRestoreFrom)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup prepare append-only: %s", err)
+	}
+	// Prepare the data directory
+	cmd = exec.Command("xtrabackup", "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--target-dir=/backup/"+cfg.XRestoreFrom)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup prepare: %s", err)
+	}
+	// Copy the data directory.
+	cmd = exec.Command("xtrabackup", "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--datadir="+utils.DataVolumeMountPath, "--copy-back", "--target-dir=/backup/"+cfg.XRestoreFrom)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup copy-back: %s", err)
+	}
+	// Change owner of data directory
+	log.Info(fmt.Sprintf("change owner of data directory %s", utils.DataVolumeMountPath))
+	cmd = exec.Command("chown", "-R", "mysql.mysql", utils.DataVolumeMountPath)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chown -R mysql.mysql : %s", err)
+	}
+
+	return nil
 }

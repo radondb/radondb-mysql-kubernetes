@@ -54,6 +54,10 @@ func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
 			Value: c.Namespace,
 		},
 		{
+			Name:  "CLUSTER_NAME",
+			Value: c.Name,
+		},
+		{
 			Name:  "SERVICE_NAME",
 			Value: c.GetNameForResource(utils.HeadlessSVC),
 		},

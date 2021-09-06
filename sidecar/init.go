@@ -234,8 +234,11 @@ func runInitCommand(cfg *Config) error {
 					return fmt.Errorf("failed to execute Clone Restore : %s", err_f)
 				}
 			} else {
-				if err = cfg.executeS3Restore(cfg.XRestoreFrom); err != nil {
-					return fmt.Errorf("failed to restore from %s: %s", cfg.XRestoreFrom, err)
+				if err_f = cfg.ExecuteNFSRestore(); err_f != nil {
+					// No nfs , do s3 restore.
+					if err_f = cfg.executeS3Restore(cfg.XRestoreFrom); err_f != nil {
+						return fmt.Errorf("failed to restore from %s: %s", cfg.XRestoreFrom, err_f)
+					}
 				}
 			}
 			// Check has initialized again.
@@ -251,6 +254,7 @@ func runInitCommand(cfg *Config) error {
 	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
 	}
+
 	log.Info("init command success")
 	return nil
 }

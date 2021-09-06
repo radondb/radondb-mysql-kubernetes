@@ -1,0 +1,33 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  annotations:
+  name: manual
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: backup-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  # you can set affinity ,for example:
+  # nodeAffinity:
+  #   required:
+  #     nodeSelectorTerms:
+  #     - matchExpressions:
+  #       - key: kubernetes.io/hostname
+  #         operator: In
+  #         values:
+  #         - node2
+  capacity:
+    storage: 40Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/backup"
