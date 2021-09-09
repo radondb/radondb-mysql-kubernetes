@@ -29,16 +29,14 @@ import (
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
-var (
-	// errorConnectionStates contains the list of the Slave_IO_State message.
-	errorConnectionStates = []string{
-		"connecting to master",
-		"reconnecting after a failed binlog dump request",
-		"reconnecting after a failed master event read",
-		"waiting to reconnect after a failed binlog dump request",
-		"waiting to reconnect after a failed master event read",
-	}
-)
+// errorConnectionStates contains the list of the Slave_IO_State message.
+var errorConnectionStates = []string{
+	"connecting to master",
+	"reconnecting after a failed binlog dump request",
+	"reconnecting after a failed master event read",
+	"waiting to reconnect after a failed binlog dump request",
+	"waiting to reconnect after a failed master event read",
+}
 
 // SQLRunner is a runner for run the sql.
 type SQLRunner struct {

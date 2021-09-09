@@ -63,7 +63,7 @@ func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
 			Name:  "REPLICAS",
 			Value: fmt.Sprintf("%d", *c.Spec.Replicas),
 		},
-		//backup user password for sidecar http server
+		// backup user password for sidecar http server
 		getEnvVarFromSecret(sctName, "BACKUP_USER", "backup-user", true),
 		getEnvVarFromSecret(sctName, "BACKUP_PASSWORD", "backup-password", true),
 	}
@@ -142,5 +142,4 @@ func (c *backupSidecar) getVolumeMounts() []corev1.VolumeMount {
 			MountPath: utils.LogsVolumeMountPath,
 		},
 	}
-
 }

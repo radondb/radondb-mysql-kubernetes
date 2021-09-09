@@ -292,11 +292,11 @@ func TestGetInitSidecarCommand(t *testing.T) {
 }
 
 func TestGetInitSidecarEnvVar(t *testing.T) {
-	//default
+	// default
 	{
 		assert.Equal(t, defaultInitSidecarEnvs, initSidecarCase.Env)
 	}
-	//initTokuDB
+	// initTokuDB
 	{
 		testToKuDBMysqlCluster := initSidecarMysqlCluster
 		testToKuDBMysqlCluster.Spec.MysqlOpts.InitTokuDB = true
@@ -338,11 +338,11 @@ func TestGetInitSidecarReadinessProbe(t *testing.T) {
 }
 
 func TestGetInitSidecarVolumeMounts(t *testing.T) {
-	//default
+	// default
 	{
 		assert.Equal(t, defaultInitsidecarVolumeMounts, initSidecarCase.VolumeMounts)
 	}
-	//init tokudb
+	// init tokudb
 	{
 		testToKuDBMysqlCluster := initSidecarMysqlCluster
 		testToKuDBMysqlCluster.Spec.MysqlOpts.InitTokuDB = true
@@ -358,7 +358,7 @@ func TestGetInitSidecarVolumeMounts(t *testing.T) {
 		})
 		assert.Equal(t, tokuDBVolumeMounts, tokudbCase.VolumeMounts)
 	}
-	//enable persistence
+	// enable persistence
 	{
 		testPersistenceMysqlCluster := initSidecarMysqlCluster
 		testPersistenceMysqlCluster.Spec.Persistence.Enabled = true

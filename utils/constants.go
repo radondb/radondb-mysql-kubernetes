@@ -67,7 +67,7 @@ const (
 	// The MySQL user used for operator to connect to the mysql node for configuration.
 	OperatorUser = "qc_operator"
 
-	//xtrabackup http server user
+	// xtrabackup http server user
 	BackupUser = "sys_backup"
 
 	// volumes names.
@@ -112,7 +112,7 @@ const (
 	LeaderService ResourceName = "leader-service"
 	// FollowerService is the name of a service that points healthy followers (excludes leader).
 	FollowerService ResourceName = "follower-service"
-	//MetricsService is the name of the metrics service that points to all nodes.
+	// MetricsService is the name of the metrics service that points to all nodes.
 	MetricsService ResourceName = "metrics-service"
 	// Secret is the name of the secret that contains operator related credentials.
 	Secret ResourceName = "secret"

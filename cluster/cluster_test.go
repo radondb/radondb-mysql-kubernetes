@@ -61,7 +61,7 @@ func TestUnwrap(t *testing.T) {
 }
 
 func TestGetLabel(t *testing.T) {
-	//when the instance label exist
+	// when the instance label exist.
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Annotations = map[string]string{
@@ -80,7 +80,7 @@ func TestGetLabel(t *testing.T) {
 		}
 		assert.Equal(t, want, testCase.GetLabels())
 	}
-	//when the component label exist
+	// when the component label exist.
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Annotations = map[string]string{
@@ -99,7 +99,7 @@ func TestGetLabel(t *testing.T) {
 		}
 		assert.Equal(t, want, testCase.GetLabels())
 	}
-	//when the part-of label exist
+	// when the part-of label exist.
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Annotations = map[string]string{
@@ -131,7 +131,7 @@ func TestGetSelectorLabels(t *testing.T) {
 }
 
 func TestGetMySQLVersion(t *testing.T) {
-	//other 8.0 ->  5.7.33
+	// other 8.0 ->  5.7.33
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Spec.MysqlVersion = "8.0"
@@ -141,7 +141,7 @@ func TestGetMySQLVersion(t *testing.T) {
 		want := "5.7.33"
 		assert.Equal(t, want, testCase.GetMySQLVersion())
 	}
-	//MySQLTagsToSemVer 5.7 -> 5.7.33
+	// MySQLTagsToSemVer 5.7 -> 5.7.33
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Spec.MysqlVersion = "5.7"
@@ -151,7 +151,7 @@ func TestGetMySQLVersion(t *testing.T) {
 		want := "5.7.33"
 		assert.Equal(t, want, testCase.GetMySQLVersion())
 	}
-	//MysqlImageVersions 5.7.33 -> 5.7.33
+	// MysqlImageVersions 5.7.33 -> 5.7.33
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Spec.MysqlVersion = "5.7.33"
@@ -284,7 +284,7 @@ func TestEnsureVolumes(t *testing.T) {
 			},
 		},
 	}
-	//when disable Persistence
+	// when disable Persistence
 	{
 		testMysql := mysqlCluster
 		testMysql.Spec.Persistence.Enabled = false
@@ -302,7 +302,7 @@ func TestEnsureVolumes(t *testing.T) {
 		want = append(want, volume...)
 		assert.Equal(t, want, testCase.EnsureVolumes())
 	}
-	//when enable tokudb
+	// when enable tokudb
 	{
 		testMysql := mysqlCluster
 		testMysql.Spec.Persistence.Enabled = true
@@ -323,7 +323,7 @@ func TestEnsureVolumes(t *testing.T) {
 		want = append(want, volume...)
 		assert.Equal(t, want, testCase.EnsureVolumes())
 	}
-	//default(Persistence is turned on by default)
+	// default(Persistence is turned on by default)
 	{
 		testMysql := mysqlCluster
 		testMysql.Spec.Persistence.Enabled = true
@@ -336,14 +336,14 @@ func TestEnsureVolumes(t *testing.T) {
 
 func TestEnsureVolumeClaimTemplates(t *testing.T) {
 	var scheme runtime.Scheme
-	//when disable persistence
+	// when disable persistence
 	{
 		result, err := testCluster.EnsureVolumeClaimTemplates(&scheme)
 		assert.Nil(t, result)
 		assert.Nil(t, err)
 	}
 
-	//when enable persistence
+	// when enable persistence
 	{
 		var cluster *Cluster
 		storageClass := "ssd"
@@ -400,7 +400,7 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
-	//when the StorageClass is "-"
+	// when the StorageClass is "-"
 	{
 		storageClass := "-"
 		testMysql := mysqlCluster
@@ -420,7 +420,7 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
-	//when SetControllerReference error
+	// when SetControllerReference error
 	{
 		testMysql := mysqlCluster
 		testMysql.Spec.Persistence.Enabled = true
@@ -440,29 +440,29 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 }
 
 func TestGetNameForResource(t *testing.T) {
-	//statefulset configMap headlessSvc
+	// statefulset configMap headlessSvc
 	{
 		want := "sample-mysql"
 		assert.Equal(t, want, testCluster.GetNameForResource(utils.StatefulSet))
 		assert.Equal(t, want, testCluster.GetNameForResource(utils.ConfigMap))
 		assert.Equal(t, want, testCluster.GetNameForResource(utils.HeadlessSVC))
 	}
-	//leaderSvc
+	// leaderSvc
 	{
 		want := "sample-leader"
 		assert.Equal(t, want, testCluster.GetNameForResource(utils.LeaderService))
 	}
-	//folloerSvc
+	// folloerSvc
 	{
 		want := "sample-follower"
 		assert.Equal(t, want, testCluster.GetNameForResource(utils.FollowerService))
 	}
-	//secret
+	// secret
 	{
 		want := "sample-secret"
 		assert.Equal(t, want, testCluster.GetNameForResource(utils.Secret))
 	}
-	//others
+	// others
 	{
 		want := "sample"
 		assert.Equal(t, want, testCluster.GetNameForResource("others"))
@@ -496,7 +496,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 			},
 		},
 	}
-	//cpu 1 corev1s,memory 1 gb,innodb_buffer_pool_size not set
+	// cpu 1 corev1s,memory 1 gb,innodb_buffer_pool_size not set
 	{
 		testMysqlCase := testMysql
 		testCase := Cluster{
@@ -508,7 +508,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		assert.Equal(t, wantSize, testCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"])
 		assert.Equal(t, wantInstance, testCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"])
 	}
-	//cpu 1 corev1s,memory 1 gb,innodb_buffer_pool_size 600 mb
+	// cpu 1 corev1s,memory 1 gb,innodb_buffer_pool_size 600 mb
 	{
 		guard := Patch(sizeToBytes, func(s string) (uint64, error) {
 			return uint64(600 * mb), nil
@@ -526,7 +526,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		assert.Equal(t, wantSize, testCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"])
 		assert.Equal(t, wantInstance, testCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"])
 	}
-	//cpu 1 corev1s,memory 2 gb,innodb_buffer_pool_size 1.7 gb
+	// cpu 1 corev1s,memory 2 gb,innodb_buffer_pool_size 1.7 gb
 	{
 		guard := Patch(sizeToBytes, func(s string) (uint64, error) {
 			return uint64(1700 * mb), nil
@@ -546,7 +546,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		assert.Equal(t, wantSize, testCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"])
 		assert.Equal(t, wantInstance, testCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"])
 	}
-	//cpu 1 corev1s,memory 2 gb,innodb_buffer_pool_size 1.7 gb, sizeToBytes error
+	// cpu 1 corev1s,memory 2 gb,innodb_buffer_pool_size 1.7 gb, sizeToBytes error
 	{
 		guard := Patch(sizeToBytes, func(s string) (uint64, error) {
 			return uint64(1700 * mb), fmt.Errorf("error")
@@ -565,7 +565,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		assert.Equal(t, wantSize, testCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"])
 		assert.Equal(t, wantInstance, testCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"])
 	}
-	//cpu 8 corev1s,memory 16 gb,innodb_buffer_pool_size 2 gb
+	// cpu 8 corev1s,memory 16 gb,innodb_buffer_pool_size 2 gb
 	{
 		guard := Patch(sizeToBytes, func(s string) (uint64, error) {
 			return uint64(2 * gb), nil
@@ -594,7 +594,7 @@ func TestSizeToBytes(t *testing.T) {
 		mb int64 = 1 << 20
 		kb int64 = 1 << 10
 	)
-	//kb
+	// kb
 	{
 		testCase := "1000k"
 		want := uint64(1000 * kb)
@@ -602,7 +602,7 @@ func TestSizeToBytes(t *testing.T) {
 		assert.Equal(t, want, result)
 		assert.Nil(t, err)
 	}
-	//mb
+	// mb
 	{
 		testCase := "1000m"
 		want := uint64(1000 * mb)
@@ -610,7 +610,7 @@ func TestSizeToBytes(t *testing.T) {
 		assert.Equal(t, want, result)
 		assert.Nil(t, err)
 	}
-	//gb
+	// gb
 	{
 		testCase := "1000g"
 		want := uint64(1000 * gb)
@@ -618,7 +618,7 @@ func TestSizeToBytes(t *testing.T) {
 		assert.Equal(t, want, result)
 		assert.Nil(t, err)
 	}
-	//others
+	// others
 	{
 		testCase := "1000a"
 		want := uint64(0)
@@ -627,7 +627,7 @@ func TestSizeToBytes(t *testing.T) {
 		assert.Equal(t, want, result)
 		assert.Equal(t, wantError, err)
 	}
-	//it will return the result of ParseUint() when the parameter without unit
+	// it will return the result of ParseUint() when the parameter without unit
 	{
 		guard := Patch(strconv.ParseUint, func(s string, base int, bitSize int) (uint64, error) {
 			return uint64(666), nil
@@ -640,7 +640,7 @@ func TestSizeToBytes(t *testing.T) {
 		assert.Equal(t, want, result)
 		assert.Nil(t, err)
 	}
-	//ParseUint error
+	// ParseUint error
 	{
 		guard := Patch(strconv.ParseUint, func(s string, base int, bitSize int) (uint64, error) {
 			return uint64(777), fmt.Errorf("error")
