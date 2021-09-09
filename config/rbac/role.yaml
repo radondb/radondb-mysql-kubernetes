@@ -19,6 +19,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - coordination.k8s.io
   resources:
   - leases
@@ -64,6 +76,26 @@ rules:
   - list
   - update
   - watch
+- apiGroups:
+  - mysql.radondb.com
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.radondb.com
+  resources:
+  - backups/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - mysql.radondb.com
   resources:

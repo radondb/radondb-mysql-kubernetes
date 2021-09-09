@@ -18,7 +18,11 @@ package sidecar
 
 import (
 	"fmt"
+	"os"
 	"strconv"
+
+	// "strings"
+	"text/template"
 
 	"github.com/blang/semver"
 	"github.com/go-ini/ini"
@@ -77,10 +81,47 @@ type Config struct {
 
 	// Whether the MySQL data exists.
 	existMySQLData bool
+	// for mysql backup
+	// backup user and password for http endpoint
+	ClusterName string
+
+	// Backup user name to http Server
+	BackupUser string
+
+	// Backup Password to htpp Server
+	BackupPassword string
+
+	// XbstreamExtraArgs is a list of extra command line arguments to pass to xbstream.
+	XbstreamExtraArgs []string
+
+	// XtrabackupExtraArgs is a list of extra command line arguments to pass to xtrabackup.
+	XtrabackupExtraArgs []string
+
+	// XtrabackupPrepareExtraArgs is a list of extra command line arguments to pass to xtrabackup
+	// during --prepare.
+	XtrabackupPrepareExtraArgs []string
+
+	// XtrabackupTargetDir is a backup destination directory for xtrabackup.
+	XtrabackupTargetDir string
+
+	// S3 endpoint domain name
+	XCloudS3EndPoint string
+
+	// S3 access key
+	XCloudS3AccessKey string
+
+	// S3 secrete key
+	XCloudS3SecretKey string
+
+	// S3 Bucket names
+	XCloudS3Bucket string
+
+	// directory in S3 bucket for cluster restore from
+	XRestoreFrom string
 }
 
-// NewConfig returns a pointer to Config.
-func NewConfig() *Config {
+// NewInitConfig returns the configuration file needed for initialization.
+func NewInitConfig() *Config {
 	mysqlVersion, err := semver.Parse(getEnvValue("MYSQL_VERSION"))
 	if err != nil {
 		log.Info("MYSQL_VERSION is not a semver version")
@@ -139,8 +180,102 @@ func NewConfig() *Config {
 		AdmitDefeatHearbeatCount: int32(admitDefeatHearbeatCount),
 		ElectionTimeout:          int32(electionTimeout),
 
-		existMySQLData: existMySQLData,
+		existMySQLData:    existMySQLData,
+		XRestoreFrom:      getEnvValue("RESTORE_FROM"),
+		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
+		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
+		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
+		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
 	}
+}
+
+// NewBackupConfig returns the configuration file needed for backup container.
+func NewBackupConfig() *Config {
+	replicaStr := getEnvValue("REPLICAS")
+	replicas, err := strconv.ParseInt(replicaStr, 10, 32)
+	if err != nil {
+		log.Error(err, "invalid environment values", "REPLICAS", replicaStr)
+		panic(err)
+	}
+
+	return &Config{
+		NameSpace:   getEnvValue("NAMESPACE"),
+		ServiceName: getEnvValue("SERVICE_NAME"),
+		Replicas:    int32(replicas),
+		ClusterName: getEnvValue("SERVICE_NAME"),
+
+		BackupUser:     getEnvValue("BACKUP_USER"),
+		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
+
+		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
+		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
+		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
+		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
+	}
+}
+
+// NewReqBackupConfig returns the configuration file needed for backup job.
+func NewReqBackupConfig() *Config {
+	replicaStr := getEnvValue("REPLICAS")
+	replicas, err := strconv.ParseInt(replicaStr, 10, 32)
+	if err != nil {
+		log.Error(err, "invalid environment values", "REPLICAS", replicaStr)
+		panic(err)
+	}
+
+	return &Config{
+		NameSpace:   getEnvValue("NAMESPACE"),
+		ServiceName: getEnvValue("SERVICE_NAME"),
+		Replicas:    int32(replicas),
+
+		BackupUser:     getEnvValue("BACKUP_USER"),
+		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
+	}
+}
+
+// GetContainerType returns the CONTAINER_TYPE of the currently running container.
+// CONTAINER_TYPE used to mark the container type.
+func GetContainerType() string {
+	return getEnvValue("CONTAINER_TYPE")
+}
+
+//build Xtrabackup arguments
+func (cfg *Config) XtrabackupArgs() []string {
+	// xtrabackup --backup <args> --target-dir=<backup-dir> <extra-args>
+	user := "root"
+	if len(cfg.ReplicationUser) != 0 {
+		user = cfg.ReplicationUser
+	}
+
+	tmpdir := "/root/backup/"
+	if len(cfg.XtrabackupTargetDir) != 0 {
+		tmpdir = cfg.XtrabackupTargetDir
+	}
+	xtrabackupArgs := []string{
+		"--backup",
+		"--stream=xbstream",
+		"--host=127.0.0.1",
+		fmt.Sprintf("--user=%s", user),
+		fmt.Sprintf("--target-dir=%s", tmpdir),
+	}
+
+	return append(xtrabackupArgs, cfg.XtrabackupExtraArgs...)
+}
+
+// Build xbcloud arguments
+func (cfg *Config) XCloudArgs() []string {
+	xcloudArgs := []string{
+		"put",
+		"--storage=S3",
+		fmt.Sprintf("--s3-endpoint=%s", cfg.XCloudS3EndPoint),
+		fmt.Sprintf("--s3-access-key=%s", cfg.XCloudS3AccessKey),
+		fmt.Sprintf("--s3-secret-key=%s", cfg.XCloudS3SecretKey),
+		fmt.Sprintf("--s3-bucket=%s", cfg.XCloudS3Bucket),
+		"--parallel=10",
+		utils.BuildBackupName(),
+		"--insecure",
+	}
+	return xcloudArgs
 }
 
 // buildExtraConfig build a ini file for mysql.
@@ -404,4 +539,66 @@ curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/ser
 -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
 `, cfg.NameSpace)
 	return utils.StringToBytes(str)
+}
+
+// build S3 restore shell script
+func (cfg *Config) buildS3Restore(path string) error {
+	if len(cfg.XRestoreFrom) == 0 {
+		return fmt.Errorf("Do not have restore from")
+	}
+	if len(cfg.XCloudS3EndPoint) == 0 ||
+		len(cfg.XCloudS3AccessKey) == 0 ||
+		len(cfg.XCloudS3SecretKey) == 0 ||
+		len(cfg.XCloudS3Bucket) == 0 {
+		return fmt.Errorf("Do not have S3 information")
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("create restore.sh fail : %s", err)
+	}
+	defer func() {
+		f.Close()
+	}()
+
+	restoresh := `#!/bin/sh
+if [ ! -d {{.DataDir}} ] ; then
+    echo "is not exist the var lib mysql"
+    mkdir {{.DataDir}} 
+    chown -R mysql.mysql {{.DataDir}} 
+fi
+mkdir /root/backup
+xbcloud get --storage=S3 \
+--s3-endpoint="{{.XCloudS3EndPoint}}" \
+--s3-access-key="{{.XCloudS3AccessKey}}" \
+--s3-secret-key="{{.XCloudS3SecretKey}}" \
+--s3-bucket="{{.XCloudS3Bucket}}" \
+--parallel=10 {{.XRestoreFrom}} \
+--insecure |xbstream -xv -C /root/backup
+# prepare redolog
+xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --apply-log-only --target-dir=/root/backup
+# prepare data
+xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --target-dir=/root/backup
+chown -R mysql.mysql /root/backup
+xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-back --target-dir=/root/backup
+chown -R mysql.mysql {{.DataDir}}
+rm -rf /root/backup	
+`
+	template_restore := template.New("restore.sh")
+	template_restore, err = template_restore.Parse(restoresh)
+	if err != nil {
+		return err
+	}
+	err2 := template_restore.Execute(f, struct {
+		Config
+		DataDir        string
+		MyCnfMountPath string
+	}{
+		*cfg,
+		utils.DataVolumeMountPath,
+		utils.ConfVolumeMountPath + "/my.cnf",
+	})
+	if err2 != nil {
+		return err2
+	}
+	return nil
 }

@@ -37,12 +37,16 @@ const (
 	ContainerInitMysqlName   = "init-mysql"
 
 	// containers
-	ContainerMysqlName    = "mysql"
-	ContainerXenonName    = "xenon"
-	ContainerMetricsName  = "metrics"
-	ContainerSlowLogName  = "slowlog"
-	ContainerAuditLogName = "auditlog"
+	ContainerMysqlName     = "mysql"
+	ContainerXenonName     = "xenon"
+	ContainerMetricsName   = "metrics"
+	ContainerSlowLogName   = "slowlog"
+	ContainerAuditLogName  = "auditlog"
+	ContainerBackupName    = "backup"
+	ContainerBackupJobName = "backup-job"
 
+	XBackupPortName = "xtrabackup"
+	XBackupPort     = 8082
 	// MySQL port.
 	MysqlPortName = "mysql"
 	MysqlPort     = 3306
@@ -62,6 +66,9 @@ const (
 	MetricsUser = "qc_metrics"
 	// The MySQL user used for operator to connect to the mysql node for configuration.
 	OperatorUser = "qc_operator"
+
+	//xtrabackup http server user
+	BackupUser = "sys_backup"
 
 	// volumes names.
 	ConfVolumeName     = "conf"
@@ -118,3 +125,6 @@ const (
 	// PodDisruptionBudget is the name of pod disruption budget for the statefulset.
 	PodDisruptionBudget ResourceName = "pdb"
 )
+
+// JobType
+const BackupJobTypeName = ContainerBackupName

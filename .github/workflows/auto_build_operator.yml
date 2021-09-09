@@ -10,6 +10,7 @@ on:
      - controllers/*
      - internal/*
      - utils/*
+     - backup/*
   workflow_dispatch:
 
 jobs:
