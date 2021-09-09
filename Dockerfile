@@ -18,6 +18,7 @@ COPY controllers/ controllers/
 COPY backup/ backup/
 COPY internal/ internal/
 COPY utils/ utils/
+COPY mysqluser/ mysqluser/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager cmd/manager/main.go

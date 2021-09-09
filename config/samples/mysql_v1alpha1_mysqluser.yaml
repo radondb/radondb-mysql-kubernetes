@@ -1,0 +1,26 @@
+apiVersion: mysql.radondb.com/v1alpha1
+kind: MysqlUser
+metadata:
+  name: user-sample
+spec:
+  ## User to operate.
+  user: sample_user
+  hosts: 
+    - "%"
+  ## It`s not support now.
+  # enableSsl: true
+  ## If create super user, do not need to fill in permissions.
+  permissions:
+    - database: "*"
+      tables: 
+        - "*"
+      privileges: 
+        - SELECT
+  ## Specify the cluster where the user is located.
+  clusterBinder:
+    clusterName: sample
+    nameSpace: default
+  ## Specify the secret object for user.
+  secretBinder:
+    secretName: sample-user-password
+    secretKey: pwdForSample
