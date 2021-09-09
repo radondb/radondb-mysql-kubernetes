@@ -14,7 +14,7 @@ spec:
   # restoreFrom: 
   
   mysqlOpts:
-    rootPassword: ""
+    rootPassword: "RadonDB@123"
     rootHost: localhost
     user: qc_usr
     password: Qing@123

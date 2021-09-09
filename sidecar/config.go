@@ -376,6 +376,8 @@ func (cfg *Config) buildInitSql() []byte {
 CREATE DATABASE IF NOT EXISTS %s;
 DROP user IF EXISTS 'root'@'127.0.0.1';
 GRANT ALL ON *.* TO 'root'@'127.0.0.1' IDENTIFIED BY '%s' with grant option;
+DROP user IF EXISTS 'root'@'%%';
+GRANT ALL ON *.* TO 'root'@'%%' IDENTIFIED BY '%s' with grant option;
 DROP user IF EXISTS '%s'@'%%';
 GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '%s'@'%%' IDENTIFIED BY '%s';
 DROP user IF EXISTS '%s'@'%%';
@@ -385,7 +387,7 @@ GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%' IDENTIFIED BY '
 DROP user IF EXISTS '%s'@'%%';
 GRANT ALL ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s';
 FLUSH PRIVILEGES;
-`, cfg.Database, cfg.RootPassword, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword,
+`, cfg.Database, cfg.RootPassword, cfg.RootPassword, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword,
 		cfg.MetricsUser, cfg.MetricsUser, cfg.MetricsPassword, cfg.OperatorUser, cfg.OperatorUser,
 		cfg.OperatorPassword, cfg.User, cfg.Database, cfg.User, cfg.Password)
 

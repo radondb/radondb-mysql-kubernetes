@@ -67,6 +67,8 @@ const (
 	MetricsUser = "qc_metrics"
 	// The MySQL user used for operator to connect to the mysql node for configuration.
 	OperatorUser = "qc_operator"
+	// The name of the MySQL root user.
+	RootUser = "root"
 
 	// xtrabackup http server user
 	BackupUser = "sys_backup"
@@ -125,6 +127,10 @@ const (
 	ServiceAccount ResourceName = "service-account"
 	// PodDisruptionBudget is the name of pod disruption budget for the statefulset.
 	PodDisruptionBudget ResourceName = "pdb"
+	// UserFinalizer is the name of the user finalizer.
+	UserFinalizer ResourceName = "radondb-mysql-user"
+	// UserControllerName is the name of UserController.
+	UserControllerName ResourceName = "controller.user"
 )
 
 // JobType
