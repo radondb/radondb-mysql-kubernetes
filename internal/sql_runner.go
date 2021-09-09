@@ -17,6 +17,7 @@ limitations under the License.
 package internal
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	corev1 "k8s.io/api/core/v1"
 
+	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
@@ -225,4 +227,139 @@ func columnValue(scanArgs []interface{}, slaveCols []string, colName string) str
 	}
 
 	return string(*scanArgs[columnIndex].(*sql.RawBytes))
+}
+
+// CheckUserQuery check if the user exist.
+func (s *SQLRunner) CheckUserQuery(query string, args ...interface{}) error {
+	var result string
+	err := s.db.QueryRow(query, args...).Scan(&result)
+	if err != nil {
+		return fmt.Errorf("check user faild, err:%s", err)
+	}
+
+	if result == "" {
+		return fmt.Errorf("user is not exist")
+	}
+
+	return nil
+}
+
+// GetCreateQuery get the query of create users.
+func GetCreateQuery(ctx context.Context, hosts []string, userName, password string) Query {
+	idsTmpl, idsArgs := getUsersIdentification(userName, &password, hosts)
+
+	return NewQuery(fmt.Sprintf("CREATE USER IF NOT EXISTS%s", idsTmpl), idsArgs...)
+}
+
+// GetDeleteQuery get the query of delete users.
+func GetDeleteQuery(ctx context.Context, hosts []string, userName string) Query {
+	queries := []Query{}
+	for _, host := range hosts {
+		queries = append(queries, NewQuery("DROP USER IF EXISTS ?@?;", userName, host))
+	}
+
+	return BuildAtomicQuery(queries...)
+}
+
+// GetGrantQuery get the query for grant.
+func GetGrantQuery(permissions []mysqlv1alpha1.UserPermission, user string, allowedHosts []string) Query {
+	permQueries := []Query{}
+
+	for _, perm := range permissions {
+		// If you wish to grant permissions on all tables, you should explicitly use "*".
+		for _, table := range perm.Tables {
+			args := []interface{}{}
+
+			escPerms := []string{}
+			for _, perm := range perm.Privileges {
+				escPerms = append(escPerms, Escape(perm))
+			}
+
+			schemaTable := fmt.Sprintf("%s.%s", escapeID(perm.Database), escapeID(table))
+
+			// Build GRANT query.
+			idsTmpl, idsArgs := getUsersIdentification(user, nil, allowedHosts)
+
+			query := "GRANT " + strings.Join(escPerms, ", ") + " ON " + schemaTable + " TO" + idsTmpl
+			args = append(args, idsArgs...)
+
+			permQueries = append(permQueries, NewQuery(query, args...))
+		}
+	}
+
+	return ConcatenateQueries(permQueries...)
+}
+
+// SetPasswordQuery set mysql user password.
+func SetPasswordQuery(ctx context.Context, name, host, password string) Query {
+	return NewQuery("ALTER USER ?@? IDENTIFIED BY ?;", name, host, password)
+}
+
+// CheckUserQuery get the query of check if the user exist.
+func CheckUserQuery(ctx context.Context, name, host string) Query {
+	return NewQuery("SELECT USER FROM mysql.user WHERE user = ? AND host = ?;", name, host)
+}
+
+// getUsersIdentification return the identification(name,host,password(if exist)) of user.
+func getUsersIdentification(user string, pwd *string, hosts []string) (ids string, args []interface{}) {
+	for i, host := range hosts {
+		// add comma if more than one allowed hosts are used.
+		if i > 0 {
+			ids += ","
+		}
+
+		if pwd != nil {
+			ids += " ?@? IDENTIFIED BY ?"
+			args = append(args, user, host, *pwd)
+		} else {
+			ids += " ?@?"
+			args = append(args, user, host)
+		}
+	}
+
+	return ids, args
+}
+
+// escapeID remove the ` in id.
+func escapeID(id string) string {
+	if id == "*" {
+		return id
+	}
+
+	id = strings.ReplaceAll(id, "`", "")
+
+	return fmt.Sprintf("`%s`", id)
+}
+
+// Escape escapes a string.
+func Escape(sql string) string {
+	dest := make([]byte, 0, 2*len(sql))
+	var escape byte
+	for i := 0; i < len(sql); i++ {
+		escape = 0
+		switch sql[i] {
+		case 0: /* Must be escaped for 'mysql' */
+			escape = '0'
+		case '\n': /* Must be escaped for logs */
+			escape = 'n'
+		case '\r':
+			escape = 'r'
+		case '\\':
+			escape = '\\'
+		case '\'':
+			escape = '\''
+		case '"': /* Better safe than sorry */
+			escape = '"'
+		case '\032': /* This gives problems on Win32 */
+			escape = 'Z'
+		}
+
+		if escape != 0 {
+			dest = append(dest, '\\', escape)
+		} else {
+			dest = append(dest, sql[i])
+		}
+	}
+
+	return string(dest)
 }

@@ -13,9 +13,7 @@ limitations under the License.
 
 package mysqluser
 
-import (
-	v1alhpa1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
-)
+import v1alhpa1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 
 const (
 	// ConfigurationFailedReason is the condition reason when MysqlUser has failed to configure.

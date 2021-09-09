@@ -98,3 +98,25 @@ func BuildBackupName() string {
 	return fmt.Sprintf("backup_%v%v%v%v%v%v", cur_time.Year(), int(cur_time.Month()),
 		cur_time.Day(), cur_time.Hour(), cur_time.Minute(), cur_time.Second())
 }
+
+func StringDiffIn(actual, desired []string) []string {
+	diff := []string{}
+	for _, aStr := range actual {
+		// if is not in the desired list remove it
+		if _, exists := stringIn(aStr, desired); !exists {
+			diff = append(diff, aStr)
+		}
+	}
+
+	return diff
+}
+
+func stringIn(str string, strs []string) (int, bool) {
+	for i, s := range strs {
+		if s == str {
+			return i, true
+		}
+	}
+
+	return 0, false
+}
