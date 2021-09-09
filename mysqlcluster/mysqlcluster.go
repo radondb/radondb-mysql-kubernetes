@@ -17,6 +17,7 @@ limitations under the License.
 package mysqlcluster
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -31,18 +32,21 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
-// nolint: megacheck, deadcode, varcheck
+// Nolint: megacheck, deadcode, varcheck.
 const (
 	_         = iota // ignore first value by assigning to blank identifier
 	kb uint64 = 1 << (10 * iota)
 	mb
 	gb
 )
+
+var log = logf.Log.WithName("mysqlcluster")
 
 // MysqlCluster is the wrapper for apiv1alpha1.MysqlCluster type.
 type MysqlCluster struct {
@@ -56,7 +60,7 @@ func New(mc *apiv1alpha1.MysqlCluster) *MysqlCluster {
 	}
 }
 
-// Unwrap returns the api mysqlcluster object
+// Unwrap returns the api mysqlcluster object.
 func (c *MysqlCluster) Unwrap() *apiv1alpha1.MysqlCluster {
 	return c.MysqlCluster
 }
@@ -75,7 +79,7 @@ func (c *MysqlCluster) Validate() error {
 	return nil
 }
 
-// GetLabels returns mysqlcluster labels
+// GetLabels returns mysqlcluster labels.
 func (c *MysqlCluster) GetLabels() labels.Set {
 	instance := c.Name
 	if inst, ok := c.Annotations["app.kubernetes.io/instance"]; ok {
@@ -103,7 +107,7 @@ func (c *MysqlCluster) GetLabels() labels.Set {
 	return labels
 }
 
-// GetSelectorLabels returns the labels that will be used as selector
+// GetSelectorLabels returns the labels that will be used as selector.
 func (c *MysqlCluster) GetSelectorLabels() labels.Set {
 	return labels.Set{
 		"mysql.radondb.com/cluster":    c.Name,
@@ -114,12 +118,17 @@ func (c *MysqlCluster) GetSelectorLabels() labels.Set {
 
 // GetMySQLVersion returns the MySQL server version.
 func (c *MysqlCluster) GetMySQLVersion() string {
-	version := c.Spec.MysqlVersion
-	// lookup for an alias, usually this will solve 5.7 to 5.7.x
-	if v, ok := utils.MySQLTagsToSemVer[version]; ok {
+	var version string
+	// Lookup for an alias, this will solve MySQL tags: 5.7 --> 5.7.x
+	if v, ok := utils.MySQLTagsToSemVer[c.Spec.MysqlVersion]; ok {
 		version = v
+	} else {
+		errmsg := "Invalid mysql version option:" + c.Spec.MysqlVersion
+		log.Error(errors.New(errmsg), "currently we do not support mysql 5.6 or earlier version, default mysql version option should be 5.7 or 8.0")
+		return utils.InvalidMySQLVersion
 	}
 
+	// Check if has specified image.
 	if _, ok := utils.MysqlImageVersions[version]; !ok {
 		version = utils.MySQLDefaultVersion
 	}

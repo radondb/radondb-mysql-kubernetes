@@ -20,6 +20,9 @@ var (
 	// MySQLDefaultVersion is the version for mysql that should be used
 	MySQLDefaultVersion = "5.7.34"
 
+	// InvalidMySQLVersion is used for set invalid version that we do not support.
+	InvalidMySQLVersion = "0.0.0"
+
 	// MySQLTagsToSemVer maps simple version to semver versions
 	MySQLTagsToSemVer = map[string]string{
 		"5.7": "5.7.34",
@@ -29,6 +32,7 @@ var (
 	MysqlImageVersions = map[string]string{
 		"5.7.33": "percona/percona-server:5.7.33",
 		"5.7.34": "percona/percona-server:5.7.34",
+		"0.0.0":  "errimage",
 	}
 )
 

@@ -17,7 +17,6 @@ limitations under the License.
 package sidecar
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -121,12 +120,18 @@ type Config struct {
 	XRestoreFrom string
 }
 
-// NewInitConfig returns the configuration file needed for initialization.
+// NewInitConfig returns a pointer to Config.
 func NewInitConfig() *Config {
-	mysqlVersion, err := semver.Parse(getEnvValue("MYSQL_VERSION"))
-	if err != nil {
-		log.Info("MYSQL_VERSION is not a semver version")
-		mysqlVersion, _ = semver.Parse(utils.MySQLDefaultVersion)
+	// check mysql version is supported or not and then get parse mysql semver version
+	var mysqlSemVer semver.Version
+	if ver := getEnvValue("MYSQL_VERSION"); ver == utils.InvalidMySQLVersion {
+		panic("invalid mysql version, currently we only support 5.7 or 8.0")
+	} else {
+		mysqlSemVer, err := semver.Parse(ver)
+		if err != nil {
+			log.Info("semver get from MYSQL_VERSION is invalid", "semver: ", mysqlSemVer)
+			panic(err)
+		}
 	}
 
 	replicaStr := getEnvValue("REPLICAS")
@@ -177,7 +182,7 @@ func NewInitConfig() *Config {
 
 		InitTokuDB: initTokuDB,
 
-		MySQLVersion: mysqlVersion,
+		MySQLVersion: mysqlSemVer,
 
 		AdmitDefeatHearbeatCount: int32(admitDefeatHearbeatCount),
 		ElectionTimeout:          int32(electionTimeout),
@@ -305,20 +310,16 @@ func (cfg *Config) buildXenonConf() []byte {
 
 	version := "mysql80"
 	if cfg.MySQLVersion.Major == 5 {
-		// currently we do not support mysql 5.6 or lower version.
-		if cfg.MySQLVersion.Minor != 7 {
-			log.Error(errors.New("uneffective mysql version."), "currently we do not support mysql 5.6 or lower version, default we set mysql 5.7")
-		}
 		version = "mysql57"
 	}
 
-	var masterSysVars, slaveSysVars string
+	var srcSysVars, replicaSysVars string
 	if cfg.InitTokuDB {
-		masterSysVars = "tokudb_fsync_log_period=default;sync_binlog=default;innodb_flush_log_at_trx_commit=default"
-		slaveSysVars = "tokudb_fsync_log_period=1000;sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
+		srcSysVars = "tokudb_fsync_log_period=default;sync_binlog=default;innodb_flush_log_at_trx_commit=default"
+		replicaSysVars = "tokudb_fsync_log_period=1000;sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
 	} else {
-		masterSysVars = "sync_binlog=default;innodb_flush_log_at_trx_commit=default"
-		slaveSysVars = "sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
+		srcSysVars = "sync_binlog=default;innodb_flush_log_at_trx_commit=default"
+		replicaSysVars = "sync_binlog=1000;innodb_flush_log_at_trx_commit=1"
 	}
 
 	hostName := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
@@ -364,7 +365,7 @@ func (cfg *Config) buildXenonConf() []byte {
     }
 }
 `, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser, requestTimeout,
-		pingTimeout, cfg.RootPassword, version, masterSysVars, slaveSysVars, cfg.ElectionTimeout,
+		pingTimeout, cfg.RootPassword, version, srcSysVars, replicaSysVars, cfg.ElectionTimeout,
 		cfg.AdmitDefeatHearbeatCount, heartbeatTimeout)
 	return utils.StringToBytes(str)
 }
