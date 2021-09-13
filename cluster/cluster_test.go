@@ -74,7 +74,7 @@ func TestGetLabel(t *testing.T) {
 			"mysql.radondb.com/cluster":    "sample",
 			"app.kubernetes.io/name":       "mysql",
 			"app.kubernetes.io/instance":   "instance",
-			"app.kubernetes.io/version":    "5.7.33",
+			"app.kubernetes.io/version":    "5.7.34",
 			"app.kubernetes.io/component":  "database",
 			"app.kubernetes.io/managed-by": "mysql.radondb.com",
 		}
@@ -93,7 +93,7 @@ func TestGetLabel(t *testing.T) {
 			"mysql.radondb.com/cluster":    "sample",
 			"app.kubernetes.io/name":       "mysql",
 			"app.kubernetes.io/instance":   "sample",
-			"app.kubernetes.io/version":    "5.7.33",
+			"app.kubernetes.io/version":    "5.7.34",
 			"app.kubernetes.io/component":  "component",
 			"app.kubernetes.io/managed-by": "mysql.radondb.com",
 		}
@@ -112,7 +112,7 @@ func TestGetLabel(t *testing.T) {
 			"mysql.radondb.com/cluster":    "sample",
 			"app.kubernetes.io/name":       "mysql",
 			"app.kubernetes.io/instance":   "sample",
-			"app.kubernetes.io/version":    "5.7.33",
+			"app.kubernetes.io/version":    "5.7.34",
 			"app.kubernetes.io/component":  "database",
 			"app.kubernetes.io/managed-by": "mysql.radondb.com",
 			"app.kubernetes.io/part-of":    "part-of",
@@ -131,34 +131,34 @@ func TestGetSelectorLabels(t *testing.T) {
 }
 
 func TestGetMySQLVersion(t *testing.T) {
-	// other 8.0 ->  5.7.33
+	//other 8.0 ->  5.7.34
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Spec.MysqlVersion = "8.0"
 		testCase := Cluster{
 			&testMysqlCluster,
 		}
-		want := "5.7.33"
+		want := "5.7.34"
 		assert.Equal(t, want, testCase.GetMySQLVersion())
 	}
-	// MySQLTagsToSemVer 5.7 -> 5.7.33
+	//MySQLTagsToSemVer 5.7 -> 5.7.34
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Spec.MysqlVersion = "5.7"
 		testCase := Cluster{
 			&testMysqlCluster,
 		}
-		want := "5.7.33"
+		want := "5.7.34"
 		assert.Equal(t, want, testCase.GetMySQLVersion())
 	}
-	// MysqlImageVersions 5.7.33 -> 5.7.33
+	//MysqlImageVersions 5.7.34 -> 5.7.34
 	{
 		testMysqlCluster := mysqlCluster
-		testMysqlCluster.Spec.MysqlVersion = "5.7.33"
+		testMysqlCluster.Spec.MysqlVersion = "5.7.34"
 		testCase := Cluster{
 			&testMysqlCluster,
 		}
-		want := "5.7.33"
+		want := "5.7.34"
 		assert.Equal(t, want, testCase.GetMySQLVersion())
 	}
 }

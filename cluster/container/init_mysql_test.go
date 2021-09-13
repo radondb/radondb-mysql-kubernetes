@@ -105,7 +105,7 @@ func TestGetInitMysqlName(t *testing.T) {
 }
 
 func TestGetInitMysqlImage(t *testing.T) {
-	assert.Equal(t, "percona/percona-server:5.7.33", initMysqlCase.Image)
+	assert.Equal(t, "percona/percona-server:5.7.34", initMysqlCase.Image)
 }
 
 func TestGetInitMysqlCommand(t *testing.T) {
