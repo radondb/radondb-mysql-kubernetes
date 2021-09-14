@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: MysqlUser is the Schema for the users API
+        description: MysqlUser is the Schema for the users API.
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -49,13 +49,16 @@ spec:
                 type: object
               enableSsl:
                 default: false
-                description: EnableSsl represents whether to open the ssl connection.
+                description: 'EnableSsl represents whether to open the ssl connection.
+                  TODO: add logic.'
                 type: boolean
               hosts:
                 description: Hosts is the grants hosts.
                 items:
                   type: string
+                minItems: 1
                 type: array
+                uniqueItems: true
               permissions:
                 description: Permissions is the list of roles that user has in the
                   specified database.
@@ -64,18 +67,23 @@ spec:
                   properties:
                     database:
                       description: Database is the grants database.
+                      pattern: ^([*]|[A-Za-z0-9_]{2,26})$
                       type: string
                     privileges:
                       description: Privileges is the normal privileges(comma delimited,
                         such as "SELECT,CREATE").
                       items:
                         type: string
+                      minItems: 1
                       type: array
+                      uniqueItems: true
                     tables:
                       description: Tables is the grants tables inside the database.
                       items:
                         type: string
+                      minItems: 1
                       type: array
+                      uniqueItems: true
                   type: object
                 type: array
               secretBinder:
@@ -96,7 +104,7 @@ spec:
                 type: string
             type: object
           status:
-            description: UserStatus defines the observed state of User.
+            description: UserStatus defines the observed state of MysqlUser.
             properties:
               allowedHosts:
                 description: AllowedHosts contains the list of hosts that the user

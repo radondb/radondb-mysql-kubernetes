@@ -1,20 +1,17 @@
 apiVersion: mysql.radondb.com/v1alpha1
 kind: MysqlUser
 metadata:
-  name: user-sample
+  name: sample_user_cr
 spec:
   ## User to operate.
   user: sample_user
   hosts: 
     - "%"
-  ## It`s not support now.
-  # enableSsl: true
-  ## If create super user, do not need to fill in permissions.
   permissions:
     - database: "*"
-      tables: 
+      tables:
         - "*"
-      privileges: 
+      privileges:
         - SELECT
   ## Specify the cluster where the user is located.
   clusterBinder:

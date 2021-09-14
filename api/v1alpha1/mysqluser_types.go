@@ -31,12 +31,13 @@ type UserSpec struct {
 
 	// Username is the name of user to be operated.
 	// This field should be immutable.
-	// +optional
+	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern="^[A-Za-z0-9_]{2,26}$"
 	User string `json:"user,omitempty"`
 
 	// Hosts is the grants hosts.
-	// +optional
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
 	Hosts []string `json:"hosts,omitempty"`
 
 	// EnableSsl represents whether to open the ssl connection.
@@ -46,11 +47,11 @@ type UserSpec struct {
 	EnableSsl bool `json:"enableSsl,omitempty"`
 
 	// ClusterBinder Contains parameters about the cluster bound by user.
-	// +optional
+	// +kubebuilder:validation:Required
 	ClusterBinder ClusterBinder `json:"clusterBinder,omitempty"`
 
 	// SecretBinder Contains parameters about the secret object bound by user.
-	// +optional
+	// +kubebuilder:validation:Required
 	SecretBinder SecretBinder `json:"secretBinder,omitempty"`
 
 	// Permissions is the list of roles that user has in the specified database.
@@ -77,20 +78,21 @@ type SecretBinder struct {
 // UserPermission defines a UserPermission permission.
 type UserPermission struct {
 	// Database is the grants database.
-	// +optional
+	// +kubebuilder:validation:Pattern="^([*]|[A-Za-z0-9_]{2,26})$"
 	Database string `json:"database,omitempty"`
+
 	// Tables is the grants tables inside the database.
-	// +optional
+	// +kubebuilder:validation:MinItems=1
 	Tables []string `json:"tables,omitempty"`
+
 	// Privileges is the normal privileges(comma delimited, such as "SELECT,CREATE").
-	// +optional
-	// TODO: add validation.
+	// Optional parameters can refer to: https://dev.mysql.com/doc/refman/5.7/en/privileges-provided.html.
+	// +kubebuilder:validation:MinItems=1
 	Privileges []string `json:"privileges,omitempty"`
 }
 
 // UserStatus defines the observed state of MysqlUser.
 type UserStatus struct {
-
 	// Conditions represents the MysqlUser resource conditions list.
 	// +optional
 	Conditions []UserCondition `json:"conditions,omitempty"`
@@ -111,14 +113,19 @@ const (
 type UserCondition struct {
 	// Type of MysqlUser condition.
 	Type UserConditionType `json:"type"`
+
 	// Status of the condition, one of True, False, Unknown.
 	Status corev1.ConditionStatus `json:"status"`
+	
 	// The last time this condition was updated.
 	LastUpdateTime metav1.Time `json:"lastUpdateTime,omitempty"`
+
 	// Last time the condition transitioned from one status to another.
 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
+
 	// The reason for the condition's last transition.
 	Reason string `json:"reason"`
+
 	// A human readable message indicating details about the transition.
 	Message string `json:"message"`
 }
