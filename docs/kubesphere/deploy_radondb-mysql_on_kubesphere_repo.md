@@ -1,30 +1,34 @@
 Contents
 =================
 
-   * [在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群](#在-kubesphere-上通过应用商店部署-radondb-mysql-集群)
+   * [在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群](#在-kubesphere-上通过-helm-repo-部署-radondb-mysql-集群)
       * [简介](#简介)
       * [部署准备](#部署准备)
-         * [安装 KubeSphere](#安装-kubesphere)
-         * [创建 KubeSphere 多租户系统](#创建-kubesphere-多租户系统)
-         * [部署步骤](#部署步骤)
+	 * [安装 KubeSphere](#安装-kubesphere)
+	 * [创建 KubeSphere 多租户系统](#创建-kubesphere-多租户系统)
+	 * [连接 KubeSphere 客户端节点](#连接-kubesphere-客户端节点)
+	 * [部署步骤](#部署步骤)
+	    * [步骤 1 : 添加仓库](#步骤-1--添加仓库)
+	    * [步骤 2 : 部署](#步骤-2--部署)
+	 * [部署校验](#部署校验)
       * [访问 RadonDB MySQL](#访问-radondb-mysql)
-         * [开启服务网络访问](#开启服务网络访问)
-         * [连接节点](#连接节点)
+	 * [开启服务网络访问](#开启服务网络访问)
+	 * [连接节点](#连接节点)
       * [配置](#配置)
       * [持久化](#持久化)
       * [自定义 MYSQL 配置](#自定义-mysql-配置)
 
-# 在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群
+# 在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群
 
 ## 简介
 
 RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方案。通过使用 Raft 协议，RadonDB MySQL 可以快速进行故障转移，且不会丢失任何事务。
 
-本教程演示如何在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群。
+本教程演示如何在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群。
 
 您还可以通过如下方式在 KubeSphere 上部署 RadonDB MySQL 集群：
 
-- [在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere_repo.md)
+- [在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere_appstore.md)
 - [在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群](deploy_radondb-mysql_on_kubesphere.md)
 
 ## 部署准备
@@ -39,68 +43,121 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
   
 - [在 Linux 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
 
-> KubeSphere 版本需更新到 3.1。
-
 ### 创建 KubeSphere 多租户系统
 
 参考 KubeSphere 官方文档：[创建企业空间、项目、帐户和角色](https://kubesphere.io/zh/docs/quick-start/create-workspace-and-project/)。
 
+### 连接 KubeSphere 客户端节点
+
+> **说明**
+> 
+> 如下示例适用于 KubeSphere 安装在 [青云QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 的场景。
+
+通过[青云 QingCloud 控制台](https://console.qingcloud.com/) 直接连接客户端节点。
+
+- 默认 root 用户密码为 KubeSphere 集群 ID。
+
+- 通过第三方 SSH 工具连接客户端节点，需要在配置参数中填写 KubeSphere 的 `用户 SSH 公钥` 参数。
+
 ### 部署步骤
 
-1. 打开 KubeSphere 控制台，在 `demo-project` 项目的**概览**页面，点击左上角的**应用商店**。
+#### 步骤 1 : 添加仓库
 
-   ![应用商店](png/应用商店.png)
+添加并更新 helm 仓库。
 
-2. 找到 RadonDB MySQL，点击**应用信息**页面上的**部署**。
+```bash
+$ helm repo add test https://charts.kubesphere.io/test
+$ helm repo update
+```
 
-   ![应用商店中的 RadonDB MySQL](png/应用商店中的%20RadonDB%20MySQL.png)
+#### 步骤 2 : 部署
 
-   ![部署 RadonDB MySQL](png/部署%20RadonDB%20MySQL.png)
+以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
 
-3. 设置名称并选择应用版本。请确保将 RadonDB MySQL 部署在 `demo-project` 中，点击**下一步**。
+```bash
+$ helm install demo test/radondb-mysql
+NAME: demo
+LAST DEPLOYED: Wed Apr 28 08:08:15 2021
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The cluster is comprised of 3 pods: 1 leader and 2 followers. Each instance is accessible within the cluster through:
 
-   ![确认部署](png/确认部署.png)
+    <pod-name>.demo-radondb-mysql
 
-4. 在**应用配置**页面，可参考[配置](#配置)定义 RadonDB MySQL 配置参数。操作完成后，点击**部署**。
+To connect to your database:
 
-   ![应用配置界面](png/应用配置界面.png)
+1. Get mysql user `qingcloud`s password:
 
-5. 稍等片刻待 RadonDB MySQL 启动并运行。
+    kubectl get secret -n default demo-radondb-mysql -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
 
-   ![RadonDB MySQL 运行中](png/RadonDB%20MySQL运行中.png)
+2. Run an Ubuntu pod that you can use as a client:
+
+    kubectl run ubuntu -n default --image=ubuntu:focal -it --rm --restart='Never' -- bash -il
+
+3. Install the mysql client:
+
+    apt-get update && apt-get install mysql-client -y
+
+4. To connect to leader service in the Ubuntu pod:
+
+    mysql -h demo-radondb-mysql-leader -u qingcloud -p
+
+5. To connect to follower service (read-only) in the Ubuntu pod:
+
+    mysql -h demo-radondb-mysql-follower -u qingcloud -p
+```
+
+### 部署校验
+
+分别执行如下指令，查看到 `release` 名为 `demo` 的有状态副本集 `demo-radondb-mysql`，则 RadonDB MySQL 部署成功。
+
+```bash
+$ helm list
+NAME        NAMESPACE REVISION UPDATED                                 STATUS   CHART               APP VERSION
+demo        default   1        2021-04-28 08:08:15.828384203 +0000 UTC deployed radondb-mysql-1.0.0 5.7.34   
+
+$ kubectl get statefulset
+NAME                 READY   AGE
+demo-radondb-mysql   3/3     25h
+```
 
 ## 访问 RadonDB MySQL
 
 您需准备一个用于连接 RadonDB MySQL 的客户端。
 
-> **注意：** 建议通过使用在同一 VPC 下主机或青云 VPN 服务来访问 RadonDB MySQL。不要通过端口转发的方式将服务暴露到公网，避免对数据库服务造成重大影响！
+> **注意**
+> 
+> 建议通过使用在同一 VPC 下主机或 VPN 服务来访问 RadonDB MySQL。不要通过端口转发的方式将服务暴露到公网，避免对数据库服务造成重大影响！
 
 ### 开启服务网络访问
 
 1. 在 **项目管理** 界面中，选择 **应用负载** > **服务**，查看当前项目中的服务列表。
 
-   ![服务](png/服务.png)
+   ![服务](_images/service.png)
 
 
 2. 进入需要开启外网访问的服务中，选择 **更多操作** > **编辑外网访问**。
 
-   ![编辑外网访问](png/编辑外网访问.png)
+   ![编辑外网访问](_images/config_vnet.png)
 
    - **NodePort方式**
 
       选择 NodePort。
 
-      ![nodeport](png/nodeport.png)
+      ![nodeport](_images/nodeport.png)
 
       点击确定自动生成转发端口，在 KubeSphere 集群同一网络内可通过集群IP/节点IP和此端口访问服务。
 
-     ![节点端口](png/节点端口.png)
+     ![节点端口](_images/node_port.png)
 
    - **Loadbalancer方式**
 
       选择 LoadBalancer。
 
-      ![负载均衡](png/负载均衡.png)
+      ![负载均衡](_images/loadbalancer.png)
 
      在 `service.beta.kubernetes.io/qingcloud-load-balancer-eip-ids` 参数中填写可用的 EIP ID，系统会自动为 EIP 创建负载均衡器和对应的监听器。
 
@@ -108,7 +165,7 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
      点击确定自动生成转发端口，在 KubeSphere 集群同一网络内可通过集群IP/节点IP和此端口访问服务。
 
-      ![负载均衡端口](png/负载均衡端口.png)
+      ![负载均衡端口](_images/loadbalancer_port.png)
 
 ### 连接节点
 
@@ -225,9 +282,13 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
 默认情况下，会创建一个 PersistentVolumeClaim 并将其挂载到指定目录中。 若想禁用此功能，您可以更改 `values.yaml` 禁用持久化，改用 emptyDir。
 
-> *"当 Pod 分配给节点时，将首先创建一个 emptyDir 卷，只要该 Pod 在该节点上运行，该卷便存在。 当 Pod 从节点中删除时，emptyDir 中的数据将被永久删除."*
+*"当 Pod 分配给节点时，将首先创建一个 emptyDir 卷，只要该 Pod 在该节点上运行，该卷便存在。 当 Pod 从节点中删除时，emptyDir 中的数据将被永久删除."*
 
-**注意**：PersistentVolumeClaim 中可以使用不同特性的 PersistentVolume，其 IO 性能会影响数据库的初始化性能。所以当使用 PersistentVolumeClaim 启用持久化存储时，可能需要调整 livenessProbe.initialDelaySeconds 的值。数据库初始化的默认限制是60秒 (livenessProbe.initialDelaySeconds + livenessProbe.periodSeconds * livenessProbe.failureThreshold)。如果初始化时间超过限制，kubelet将重启数据库容器，数据库初始化被中断，会导致持久数据不可用。
+> **注意**
+> 
+> PersistentVolumeClaim 中可以使用不同特性的 PersistentVolume，其 IO 性能会影响数据库的初始化性能。所以当使用 PersistentVolumeClaim 启用持久化存储时，可能需要调整 `livenessProbe.initialDelaySeconds` 的值。
+> 
+> 数据库初始化的默认限制是60秒 (l`ivenessProbe.initialDelaySeconds` + `livenessProbe.periodSeconds` * `livenessProbe.failureThreshold`)。如果初始化时间超过限制，kubelet 将重启数据库容器，数据库初始化被中断，会导致持久数据不可用。
 
 ## 自定义 MYSQL 配置
 

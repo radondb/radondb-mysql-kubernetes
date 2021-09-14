@@ -25,7 +25,8 @@ RadonDB MySQL Kubernetes支持在[Kubernetes](https://kubernetes.io)和[KubeSphe
     - 主从秒级切换
     - 集群切换的数据强一致性
 - 集群管理
-- 监控告警
+- [监控告警](docs/deploy_monitoring.md)
+- [备份](docs/deploy_backup_restore_s3.md)
 - 集群日志管理
 - 账户管理
 
@@ -33,20 +34,20 @@ RadonDB MySQL Kubernetes支持在[Kubernetes](https://kubernetes.io)和[KubeSphe
 
 ### Helm
 
-- [ 在 Kubernetes 上部署 RadonDB MySQL 集群](docs/Kubernetes/deploy_radondb-mysql_on_kubernetes.md)
-- [在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere.md)
-- [在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere_repo.md)
-- [在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群](docs/KubeSphere/deploy_radondb-mysql_on_kubesphere_appstore.md)
+- [ 在 Kubernetes 上部署 RadonDB MySQL 集群](docs/kubernetes/deploy_radondb-mysql_on_kubernetes.md)
+- [在 KubeSphere 上通过 Git 部署 RadonDB MySQL 集群](docs/kubesphere/deploy_radondb-mysql_on_kubesphere.md)
+- [在 KubeSphere 上通过 Helm Repo 部署 RadonDB MySQL 集群](docs/kubesphere/deploy_radondb-mysql_on_kubesphere_repo.md)
+- [在 KubeSphere 上通过应用商店部署 RadonDB MySQL 集群](docs/kubesphere/deploy_radondb-mysql_on_kubesphere_appstore.md)
 
 ### Operator
 
-- [在 Kubernetes 上部署 RadonDB MySQL 集群](docs/Kubernetes/deploy_radondb-mysql_operator_on_k8s.md)
+- [在 Kubernetes 上部署 RadonDB MySQL 集群](docs/kubernetes/deploy_radondb-mysql_operator_on_k8s.md)
 
 ## 路线图
 
 | 版本 | 功能  | 实现方式 |
 |------|--------|------| 
-| 1.0 | MySQL 高可用 <br> 无中心化领导者自动选举<br> 主从秒级切换<br> 数据强一致性 <br> 集群管理 <br> 监控告警 <br> 集群日志管理 <br> 账户管理 | Helm |
+| 1.0 |  集群管理 <br> 监控告警 <br> 集群日志管理 <br> 账户管理 | Helm |
 | 2.0  | 增删节点 <br> 自动扩缩容 <br> 升级集群 <br> 备份与恢复 <br> 故障自动转移 <br> 自动重建节点 <br> 自动重启服务 <br> 账户管理（提供 API 接口）<br> 在线迁移   |  Operator |
 | 3.0  | 自动化运维 <br> 多节点角色 <br> 灾备集群 <br> SSL 传输加密 | Operator |
 
@@ -56,17 +57,17 @@ RadonDB MySQL Kubernetes支持在[Kubernetes](https://kubernetes.io)和[KubeSphe
 
 ## 协议
 
-RadonDB MySQL 基于 Apache 2.0 协议，详见 [LICENSE](./LICENSE)。
+RadonDB MySQL 基于 Apache 2.0 协议，详见 [License](./LICENSE)。
 
 ## 欢迎加入社区话题互动
 
 - 论坛
 
-    请加入[Kubesphere 开发者社区](https://kubesphere.com.cn/forum/t/radondb) RadonDB MySQL 话题专区。
+    请加入[KubeSphere 开发者社区](https://kubesphere.com.cn/forum/t/radondb) RadonDB MySQL 话题专区。
     
-- 请关注我们的微信公众号
+- 欢迎关注微信公众号
 
-    ![](docs/images/qrcode_for_gh_ffb9d7c5dc1f_258.jpg)
+    ![](docs/images/vx_code_258.jpg)
 
 ---
 <p align="center">
