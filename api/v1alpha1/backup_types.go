@@ -31,7 +31,7 @@ type BackupSpec struct {
 
 	// To specify the image that will be used for sidecar container.
 	// +optional
-	// +kubebuilder:default:="radondb/mysql-sidecar:0.1.88"
+	// +kubebuilder:default:="radondb/mysql-sidecar:latest"
 	Image string `json:"image"`
 
 	// HostName represents the host for which to take backup
