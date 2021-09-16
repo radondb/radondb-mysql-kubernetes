@@ -27,7 +27,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	corev1 "k8s.io/api/core/v1"
 
-	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
+	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
@@ -262,7 +262,7 @@ func GetDeleteQuery(ctx context.Context, hosts []string, userName string) Query 
 }
 
 // GetGrantQuery get the query for grant.
-func GetGrantQuery(permissions []mysqlv1alpha1.UserPermission, user string, allowedHosts []string) Query {
+func GetGrantQuery(permissions []apiv1alpha1.UserPermission, user string, allowedHosts []string) Query {
 	permQueries := []Query{}
 
 	for _, perm := range permissions {

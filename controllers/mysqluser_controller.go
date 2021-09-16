@@ -32,9 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
+	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
-	mysqluser "github.com/radondb/radondb-mysql-kubernetes/mysqluser"
+	"github.com/radondb/radondb-mysql-kubernetes/mysqluser"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
@@ -62,7 +62,7 @@ var userLog = log.Log.WithName("controller").WithName("mysqluser")
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *MysqlUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// your logic here.
-	user := mysqluser.New(&mysqlv1alpha1.MysqlUser{})
+	user := mysqluser.New(&apiv1alpha1.MysqlUser{})
 
 	err := r.Get(ctx, req.NamespacedName, user.Unwrap())
 	if err != nil {
@@ -171,19 +171,16 @@ func (r *MysqlUserReconciler) createOrUpdate(ctx context.Context, sqlRunner *int
 	if err := r.updateAllowedHosts(ctx, sqlRunner, mysqlUser); err != nil {
 		return fmt.Errorf("update allowed hosts faild, err: %s", err)
 	}
-
 	if len(unexistHosts) == 0 {
 		userLog.Info("users already exist", "user name:", mysqlUser.Spec.User, "hosts:", mysqlUser.Status.AllowedHosts)
 		return nil
 	}
 
-	query := internal.GetCreateQuery(ctx, unexistHosts, userName, password)
-
 	// 5. Create unexist hosts.
+	query := internal.GetCreateQuery(ctx, unexistHosts, userName, password)
 	if err := r.createUser(ctx, query, sqlRunner); err != nil {
 		return fmt.Errorf("create user faild, err: %s", err)
 	}
-
 	userLog.Info("create mysql user success", "user name", userName, "hosts", unexistHosts)
 
 	// 6. Add finalizer.
@@ -197,13 +194,12 @@ func (r *MysqlUserReconciler) createOrUpdate(ctx context.Context, sqlRunner *int
 		return fmt.Errorf("set permissions faild, err: %s", err)
 	}
 
-	// Update status for allowedHosts if needed, mark that status need to be updated.
+	// 8. Update user`s status.
 	if !reflect.DeepEqual(mysqlUser.Status.AllowedHosts, mysqlUser.Spec.Hosts) {
 		mysqlUser.Status.AllowedHosts = mysqlUser.Spec.Hosts
 	}
-
 	mysqlUser.UpdateStatusCondition(
-		mysqlv1alpha1.MySQLUserReady, corev1.ConditionTrue,
+		apiv1alpha1.MySQLUserReady, corev1.ConditionTrue,
 		mysqluser.ConfigurationSucceededReason, "The mysql user has been configured successfully.",
 	)
 
@@ -240,7 +236,7 @@ func (r *MysqlUserReconciler) setPassword(ctx context.Context, sqlRunner *intern
 }
 
 // setPermission set permissions to existed user.
-func (r *MysqlUserReconciler) setPermission(ctx context.Context, sqlRunner *internal.SQLRunner, permissions []mysqlv1alpha1.UserPermission, userName string, hosts []string) error {
+func (r *MysqlUserReconciler) setPermission(ctx context.Context, sqlRunner *internal.SQLRunner, permissions []apiv1alpha1.UserPermission, userName string, hosts []string) error {
 	if len(permissions) > 0 {
 		query := internal.GetGrantQuery(permissions, userName, hosts)
 		if err := sqlRunner.RunQuery(query.String(), query.Args()...); err != nil {
@@ -290,7 +286,7 @@ func checkUserExist(ctx context.Context, query internal.Query, sqlRunner *intern
 }
 
 // updateStatusAndErr update the status and catch create/update error.
-func (r *MysqlUserReconciler) updateStatusAndErr(ctx context.Context, mysqlUser *mysqluser.MysqlUser, oldStatus *mysqlv1alpha1.UserStatus, cuErr error) error {
+func (r *MysqlUserReconciler) updateStatusAndErr(ctx context.Context, mysqlUser *mysqluser.MysqlUser, oldStatus *apiv1alpha1.UserStatus, cuErr error) error {
 	if !reflect.DeepEqual(oldStatus, &mysqlUser.Status) {
 		userLog.Info("update mysql user status", "name", mysqlUser.Name, "oldHost", oldStatus.AllowedHosts, "newHost", mysqlUser.Spec.Hosts)
 
@@ -340,7 +336,7 @@ func (r *MysqlUserReconciler) getSqlRunner(ctx context.Context, mysqlUser *mysql
 
 // addUserFinalizer add the mysql user finalizer if it`s not exists, before delete mysql user cr , it will wait mysql user finalizer delete first.
 // In this way, the logic of deleting the mysql mysql user can be executed before deleting cr.
-func (r *MysqlUserReconciler) addUserFinalizer(ctx context.Context, mysqlUser *mysqlv1alpha1.MysqlUser) error {
+func (r *MysqlUserReconciler) addUserFinalizer(ctx context.Context, mysqlUser *apiv1alpha1.MysqlUser) error {
 	// add finalizer if not present.
 	if !controllerutil.ContainsFinalizer(mysqlUser, string(utils.UserFinalizer)) {
 		controllerutil.AddFinalizer(mysqlUser, string(utils.UserFinalizer))
@@ -354,7 +350,7 @@ func (r *MysqlUserReconciler) addUserFinalizer(ctx context.Context, mysqlUser *m
 }
 
 // deleteUserFinalizer delete the mysql user finalizer.
-func (r *MysqlUserReconciler) deleteUserFinalizer(ctx context.Context, mysqlUser *mysqlv1alpha1.MysqlUser) error {
+func (r *MysqlUserReconciler) deleteUserFinalizer(ctx context.Context, mysqlUser *apiv1alpha1.MysqlUser) error {
 	controllerutil.RemoveFinalizer(mysqlUser, string(utils.UserFinalizer))
 	if err := r.Update(ctx, mysqlUser); err != nil {
 		userLog.Error(err, "failed to update mysql user status")
@@ -367,7 +363,7 @@ func (r *MysqlUserReconciler) deleteUserFinalizer(ctx context.Context, mysqlUser
 func setFailedStatus(err *error, user *mysqluser.MysqlUser) {
 	if *err != nil {
 		user.UpdateStatusCondition(
-			mysqlv1alpha1.MySQLUserReady, corev1.ConditionFalse,
+			apiv1alpha1.MySQLUserReady, corev1.ConditionFalse,
 			mysqluser.ConfigurationFailedReason, fmt.Sprintf("The mysql user has been configured failed: %s", *err),
 		)
 	}
@@ -376,6 +372,6 @@ func setFailedStatus(err *error, user *mysqluser.MysqlUser) {
 // SetupWithManager sets up the controller with the Manager.
 func (r *MysqlUserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&mysqlv1alpha1.MysqlUser{}).
+		For(&apiv1alpha1.MysqlUser{}).
 		Complete(r)
 }
