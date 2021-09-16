@@ -510,6 +510,13 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 			return true, nil
 		}
 
+		// fix issue#219. When 2->5 rolling update, Because of PDB, minAvaliable 50%, if Spec Replicas is 5, sfs Spec first be set to 3, then to be set 5
+		// pod healthy is yes,but controller-revision-hash will never correct, it must return,otherwise wait for 2 hours.
+		// https://kubernetes.io/zh/docs/tasks/run-application/configure-pdb/
+		if pod.ObjectMeta.Labels["healthy"] == "yes" &&
+			pod.ObjectMeta.Labels["controller-revision-hash"] != s.sfs.Status.UpdateRevision {
+			return false, fmt.Errorf("pod %s is ready, wait next schedule", pod.Name)
+		}
 		return false, nil
 	})
 }

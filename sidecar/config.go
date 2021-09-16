@@ -459,7 +459,7 @@ done
 i=0
 while [ $i -lt %d ]; do
 	if [ $i -ne %d ]; then
-		while true; do
+		for k in $(seq 12); do
 			res=$(curl -i -X POST -d '{"address": "%s-'$i'.%s.%s:%d"}' -u root:%s http://%s:%d/v1/cluster/add)
 			code=$(echo $res|grep "HTTP"|awk '{print $2}')
 			if [ "$code" -eq "200" ]; then
@@ -467,7 +467,7 @@ while [ $i -lt %d ]; do
 			fi
 		done
 
-		while true; do
+		for k in $(seq 12); do
 			res=$(curl -i -X POST -d '{"address": "%s:%d"}' -u root:%s http://%s-$i.%s.%s:%d/v1/cluster/add)
 			code=$(echo $res|grep "HTTP"|awk '{print $2}')
 			if [ "$code" -eq "200" ]; then
