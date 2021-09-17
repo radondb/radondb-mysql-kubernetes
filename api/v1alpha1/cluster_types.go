@@ -43,7 +43,7 @@ type ClusterSpec struct {
 
 	// MysqlOpts is the options of MySQL container.
 	// +optional
-	// +kubebuilder:default:={rootPassword: "", rootHost: "localhost", user: "qc_usr", password: "Qing@123", database: "qingcloud", initTokuDB: true, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}
+	// +kubebuilder:default:={rootPassword: "", rootHost: "localhost", user: "radondb_usr", password: "RadonDB@123", database: "radondb", initTokuDB: true, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}
 	MysqlOpts MysqlOpts `json:"mysqlOpts,omitempty"`
 
 	// XenonOpts is the options of xenon container.
@@ -101,7 +101,7 @@ type MysqlOpts struct {
 	// Username of new user to create.
 	// Only be a combination of letters, numbers or underlines. The length can not exceed 26 characters.
 	// +optional
-	// +kubebuilder:default:="qc_usr"
+	// +kubebuilder:default:="radondb_usr"
 	// +kubebuilder:validation:Pattern="^[A-Za-z0-9_]{2,26}$"
 	User string `json:"user,omitempty"`
 
@@ -109,13 +109,13 @@ type MysqlOpts struct {
 	// Only be a combination of uppercase letters, lowercase letters, numbers or special characters.
 	// Special characters are supported: @#$%^&*_+-=.
 	// +optional
-	// +kubebuilder:default:="Qing@123"
+	// +kubebuilder:default:="RadonDB@123"
 	// +kubebuilder:validation:Pattern="^[A-Za-z0-9@#$%^&*_+\\-=]{8,32}$"
 	Password string `json:"password,omitempty"`
 
 	// Name for new database to create.
 	// +optional
-	// +kubebuilder:default:="qingcloud"
+	// +kubebuilder:default:="radondb"
 	Database string `json:"database,omitempty"`
 
 	// InitTokuDB represents if install tokudb engine.

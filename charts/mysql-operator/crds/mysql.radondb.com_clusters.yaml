@@ -117,9 +117,9 @@ spec:
                 type: string
               mysqlOpts:
                 default:
-                  database: qingcloud
+                  database: radondb
                   initTokuDB: true
-                  password: Qing@123
+                  password: RadonDB@123
                   resources:
                     limits:
                       cpu: 500m
@@ -129,11 +129,11 @@ spec:
                       memory: 256Mi
                   rootHost: localhost
                   rootPassword: ""
-                  user: qc_usr
+                  user: radondb_usr
                 description: MysqlOpts is the options of MySQL container.
                 properties:
                   database:
-                    default: qingcloud
+                    default: radondb
                     description: Name for new database to create.
                     type: string
                   initTokuDB:
@@ -147,7 +147,7 @@ spec:
                       file.
                     type: object
                   password:
-                    default: Qing@123
+                    default: RadonDB@123
                     description: 'Password for the new user, must be 8~32 characters
                       long. Only be a combination of uppercase letters, lowercase
                       letters, numbers or special characters. Special characters are
@@ -200,7 +200,7 @@ spec:
                     pattern: ^$|^[A-Za-z0-9@#$%^&*_+\-=]{8,32}$
                     type: string
                   user:
-                    default: qc_usr
+                    default: radondb_usr
                     description: Username of new user to create. Only be a combination
                       of letters, numbers or underlines. The length can not exceed
                       26 characters.

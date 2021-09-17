@@ -30,9 +30,9 @@ mysql:
   # mysqlRootPassword:
   mysqlReplicationPassword: Repl_123
 
-  mysqlUser: qingcloud
-  mysqlPassword: Qing@123
-  mysqlDatabase: qingcloud
+  mysqlUser: radondb
+  mysqlPassword: RadonDB@123
+  mysqlDatabase: radondb
 
   initTokudb: false
   ## Additionnal arguments that are passed to the MySQL container.
