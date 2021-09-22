@@ -67,6 +67,8 @@ const (
 	MetricsUser = "radondb_metrics"
 	// The MySQL user used for operator to connect to the mysql node for configuration.
 	OperatorUser = "radondb_operator"
+	// The name of the MySQL root user.
+	RootUser = "root"
 
 	// xtrabackup http server user
 	BackupUser = "sys_backup"
@@ -97,6 +99,9 @@ const (
 
 	// preUpdate file
 	FileIndicateUpdate = "PreUpdating"
+
+	// LeaderHost is the alias for leader`s host.
+	LeaderHost = "leader-host"
 )
 
 // ResourceName is the type for aliasing resources that will be created.
