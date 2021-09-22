@@ -1,0 +1,23 @@
+apiVersion: mysql.radondb.com/v1alpha1
+kind: MysqlUser
+metadata:
+  name: sample-user-cr
+spec:
+  ## User to operate.
+  user: sample_user
+  hosts: 
+    - "%"
+  permissions:
+    - database: "*"
+      tables:
+        - "*"
+      privileges:
+        - SELECT
+  ## Specify the cluster where the user is located.
+  userOwner:
+    clusterName: sample
+    nameSpace: default
+  ## Specify the secret object for user.
+  secretSelector:
+    secretName: sample-user-password
+    secretKey: pwdForSample
