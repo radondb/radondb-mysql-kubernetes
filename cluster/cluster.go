@@ -334,7 +334,16 @@ func sizeToBytes(s string) (uint64, error) {
 	return 0, fmt.Errorf("'%s' format error, must be a positive integer with a unit of measurement like K, M or G", s)
 }
 
-// GetClusterKey returns the MysqlUser's Cluster key.
+// IsClusterKind for the given kind checks if CRD kind is for Cluster CRD.
+func IsClusterKind(kind string) bool {
+	switch kind {
+	case "Cluster", "cluster", "clusters":
+		return true
+	}
+	return false
+}
+
+// GetClusterKey returns the MysqlUser's MySQLCluster key.
 func (c *Cluster) GetClusterKey() client.ObjectKey {
 	return client.ObjectKey{
 		Name:      c.Name,

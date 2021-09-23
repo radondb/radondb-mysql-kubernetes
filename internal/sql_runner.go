@@ -325,27 +325,27 @@ func columnValue(scanArgs []interface{}, slaveCols []string, colName string) str
 }
 
 // CreateUserIfNotExists creates a user if it doesn't already exist and it gives it the specified permissions.
-func (s sqlRunner) CreateUserIfNotExists(
-	user, pass string, allowedHosts []string, permissions []apiv1alpha1.UserPermission,
+func CreateUserIfNotExists(
+	sqlRunner SQLRunner, user, pass string, hosts []string, permissions []apiv1alpha1.UserPermission,
 ) error {
 
 	// Throw error if there are no allowed hosts.
-	if len(allowedHosts) == 0 {
+	if len(hosts) == 0 {
 		return errors.New("no allowedHosts specified")
 	}
 
 	queries := []Query{
-		getCreateUserQuery(user, pass, allowedHosts),
-		// todo: getAlterUserQuery
+		getCreateUserQuery(user, pass, hosts),
+		// todo: getAlterUserQuery.
 	}
 
 	if len(permissions) > 0 {
-		queries = append(queries, permissionsToQuery(permissions, user, allowedHosts))
+		queries = append(queries, permissionsToQuery(permissions, user, hosts))
 	}
 
 	query := BuildAtomicQuery(queries...)
 
-	if err := s.QueryExec(query); err != nil {
+	if err := sqlRunner.QueryExec(query); err != nil {
 		return fmt.Errorf("failed to configure user (user/pass/access), err: %s", err)
 	}
 
@@ -378,10 +378,10 @@ func getUsersIdentification(user string, pwd *string, allowedHosts []string) (id
 }
 
 // DropUser removes a MySQL user if it exists, along with its privileges.
-func (s sqlRunner) DropUser(user, host string) error {
+func DropUser(sqlRunner SQLRunner, user, host string) error {
 	query := NewQuery("DROP USER IF EXISTS ?@?;", user, host)
 
-	if err := s.QueryExec(query); err != nil {
+	if err := sqlRunner.QueryExec(query); err != nil {
 		return fmt.Errorf("failed to delete user, err: %s", err)
 	}
 
@@ -421,7 +421,7 @@ func escapeID(id string) string {
 		return id
 	}
 
-	// don't allow using ` in id name
+	// don't allow using ` in id name.
 	id = strings.ReplaceAll(id, "`", "")
 
 	return fmt.Sprintf("`%s`", id)
