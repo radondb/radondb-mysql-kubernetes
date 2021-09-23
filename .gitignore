@@ -5,6 +5,9 @@
 *.so
 *.dylib
 
+
+README_zh.md
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -24,4 +27,3 @@ bin/
 # vs code.
 .vscode
 
-README_zh.md
