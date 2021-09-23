@@ -1,4 +1,3 @@
-
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 SIDECAR_IMG ?= sidecar:latest
@@ -113,3 +112,8 @@ GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
+
+# E2E tests
+###########
+e2e-local:
+	go test -v ./test/e2e  $(G_ARGS) -timeout 20m
