@@ -33,17 +33,17 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
 可选择如下安装方式：
 
-- 在 [青云 QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 上安装 Kubersphere。
+- [在青云 AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 上安装 KubeSphere。
   
-- [在 Kubernetes 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-kubernetes/)。
+- [在 Kubernetes 上安装 KubeSphere](https://kubesphere.io/zh/docs/installing-on-kubernetes/)。
   
-- [在 Linux 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
-
-> KubeSphere 需更新到 3.1.X 及以上版本。
+- [在 Linux 上安装 KubeSphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
 
 ### 创建 KubeSphere 多租户系统
 
 参考 KubeSphere 官方文档：[创建企业空间、项目、帐户和角色](https://kubesphere.io/zh/docs/quick-start/create-workspace-and-project/)。
+
+> KubeSphere 需更新到 3.1.X 及以上版本。
 
 ### 部署步骤
 
@@ -88,7 +88,7 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
    ![编辑外网访问](_images/config_vnet.png)
 
-   - **NodePort方式**
+   - **NodePort 方式**
 
       选择 NodePort。
 
@@ -98,17 +98,19 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
      ![节点端口](_images/node_port.png)
 
-   - **Loadbalancer方式**
+   - **Loadbalancer 方式**
 
       选择 LoadBalancer。
 
       ![负载均衡](_images/loadbalancer.png)
 
+     Loadbalancer 方式的负载均衡器由第三方提供，以使用[青云负载均衡](https://docsv3.qingcloud.com/network/loadbalancer/)为示例。
+     
      在 `service.beta.kubernetes.io/qingcloud-load-balancer-eip-ids` 参数中填写可用的 EIP ID，系统会自动为 EIP 创建负载均衡器和对应的监听器。
 
-     在 `service.beta.kubernetes.io/qingcloud-load-balancer-type` 参数中填写负载均衡器承载能力类型，具体可查看 [CreateLoadBalancer](https://docs.qingcloud.com/product/api/action/lb/create_loadbalancer.html)。
+     在 `service.beta.kubernetes.io/qingcloud-load-balancer-type` 参数中填写负载均衡器承载能力类型，详细参数说明请参考 [CreateLoadBalancer](https://docsv3.qingcloud.com/development_docs/api/command_list/lb/create_loadbalancer/)。
 
-     点击确定自动生成转发端口，在 KubeSphere 集群同一网络内可通过集群IP/节点IP和此端口访问服务。
+     点击**确定**自动生成转发端口，在 KubeSphere 集群同一网络内可通过集群 IP /节点 IP 和此端口访问服务。
 
       ![负载均衡端口](_images/loadbalancer_port.png)
 
@@ -152,10 +154,10 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 | `mysql.tag`                                  | `mysql` 镜像标签                                          | `5.7.34`                               |
 | `mysql.allowEmptyRootPassword`               | 如果为 `true`，允许 root 账号密码为空                       | `true`                                  |
 | `mysql.mysqlRootPassword`                    | `root` 用户密码                                          |                                          |
-| `mysql.mysqlReplicationPassword`             | `qc_repl` 用户密码                                         | `Repl_123`, 如果没有设置则随机12个字符      |
-| `mysql.mysqlUser`                            | 新建用户的用户名                                           | `qingcloud`                              |
-| `mysql.mysqlPassword`                        | 新建用户的密码                                             | `Qing@123`, 如果没有设置则随机12个字符      |
-| `mysql.mysqlDatabase`                        | 将要创建的数据库名                                          | `qingcloud`                             |
+| `mysql.mysqlReplicationPassword`             | `radondb_repl` 用户密码                                         | `Repl_123`, 如果没有设置则随机12个字符      |
+| `mysql.mysqlUser`                            | 新建用户的用户名                                           | `radondb`                              |
+| `mysql.mysqlPassword`                        | 新建用户的密码                                             | `RadonDB@123`, 如果没有设置则随机12个字符      |
+| `mysql.mysqlDatabase`                        | 将要创建的数据库名                                          | `radondb`                             |
 | `mysql.initTokudb`                           | 安装 tokudb 引擎                                          | `false`                                 |
 | `mysql.args`                                 | 要传递到 mysql 容器的其他参数                                | `[]`                                    |
 | `mysql.configFiles.node.cnf`                 | Mysql 配置文件                                            | 详见 `values.yaml`                      |

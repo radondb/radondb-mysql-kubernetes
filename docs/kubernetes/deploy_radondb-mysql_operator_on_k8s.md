@@ -123,10 +123,10 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
     $ mysql -h <leader service 名称> -u <用户名> -p
     ```
 
-   用户名为 `qc_usr`，release 名为 `sample` ，连接主节点示例如下：
+   用户名为 `radondb_usr`，release 名为 `sample` ，连接主节点示例如下：
 
     ```shell
-    $ mysql -h sample-leader -u qc_usr -p
+    $ mysql -h sample-leader -u radondb_usr -p
     ```
 
 * 连接从节点(只读节点)。
@@ -135,10 +135,10 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
     $ mysql -h <follower service 名称> -u <用户名> -p
     ```
 
-   用户名为 `qc_usr`，release 名为 `sample` ，连接从节点示例如下：
+   用户名为 `radondb_usr`，release 名为 `sample` ，连接从节点示例如下：
 
     ```shell
-    $ mysql -h sample-follower -u qc_usr -p  
+    $ mysql -h sample-follower -u radondb_usr -p  
     ```
 
 ### 跨 NameSpace 访问
@@ -166,10 +166,10 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
     $ mysql -h <pod IP/服务 ClusterIP> -u <用户名> -p
     ```
 
-    用户名为 `qc_usr`，pod IP 为 `10.10.128.136` ，连接示例如下：
+    用户名为 `radondb_usr`，pod IP 为 `10.10.128.136` ，连接示例如下：
 
     ```shell
-    $ mysql -h 10.10.128.136 -u qc_usr -p
+    $ mysql -h 10.10.128.136 -u radondb_usr -p
     ```
 
 ## 卸载
@@ -204,9 +204,9 @@ kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.rad
 |:---------------------------------- |:---------------------------|:----------------------------------------------------------- |
 | MysqlVersion                       | MySQL 版本号                | 5.7                                                         |
 | MysqlOpts.RootPassword             | MySQL Root 用户密码         | ""                                                          |
-| MysqlOpts.User                     | 默认新建的 MySQL 用户名称     | qc_usr                                                      |
-| MysqlOpts.Password                 | 默认新建的 MySQL 用户密码     | Qing@123                                                    |
-| MysqlOpts.Database                 | 默认新建的 MySQL 数据库名称   | qingcloud                                                   |
+| MysqlOpts.User                     | 默认新建的 MySQL 用户名称     | radondb_usr                                                      |
+| MysqlOpts.Password                 | 默认新建的 MySQL 用户密码     | RadonDB@123                                                   |
+| MysqlOpts.Database                 | 默认新建的 MySQL 数据库名称   | radondb                                                   |
 | MysqlOpts.InitTokuDB               | 是否启用TokuDB              | true                                                        |
 | MysqlOpts.MysqlConf                | MySQL 配置                  |  -                                                          |
 | MysqlOpts.Resources                | MySQL 容器配额              | 预留: cpu 100m, 内存 256Mi; </br> 限制: cpu 500m, 内存 1Gi  |
