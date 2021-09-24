@@ -82,7 +82,6 @@ func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 	// check for completion condition
 	if cond := jobCondition(batchv1.JobComplete, job); cond != nil {
 		s.backup.UpdateStatusCondition(v1alpha1.BackupComplete, cond.Status, cond.Reason, cond.Message)
-
 		if cond.Status == corev1.ConditionTrue {
 			s.backup.Status.Completed = true
 		}
@@ -91,7 +90,6 @@ func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 	// check for failed condition
 	if cond := jobCondition(batchv1.JobFailed, job); cond != nil {
 		s.backup.UpdateStatusCondition(v1alpha1.BackupFailed, cond.Status, cond.Reason, cond.Message)
-
 		if cond.Status == corev1.ConditionTrue {
 			s.backup.Status.Completed = true
 		}

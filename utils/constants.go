@@ -62,11 +62,11 @@ const (
 	XenonPeerPort = 6601
 
 	// The name of the MySQL replication user.
-	ReplicationUser = "qc_repl"
+	ReplicationUser = "radondb_repl"
 	// The name of the MySQL metrics user.
-	MetricsUser = "qc_metrics"
+	MetricsUser = "radondb_metrics"
 	// The MySQL user used for operator to connect to the mysql node for configuration.
-	OperatorUser = "qc_operator"
+	OperatorUser = "radondb_operator"
 
 	// xtrabackup http server user
 	BackupUser = "sys_backup"

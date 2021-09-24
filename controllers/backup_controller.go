@@ -91,14 +91,14 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	// Clear the backup, Just keep historyLimit len
-	if err = r.clearHistoryJob(ctx, req, backup); err != nil {
+	if err = r.clearHistoryJob(ctx, req, *backup.Spec.HistoryLimit); err != nil {
 		return reconcile.Result{}, err
 	}
 	return ctrl.Result{}, nil
 }
 
 // Clear the History finished Jobs over HistoryLimit.
-func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request, backup *backup.Backup) error {
+func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request, historyLimit int32) error {
 	log := log.Log.WithName("controllers").WithName("Backup")
 	backups := batchv1.JobList{}
 	labelSet := labels.Set{"Type": utils.BackupJobTypeName}
@@ -123,7 +123,7 @@ func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request
 	})
 
 	for i, job := range finishedBackups {
-		if int32(i) >= int32(len(finishedBackups))-*backup.Spec.HistoryLimit {
+		if int32(i) >= int32(len(finishedBackups))-historyLimit {
 			break
 		}
 		if err := r.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
@@ -155,7 +155,7 @@ func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup 
 		log.Info("update backup object status")
 		if err := r.Status().Update(context.TODO(), backup.Unwrap()); err != nil {
 			log.Error(err, fmt.Sprintf("update status backup %s/%s", backup.Name, backup.Namespace),
-				"backupStatus", backup.Status)
+				"backupStatus", backup.Status, "saveBackupStatus", savedBackup.Status)
 			return err
 		}
 	}
