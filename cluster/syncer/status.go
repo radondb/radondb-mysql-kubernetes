@@ -48,13 +48,17 @@ type StatusSyncer struct {
 	*cluster.Cluster
 
 	cli client.Client
+
+	// Mysql query runner.
+	internal.SQLRunnerFactory
 }
 
 // NewStatusSyncer returns a pointer to StatusSyncer.
-func NewStatusSyncer(c *cluster.Cluster, cli client.Client) *StatusSyncer {
+func NewStatusSyncer(c *cluster.Cluster, cli client.Client, sqlRunnerFactory internal.SQLRunnerFactory) *StatusSyncer {
 	return &StatusSyncer{
-		Cluster: c,
-		cli:     cli,
+		Cluster:          c,
+		cli:              cli,
+		SQLRunnerFactory: sqlRunnerFactory,
 	}
 }
 
@@ -144,7 +148,6 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, pods []corev1.Pod) error {
 	sctName := s.GetNameForResource(utils.Secret)
 	svcName := s.GetNameForResource(utils.HeadlessSVC)
-	port := utils.MysqlPort
 	nameSpace := s.Namespace
 
 	secret := &corev1.Secret{}
@@ -158,14 +161,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		log.V(1).Info("secret not found", "name", sctName)
 		return nil
 	}
-	user, ok := secret.Data["operator-user"]
-	if !ok {
-		return fmt.Errorf("failed to get the user: %s", user)
-	}
-	password, ok := secret.Data["operator-password"]
-	if !ok {
-		return fmt.Errorf("failed to get the password: %s", password)
-	}
+
 	rootPasswd, ok := secret.Data["root-password"]
 	if !ok {
 		return fmt.Errorf("failed to get the root password: %s", rootPasswd)
@@ -187,18 +183,20 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		s.updateNodeCondition(node, int(apiv1alpha1.IndexLeader), isLeader)
 
 		isLagged, isReplicating, isReadOnly := corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown
-		runner, err := internal.NewSQLRunner(utils.BytesToString(user), utils.BytesToString(password), host, port)
+		sqlRunner, closeConn, err := s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
+			s.cli, s.Cluster.GetClusterKey(), utils.OperatorUser, host))
+		defer closeConn()
 		if err != nil {
 			log.Error(err, "failed to connect the mysql", "node", node.Name)
 			node.Message = err.Error()
 		} else {
-			isLagged, isReplicating, err = runner.CheckSlaveStatusWithRetry(checkNodeStatusRetry)
+			isLagged, isReplicating, err = internal.CheckSlaveStatusWithRetry(sqlRunner, checkNodeStatusRetry)
 			if err != nil {
 				log.Error(err, "failed to check slave status", "node", node.Name)
 				node.Message = err.Error()
 			}
 
-			isReadOnly, err = runner.CheckReadOnly()
+			isReadOnly, err = internal.CheckReadOnly(sqlRunner)
 			if err != nil {
 				log.Error(err, "failed to check read only", "node", node.Name)
 				node.Message = err.Error()
@@ -208,13 +206,9 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 				isLeader == corev1.ConditionTrue &&
 				isReadOnly != corev1.ConditionFalse {
 				log.V(1).Info("try to correct the leader writeable", "node", node.Name)
-				runner.RunQuery("SET GLOBAL read_only=off")
-				runner.RunQuery("SET GLOBAL super_read_only=off")
+				sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL read_only=off"))
+				sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL super_read_only=off"))
 			}
-		}
-
-		if runner != nil {
-			runner.Close()
 		}
 
 		// update apiv1alpha1.NodeConditionLagged.

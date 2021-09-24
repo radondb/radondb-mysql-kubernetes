@@ -40,6 +40,7 @@ import (
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/cluster"
 	clustersyncer "github.com/radondb/radondb-mysql-kubernetes/cluster/syncer"
+	"github.com/radondb/radondb-mysql-kubernetes/internal"
 )
 
 // reconcileTimePeriod represents the time in which a cluster should be reconciled
@@ -50,6 +51,9 @@ type StatusReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+
+	// Mysql query runner.
+	internal.SQLRunnerFactory
 }
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -88,7 +92,7 @@ func (r *StatusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 	}()
 
-	statusSyncer := clustersyncer.NewStatusSyncer(instance, r.Client)
+	statusSyncer := clustersyncer.NewStatusSyncer(instance, r.Client, r.SQLRunnerFactory)
 	if err := syncer.Sync(ctx, statusSyncer, r.Recorder); err != nil {
 		return ctrl.Result{}, err
 	}

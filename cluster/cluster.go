@@ -28,6 +28,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
@@ -330,4 +332,20 @@ func sizeToBytes(s string) (uint64, error) {
 		return nums * gb, nil
 	}
 	return 0, fmt.Errorf("'%s' format error, must be a positive integer with a unit of measurement like K, M or G", s)
+}
+
+// GetClusterKey returns the MysqlUser's Cluster key.
+func (c *Cluster) GetClusterKey() client.ObjectKey {
+	return client.ObjectKey{
+		Name:      c.Name,
+		Namespace: c.Namespace,
+	}
+}
+
+// GetKey return the user key. Usually used for logging or for runtime.Client.Get as key.
+func (c *Cluster) GetKey() client.ObjectKey {
+	return types.NamespacedName{
+		Namespace: c.Namespace,
+		Name:      c.Name,
+	}
 }

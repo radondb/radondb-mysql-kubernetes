@@ -35,6 +35,7 @@ import (
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/cluster"
 	clustersyncer "github.com/radondb/radondb-mysql-kubernetes/cluster/syncer"
+	"github.com/radondb/radondb-mysql-kubernetes/internal"
 )
 
 // ClusterReconciler reconciles a Cluster object
@@ -42,6 +43,9 @@ type ClusterReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+
+	// Mysql query runner.
+	internal.SQLRunnerFactory
 }
 
 // +kubebuilder:rbac:groups=mysql.radondb.com,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -114,7 +118,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		clustersyncer.NewHeadlessSVCSyncer(r.Client, instance),
 		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
 		clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
-		clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev),
+		clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, r.SQLRunnerFactory),
 		clustersyncer.NewPDBSyncer(r.Client, instance),
 	}
 

@@ -63,10 +63,13 @@ type StatefulSetSyncer struct {
 
 	// Secret resourceVersion.
 	sctRev string
+
+	// Mysql query runner.
+	internal.SQLRunnerFactory
 }
 
 // NewStatefulSetSyncer returns a pointer to StatefulSetSyncer.
-func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster, cmRev, sctRev string) *StatefulSetSyncer {
+func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster, cmRev, sctRev string, sqlRunnerFactory internal.SQLRunnerFactory) *StatefulSetSyncer {
 	return &StatefulSetSyncer{
 		Cluster: c,
 		cli:     cli,
@@ -80,8 +83,9 @@ func NewStatefulSetSyncer(cli client.Client, c *cluster.Cluster, cmRev, sctRev s
 				Namespace: c.Namespace,
 			},
 		},
-		cmRev:  cmRev,
-		sctRev: sctRev,
+		cmRev:            cmRev,
+		sctRev:           sctRev,
+		SQLRunnerFactory: sqlRunnerFactory,
 	}
 }
 
@@ -258,6 +262,13 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 // 5. Check followerHost current role.
 // 6. If followerHost is not leader, switch it to leader through xenon.
 func (s *StatefulSetSyncer) preUpdate(ctx context.Context, leader, follower string) error {
+	leaderRunner, closeConn, err := s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
+		s.cli, s.Cluster.GetClusterKey(), utils.OperatorUser, utils.LeaderHost))
+	if err != nil {
+		return err
+	}
+	defer closeConn()
+
 	// Status.Replicas indicate the number of Pod has been created.
 	// So sfs.Spec.Replicas is 2, May be sfs.Status.Replicas maybe are 3, 5 ,
 	// because it do not update the pods, so it is still the last status.
@@ -272,7 +283,6 @@ func (s *StatefulSetSyncer) preUpdate(ctx context.Context, leader, follower stri
 	defer utils.RemoveUpdateFile()
 	sctName := s.GetNameForResource(utils.Secret)
 	svcName := s.GetNameForResource(utils.HeadlessSVC)
-	port := utils.MysqlPort
 	nameSpace := s.Namespace
 
 	// Get secrets.
@@ -286,36 +296,21 @@ func (s *StatefulSetSyncer) preUpdate(ctx context.Context, leader, follower stri
 	); err != nil {
 		return fmt.Errorf("failed to get the secret: %s", sctName)
 	}
-	user, ok := secret.Data["operator-user"]
-	if !ok {
-		return fmt.Errorf("failed to get the user: %s", user)
-	}
-	password, ok := secret.Data["operator-password"]
-	if !ok {
-		return fmt.Errorf("failed to get the password: %s", password)
-	}
+
 	rootPasswd, ok := secret.Data["root-password"]
 	if !ok {
 		return fmt.Errorf("failed to get the root password: %s", rootPasswd)
 	}
 
-	leaderHost := fmt.Sprintf("%s.%s.%s", leader, svcName, nameSpace)
-	leaderRunner, err := internal.NewSQLRunner(utils.BytesToString(user), utils.BytesToString(password), leaderHost, port)
-	if err != nil {
-		log.Error(err, "failed to connect the mysql", "node", leader)
-		return err
-	}
-	defer leaderRunner.Close()
-
 	if err = retry(time.Second*2, time.Duration(waitLimit)*time.Second, func() (bool, error) {
 		// Set leader read only.
-		if err = leaderRunner.RunQuery("SET GLOBAL super_read_only=on;"); err != nil {
+		if err = leaderRunner.QueryExec(internal.NewQuery("SET GLOBAL super_read_only=on;")); err != nil {
 			log.Error(err, "failed to set leader read only", "node", leader)
 			return false, err
 		}
 
 		// Make sure the master has sent all binlog to slave.
-		success, err := leaderRunner.CheckProcesslist()
+		success, err := internal.CheckProcesslist(leaderRunner)
 		if err != nil {
 			return false, err
 		}

@@ -33,6 +33,7 @@ import (
 
 	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/controllers"
+	"github.com/radondb/radondb-mysql-kubernetes/internal"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -79,17 +80,19 @@ func main() {
 	}
 
 	if err = (&controllers.ClusterReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("controller.cluster"),
+		Client:           mgr.GetClient(),
+		Scheme:           mgr.GetScheme(),
+		Recorder:         mgr.GetEventRecorderFor("controller.cluster"),
+		SQLRunnerFactory: internal.NewSQLRunner,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Cluster")
 		os.Exit(1)
 	}
 	if err = (&controllers.StatusReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("controller.status"),
+		Client:           mgr.GetClient(),
+		Scheme:           mgr.GetScheme(),
+		Recorder:         mgr.GetEventRecorderFor("controller.status"),
+		SQLRunnerFactory: internal.NewSQLRunner,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Status")
 		os.Exit(1)
