@@ -37,11 +37,11 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
 可选择如下安装方式：
 
-- 在 [青云 QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 上安装 Kubersphere。
+- [在青云 AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 上安装 KubeSphere。
   
-- [在 Kubernetes 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-kubernetes/)。
+- [在 Kubernetes 上安装 KubeSphere](https://kubesphere.io/zh/docs/installing-on-kubernetes/)。
   
-- [在 Linux 上安装 Kubersphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
+- [在 Linux 上安装 KubeSphere](https://kubesphere.io/zh/docs/installing-on-linux/)。
 
 ### 创建 KubeSphere 多租户系统
 
@@ -49,11 +49,7 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 
 ### 连接 KubeSphere 客户端节点
 
-> **说明**
-> 
-> 如下示例适用于 KubeSphere 安装在 [青云QingCloud AppCenter](https://appcenter.qingcloud.com/apps/app-cmgbd5k2) 的场景。
-
-通过[青云 QingCloud 控制台](https://console.qingcloud.com/) 直接连接客户端节点。
+通过[青云管理控制台](https://console.qingcloud.com/) 直接连接客户端节点。
 
 - 默认 root 用户密码为 KubeSphere 集群 ID。
 
@@ -89,7 +85,7 @@ The cluster is comprised of 3 pods: 1 leader and 2 followers. Each instance is a
 
 To connect to your database:
 
-1. Get mysql user `qingcloud`s password:
+1. Get mysql user `radondb`s password:
 
     kubectl get secret -n default demo-radondb-mysql -o jsonpath="{.data.mysql-password}" | base64 --decode; echo
 
@@ -103,11 +99,11 @@ To connect to your database:
 
 4. To connect to leader service in the Ubuntu pod:
 
-    mysql -h demo-radondb-mysql-leader -u qingcloud -p
+    mysql -h demo-radondb-mysql-leader -u radondb -p
 
 5. To connect to follower service (read-only) in the Ubuntu pod:
 
-    mysql -h demo-radondb-mysql-follower -u qingcloud -p
+    mysql -h demo-radondb-mysql-follower -u radondb -p
 ```
 
 ### 部署校验
@@ -159,11 +155,13 @@ demo-radondb-mysql   3/3     25h
 
       ![负载均衡](_images/loadbalancer.png)
 
+     Loadbalancer 方式的负载均衡器由第三方提供，以使用[青云负载均衡](https://docsv3.qingcloud.com/network/loadbalancer/)为示例。
+     
      在 `service.beta.kubernetes.io/qingcloud-load-balancer-eip-ids` 参数中填写可用的 EIP ID，系统会自动为 EIP 创建负载均衡器和对应的监听器。
 
-     在 `service.beta.kubernetes.io/qingcloud-load-balancer-type` 参数中填写负载均衡器承载能力类型，具体可查看 [CreateLoadBalancer](https://docs.qingcloud.com/product/api/action/lb/create_loadbalancer.html)。
+     在 `service.beta.kubernetes.io/qingcloud-load-balancer-type` 参数中填写负载均衡器承载能力类型，详细参数说明请参考 [CreateLoadBalancer](https://docsv3.qingcloud.com/development_docs/api/command_list/lb/create_loadbalancer/)。
 
-     点击确定自动生成转发端口，在 KubeSphere 集群同一网络内可通过集群IP/节点IP和此端口访问服务。
+     点击**确定**自动生成转发端口，在 KubeSphere 集群同一网络内可通过集群 IP /节点 IP 和此端口访问服务。
 
       ![负载均衡端口](_images/loadbalancer_port.png)
 
@@ -207,10 +205,10 @@ demo-radondb-mysql   3/3     25h
 | `mysql.tag`                                  | `mysql` 镜像标签                                          | `5.7.34`                               |
 | `mysql.allowEmptyRootPassword`               | 如果为 `true`，允许 root 账号密码为空                       | `true`                                  |
 | `mysql.mysqlRootPassword`                    | `root` 用户密码                                          |                                          |
-| `mysql.mysqlReplicationPassword`             | `qc_repl` 用户密码                                         | `Repl_123`, 如果没有设置则随机12个字符      |
-| `mysql.mysqlUser`                            | 新建用户的用户名                                           | `qingcloud`                              |
-| `mysql.mysqlPassword`                        | 新建用户的密码                                             | `Qing@123`, 如果没有设置则随机12个字符      |
-| `mysql.mysqlDatabase`                        | 将要创建的数据库名                                          | `qingcloud`                             |
+| `mysql.mysqlReplicationPassword`             | `radondb_repl` 用户密码                                         | `Repl_123`, 如果没有设置则随机12个字符      |
+| `mysql.mysqlUser`                            | 新建用户的用户名                                           | `radondb`                              |
+| `mysql.mysqlPassword`                        | 新建用户的密码                                             | `RadonDB@123`, 如果没有设置则随机12个字符      |
+| `mysql.mysqlDatabase`                        | 将要创建的数据库名                                          | `radondb`                             |
 | `mysql.initTokudb`                           | 安装 tokudb 引擎                                          | `false`                                 |
 | `mysql.args`                                 | 要传递到 mysql 容器的其他参数                                | `[]`                                    |
 | `mysql.configFiles.node.cnf`                 | Mysql 配置文件                                            | 详见 `values.yaml`                      |
