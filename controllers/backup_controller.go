@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/presslabs/controller-util/syncer"
 	batchv1 "k8s.io/api/batch/v1"
@@ -29,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -100,16 +102,16 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 // Clear the History finished Jobs over HistoryLimit.
 func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request, historyLimit int32) error {
 	log := log.Log.WithName("controllers").WithName("Backup")
-	backups := batchv1.JobList{}
+	backupJobs := batchv1.JobList{}
 	labelSet := labels.Set{"Type": utils.BackupJobTypeName}
-	if err := r.List(context.TODO(), &backups, &client.ListOptions{
+	if err := r.List(context.TODO(), &backupJobs, &client.ListOptions{
 		Namespace: req.Namespace, LabelSelector: labelSet.AsSelector(),
 	}); err != nil {
 		return err
 	}
 
 	var finishedBackups []*batchv1.Job
-	for _, job := range backups.Items {
+	for _, job := range backupJobs.Items {
 		if IsJobFinished(&job) {
 			finishedBackups = append(finishedBackups, &job)
 		}
@@ -126,11 +128,24 @@ func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request
 		if int32(i) >= int32(len(finishedBackups))-historyLimit {
 			break
 		}
-		if err := r.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
-			log.Error(err, "unable to delete old completed job", "job", job)
-		} else {
-			log.V(0).Info("deleted old completed job", "job", job)
+		// at first check backup status completed.
+		backup := backup.New(&apiv1alpha1.Backup{})
+		namespacedName := types.NamespacedName{
+			Name:      strings.TrimSuffix(job.Name, "-backup"),
+			Namespace: job.Namespace,
 		}
+		if err := r.Get(context.TODO(), namespacedName, backup.Unwrap()); err != nil {
+			log.Error(err, "can not find the backup", "jobName", job.Name)
+			break
+		}
+		if backup.Status.Completed {
+			if err := r.Delete(ctx, job, client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
+				log.Error(err, "unable to delete old completed job", "job", job)
+			} else {
+				log.V(0).Info("deleted old completed job", "job", job)
+			}
+		}
+
 	}
 	return nil
 }
