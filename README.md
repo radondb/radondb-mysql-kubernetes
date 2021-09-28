@@ -32,13 +32,6 @@ RadonDB MySQL Kubernetes supports deployment and management of RaodnDB MySQL clu
 
 ## Quick Start
 
-### Helm
-
-- [Deploy RadonDB MySQL on Kubernetes](docs/kubernetes/deploy_radondb-mysql_on_kubernetes.md)
-- [Deploy RadonDB MySQL through git on Kubesphere](docs/kubesphere/deploy_radondb-mysql_on_kubesphere.md)
-- [Deploy RadonDB MySQL through helm repo on Kubesphere](docs/kubesphere/deploy_radondb-mysql_on_kubesphere_repo.md)
-- [Deploy RadonDB MySQL through Appstore of KubeSphere](docs/kubesphere/deploy_radondb-mysql_on_kubesphere_appstore.md)
-
 ### Operator
 
 - [Deploy RadonDB MySQL on Kubernetes](docs/kubernetes/deploy_radondb-mysql_operator_on_k8s.md)
