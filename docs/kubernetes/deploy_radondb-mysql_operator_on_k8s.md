@@ -176,10 +176,10 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
 
 ### 卸载 Operator
 
-卸载 release 名为 `demo` 的 RadonDB MySQL Operator。
+卸载当前命名空间下 release 名为 `demo` 的 RadonDB MySQL Operator。
 
 ```shell
-helm delete demo-mysql-operator
+helm delete demo
 ```
 
 ### 卸载 RadonDB MySQL
