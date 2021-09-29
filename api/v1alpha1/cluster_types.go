@@ -31,7 +31,7 @@ type ClusterSpec struct {
 
 	// Replicas is the number of pods.
 	// +optional
-	// +kubebuilder:validation:Enum=0;2;3;5
+	// +kubebuilder:validation:Enum=2;3;5
 	// +kubebuilder:default:=3
 	Replicas *int32 `json:"replicas,omitempty"`
 

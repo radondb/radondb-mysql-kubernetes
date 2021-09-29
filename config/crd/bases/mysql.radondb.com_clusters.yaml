@@ -1233,7 +1233,6 @@ spec:
                 default: 3
                 description: Replicas is the number of pods.
                 enum:
-                - 0
                 - 2
                 - 3
                 - 5

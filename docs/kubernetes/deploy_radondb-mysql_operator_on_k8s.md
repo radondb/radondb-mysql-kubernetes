@@ -222,7 +222,7 @@ kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.rad
 
 | 参数                      | 描述                                                | 默认值                   |
 |:------------------------- |:-------------------------------------------------- |:------------------------ |
-| Replicas                  | 集群节点数，只允许为0、2、3、5                        | 3                        |
+| Replicas                  | 集群节点数，只允许为2、3、5                        | 3                        |
 | PodSpec.ImagePullPolicy   | 镜像拉取策略, 只允许为 Always/IfNotPresent/Never     | IfNotPresent             |
 | PodSpec.Labels            | 节点 pod [标签](#1-标签)                            |     -                     |
 | PodSpec.Annotations       | 节点 pod [注解](#2-注解)                            |     -                    |
