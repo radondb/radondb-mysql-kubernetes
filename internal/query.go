@@ -17,8 +17,8 @@ limitations under the License.
 package internal
 
 import (
-	"strings"
 	"errors"
+	"strings"
 )
 
 // Query contains a escaped query string with variables marked with a question mark (?) and a slice
@@ -52,4 +52,31 @@ func NewQuery(q string, args ...interface{}) Query {
 		escapedQuery: q,
 		args:         args,
 	}
+}
+
+// ConcatenateQueries concatenates the provided queries into a single query.
+func ConcatenateQueries(queries ...Query) Query {
+	args := []interface{}{}
+	query := ""
+
+	for _, pq := range queries {
+		if query != "" {
+			if !strings.HasSuffix(query, "\n") {
+				query += "\n"
+			}
+		}
+
+		query += pq.escapedQuery
+		args = append(args, pq.args...)
+	}
+
+	return NewQuery(query, args...)
+}
+
+// BuildAtomicQuery concatenates the provided queries into a single query wrapped in a BEGIN COMMIT block.
+func BuildAtomicQuery(queries ...Query) Query {
+	queries = append([]Query{NewQuery("BEGIN")}, queries...)
+	queries = append(queries, NewQuery("COMMIT"))
+
+	return ConcatenateQueries(queries...)
 }

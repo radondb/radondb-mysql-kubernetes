@@ -4,6 +4,7 @@
 resources:
 - bases/mysql.radondb.com_clusters.yaml
 - bases/mysql.radondb.com_backups.yaml
+- bases/mysql.radondb.com_mysqlusers.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

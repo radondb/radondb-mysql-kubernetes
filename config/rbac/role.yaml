@@ -123,6 +123,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - mysql.radondb.com
+  resources:
+  - mysqlusers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mysql.radondb.com
+  resources:
+  - mysqlusers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mysql.radondb.com
+  resources:
+  - mysqlusers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - policy
   resources:
   - poddisruptionbudgets

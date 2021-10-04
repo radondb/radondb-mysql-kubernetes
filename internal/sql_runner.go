@@ -19,6 +19,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -84,7 +85,6 @@ func NewConfigFromClusterKey(c client.Client, clusterKey client.ObjectKey, userN
 			Port:     utils.MysqlPort,
 		}, nil
 
-		
 	case utils.RootUser:
 		password, ok := secret.Data["root-password"]
 		if !ok {
@@ -322,4 +322,140 @@ func columnValue(scanArgs []interface{}, slaveCols []string, colName string) str
 	}
 
 	return string(*scanArgs[columnIndex].(*sql.RawBytes))
+}
+
+// CreateUserIfNotExists creates a user if it doesn't already exist and it gives it the specified permissions.
+func CreateUserIfNotExists(
+	sqlRunner SQLRunner, user, pass string, hosts []string, permissions []apiv1alpha1.UserPermission,
+) error {
+
+	// Throw error if there are no allowed hosts.
+	if len(hosts) == 0 {
+		return errors.New("no allowedHosts specified")
+	}
+
+	queries := []Query{
+		getCreateUserQuery(user, pass, hosts),
+		// todo: getAlterUserQuery.
+	}
+
+	if len(permissions) > 0 {
+		queries = append(queries, permissionsToQuery(permissions, user, hosts))
+	}
+
+	query := BuildAtomicQuery(queries...)
+
+	if err := sqlRunner.QueryExec(query); err != nil {
+		return fmt.Errorf("failed to configure user (user/pass/access), err: %s", err)
+	}
+
+	return nil
+}
+
+func getCreateUserQuery(user, pwd string, allowedHosts []string) Query {
+	idsTmpl, idsArgs := getUsersIdentification(user, &pwd, allowedHosts)
+
+	return NewQuery(fmt.Sprintf("CREATE USER IF NOT EXISTS%s", idsTmpl), idsArgs...)
+}
+
+func getUsersIdentification(user string, pwd *string, allowedHosts []string) (ids string, args []interface{}) {
+	for i, host := range allowedHosts {
+		// Add comma if more than one allowed hosts are used.
+		if i > 0 {
+			ids += ","
+		}
+
+		if pwd != nil {
+			ids += " ?@? IDENTIFIED BY ?"
+			args = append(args, user, host, *pwd)
+		} else {
+			ids += " ?@?"
+			args = append(args, user, host)
+		}
+	}
+
+	return ids, args
+}
+
+// DropUser removes a MySQL user if it exists, along with its privileges.
+func DropUser(sqlRunner SQLRunner, user, host string) error {
+	query := NewQuery("DROP USER IF EXISTS ?@?;", user, host)
+
+	if err := sqlRunner.QueryExec(query); err != nil {
+		return fmt.Errorf("failed to delete user, err: %s", err)
+	}
+
+	return nil
+}
+
+func permissionsToQuery(permissions []apiv1alpha1.UserPermission, user string, allowedHosts []string) Query {
+	permQueries := []Query{}
+
+	for _, perm := range permissions {
+		// If you wish to grant permissions on all tables, you should explicitly use "*".
+		for _, table := range perm.Tables {
+			args := []interface{}{}
+
+			escPerms := []string{}
+			for _, perm := range perm.Privileges {
+				escPerms = append(escPerms, Escape(perm))
+			}
+
+			schemaTable := fmt.Sprintf("%s.%s", escapeID(perm.Database), escapeID(table))
+
+			// Build GRANT query.
+			idsTmpl, idsArgs := getUsersIdentification(user, nil, allowedHosts)
+
+			query := "GRANT " + strings.Join(escPerms, ", ") + " ON " + schemaTable + " TO" + idsTmpl
+			args = append(args, idsArgs...)
+
+			permQueries = append(permQueries, NewQuery(query, args...))
+		}
+	}
+
+	return ConcatenateQueries(permQueries...)
+}
+
+func escapeID(id string) string {
+	if id == "*" {
+		return id
+	}
+
+	// don't allow using ` in id name.
+	id = strings.ReplaceAll(id, "`", "")
+
+	return fmt.Sprintf("`%s`", id)
+}
+
+// Escape escapes a string.
+func Escape(sql string) string {
+	dest := make([]byte, 0, 2*len(sql))
+	var escape byte
+	for i := 0; i < len(sql); i++ {
+		escape = 0
+		switch sql[i] {
+		case 0: /* Must be escaped for 'mysql' */
+			escape = '0'
+		case '\n': /* Must be escaped for logs */
+			escape = 'n'
+		case '\r':
+			escape = 'r'
+		case '\\':
+			escape = '\\'
+		case '\'':
+			escape = '\''
+		case '"': /* Better safe than sorry */
+			escape = '"'
+		case '\032': /* This gives problems on Win32 */
+			escape = 'Z'
+		}
+
+		if escape != 0 {
+			dest = append(dest, '\\', escape)
+		} else {
+			dest = append(dest, sql[i])
+		}
+	}
+
+	return string(dest)
 }
