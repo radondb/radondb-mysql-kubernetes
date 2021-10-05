@@ -37,7 +37,7 @@ type BackupSpec struct {
 	// HostName represents the host for which to take backup
 	HostName string `json:"hostname"`
 
-	// Cluster represents the cluster name to backup
+	// ClusterName represents the cluster name to backup
 	ClusterName string `json:"clustname"`
 
 	// History Limit of job

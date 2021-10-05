@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
-	mysqlcluster "github.com/radondb/radondb-mysql-kubernetes/cluster"
+	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
@@ -56,7 +56,7 @@ type Config struct {
 
 // NewConfigFromClusterKey returns a new Config based on a MySQLCluster key.
 func NewConfigFromClusterKey(c client.Client, clusterKey client.ObjectKey, userName, host string) (*Config, error) {
-	cluster := &apiv1alpha1.Cluster{}
+	cluster := &apiv1alpha1.MysqlCluster{}
 	if err := c.Get(context.TODO(), clusterKey, cluster); err != nil {
 		return nil, err
 	}

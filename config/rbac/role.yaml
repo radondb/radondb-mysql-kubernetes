@@ -99,7 +99,7 @@ rules:
 - apiGroups:
   - mysql.radondb.com
   resources:
-  - clusters
+  - mysqlclusters
   verbs:
   - create
   - delete
@@ -111,13 +111,13 @@ rules:
 - apiGroups:
   - mysql.radondb.com
   resources:
-  - clusters/finalizers
+  - mysqlclusters/finalizers
   verbs:
   - update
 - apiGroups:
   - mysql.radondb.com
   resources:
-  - clusters/status
+  - mysqlclusters/status
   verbs:
   - get
   - patch

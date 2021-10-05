@@ -13,7 +13,7 @@ RUN go env -w GOPROXY=https://goproxy.cn,direct; \
 # Copy the go source
 COPY cmd/manager/main.go cmd/manager/main.go
 COPY api/ api/
-COPY cluster/ cluster/
+COPY mysqlcluster/ mysqlcluster/
 COPY controllers/ controllers/
 COPY backup/ backup/
 COPY internal/ internal/
