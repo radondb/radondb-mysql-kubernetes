@@ -41,7 +41,10 @@ func NewFollowerSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		},
 	}
 	return syncer.NewObjectSyncer("FollowerSVC", c.Unwrap(), service, cli, func() error {
-		service.Spec.Type = "ClusterIP"
+		// Allows to modify the service access method, the default is ClusterIP.
+		if service.Spec.Type == "" {
+			service.Spec.Type = "ClusterIP"
+		}
 		service.Spec.Selector = c.GetSelectorLabels()
 		service.Spec.Selector["role"] = "follower"
 		service.Spec.Selector["healthy"] = "yes"
