@@ -29,6 +29,8 @@ import (
 
 // NewFollowerSVCSyncer returns follower service syncer.
 func NewFollowerSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+	labels := c.GetLabels()
+	labels["mysql.radondb.com/service-type"] = string(utils.FollowerService)
 	service := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -37,7 +39,7 @@ func NewFollowerSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interfac
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.GetNameForResource(utils.FollowerService),
 			Namespace: c.Namespace,
-			Labels:    c.GetLabels(),
+			Labels:    labels,
 		},
 	}
 	return syncer.NewObjectSyncer("FollowerSVC", c.Unwrap(), service, cli, func() error {

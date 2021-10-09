@@ -29,6 +29,8 @@ import (
 
 // NewMetricsSVCSyncer returns metrics service syncer.
 func NewMetricsSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+	labels := c.GetLabels()
+	labels["mysql.radondb.com/service-type"] = string(utils.MetricsService)
 	service := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -37,7 +39,7 @@ func NewMetricsSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.GetNameForResource(utils.MetricsService),
 			Namespace: c.Namespace,
-			Labels:    c.GetLabels(),
+			Labels:    labels,
 		},
 	}
 	return syncer.NewObjectSyncer("MetricsSVC", c.Unwrap(), service, cli, func() error {
