@@ -29,6 +29,8 @@ import (
 
 // NewLeaderSVCSyncer returns leader service syncer.
 func NewLeaderSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+	labels := c.GetLabels()
+	labels["mysql.radondb.com/service-type"] = string(utils.LeaderService)
 	service := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -37,11 +39,14 @@ func NewLeaderSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.GetNameForResource(utils.LeaderService),
 			Namespace: c.Namespace,
-			Labels:    c.GetLabels(),
+			Labels:    labels,
 		},
 	}
 	return syncer.NewObjectSyncer("LeaderSVC", c.Unwrap(), service, cli, func() error {
-		service.Spec.Type = "ClusterIP"
+		// Allows to modify the service access method, the default is ClusterIP.
+		if service.Spec.Type == "" {
+			service.Spec.Type = "ClusterIP"
+		}
 		service.Spec.Selector = c.GetSelectorLabels()
 		service.Spec.Selector["role"] = "leader"
 

@@ -29,6 +29,8 @@ import (
 
 // NewMetricsSVCSyncer returns metrics service syncer.
 func NewMetricsSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface {
+	labels := c.GetLabels()
+	labels["mysql.radondb.com/service-type"] = string(utils.MetricsService)
 	service := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -37,11 +39,14 @@ func NewMetricsSVCSyncer(cli client.Client, c *cluster.Cluster) syncer.Interface
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      c.GetNameForResource(utils.MetricsService),
 			Namespace: c.Namespace,
-			Labels:    c.GetLabels(),
+			Labels:    labels,
 		},
 	}
 	return syncer.NewObjectSyncer("MetricsSVC", c.Unwrap(), service, cli, func() error {
-		service.Spec.Type = "ClusterIP"
+		// Allows to modify the service access method, the default is ClusterIP.
+		if service.Spec.Type == "" {
+			service.Spec.Type = "ClusterIP"
+		}
 		service.Spec.Selector = c.GetSelectorLabels()
 
 		if len(service.Spec.Ports) != 1 {
