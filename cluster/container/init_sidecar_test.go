@@ -67,6 +67,10 @@ var (
 	}
 	defaultInitSidecarEnvs = []corev1.EnvVar{
 		{
+			Name:  "CONTAINER_TYPE",
+			Value: utils.ContainerInitSidecarName,
+		},
+		{
 			Name: "POD_HOSTNAME",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
@@ -304,13 +308,79 @@ func TestGetInitSidecarEnvVar(t *testing.T) {
 			Cluster: &testToKuDBMysqlCluster,
 		}
 		tokudbCase := EnsureContainer("init-sidecar", &testTokuDBCluster)
-		testTokuDBEnv := make([]corev1.EnvVar, 18)
+		testTokuDBEnv := make([]corev1.EnvVar, len(defaultInitSidecarEnvs))
 		copy(testTokuDBEnv, defaultInitSidecarEnvs)
 		testTokuDBEnv = append(testTokuDBEnv, corev1.EnvVar{
 			Name:  "INIT_TOKUDB",
 			Value: "1",
 		})
 		assert.Equal(t, testTokuDBEnv, tokudbCase.Env)
+	}
+	// BackupSecretName not empty
+	{
+		testBackupMysqlCluster := initSidecarMysqlCluster
+		testBackupMysqlCluster.Spec.BackupSecretName = "backup-secret"
+		testBackupMysqlClusterWraper := cluster.Cluster{
+			Cluster: &testBackupMysqlCluster,
+		}
+		BackupCase := EnsureContainer("init-sidecar", &testBackupMysqlClusterWraper)
+		testBackupEnv := make([]corev1.EnvVar, len(defaultInitSidecarEnvs))
+		copy(testBackupEnv, defaultInitSidecarEnvs)
+		testBackupEnv = append(testBackupEnv,
+			corev1.EnvVar{
+				Name: "S3_ENDPOINT",
+
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
+						},
+						Key:      "s3-endpoint",
+						Optional: &optFalse,
+					},
+				},
+			},
+			corev1.EnvVar{
+				Name: "S3_ACCESSKEY",
+
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
+						},
+						Key:      "s3-access-key",
+						Optional: &optTrue,
+					},
+				},
+			},
+			corev1.EnvVar{
+				Name: "S3_SECRETKEY",
+
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
+						},
+						Key:      "s3-secret-key",
+						Optional: &optTrue,
+					},
+				},
+			},
+			corev1.EnvVar{
+				Name: "S3_BUCKET",
+
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
+						},
+						Key:      "s3-bucket",
+						Optional: &optTrue,
+					},
+				},
+			},
+		)
+		assert.Equal(t, testBackupEnv, BackupCase.Env)
 	}
 }
 
