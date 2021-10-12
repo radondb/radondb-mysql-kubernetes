@@ -28,7 +28,7 @@ RadonDB MySQL Kubernetes支持在[Kubernetes](https://kubernetes.io)和[KubeSphe
 - [监控告警](docs/deploy_monitoring.md)
 - [备份](docs/deploy_backup_restore_s3.md)
 - 集群日志管理
-- 账户管理
+- [账户管理](docs/mgt_mysqluser.md)
 
 ## 快速开始
 

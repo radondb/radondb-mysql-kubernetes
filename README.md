@@ -28,7 +28,7 @@ RadonDB MySQL Kubernetes supports deployment and management of RaodnDB MySQL clu
 - [Monitoring and alerting](docs/deploy_monitoring.md)
 - [Backups](docs/deploy_backup_restore_s3.md)
 - Logs
-- Account management
+- [Account management](docs/mgt_mysqluser.md)
 
 ## Quick Start
 
