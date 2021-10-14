@@ -223,18 +223,18 @@ kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysq
 | 参数                      | 描述                                                | 默认值                   |
 |:------------------------- |:-------------------------------------------------- |:------------------------ |
 | Replicas                  | 集群节点数，只允许为0、2、3、5                        | 3                        |
-| PodSpec.ImagePullPolicy   | 镜像拉取策略, 只允许为 Always/IfNotPresent/Never     | IfNotPresent             |
-| PodSpec.Labels            | 节点 pod [标签](#1-标签)                            |     -                     |
-| PodSpec.Annotations       | 节点 pod [注解](#2-注解)                            |     -                    |
-| PodSpec.Affinity          | 节点 pod [亲和性](#3-亲和性)                         |     -                  |
-| PodSpec.PriorityClassName | 节点 pod [优先级](#4-优先级)对象名称                   |     -                  |
-| PodSpec.Tolerations       | 节点 pod [污点容忍度](#5-容忍)列表                   |     -                |
-| PodSpec.SchedulerName     | 节点 pod [调度器](#6-调度器)名称                     | -                         |
-| PodSpec.Resources         | 节点 pod 配额                                        | 预留: cpu 10m, 内存 32Mi |
-| PodSpec.SidecarImage      | Sidecar 镜像                                        | radondb/mysql-sidecar:0.1       |
-| PodSpec.BusyboxImage      | Busybox 镜像                                         | busybox:1.32             |
-| PodSpec.SlowLogTail       | 是否开启慢日志跟踪                                     | false                    |
-| PodSpec.AuditLogTail      | 是否开启审计日志跟踪                                    | false                    |
+| PodPolicy.ImagePullPolicy   | 镜像拉取策略, 只允许为 Always/IfNotPresent/Never     | IfNotPresent             |
+| PodPolicy.Labels            | 节点 pod [标签](#1-标签)                            |     -                     |
+| PodPolicy.Annotations       | 节点 pod [注解](#2-注解)                            |     -                    |
+| PodPolicy.Affinity          | 节点 pod [亲和性](#3-亲和性)                         |     -                  |
+| PodPolicy.PriorityClassName | 节点 pod [优先级](#4-优先级)对象名称                   |     -                  |
+| PodPolicy.Tolerations       | 节点 pod [污点容忍度](#5-容忍)列表                   |     -                |
+| PodPolicy.SchedulerName     | 节点 pod [调度器](#6-调度器)名称                     | -                         |
+| PodPolicy.Resources         | 节点 pod 配额                                        | 预留: cpu 10m, 内存 32Mi |
+| PodPolicy.SidecarImage      | Sidecar 镜像                                        | radondb/mysql-sidecar:0.1       |
+| PodPolicy.BusyboxImage      | Busybox 镜像                                         | busybox:1.32             |
+| PodPolicy.SlowLogTail       | 是否开启慢日志跟踪                                     | false                    |
+| PodPolicy.AuditLogTail      | 是否开启审计日志跟踪                                    | false                    |
 
 ### 持久化配置
 

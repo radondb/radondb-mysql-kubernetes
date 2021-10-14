@@ -36,7 +36,7 @@ func (c *backupSidecar) getName() string {
 }
 
 func (c *backupSidecar) getImage() string {
-	return c.Spec.PodSpec.SidecarImage
+	return c.Spec.PodPolicy.SidecarImage
 }
 
 func (c *backupSidecar) getCommand() []string {
@@ -87,7 +87,7 @@ func (c *backupSidecar) getLifecycle() *corev1.Lifecycle {
 }
 
 func (c *backupSidecar) getResources() corev1.ResourceRequirements {
-	return c.Spec.PodSpec.Resources
+	return c.Spec.PodPolicy.ExtraResources
 }
 
 func (c *backupSidecar) getPorts() []corev1.ContainerPort {

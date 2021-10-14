@@ -452,13 +452,13 @@ func (s *StatefulSetSyncer) mutate() error {
 	}
 
 	s.sfs.Spec.Template.ObjectMeta.Labels = s.GetLabels()
-	for k, v := range s.Spec.PodSpec.Labels {
+	for k, v := range s.Spec.PodPolicy.Labels {
 		s.sfs.Spec.Template.ObjectMeta.Labels[k] = v
 	}
 	s.sfs.Spec.Template.ObjectMeta.Labels["role"] = "candidate"
 	s.sfs.Spec.Template.ObjectMeta.Labels["healthy"] = "no"
 
-	s.sfs.Spec.Template.Annotations = s.Spec.PodSpec.Annotations
+	s.sfs.Spec.Template.Annotations = s.Spec.PodPolicy.Annotations
 	if len(s.sfs.Spec.Template.ObjectMeta.Annotations) == 0 {
 		s.sfs.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -473,7 +473,7 @@ func (s *StatefulSetSyncer) mutate() error {
 	if err != nil {
 		return err
 	}
-	s.sfs.Spec.Template.Spec.Tolerations = s.Spec.PodSpec.Tolerations
+	s.sfs.Spec.Template.Spec.Tolerations = s.Spec.PodPolicy.Tolerations
 
 	if s.Spec.Persistence.Enabled {
 		if s.sfs.Spec.VolumeClaimTemplates, err = s.EnsureVolumeClaimTemplates(s.cli.Scheme()); err != nil {
@@ -508,10 +508,10 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 	if s.Spec.MetricsOpts.Enabled {
 		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, s.MysqlCluster))
 	}
-	if s.Spec.PodSpec.SlowLogTail {
+	if s.Spec.PodPolicy.SlowLogTail {
 		containers = append(containers, container.EnsureContainer(utils.ContainerSlowLogName, s.MysqlCluster))
 	}
-	if s.Spec.PodSpec.AuditLogTail {
+	if s.Spec.PodPolicy.AuditLogTail {
 		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, s.MysqlCluster))
 	}
 
@@ -519,11 +519,11 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 		InitContainers:     initContainers,
 		Containers:         containers,
 		Volumes:            s.EnsureVolumes(),
-		SchedulerName:      s.Spec.PodSpec.SchedulerName,
+		SchedulerName:      s.Spec.PodPolicy.SchedulerName,
 		ServiceAccountName: s.GetNameForResource(utils.ServiceAccount),
-		Affinity:           s.Spec.PodSpec.Affinity,
-		PriorityClassName:  s.Spec.PodSpec.PriorityClassName,
-		Tolerations:        s.Spec.PodSpec.Tolerations,
+		Affinity:           s.Spec.PodPolicy.Affinity,
+		PriorityClassName:  s.Spec.PodPolicy.PriorityClassName,
+		Tolerations:        s.Spec.PodPolicy.Tolerations,
 	}
 }
 

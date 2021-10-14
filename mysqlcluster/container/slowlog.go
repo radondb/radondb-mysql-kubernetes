@@ -38,7 +38,7 @@ func (c *slowLog) getName() string {
 
 // getImage get the container image.
 func (c *slowLog) getImage() string {
-	return c.Spec.PodSpec.SidecarImage
+	return c.Spec.PodPolicy.SidecarImage
 }
 
 // getCommand get the container command.
@@ -58,7 +58,7 @@ func (c *slowLog) getLifecycle() *corev1.Lifecycle {
 
 // getResources get the container resources.
 func (c *slowLog) getResources() corev1.ResourceRequirements {
-	return c.Spec.PodSpec.Resources
+	return c.Spec.PodPolicy.ExtraResources
 }
 
 // getPorts get the container ports.

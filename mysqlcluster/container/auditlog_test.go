@@ -29,9 +29,9 @@ import (
 var (
 	auditlogMysqlCluster = mysqlv1alpha1.MysqlCluster{
 		Spec: mysqlv1alpha1.MysqlClusterSpec{
-			PodSpec: mysqlv1alpha1.PodSpec{
+			PodPolicy: mysqlv1alpha1.PodPolicy{
 				BusyboxImage: "busybox",
-				Resources: corev1.ResourceRequirements{
+				ExtraResources: corev1.ResourceRequirements{
 					Limits:   nil,
 					Requests: nil,
 				},

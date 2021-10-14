@@ -41,7 +41,7 @@ func (c *initSidecar) getName() string {
 
 // getImage get the container image.
 func (c *initSidecar) getImage() string {
-	return c.Spec.PodSpec.SidecarImage
+	return c.Spec.PodPolicy.SidecarImage
 }
 
 // getCommand get the container command.
@@ -143,7 +143,7 @@ func (c *initSidecar) getLifecycle() *corev1.Lifecycle {
 
 // getResources get the container resources.
 func (c *initSidecar) getResources() corev1.ResourceRequirements {
-	return c.Spec.PodSpec.Resources
+	return c.Spec.PodPolicy.ExtraResources
 }
 
 // getPorts get the container ports.

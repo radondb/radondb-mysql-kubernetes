@@ -38,7 +38,7 @@ func (c *auditLog) getName() string {
 
 // getImage get the container image.
 func (c *auditLog) getImage() string {
-	return c.Spec.PodSpec.BusyboxImage
+	return c.Spec.PodPolicy.BusyboxImage
 }
 
 // getCommand get the container command.
@@ -58,7 +58,7 @@ func (c *auditLog) getLifecycle() *corev1.Lifecycle {
 
 // getResources get the container resources.
 func (c *auditLog) getResources() corev1.ResourceRequirements {
-	return c.Spec.PodSpec.Resources
+	return c.Spec.PodPolicy.ExtraResources
 }
 
 // getPorts get the container ports.
