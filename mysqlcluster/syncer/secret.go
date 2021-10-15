@@ -78,6 +78,10 @@ func NewSecretSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Int
 			return err
 		}
 
+		if err := addRandomPassword(secret.Data, "internal-root-password"); err != nil {
+			return err
+		}
+
 		if c.Spec.MysqlOpts.RootHost != "localhost" && c.Spec.MysqlOpts.RootPassword == "" {
 			if err := addRandomPassword(secret.Data, "root-password"); err != nil {
 				return err
