@@ -33,8 +33,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
-	mysqlcluster "github.com/radondb/radondb-mysql-kubernetes/cluster"
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
+	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	mysqluser "github.com/radondb/radondb-mysql-kubernetes/mysqluser"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )

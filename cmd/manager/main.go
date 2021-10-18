@@ -79,13 +79,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.ClusterReconciler{
+	if err = (&controllers.MysqlClusterReconciler{
 		Client:           mgr.GetClient(),
 		Scheme:           mgr.GetScheme(),
-		Recorder:         mgr.GetEventRecorderFor("controller.cluster"),
+		Recorder:         mgr.GetEventRecorderFor("controller.mysqlcluster"),
 		SQLRunnerFactory: internal.NewSQLRunner,
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Cluster")
+		setupLog.Error(err, "unable to create controller", "controller", "MysqlCluster")
 		os.Exit(1)
 	}
 	if err = (&controllers.StatusReconciler{
