@@ -242,16 +242,34 @@ type Persistence struct {
 	Size string `json:"size,omitempty"`
 }
 
+// ClusterState defines cluster state.
+type ClusterState string
+
+const (
+	// ClusterInitState  indicates whether the cluster is initializing.
+	ClusterInitState  ClusterState = "Initializing"
+	// ClusterUpdateState indicates whether the cluster is being updated.
+	ClusterUpdateState ClusterState = "Updating"
+	// ClusterReadyState indicates whether all containers in the pod are ready.
+	ClusterReadyState ClusterState = "Ready"
+	// ClusterCloseState indicates whether the cluster is closed.
+	ClusterCloseState ClusterState = "Closed"
+)
+
 // ClusterConditionType defines type for cluster condition type.
 type ClusterConditionType string
 
 const (
-	// ClusterInit indicates whether the cluster is initializing.
-	ClusterInit ClusterConditionType = "Initializing"
-	// ClusterReady indicates whether all containers in the pod are ready.
-	ClusterReady ClusterConditionType = "Ready"
-	// ClusterError indicates whether the cluster encountered an error.
-	ClusterError ClusterConditionType = "Error"
+	// ConditionInit indicates whether the cluster is initializing.
+	ConditionInit ClusterConditionType = "Initializing"
+	// ConditionUpdate indicates whether the cluster is being updated.
+	ConditionUpdate ClusterConditionType = "Updating"
+	// ConditionReady indicates whether all containers in the pod are ready.
+	ConditionReady ClusterConditionType = "Ready"
+	// ConditionClose indicates whether the cluster is closed.
+	ConditionClose ClusterConditionType = "Closed"
+	// ConditionError indicates whether there is an error in the cluster.
+	ConditionError ClusterConditionType = "Error"
 )
 
 // ClusterCondition defines type for cluster conditions.
@@ -321,7 +339,7 @@ type MysqlClusterStatus struct {
 	// ReadyNodes represents number of the nodes that are in ready state.
 	ReadyNodes int `json:"readyNodes,omitempty"`
 	// State
-	State ClusterConditionType `json:"state,omitempty"`
+	State ClusterState `json:"state,omitempty"`
 	// Conditions contains the list of the cluster conditions fulfilled.
 	Conditions []ClusterCondition `json:"conditions,omitempty"`
 	// Nodes contains the list of the node status fulfilled.

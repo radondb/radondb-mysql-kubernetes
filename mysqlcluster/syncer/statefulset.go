@@ -470,6 +470,7 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 	if pod.ObjectMeta.Labels["controller-revision-hash"] == s.sfs.Status.UpdateRevision {
 		log.Info("pod is already updated", "pod name", pod.Name)
 	} else {
+		s.Status.State = apiv1alpha1.ClusterUpdateState
 		log.Info("updating pod", "pod", pod.Name, "key", s.Unwrap())
 		if pod.DeletionTimestamp != nil {
 			log.Info("pod is being deleted", "pod", pod.Name, "key", s.Unwrap())

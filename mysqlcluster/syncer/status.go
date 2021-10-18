@@ -78,12 +78,7 @@ func (s *StatusSyncer) GetOwner() runtime.Object { return s.MysqlCluster }
 
 // Sync persists data into the external store.
 func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
-	clusterCondition := apiv1alpha1.ClusterCondition{
-		Type:               apiv1alpha1.ClusterInit,
-		Status:             corev1.ConditionTrue,
-		LastTransitionTime: metav1.NewTime(time.Now()),
-	}
-	s.Status.State = apiv1alpha1.ClusterInit
+	clusterCondition := s.updateClusterStatus()
 
 	list := corev1.PodList{}
 	err := s.cli.List(
@@ -109,23 +104,24 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 				}
 			case corev1.PodScheduled:
 				if cond.Reason == corev1.PodReasonUnschedulable {
+					// When an error occurs, it is first recorded in the condition,
+					// but the cluster status is not updated immediately.
 					clusterCondition = apiv1alpha1.ClusterCondition{
-						Type:               apiv1alpha1.ClusterError,
+						Type:               apiv1alpha1.ConditionError,
 						Status:             corev1.ConditionTrue,
 						LastTransitionTime: metav1.NewTime(time.Now()),
 						Reason:             corev1.PodReasonUnschedulable,
 						Message:            cond.Message,
 					}
-					s.Status.State = apiv1alpha1.ClusterError
 				}
 			}
 		}
 	}
 
 	s.Status.ReadyNodes = len(readyNodes)
-	if s.Status.ReadyNodes == int(*s.Spec.Replicas) {
-		s.Status.State = apiv1alpha1.ClusterReady
-		clusterCondition.Type = apiv1alpha1.ClusterReady
+	if s.Status.ReadyNodes == int(*s.Spec.Replicas) && int(*s.Spec.Replicas) != 0 {
+		s.Status.State = apiv1alpha1.ClusterReadyState
+		clusterCondition.Type = apiv1alpha1.ConditionReady
 	}
 
 	if len(s.Status.Conditions) == 0 {
@@ -140,8 +136,43 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
 	}
 
-	// update ready nodes' status.
+	// Update ready nodes' status.
 	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, readyNodes)
+}
+
+// updateClusterStatus update the cluster status and returns condition.
+func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
+	clusterCondition := apiv1alpha1.ClusterCondition{
+		Type:               apiv1alpha1.ConditionInit,
+		Status:             corev1.ConditionTrue,
+		LastTransitionTime: metav1.NewTime(time.Now()),
+	}
+
+	oldState := s.Status.State
+	// If the state does not exist, the cluster is being initialized.
+	if oldState == "" {
+		s.Status.State = apiv1alpha1.ClusterInitState
+		return clusterCondition
+	}
+	// If the expected number of replicas and the actual number 
+	// of replicas are both 0, the cluster has been closed.
+	if int(*s.Spec.Replicas) == 0 && s.Status.ReadyNodes == 0 {
+		clusterCondition.Type = apiv1alpha1.ConditionClose
+		s.Status.State = apiv1alpha1.ClusterCloseState
+		return clusterCondition
+	}
+	// When the cluster is ready or closed, the number of replicas changes,
+	// indicating that the cluster is updating nodes.
+	if oldState == apiv1alpha1.ClusterReadyState || oldState == apiv1alpha1.ClusterCloseState {
+		if int(*s.Spec.Replicas) != s.Status.ReadyNodes {
+			clusterCondition.Type = apiv1alpha1.ConditionUpdate
+			s.Status.State = apiv1alpha1.ClusterUpdateState
+			return clusterCondition
+		}
+	}
+
+	clusterCondition.Type = apiv1alpha1.ClusterConditionType(oldState)
+	return clusterCondition
 }
 
 // updateNodeStatus update the node status.
