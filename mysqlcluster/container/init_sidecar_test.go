@@ -320,8 +320,8 @@ func TestGetInitSidecarEnvVar(t *testing.T) {
 	{
 		testBackupMysqlCluster := initSidecarMysqlCluster
 		testBackupMysqlCluster.Spec.BackupSecretName = "backup-secret"
-		testBackupMysqlClusterWraper := cluster.Cluster{
-			Cluster: &testBackupMysqlCluster,
+		testBackupMysqlClusterWraper := mysqlcluster.MysqlCluster{
+			MysqlCluster: &testBackupMysqlCluster,
 		}
 		BackupCase := EnsureContainer("init-sidecar", &testBackupMysqlClusterWraper)
 		testBackupEnv := make([]corev1.EnvVar, len(defaultInitSidecarEnvs))
