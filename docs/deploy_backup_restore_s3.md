@@ -33,7 +33,7 @@ then, create the secret in k8s.
 ```
 kubectl create -f config/samples/backup_secret.yaml
 ```
-Please add the backupSecretName in mysql_v1apha1_cluster.yaml, name as secret file:
+Please add the backupSecretName in mysql_v1apha1_mysqlcluster.yaml, name as secret file:
 ```yaml
 spec:
   replicas: 3
@@ -62,7 +62,7 @@ spec:
 ### start cluster
 
 ```shell
-kubectl apply -f config/samples/mysql_v1alpha1_cluster.yaml     
+kubectl apply -f config/samples/mysql_v1alpha1_mysqlcluster.yaml     
 ```
 ### start backup
 After run cluster success
@@ -75,7 +75,7 @@ kubectl apply -f config/samples/mysql_v1alpha1_backup.yaml
 Uninstall the cluster named `sample`:
 
 ```shell
-kubectl delete clusters.mysql.radondb.com sample
+kubectl delete mysqlclusters.mysql.radondb.com sample
 ```
 
 Uninstall the operator name `test`:
@@ -88,7 +88,7 @@ kubectl delete -f config/samples/mysql_v1alpha1_backup.yaml
 Uninstall the crd:
 
 ```shell
-kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.radondb.com
+kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysql.radondb.com
 ```
 
 
@@ -106,7 +106,7 @@ spec:
 ```
 Then you use:
 ```shell
-kubectl apply -f config/samples/mysql_v1alpha1_cluster.yaml     
+kubectl apply -f config/samples/mysql_v1alpha1_mysqlcluster.yaml     
 ```
 could restore a cluster from the `backup_2021720827 ` copy in the S3 bucket. 
 
