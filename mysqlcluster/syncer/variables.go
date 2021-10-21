@@ -47,6 +47,7 @@ var mysqlSysConfigs = map[string]string{
 	"relay_log_index":                    "/var/lib/mysql/mysql-relay-bin.index",
 	"master_info_repository":             "TABLE",
 	"relay_log_info_repository":          "TABLE",
+	"relay_log_recovery":                 "ON",
 	"slow_query_log":                     "1",
 	"tmp_table_size":                     "32M",
 	"tmpdir":                             "/var/lib/mysql",

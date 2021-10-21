@@ -86,9 +86,9 @@ func NewConfigFromClusterKey(c client.Client, clusterKey client.ObjectKey, userN
 		}, nil
 
 	case utils.RootUser:
-		password, ok := secret.Data["root-password"]
+		password, ok := secret.Data["internal-root-password"]
 		if !ok {
-			return nil, fmt.Errorf("root-password cannot be empty")
+			return nil, fmt.Errorf("internal-root-password cannot be empty")
 		}
 		return &Config{
 			User:     utils.RootUser,

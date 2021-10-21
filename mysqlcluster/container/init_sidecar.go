@@ -101,6 +101,7 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 		},
 
 		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
+		getEnvVarFromSecret(sctName, "INTERNAL_ROOT_PASSWORD", "internal-root-password", true),
 		getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true),
 		getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true),
 		getEnvVarFromSecret(sctName, "MYSQL_PASSWORD", "mysql-password", true),

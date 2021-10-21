@@ -32,7 +32,7 @@ type UserSpec struct {
 	// Username is the name of user to be operated.
 	// This field should be immutable.
 	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Pattern="^[A-Za-z0-9_]{2,26}$"
+	// +kubebuilder:validation:Pattern="^(?!root$|radondb_)[A-Za-z0-9_]{2,26}$"
 	User string `json:"user,omitempty"`
 
 	// Hosts is the grants hosts.

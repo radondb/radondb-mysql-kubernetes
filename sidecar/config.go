@@ -20,8 +20,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
-	// "strings"
 	"text/template"
 
 	"github.com/blang/semver"
@@ -67,6 +65,8 @@ type Config struct {
 	OperatorUser string
 	// The password of operator user.
 	OperatorPassword string
+	// The password of the mysql root user, for operator use only.
+	InternalRootPassword string
 
 	// InitTokuDB represents if install tokudb engine.
 	InitTokuDB bool
@@ -159,6 +159,7 @@ func NewInitConfig() *Config {
 		Replicas:        int32(replicas),
 
 		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
+		InternalRootPassword: getEnvValue("INTERNAL_ROOT_PASSWORD"),
 
 		Database: getEnvValue("MYSQL_DATABASE"),
 		User:     getEnvValue("MYSQL_USER"),
@@ -203,6 +204,7 @@ func NewBackupConfig() *Config {
 		ServiceName: getEnvValue("SERVICE_NAME"),
 		Replicas:    int32(replicas),
 		ClusterName: getEnvValue("SERVICE_NAME"),
+		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
 
 		BackupUser:     getEnvValue("BACKUP_USER"),
 		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
@@ -242,11 +244,6 @@ func GetContainerType() string {
 // build Xtrabackup arguments
 func (cfg *Config) XtrabackupArgs() []string {
 	// xtrabackup --backup <args> --target-dir=<backup-dir> <extra-args>
-	user := "root"
-	if len(cfg.ReplicationUser) != 0 {
-		user = cfg.ReplicationUser
-	}
-
 	tmpdir := "/root/backup/"
 	if len(cfg.XtrabackupTargetDir) != 0 {
 		tmpdir = cfg.XtrabackupTargetDir
@@ -255,7 +252,8 @@ func (cfg *Config) XtrabackupArgs() []string {
 		"--backup",
 		"--stream=xbstream",
 		"--host=127.0.0.1",
-		fmt.Sprintf("--user=%s", user),
+		fmt.Sprintf("--user=%s", utils.RootUser),
+		fmt.Sprintf("--password=%s", cfg.RootPassword),
 		fmt.Sprintf("--target-dir=%s", tmpdir),
 	}
 
@@ -387,7 +385,7 @@ GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%' IDENTIFIED BY '
 DROP user IF EXISTS '%s'@'%%';
 GRANT ALL ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s';
 FLUSH PRIVILEGES;
-`, cfg.Database, cfg.RootPassword, cfg.RootPassword, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword,
+`, cfg.Database, cfg.RootPassword, cfg.InternalRootPassword, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword,
 		cfg.MetricsUser, cfg.MetricsUser, cfg.MetricsPassword, cfg.OperatorUser, cfg.OperatorUser,
 		cfg.OperatorPassword, cfg.User, cfg.Database, cfg.User, cfg.Password)
 
