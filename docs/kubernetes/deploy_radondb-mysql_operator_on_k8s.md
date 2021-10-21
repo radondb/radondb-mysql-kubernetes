@@ -60,14 +60,14 @@ helm install [NAME] [CHART] [flags]
 helm install demo radondb-mysql-kubernetes/charts/mysql-operator
 ```
 
-> 说明：在这一步骤中默认将同时创建一个名为 `clusters.mysql.radondb.com` 的 [CRD](#8-CRD)。
+> 说明：在这一步骤中默认将同时创建一个名为 `mysqlclusters.mysql.radondb.com` 的 [CRD](#8-CRD)。
 
 ### 步骤 3: 部署 RadonDB MySQL 集群
 
-执行以下指令，以默认参数为 CRD `clusters.mysql.radondb.com` 创建一个实例，即创建 RadonDB MySQL 集群。您可以参照[配置](#配置)自定义集群部署参数。
+执行以下指令，以默认参数为 CRD `mysqlclusters.mysql.radondb.com` 创建一个实例，即创建 RadonDB MySQL 集群。您可以参照[配置](#配置)自定义集群部署参数。
 
 ```kubectl
-kubectl apply -f radondb-mysql-kubernetes/config/samples/mysql_v1alpha1_cluster.yaml
+kubectl apply -f radondb-mysql-kubernetes/config/samples/mysql_v1alpha1_mysqlcluster.yaml
 ```
 
 ## 部署校验
@@ -88,12 +88,12 @@ service/mysql-operator-metrics   ClusterIP   10.96.142.22    <none>        8443/
 
 ### 校验 RadonDB MySQL 集群
 
-执行如下命令，将查看到名为 `clusters.mysql.radondb.com` 的 CRD。
+执行如下命令，将查看到名为 `mysqlclusters.mysql.radondb.com` 的 CRD。
 
 ```shell
 kubectl get crd
 NAME                                                  CREATED AT
-clusters.mysql.radondb.com                            2021-06-29T02:28:36Z
+mysqlclusters.mysql.radondb.com                            2021-06-29T02:28:36Z
 ```
 
 以默认部署为例，执行如下命令将查看到名为 `sample-mysql` 的三节点 RadonDB MySQL 集群及用于访问节点的服务。
@@ -187,13 +187,13 @@ helm delete demo
 卸载 release 名为 `sample` RadonDB MySQL 集群。
 
 ```shell
-kubectl delete clusters.mysql.radondb.com sample
+kubectl delete mysqlclusters.mysql.radondb.com sample
 ```
 
 ### 卸载自定义资源
 
 ```shell
-kubectl delete customresourcedefinitions.apiextensions.k8s.io clusters.mysql.radondb.com
+kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysql.radondb.com
 ```
 
 ## 配置

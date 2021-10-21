@@ -6,11 +6,14 @@ on:
     paths:
      - cmd/manager/*
      - api/*
-     - cluster/*
+     - mysqlcluster/*
+     - mysqlcluster/container/*
+     - mysqlcluster/syncer/*
      - controllers/*
      - internal/*
      - utils/*
      - backup/*
+     - mysqluser/*
   workflow_dispatch:
 
 jobs:

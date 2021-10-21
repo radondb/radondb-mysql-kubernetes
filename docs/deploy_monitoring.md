@@ -63,7 +63,7 @@ serviceMonitor:
 
 ### 步骤 2: 配置 metricsOpts
 
-`metricsOpts` 是 CRD  `clusters.mysql.radondb.com` 中定义 RadonDB MySQL 集群监控的参数，可通过配置`mysql_v1alpha1_cluster.yaml` 文件中参数值开启监控服务。
+`metricsOpts` 是 CRD  `mysqlclusters.mysql.radondb.com` 中定义 RadonDB MySQL 集群监控的参数，可通过配置`mysql_v1alpha1_mysqlcluster.yaml` 文件中参数值开启监控服务。
 
 `metricsOpts` 参数包含如下字段：
 
@@ -89,7 +89,7 @@ metricsOpts:
 文件参数修改完成后，使用如下指令应用配置，部署/更新集群回显信息如下：
 
 ```bash
-$ kubectl apply -f config/sample/mysql_v1alpha1_cluster.yaml
+$ kubectl apply -f config/sample/mysql_v1alpha1_mysqlcluster.yaml
 cluster.mysql.radondb.com/sample created/configured
 ```
 
