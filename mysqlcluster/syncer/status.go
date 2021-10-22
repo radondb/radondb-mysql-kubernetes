@@ -154,7 +154,7 @@ func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
 		s.Status.State = apiv1alpha1.ClusterInitState
 		return clusterCondition
 	}
-	// If the expected number of replicas and the actual number 
+	// If the expected number of replicas and the actual number
 	// of replicas are both 0, the cluster has been closed.
 	if int(*s.Spec.Replicas) == 0 && s.Status.ReadyNodes == 0 {
 		clusterCondition.Type = apiv1alpha1.ConditionClose

@@ -132,15 +132,113 @@ func (s *StatefulSetSyncer) Sync(ctx context.Context) (syncer.SyncResult, error)
 		log.Info("syncer skipped", "key", key, "kind", kind, "error", err)
 		err = nil
 	case err != nil:
-		result.SetEventData("Warning", basicEventReason(s.Name, err),
-			fmt.Sprintf("%s %s failed syncing: %s", kind, key, err))
-		log.Error(err, string(result.Operation), "key", key, "kind", kind)
+		// When Invliad type error occur, and the PVC claims has changed
+		// do the expand PVCs.
+		if k8serrors.IsInvalid(err) && s.canExpandPVC(ctx) {
+			result.Operation, err = s.expandPVCs(ctx)
+		} else {
+			result.SetEventData("Warning", basicEventReason(s.Name, err),
+				fmt.Sprintf("%s %s failed syncing: %s", kind, key, err))
+			log.Error(err, string(result.Operation), "key", key, "kind", kind)
+		}
+
 	default:
 		result.SetEventData("Normal", basicEventReason(s.Name, err),
 			fmt.Sprintf("%s %s %s successfully", kind, key, result.Operation))
 		log.Info(string(result.Operation), "key", key, "kind", kind)
 	}
 	return result, err
+}
+
+// Check whether need to expand PVC.
+func (s *StatefulSetSyncer) canExpandPVC(ctx context.Context) bool {
+	// Get it again. Becaus it has been mutated in Sync.
+	if err := s.cli.Get(ctx, client.ObjectKeyFromObject(s.sfs), s.sfs); err != nil {
+		if k8serrors.IsNotFound(err) {
+			return false
+		}
+	}
+	oldRequest := s.sfs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.DeepCopy()
+	// Here do s.mutate again.
+	if err := s.mutate(); err != nil {
+		return false
+	}
+	newStorage := s.sfs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage()
+	// If newStorage is not greater than oldStorage, do not expand.
+	if newStorage.Cmp(*oldRequest.Storage()) != 1 {
+		log.Info("canExpandPVC", "result", "can not expand", "reason", "new pvc is not larger than old pvc")
+		return false
+	}
+	return true
+}
+
+// expandPVCs by reCreate the statefulset and Expand pvcs.
+func (s *StatefulSetSyncer) expandPVCs(ctx context.Context) (controllerutil.OperationResult, error) {
+	// At first, delete the statefulset,for expand PVC.
+	if err := s.cli.Delete(ctx, s.sfs); err != nil {
+		return controllerutil.OperationResultNone, err
+	}
+	// Do expend the PVCs.
+	if err := s.doExpandPVCs(ctx); err != nil {
+		log.Error(err, "expandPVCs")
+		return controllerutil.OperationResultNone, err
+	}
+	// Then Create sfs again.
+	if err := s.cli.Create(ctx, s.sfs); err != nil {
+		return controllerutil.OperationResultNone, err
+	} else {
+		return controllerutil.OperationResultCreated, nil
+	}
+}
+
+// doExpandPVCs is used to extend PVC's size by refreshing PVC Resources.Requests in Spec.
+func (s *StatefulSetSyncer) doExpandPVCs(ctx context.Context) error {
+	pvcs := corev1.PersistentVolumeClaimList{}
+	if err := s.cli.List(ctx,
+		&pvcs,
+		&client.ListOptions{
+			Namespace:     s.sfs.Namespace,
+			LabelSelector: s.GetLabels().AsSelector(),
+		},
+	); err != nil {
+		return err
+	}
+
+	for _, item := range pvcs.Items {
+		// Notice: Only Resources.Requests can update, other field update will failure.
+		// If storage Class's allowVolumeExpansion is false, update will failure.
+		item.Spec.Resources.Requests = s.sfs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests
+		if err := s.cli.Update(ctx, &item); err != nil {
+			return err
+		}
+		if err := retry(time.Second*2, time.Duration(waitLimit)*time.Second, func() (bool, error) {
+			// Check the pvc status.
+			var currentPVC corev1.PersistentVolumeClaim
+			if err2 := s.cli.Get(ctx, client.ObjectKeyFromObject(&item), &currentPVC); err2 != nil {
+				return true, err2
+			}
+			var conditons = currentPVC.Status.Conditions
+			// Notice: When expanding not start, or been completed, conditons is nil
+			if conditons == nil {
+				// If change storage request when replicas are creating, should check the currentPVC.Status.Capacity.
+				// for example:
+				// Pod0 has created successful,but Pod1 is creating. then change PVC from 20Gi to 30Gi .
+				// Pod0's PVC need to expand, but Pod1's PVC has created as 30Gi, so need to skip it.
+				if equality.Semantic.DeepEqual(currentPVC.Status.Capacity, item.Spec.Resources.Requests) {
+					return true, nil
+				}
+				return false, nil
+			}
+			status := conditons[0].Type
+			if status == "FileSystemResizePending" {
+				return true, nil
+			}
+			return false, nil
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // createOrUpdate creates or updates the statefulset in the Kubernetes cluster.
@@ -594,7 +692,7 @@ func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
 		if bcp.ClusterName != s.ClusterName {
 			continue
 		}
-		if bcp.Status.Completed != true {
+		if !bcp.Status.Completed {
 			return true, nil
 		}
 	}
