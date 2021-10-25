@@ -158,7 +158,7 @@ func NewInitConfig() *Config {
 		StatefulSetName: getEnvValue("STATEFULSET_NAME"),
 		Replicas:        int32(replicas),
 
-		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
+		RootPassword:         getEnvValue("MYSQL_ROOT_PASSWORD"),
 		InternalRootPassword: getEnvValue("INTERNAL_ROOT_PASSWORD"),
 
 		Database: getEnvValue("MYSQL_DATABASE"),
@@ -200,10 +200,10 @@ func NewBackupConfig() *Config {
 	}
 
 	return &Config{
-		NameSpace:   getEnvValue("NAMESPACE"),
-		ServiceName: getEnvValue("SERVICE_NAME"),
-		Replicas:    int32(replicas),
-		ClusterName: getEnvValue("SERVICE_NAME"),
+		NameSpace:    getEnvValue("NAMESPACE"),
+		ServiceName:  getEnvValue("SERVICE_NAME"),
+		Replicas:     int32(replicas),
+		ClusterName:  getEnvValue("SERVICE_NAME"),
 		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
 
 		BackupUser:     getEnvValue("BACKUP_USER"),
@@ -544,13 +544,13 @@ curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/ser
 // build S3 restore shell script
 func (cfg *Config) buildS3Restore(path string) error {
 	if len(cfg.XRestoreFrom) == 0 {
-		return fmt.Errorf("Do not have restore from")
+		return fmt.Errorf("do not have restore from")
 	}
 	if len(cfg.XCloudS3EndPoint) == 0 ||
 		len(cfg.XCloudS3AccessKey) == 0 ||
 		len(cfg.XCloudS3SecretKey) == 0 ||
 		len(cfg.XCloudS3Bucket) == 0 {
-		return fmt.Errorf("Do not have S3 information")
+		return fmt.Errorf("do not have S3 information")
 	}
 	f, err := os.Create(path)
 	if err != nil {

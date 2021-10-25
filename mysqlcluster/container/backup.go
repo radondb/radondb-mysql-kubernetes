@@ -64,7 +64,7 @@ func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
 			Value: fmt.Sprintf("%d", *c.Spec.Replicas),
 		},
 		{
-			Name: "MYSQL_ROOT_PASSWORD",
+			Name:  "MYSQL_ROOT_PASSWORD",
 			Value: c.Spec.MysqlOpts.RootPassword,
 		},
 		// backup user password for sidecar http server

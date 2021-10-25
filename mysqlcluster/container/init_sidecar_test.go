@@ -124,6 +124,18 @@ var (
 			},
 		},
 		{
+			Name: "INTERNAL_ROOT_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "internal-root-password",
+					Optional: &optTrue,
+				},
+			},
+		},
+		{
 			Name: "MYSQL_DATABASE",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
