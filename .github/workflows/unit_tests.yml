@@ -1,0 +1,43 @@
+name: unit tests
+
+on:   
+  push:
+    branches: [ main ]
+    paths:
+     - mysqlcluster/**
+     - utils/*
+  pull_request:
+    branches: [ main ]
+    paths:
+     - mysqlcluster/**
+     - utils/*
+
+jobs:
+
+  test-cluster:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+
+    - name: Check out source code
+      uses: actions/checkout@v1
+
+    - name: Run test
+      run: go test ./mysqlcluster/container/ ./mysqlcluster/ -v -cover
+
+  test-utils:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+
+    - name: Check out source code
+      uses: actions/checkout@v1
+
+    - name: Run test
+      run: go test ./utils/ -v -cover
