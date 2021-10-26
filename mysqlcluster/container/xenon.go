@@ -47,7 +47,7 @@ func (c *xenon) getCommand() []string {
 }
 
 // getEnvVars get the container env.
-func (c *xenon) getEnvVars() []corev1.EnvVar {
+func (c *xenon) getEnvVars(ordinal int) []corev1.EnvVar {
 	return nil
 }
 

@@ -44,7 +44,7 @@ var (
 	testMysqlCluster = mysqlcluster.MysqlCluster{
 		MysqlCluster: &mysqlMysqlCluster,
 	}
-	mysqlCase = EnsureContainer("mysql", &testMysqlCluster)
+	mysqlCase = EnsureContainer("mysql", &testMysqlCluster, 0)
 )
 
 func TestGetMysqlName(t *testing.T) {
@@ -77,7 +77,7 @@ func TestGetMysqlEnvVar(t *testing.T) {
 		testCluster := mysqlcluster.MysqlCluster{
 			MysqlCluster: &mysqlCluster,
 		}
-		mysqlCase = EnsureContainer("mysql", &testCluster)
+		mysqlCase = EnsureContainer("mysql", &testCluster, 0)
 		assert.Equal(t, volumeMounts, mysqlCase.Env)
 	}
 }

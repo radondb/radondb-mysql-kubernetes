@@ -49,6 +49,7 @@ func StringInArray(str string, strArray []string) bool {
 }
 
 func GetOrdinal(name string) (int, error) {
+	name = strings.TrimSuffix(name, "-0")
 	idx := strings.LastIndexAny(name, "-")
 	if idx == -1 {
 		return -1, fmt.Errorf("failed to extract ordinal from name: %s", name)

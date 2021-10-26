@@ -338,7 +338,7 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 	var scheme runtime.Scheme
 	// when disable persistence
 	{
-		result, err := testCluster.EnsureVolumeClaimTemplates(&scheme)
+		result, err := testCluster.EnsureVolumeClaimTemplates(&scheme, 0)
 		assert.Nil(t, result)
 		assert.Nil(t, err)
 	}
@@ -395,7 +395,7 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 		defer guard.Unpatch()
 		defer guard1.Unpatch()
 		defer guard2.Unpatch()
-		result, err := testCase.EnsureVolumeClaimTemplates(&scheme)
+		result, err := testCase.EnsureVolumeClaimTemplates(&scheme, 0)
 		assert.Equal(t, want, result)
 		assert.Nil(t, err)
 	}
@@ -414,7 +414,7 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 			return nil
 		})
 		defer guard.Unpatch()
-		result, err := testCase.EnsureVolumeClaimTemplates(&scheme)
+		result, err := testCase.EnsureVolumeClaimTemplates(&scheme, 0)
 
 		assert.Equal(t, &storageClass, result[0].Spec.StorageClassName)
 		assert.Nil(t, err)
@@ -432,7 +432,7 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 			return fmt.Errorf("test")
 		})
 		defer guard.Unpatch()
-		result, err := testCase.EnsureVolumeClaimTemplates(&scheme)
+		result, err := testCase.EnsureVolumeClaimTemplates(&scheme, 0)
 		want := fmt.Errorf("failed setting controller reference: test")
 		assert.Nil(t, result)
 		assert.Equal(t, want, err)

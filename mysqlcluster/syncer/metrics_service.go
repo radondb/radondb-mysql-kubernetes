@@ -28,8 +28,9 @@ import (
 )
 
 // NewMetricsSVCSyncer returns metrics service syncer.
-func NewMetricsSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Interface {
+func NewMetricsSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster, ordinal int) syncer.Interface {
 	labels := c.GetLabels()
+	c.AppendOrdinal(labels, ordinal)
 	labels["mysql.radondb.com/service-type"] = string(utils.MetricsService)
 	service := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{

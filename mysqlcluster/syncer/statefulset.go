@@ -66,20 +66,27 @@ type StatefulSetSyncer struct {
 
 	// Mysql query runner.
 	internal.SQLRunnerFactory
+	// ordinal
+	ordinal int
 }
 
 // NewStatefulSetSyncer returns a pointer to StatefulSetSyncer.
-func NewStatefulSetSyncer(cli client.Client, c *mysqlcluster.MysqlCluster, cmRev, sctRev string, sqlRunnerFactory internal.SQLRunnerFactory) *StatefulSetSyncer {
+func NewStatefulSetSyncer(cli client.Client, c *mysqlcluster.MysqlCluster,
+	cmRev, sctRev string,
+	ordinal int,
+	sqlRunnerFactory internal.SQLRunnerFactory) *StatefulSetSyncer {
+	//c.Ordinal = ordinal
 	return &StatefulSetSyncer{
 		MysqlCluster: c,
 		cli:          cli,
+		ordinal:      ordinal,
 		sfs: &appsv1.StatefulSet{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
 				Kind:       "StatefulSet",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      c.GetNameForResource(utils.StatefulSet),
+				Name:      c.GetNameForResource(utils.StatefulSet) + fmt.Sprintf("-%d", ordinal),
 				Namespace: c.Namespace,
 			},
 		},
@@ -194,11 +201,13 @@ func (s *StatefulSetSyncer) expandPVCs(ctx context.Context) (controllerutil.Oper
 // doExpandPVCs is used to extend PVC's size by refreshing PVC Resources.Requests in Spec.
 func (s *StatefulSetSyncer) doExpandPVCs(ctx context.Context) error {
 	pvcs := corev1.PersistentVolumeClaimList{}
+	lables := s.GetLabels()
+	s.AppendOrdinal(lables, s.ordinal)
 	if err := s.cli.List(ctx,
 		&pvcs,
 		&client.ListOptions{
 			Namespace:     s.sfs.Namespace,
-			LabelSelector: s.GetLabels().AsSelector(),
+			LabelSelector: lables.AsSelector(),
 		},
 	); err != nil {
 		return err
@@ -276,13 +285,14 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 		return controllerutil.OperationResultNone, err
 	}
 	// Update every pods of statefulset.
-	if err := s.updatePod(ctx); err != nil {
-		return controllerutil.OperationResultNone, err
-	}
-	// Update pvc.
-	if err := s.updatePVC(ctx); err != nil {
-		return controllerutil.OperationResultNone, err
-	}
+	// if err := s.updatePod(ctx); err != nil {
+	// 	return controllerutil.OperationResultNone, err
+	// }
+	// // Update pvc.
+	// if err := s.updatePVC(ctx); err != nil {
+	// 	return controllerutil.OperationResultNone, err
+	// }
+
 	return controllerutil.OperationResultUpdated, nil
 }
 
@@ -444,14 +454,16 @@ func (s *StatefulSetSyncer) preUpdate(ctx context.Context, leader, follower stri
 
 // mutate set the statefulset.
 func (s *StatefulSetSyncer) mutate() error {
-	s.sfs.Spec.ServiceName = s.GetNameForResource(utils.StatefulSet)
-	s.sfs.Spec.Replicas = s.Spec.Replicas
+	var replica int32 = 1
+	s.sfs.Spec.ServiceName = s.GetNameForResource(utils.StatefulSet) + fmt.Sprintf("-%d", s.ordinal)
+	s.sfs.Spec.Replicas = &replica
 	s.sfs.Spec.Selector = metav1.SetAsLabelSelector(s.GetSelectorLabels())
 	s.sfs.Spec.UpdateStrategy = appsv1.StatefulSetUpdateStrategy{
 		Type: appsv1.OnDeleteStatefulSetStrategyType,
 	}
-
-	s.sfs.Spec.Template.ObjectMeta.Labels = s.GetLabels()
+	lables := s.GetLabels()
+	lables = s.AppendOrdinal(lables, s.ordinal)
+	s.sfs.Spec.Template.ObjectMeta.Labels = lables
 	for k, v := range s.Spec.PodPolicy.Labels {
 		s.sfs.Spec.Template.ObjectMeta.Labels[k] = v
 	}
@@ -469,14 +481,14 @@ func (s *StatefulSetSyncer) mutate() error {
 	s.sfs.Spec.Template.ObjectMeta.Annotations["config_rev"] = s.cmRev
 	s.sfs.Spec.Template.ObjectMeta.Annotations["secret_rev"] = s.sctRev
 
-	err := mergo.Merge(&s.sfs.Spec.Template.Spec, s.ensurePodSpec(), mergo.WithTransformers(transformers.PodSpec))
+	err := mergo.Merge(&s.sfs.Spec.Template.Spec, s.ensurePodSpec(s.ordinal), mergo.WithTransformers(transformers.PodSpec))
 	if err != nil {
 		return err
 	}
 	s.sfs.Spec.Template.Spec.Tolerations = s.Spec.PodPolicy.Tolerations
 
 	if s.Spec.Persistence.Enabled {
-		if s.sfs.Spec.VolumeClaimTemplates, err = s.EnsureVolumeClaimTemplates(s.cli.Scheme()); err != nil {
+		if s.sfs.Spec.VolumeClaimTemplates, err = s.EnsureVolumeClaimTemplates(s.cli.Scheme(), s.ordinal); err != nil {
 			return err
 		}
 	}
@@ -496,23 +508,23 @@ func (s *StatefulSetSyncer) mutate() error {
 }
 
 // ensurePodSpec used to ensure the podspec.
-func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
-	initSidecar := container.EnsureContainer(utils.ContainerInitSidecarName, s.MysqlCluster)
-	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, s.MysqlCluster)
+func (s *StatefulSetSyncer) ensurePodSpec(ordinal int) corev1.PodSpec {
+	initSidecar := container.EnsureContainer(utils.ContainerInitSidecarName, s.MysqlCluster, ordinal)
+	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, s.MysqlCluster, ordinal)
 	initContainers := []corev1.Container{initSidecar, initMysql}
 
-	mysql := container.EnsureContainer(utils.ContainerMysqlName, s.MysqlCluster)
-	xenon := container.EnsureContainer(utils.ContainerXenonName, s.MysqlCluster)
-	backup := container.EnsureContainer(utils.ContainerBackupName, s.MysqlCluster)
+	mysql := container.EnsureContainer(utils.ContainerMysqlName, s.MysqlCluster, ordinal)
+	xenon := container.EnsureContainer(utils.ContainerXenonName, s.MysqlCluster, ordinal)
+	backup := container.EnsureContainer(utils.ContainerBackupName, s.MysqlCluster, ordinal)
 	containers := []corev1.Container{mysql, xenon, backup}
 	if s.Spec.MetricsOpts.Enabled {
-		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, s.MysqlCluster))
+		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, s.MysqlCluster, ordinal))
 	}
 	if s.Spec.PodPolicy.SlowLogTail {
-		containers = append(containers, container.EnsureContainer(utils.ContainerSlowLogName, s.MysqlCluster))
+		containers = append(containers, container.EnsureContainer(utils.ContainerSlowLogName, s.MysqlCluster, ordinal))
 	}
 	if s.Spec.PodPolicy.AuditLogTail {
-		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, s.MysqlCluster))
+		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, s.MysqlCluster, ordinal))
 	}
 
 	return corev1.PodSpec{

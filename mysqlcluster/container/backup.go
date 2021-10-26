@@ -43,7 +43,7 @@ func (c *backupSidecar) getCommand() []string {
 	return []string{"sidecar", "http"}
 }
 
-func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
+func (c *backupSidecar) getEnvVars(ordinal int) []corev1.EnvVar {
 	sctNameBakup := c.Spec.BackupSecretName
 	sctName := c.GetNameForResource(utils.Secret)
 	envs := []corev1.EnvVar{
