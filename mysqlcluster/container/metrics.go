@@ -48,7 +48,7 @@ func (c *metrics) getCommand() []string {
 }
 
 // getEnvVars get the container env.
-func (c *metrics) getEnvVars() []corev1.EnvVar {
+func (c *metrics) getEnvVars(ordinal int) []corev1.EnvVar {
 	return []corev1.EnvVar{
 		getEnvVarFromSecret(c.GetNameForResource(utils.Secret), "DATA_SOURCE_NAME", "data-source", true),
 	}

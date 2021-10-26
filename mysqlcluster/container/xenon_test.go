@@ -50,7 +50,7 @@ var (
 	testXenonCluster = mysqlcluster.MysqlCluster{
 		MysqlCluster: &xenonMysqlCluster,
 	}
-	xenonCase = EnsureContainer("xenon", &testXenonCluster)
+	xenonCase = EnsureContainer("xenon", &testXenonCluster, 0)
 )
 
 func TestGetXenonName(t *testing.T) {

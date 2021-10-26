@@ -41,7 +41,7 @@ var (
 	testSlowlogCluster = mysqlcluster.MysqlCluster{
 		MysqlCluster: &slowlogMysqlCluster,
 	}
-	slowlogCase = EnsureContainer("slowlog", &testSlowlogCluster)
+	slowlogCase = EnsureContainer("slowlog", &testSlowlogCluster, 0)
 )
 
 func TestGetSlowlogName(t *testing.T) {

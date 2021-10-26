@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/blang/semver"
@@ -422,6 +423,8 @@ func (cfg *Config) buildPostStart() ([]byte, error) {
 		return nil, err
 	}
 
+	s := strings.SplitN(cfg.StatefulSetName, "-", 3)
+	statefulsetPrefix := fmt.Sprintf("%s-%s", s[0], s[1])
 	nums := ordinal
 	if cfg.existMySQLData {
 		nums = int(cfg.Replicas)
@@ -459,8 +462,8 @@ done
 i=0
 while [ $i -lt %d ]; do
 	if [ $i -ne %d ]; then
-		for k in $(seq 12); do
-			res=$(curl -i -X POST -d '{"address": "%s-'$i'.%s.%s:%d"}' -u root:%s http://%s:%d/v1/cluster/add)
+	    for k in $(seq 12);do
+			res=$(curl -i -X POST -d '{"address": "%s-'$i'-0.%s-'$i'.%s:%d"}' -u root:%s http://%s:%d/v1/cluster/add)
 			code=$(echo $res|grep "HTTP"|awk '{print $2}')
 			if [ "$code" -eq "200" ]; then
 				break
@@ -468,7 +471,7 @@ while [ $i -lt %d ]; do
 		done
 
 		for k in $(seq 12); do
-			res=$(curl -i -X POST -d '{"address": "%s:%d"}' -u root:%s http://%s-$i.%s.%s:%d/v1/cluster/add)
+			res=$(curl -i -X POST -d '{"address": "%s:%d"}' -u root:%s http://%s-$i-0.%s-$i.%s:%d/v1/cluster/add)
 			code=$(echo $res|grep "HTTP"|awk '{print $2}')
 			if [ "$code" -eq "200" ]; then
 				break
@@ -477,9 +480,9 @@ while [ $i -lt %d ]; do
 	fi
 	i=$((i+1))
 done
-`, str, nums, ordinal, cfg.StatefulSetName, cfg.ServiceName, cfg.NameSpace, utils.XenonPort,
+`, str, nums, ordinal, statefulsetPrefix, statefulsetPrefix, cfg.NameSpace, utils.XenonPort,
 			cfg.RootPassword, host, utils.XenonPeerPort, host, utils.XenonPort, cfg.RootPassword,
-			cfg.StatefulSetName, cfg.ServiceName, cfg.NameSpace, utils.XenonPeerPort)
+			statefulsetPrefix, statefulsetPrefix, cfg.NameSpace, utils.XenonPeerPort)
 	}
 
 	return utils.StringToBytes(str), nil
