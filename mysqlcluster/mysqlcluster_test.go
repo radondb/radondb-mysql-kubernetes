@@ -480,18 +480,14 @@ func TestEnsureMysqlConf(t *testing.T) {
 	LimitCpucorev1s := resource.NewQuantity(1, resource.DecimalSI)
 	testMysql := mysqlCluster
 	testMysql.Spec = mysqlv1alpha1.MysqlClusterSpec{
-		PodPolicy: mysqlv1alpha1.PodPolicy{
-			DefaultResources: corev1.ResourceRequirements{
-				Limits: corev1.ResourceList{
-					"cpu": *LimitCpucorev1s,
-				},
-			},
-		},
 		MysqlOpts: mysqlv1alpha1.MysqlOpts{
 			MysqlConf: mysqlv1alpha1.MysqlConf{},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					"memory": *requestsMemory,
+				},
+				Limits: corev1.ResourceList{
+					"cpu": *LimitCpucorev1s,
 				},
 			},
 		},
@@ -575,7 +571,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		memoryCase := resource.NewQuantity(16*gb, resource.BinarySI)
 		limitCpucorev1sCase := resource.NewQuantity(4, resource.DecimalSI)
 		testMysqlCase := testMysql
-		testMysqlCase.Spec.PodPolicy.DefaultResources.Limits["cpu"] = *limitCpucorev1sCase
+		testMysqlCase.Spec.MysqlOpts.Resources.Limits["cpu"] = *limitCpucorev1sCase
 		testMysqlCase.Spec.MysqlOpts.Resources.Requests["memory"] = *memoryCase
 		testCase := MysqlCluster{
 			&testMysqlCase,

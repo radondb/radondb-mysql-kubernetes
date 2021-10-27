@@ -280,7 +280,7 @@ func (c *MysqlCluster) EnsureMysqlConf() {
 	var defaultSize, maxSize, innodbBufferPoolSize uint64
 	innodbBufferPoolSize = 128 * mb
 	mem := uint64(c.Spec.MysqlOpts.Resources.Requests.Memory().Value())
-	cpu := c.Spec.PodPolicy.DefaultResources.Limits.Cpu().MilliValue()
+	cpu := c.Spec.MysqlOpts.Resources.Limits.Cpu().MilliValue()
 	if mem <= 1*gb {
 		defaultSize = uint64(0.45 * float64(mem))
 		maxSize = uint64(0.6 * float64(mem))
