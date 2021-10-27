@@ -88,7 +88,7 @@ func ExistUpdateFile() bool {
 		return true
 	}
 
-	err = f.Close()
+	f.Close()
 	return true
 }
 

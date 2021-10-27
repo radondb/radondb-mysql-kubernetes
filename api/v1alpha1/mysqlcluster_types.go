@@ -247,7 +247,7 @@ type ClusterState string
 
 const (
 	// ClusterInitState  indicates whether the cluster is initializing.
-	ClusterInitState  ClusterState = "Initializing"
+	ClusterInitState ClusterState = "Initializing"
 	// ClusterUpdateState indicates whether the cluster is being updated.
 	ClusterUpdateState ClusterState = "Updating"
 	// ClusterReadyState indicates whether all containers in the pod are ready.

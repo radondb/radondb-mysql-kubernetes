@@ -115,9 +115,7 @@ func (r *StatusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				}
 
 				log.V(1).Info("register cluster in clusters list", "obj", evt.Object)
-				clusters.Store(getKey(evt.Object), event.GenericEvent{
-					Object: evt.Object,
-				})
+				clusters.Store(getKey(evt.Object), event.GenericEvent(evt))
 			},
 			DeleteFunc: func(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
 				if evt.Object == nil {
