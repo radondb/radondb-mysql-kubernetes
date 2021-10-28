@@ -60,7 +60,7 @@ spec:
         cpu: 100m
         memory: 128Mi
 
-  podSpec:
+  podPolicy:
     imagePullPolicy: IfNotPresent
     sidecarImage: radondb/mysql-sidecar:latest
     busyboxImage: busybox:1.32
@@ -74,8 +74,8 @@ spec:
     priorityClassName: ""
     tolerations: []
     schedulerName: ""
-
-    resources:
+    # extraResources defines quotas for containers other than mysql or xenon.
+    extraResources:
       requests:
         cpu: 10m
         memory: 32Mi

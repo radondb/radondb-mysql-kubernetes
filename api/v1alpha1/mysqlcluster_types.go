@@ -63,10 +63,10 @@ type MysqlClusterSpec struct {
 	// +kubebuilder:default:="5.7"
 	MysqlVersion string `json:"mysqlVersion,omitempty"`
 
-	// Pod extra specification.
+	// PodPolicy defines the policy to extra specification.
 	// +optional
-	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", resources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "radondb/mysql-sidecar:0.1", busyboxImage: "busybox:1.32"}
-	PodSpec PodSpec `json:"podSpec,omitempty"`
+	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", extraResources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "radondb/mysql-sidecar:latest", busyboxImage: "busybox:1.32"}
+	PodPolicy PodPolicy `json:"podPolicy,omitempty"`
 
 	// PVC extra specifiaction.
 	// +optional
@@ -178,8 +178,8 @@ type MetricsOpts struct {
 // string and string.
 type MysqlConf map[string]string
 
-// PodSpec defines type for configure cluster pod spec.
-type PodSpec struct {
+// PodPolicy defines the general configuration and extra resources of pod.
+type PodPolicy struct {
 	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
 	// +kubebuilder:default:="IfNotPresent"
 	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
@@ -191,10 +191,11 @@ type PodSpec struct {
 	Tolerations       []corev1.Toleration `json:"tolerations,omitempty"`
 	SchedulerName     string              `json:"schedulerName,omitempty"`
 
-	// The compute resource requirements.
+	// ExtraResources defines quotas for containers other than mysql or xenon.
+	// These containers take up less resources, so quotas are set uniformly.
 	// +optional
 	// +kubebuilder:default:={requests: {cpu: "10m", memory: "32Mi"}}
-	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	ExtraResources corev1.ResourceRequirements `json:"extraResources,omitempty"`
 
 	// To specify the image that will be used for sidecar container.
 	// +optional

@@ -40,9 +40,9 @@ var (
 		},
 		Spec: mysqlv1alpha1.MysqlClusterSpec{
 			Replicas: &replicas,
-			PodSpec: mysqlv1alpha1.PodSpec{
+			PodPolicy: mysqlv1alpha1.PodPolicy{
 				SidecarImage: "sidecar image",
-				Resources: corev1.ResourceRequirements{
+				ExtraResources: corev1.ResourceRequirements{
 					Limits:   nil,
 					Requests: nil,
 				},

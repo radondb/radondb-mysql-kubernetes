@@ -29,8 +29,8 @@ import (
 var (
 	mysqlMysqlCluster = mysqlv1alpha1.MysqlCluster{
 		Spec: mysqlv1alpha1.MysqlClusterSpec{
-			PodSpec: mysqlv1alpha1.PodSpec{
-				Resources: corev1.ResourceRequirements{
+			PodPolicy: mysqlv1alpha1.PodPolicy{
+				ExtraResources: corev1.ResourceRequirements{
 					Limits:   nil,
 					Requests: nil,
 				},

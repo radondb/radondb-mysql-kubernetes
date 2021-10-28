@@ -62,7 +62,7 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 	return corev1.Container{
 		Name:            ctr.getName(),
 		Image:           ctr.getImage(),
-		ImagePullPolicy: c.Spec.PodSpec.ImagePullPolicy,
+		ImagePullPolicy: c.Spec.PodPolicy.ImagePullPolicy,
 		Command:         ctr.getCommand(),
 		Env:             ctr.getEnvVars(),
 		Lifecycle:       ctr.getLifecycle(),
