@@ -11,7 +11,7 @@
 使用如下指令，将查看到名称为 `mysqlusers.mysql.radondb.com` 的 CRD。
 
 ```plain
-kubectl get crd | grep MysqlUser
+kubectl get crd | grep mysqluser
 mysqlusers.mysql.radondb.com                          2021-09-21T09:15:08Z
 ```
 
