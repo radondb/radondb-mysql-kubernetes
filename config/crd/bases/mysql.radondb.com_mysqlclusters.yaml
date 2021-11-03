@@ -1379,6 +1379,23 @@ spec:
                     name:
                       description: Name of the node.
                       type: string
+                    raftStatus:
+                      description: RaftStatus is the raft status of the node.
+                      properties:
+                        leader:
+                          description: Leader is the name of the Leader of the current
+                            node.
+                          type: string
+                        nodes:
+                          description: Nodes is a list of nodes that can be identified
+                            by the current node.
+                          items:
+                            type: string
+                          type: array
+                        role:
+                          description: Role is one of (LEADER/CANDIDATE/FOLLOWER/IDLE/INVALID)
+                          type: string
+                      type: object
                   required:
                   - name
                   type: object

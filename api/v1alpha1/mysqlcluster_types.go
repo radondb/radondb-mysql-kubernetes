@@ -294,8 +294,19 @@ type NodeStatus struct {
 	Name string `json:"name"`
 	// Full text reason for current status of the node.
 	Message string `json:"message,omitempty"`
+	// RaftStatus is the raft status of the node.
+	RaftStatus RaftStatus `json:"raftStatus,omitempty"`
 	// Conditions contains the list of the node conditions fulfilled.
 	Conditions []NodeCondition `json:"conditions,omitempty"`
+}
+
+type RaftStatus struct {
+	// Role is one of (LEADER/CANDIDATE/FOLLOWER/IDLE/INVALID)
+	Role string `json:"role,omitempty"`
+	// Leader is the name of the Leader of the current node.
+	Leader string `json:"leader,omitempty"`
+	// Nodes is a list of nodes that can be identified by the current node.
+	Nodes []string `json:"nodes,omitempty"`
 }
 
 // NodeCondition defines type for representing node conditions.
