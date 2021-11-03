@@ -84,6 +84,7 @@ func main() {
 		Scheme:           mgr.GetScheme(),
 		Recorder:         mgr.GetEventRecorderFor("controller.mysqlcluster"),
 		SQLRunnerFactory: internal.NewSQLRunner,
+		XenonExecutor:    internal.NewXenonExecutor(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MysqlCluster")
 		os.Exit(1)
@@ -93,6 +94,7 @@ func main() {
 		Scheme:           mgr.GetScheme(),
 		Recorder:         mgr.GetEventRecorderFor("controller.status"),
 		SQLRunnerFactory: internal.NewSQLRunner,
+		XenonExecutor:    internal.NewXenonExecutor(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Status")
 		os.Exit(1)

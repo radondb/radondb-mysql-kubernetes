@@ -16,6 +16,8 @@ limitations under the License.
 
 package utils
 
+import "net/http"
+
 var (
 	// MySQLDefaultVersion is the version for mysql that should be used
 	MySQLDefaultVersion = "5.7.34"
@@ -29,6 +31,12 @@ var (
 	MysqlImageVersions = map[string]string{
 		"5.7.33": "percona/percona-server:5.7.33",
 		"5.7.34": "percona/percona-server:5.7.34",
+	}
+
+	// XenonHttpUrls saves the xenon http url and its corresponding request type.
+	XenonHttpUrls = map[XenonHttpUrl]string{
+		RaftStatus:      http.MethodGet,
+		RaftTryToLeader: http.MethodPost,
 	}
 )
 
@@ -134,3 +142,20 @@ const (
 
 // JobType
 const BackupJobTypeName = ContainerBackupName
+
+// RaftRole is the role of the node in raft.
+type RaftRole string
+
+const (
+	Leader    RaftRole = "LEADER"
+	Follower  RaftRole = "FOLLOWER"
+	Candidate RaftRole = "CANDIDATE"
+)
+
+// XenonHttpUrl is a http url corresponding to the xenon instruction.
+type XenonHttpUrl string
+
+const (
+	RaftStatus      XenonHttpUrl = "/v1/raft/status"
+	RaftTryToLeader XenonHttpUrl = "/v1/raft/trytoleader"
+)

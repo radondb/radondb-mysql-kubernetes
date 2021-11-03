@@ -46,6 +46,8 @@ type MysqlClusterReconciler struct {
 
 	// Mysql query runner.
 	internal.SQLRunnerFactory
+	// XenonExecutor is used to execute Xenon HTTP instructions.
+	internal.XenonExecutor
 }
 
 // +kubebuilder:rbac:groups=mysql.radondb.com,resources=mysqlclusters,verbs=get;list;watch;create;update;patch;delete
@@ -110,6 +112,8 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	cmRev := configMapSyncer.Object().(*corev1.ConfigMap).ResourceVersion
 	sctRev := secretSyncer.Object().(*corev1.Secret).ResourceVersion
 
+	r.XenonExecutor.SetRootPassword(instance.Spec.MysqlOpts.RootPassword)
+
 	// run the syncers for services, pdb and statefulset
 	syncers := []syncer.Interface{
 		clustersyncer.NewRoleSyncer(r.Client, instance),
@@ -118,7 +122,7 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		clustersyncer.NewHeadlessSVCSyncer(r.Client, instance),
 		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
 		clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
-		clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, r.SQLRunnerFactory),
+		clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, r.SQLRunnerFactory, r.XenonExecutor),
 		clustersyncer.NewPDBSyncer(r.Client, instance),
 	}
 

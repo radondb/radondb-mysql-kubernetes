@@ -18,17 +18,13 @@ package syncer
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"time"
 
 	"github.com/presslabs/controller-util/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
@@ -51,14 +47,17 @@ type StatusSyncer struct {
 
 	// Mysql query runner.
 	internal.SQLRunnerFactory
+	// XenonExecutor is used to execute Xenon HTTP instructions.
+	internal.XenonExecutor
 }
 
 // NewStatusSyncer returns a pointer to StatusSyncer.
-func NewStatusSyncer(c *mysqlcluster.MysqlCluster, cli client.Client, sqlRunnerFactory internal.SQLRunnerFactory) *StatusSyncer {
+func NewStatusSyncer(c *mysqlcluster.MysqlCluster, cli client.Client, sqlRunnerFactory internal.SQLRunnerFactory, xenonExecutor internal.XenonExecutor) *StatusSyncer {
 	return &StatusSyncer{
 		MysqlCluster:     c,
 		cli:              cli,
 		SQLRunnerFactory: sqlRunnerFactory,
+		XenonExecutor:    xenonExecutor,
 	}
 }
 
@@ -177,41 +176,16 @@ func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
 
 // updateNodeStatus update the node status.
 func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, pods []corev1.Pod) error {
-	sctName := s.GetNameForResource(utils.Secret)
-	svcName := s.GetNameForResource(utils.HeadlessSVC)
-	nameSpace := s.Namespace
-
-	secret := &corev1.Secret{}
-	if err := cli.Get(context.TODO(),
-		types.NamespacedName{
-			Namespace: nameSpace,
-			Name:      sctName,
-		},
-		secret,
-	); err != nil {
-		log.V(1).Info("secret not found", "name", sctName)
-		return nil
-	}
-
-	rootPasswd, ok := secret.Data["root-password"]
-	if !ok {
-		return fmt.Errorf("failed to get the root password: %s", rootPasswd)
-	}
-
 	for _, pod := range pods {
 		podName := pod.Name
-		host := fmt.Sprintf("%s.%s.%s", podName, svcName, nameSpace)
+		host := fmt.Sprintf("%s.%s.%s", podName, s.GetNameForResource(utils.HeadlessSVC), s.Namespace)
 		index := s.getNodeStatusIndex(host)
 		node := &s.Status.Nodes[index]
 		node.Message = ""
 
-		isLeader, err := checkRole(host, rootPasswd)
-		if err != nil {
-			log.Error(err, "failed to check the node role", "node", node.Name)
-			node.Message = err.Error()
+		if err := s.updateNodeRaftStatus(node); err != nil {
+			return err
 		}
-		// update apiv1alpha1.NodeConditionLeader.
-		s.updateNodeCondition(node, int(apiv1alpha1.IndexLeader), isLeader)
 
 		isLagged, isReplicating, isReadOnly := corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown
 		sqlRunner, closeConn, err := s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
@@ -234,7 +208,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 			}
 
 			if !utils.ExistUpdateFile() &&
-				isLeader == corev1.ConditionTrue &&
+				node.RaftStatus.Role == string(utils.Leader) &&
 				isReadOnly != corev1.ConditionFalse {
 				log.V(1).Info("try to correct the leader writeable", "node", node.Name)
 				sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL read_only=off"))
@@ -307,27 +281,21 @@ func (s *StatusSyncer) updateNodeCondition(node *apiv1alpha1.NodeStatus, idx int
 	}
 }
 
-// checkRole used to check whether the mysql role is leader.
-func checkRole(host string, rootPasswd []byte) (corev1.ConditionStatus, error) {
-	body, err := xenonHttpRequest(host, "GET", "/v1/raft/status", rootPasswd, nil)
+// updateNodeRaftStatus Update Node RaftStatus.
+func (s *StatusSyncer) updateNodeRaftStatus(node *apiv1alpha1.NodeStatus) error {
+	raftStatus, err := s.XenonExecutor.RaftStatus(node.Name)
 	if err != nil {
-		return corev1.ConditionUnknown, err
+		return err
 	}
+	node.RaftStatus = *raftStatus
 
-	var out map[string]interface{}
-	if err = unmarshalJSON(body, &out); err != nil {
-		return corev1.ConditionUnknown, err
+	isLeader := corev1.ConditionFalse
+	if node.RaftStatus.Role == string(utils.Leader) {
+		isLeader = corev1.ConditionTrue
 	}
-
-	if out["state"] == "LEADER" {
-		return corev1.ConditionTrue, nil
-	}
-
-	if out["state"] == "FOLLOWER" {
-		return corev1.ConditionFalse, nil
-	}
-
-	return corev1.ConditionUnknown, nil
+	// update apiv1alpha1.NodeConditionLeader.
+	s.updateNodeCondition(node, int(apiv1alpha1.IndexLeader), isLeader)
+	return nil
 }
 
 // setPodHealthy set the pod lable healthy.
@@ -351,19 +319,5 @@ func (s *StatusSyncer) setPodHealthy(ctx context.Context, pod *corev1.Pod, node 
 			return err
 		}
 	}
-	return nil
-}
-
-func unmarshalJSON(in io.Reader, obj interface{}) error {
-	body, err := ioutil.ReadAll(in)
-	if err != nil {
-		return fmt.Errorf("io read error: %s", err)
-	}
-
-	if err = json.Unmarshal(body, obj); err != nil {
-		log.V(1).Info("error unmarshal data", "body", string(body))
-		return err
-	}
-
 	return nil
 }
