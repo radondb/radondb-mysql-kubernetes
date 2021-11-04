@@ -247,7 +247,7 @@ type Persistence struct {
 type ClusterState string
 
 const (
-	// ClusterInitState  indicates whether the cluster is initializing.
+	// ClusterInitState indicates whether the cluster is initializing.
 	ClusterInitState ClusterState = "Initializing"
 	// ClusterUpdateState indicates whether the cluster is being updated.
 	ClusterUpdateState ClusterState = "Updating"
@@ -255,6 +255,10 @@ const (
 	ClusterReadyState ClusterState = "Ready"
 	// ClusterCloseState indicates whether the cluster is closed.
 	ClusterCloseState ClusterState = "Closed"
+	// ClusterScaleInState indicates whether the cluster replicas is decreasing.
+	ClusterScaleInState ClusterState = "ScaleIn"
+	// ClusterScaleOutState indicates whether the cluster replicas is increasing.
+	ClusterScaleOutState ClusterState = "ScaleOut"
 )
 
 // ClusterConditionType defines type for cluster condition type.
@@ -271,6 +275,10 @@ const (
 	ConditionClose ClusterConditionType = "Closed"
 	// ConditionError indicates whether there is an error in the cluster.
 	ConditionError ClusterConditionType = "Error"
+	// ConditionScaleIn indicates whether the cluster replicas is decreasing.
+	ConditionScaleIn ClusterConditionType = "ScaleIn"
+	// ConditionScaleOut indicates whether the cluster replicas is increasing.
+	ConditionScaleOut ClusterConditionType = "ScaleOut"
 )
 
 // ClusterCondition defines type for cluster conditions.
