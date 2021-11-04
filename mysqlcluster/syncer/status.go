@@ -254,6 +254,10 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		}
 	}
 
+	// Delete node status of nodes that have been deleted.
+	if len(s.Status.Nodes) > len(pods) {
+		s.Status.Nodes = s.Status.Nodes[:len(pods)]
+	}
 	return nil
 }
 
