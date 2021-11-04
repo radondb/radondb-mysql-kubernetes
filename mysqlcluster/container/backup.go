@@ -17,8 +17,6 @@ limitations under the License.
 package container
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -58,10 +56,6 @@ func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
 		{
 			Name:  "SERVICE_NAME",
 			Value: c.GetNameForResource(utils.HeadlessSVC),
-		},
-		{
-			Name:  "REPLICAS",
-			Value: fmt.Sprintf("%d", *c.Spec.Replicas),
 		},
 		{
 			Name:  "MYSQL_ROOT_PASSWORD",

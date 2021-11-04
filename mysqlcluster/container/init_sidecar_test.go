@@ -17,7 +17,6 @@ limitations under the License.
 package container
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -91,10 +90,6 @@ var (
 		{
 			Name:  "STATEFULSET_NAME",
 			Value: "sample-mysql",
-		},
-		{
-			Name:  "REPLICAS",
-			Value: fmt.Sprintf("%d", *testInitSidecarCluster.Spec.Replicas),
 		},
 		{
 			Name:  "ADMIT_DEFEAT_HEARBEAT_COUNT",

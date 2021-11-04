@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	xenonReplicas     int32 = 1
+	xenonReplicas     int32 = 3
 	xenonMysqlCluster       = mysqlv1alpha1.MysqlCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "sample",
@@ -70,19 +70,7 @@ func TestGetXenonEnvVar(t *testing.T) {
 }
 
 func TestGetXenonLifecycle(t *testing.T) {
-	lifecycle := &corev1.Lifecycle{
-		PostStart: &corev1.Handler{
-			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "/scripts/post-start.sh"},
-			},
-		},
-		PreStop: &corev1.Handler{
-			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "/scripts/pre-stop.sh"},
-			},
-		},
-	}
-	assert.Equal(t, lifecycle, xenonCase.Lifecycle)
+	assert.Nil(t, xenonCase.Lifecycle)
 }
 
 func TestGetXenonResources(t *testing.T) {
