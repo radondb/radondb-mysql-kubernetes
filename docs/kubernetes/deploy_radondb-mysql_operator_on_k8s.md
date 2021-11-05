@@ -40,34 +40,37 @@ RadonDB MySQL 支持在 Kubernetes 上安装部署和管理，自动执行与运
 
 ## 部署步骤
 
-### 步骤 1: 克隆代码
+### 步骤 1: 添加 helm 仓库
 
 ```
-git clone https://github.com/radondb/radondb-mysql-kubernetes.git
+helm repo add radondb https://radondb.github.io/radondb-mysql-kubernetes/
+```
+
+校验仓库，可查看到名为 `radondb/mysql-operator` 的 chart。
+```
+helm search repo
+NAME                            CHART VERSION   APP VERSION                     DESCRIPTION                 
+radondb/mysql-operator          0.1.1           latest                          Open Source，High Availability Cluster，based on MySQL                     
 ```
 
 ### 步骤 2: 部署 Operator
 
-使用 Helm(V3版本) 安装 chart 的指令如下。
 
-```
-helm install [NAME] [CHART] [flags]
-```
 
 以下指定 release 名为 `demo` , 创建一个名为 `demo-mysql-operator` 的 [Deployment](#7-deployments)。
 
 ```
-helm install demo radondb-mysql-kubernetes/charts/mysql-operator
+helm install demo radondb/mysql-operator
 ```
 
-> 说明：在这一步骤中默认将同时创建一个名为 `mysqlclusters.mysql.radondb.com` 的 [CRD](#8-CRD)。
+> 说明：在这一步骤中默认将同时创建集群所需的 [CRD](#8-CRD)。
 
 ### 步骤 3: 部署 RadonDB MySQL 集群
 
 执行以下指令，以默认参数为 CRD `mysqlclusters.mysql.radondb.com` 创建一个实例，即创建 RadonDB MySQL 集群。您可以参照[配置](#配置)自定义集群部署参数。
 
 ```kubectl
-kubectl apply -f radondb-mysql-kubernetes/config/samples/mysql_v1alpha1_mysqlcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/radondb/radondb-mysql-kubernetes/main/config/samples/mysql_v1alpha1_mysqlcluster.yaml
 ```
 
 ## 部署校验
@@ -88,12 +91,13 @@ service/mysql-operator-metrics   ClusterIP   10.96.142.22    <none>        8443/
 
 ### 校验 RadonDB MySQL 集群
 
-执行如下命令，将查看到名为 `mysqlclusters.mysql.radondb.com` 的 CRD。
+执行如下命令，将查看到如下 CRD。
 
 ```shell
-kubectl get crd
-NAME                                                  CREATED AT
-mysqlclusters.mysql.radondb.com                            2021-06-29T02:28:36Z
+kubectl get crd | grep mysql.radondb.com
+backups.mysql.radondb.com                             2021-11-02T07:00:01Z
+mysqlclusters.mysql.radondb.com                       2021-11-02T07:00:01Z
+mysqlusers.mysql.radondb.com                          2021-11-02T07:00:01Z
 ```
 
 以默认部署为例，执行如下命令将查看到名为 `sample-mysql` 的三节点 RadonDB MySQL 集群及用于访问节点的服务。
@@ -145,13 +149,13 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
 
 当客户端与 RadonDB MySQL 集群不在同一个 NameSpace 中时，可以通过 podIP 或服务 ClusterIP 来连接对应节点。
 
-1. 查询 pod 列表和服务列表，分别获取需要连接的节点所在的pod 名称或对应的服务名称。
+1. 查询 pod 列表和服务列表，分别获取需要连接的节点所在的 pod 名称或对应的服务名称。
 
     ```shell
     $ kubectl get pod,svc
     ```
 
-2. 查看 pod/服务的详细信息，获取对应的IP。
+2. 查看 pod/服务的详细信息，获取对应的 IP。
 
     ```shell
     $ kubectl describe pod <pod 名称>
@@ -166,7 +170,7 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
     $ mysql -h <pod IP/服务 ClusterIP> -u <用户名> -p
     ```
 
-    用户名为 `radondb_usr`，pod IP 为 `10.10.128.136` ，连接示例如下：
+    用户名为 `radondb_usr`，Cluster IP 为 `10.10.128.136` ，连接示例如下：
 
     ```shell
     $ mysql -h 10.10.128.136 -u radondb_usr -p
@@ -194,6 +198,8 @@ kubectl delete mysqlclusters.mysql.radondb.com sample
 
 ```shell
 kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysql.radondb.com
+kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlusers.mysql.radondb.com
+kubectl delete customresourcedefinitions.apiextensions.k8s.io backups.mysql.radondb.com
 ```
 
 ## 配置
@@ -201,49 +207,49 @@ kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysq
 ### 容器配置
 
 | 参数                               | 描述                        | 默认值                                                      |
-|:---------------------------------- |:---------------------------|:----------------------------------------------------------- |
+| :--------------------------------- | :-------------------------- | :---------------------------------------------------------- |
 | MysqlVersion                       | MySQL 版本号                | 5.7                                                         |
 | MysqlOpts.RootPassword             | MySQL Root 用户密码         | ""                                                          |
-| MysqlOpts.User                     | 默认新建的 MySQL 用户名称     | radondb_usr                                                      |
-| MysqlOpts.Password                 | 默认新建的 MySQL 用户密码     | RadonDB@123                                                   |
-| MysqlOpts.Database                 | 默认新建的 MySQL 数据库名称   | radondb                                                   |
+| MysqlOpts.User                     | 默认新建的 MySQL 用户名称   | radondb_usr                                                 |
+| MysqlOpts.Password                 | 默认新建的 MySQL 用户密码   | RadonDB@123                                                 |
+| MysqlOpts.Database                 | 默认新建的 MySQL 数据库名称 | radondb                                                     |
 | MysqlOpts.InitTokuDB               | 是否启用TokuDB              | true                                                        |
-| MysqlOpts.MysqlConf                | MySQL 配置                  |  -                                                          |
+| MysqlOpts.MysqlConf                | MySQL 配置                  | -                                                           |
 | MysqlOpts.Resources                | MySQL 容器配额              | 预留: cpu 100m, 内存 256Mi; </br> 限制: cpu 500m, 内存 1Gi  |
-| XenonOpts.Image                    | xenon(高可用组件)镜像       | radondb/xenon:1.1.5-alpha                                    |
-| XenonOpts.AdmitDefeatHearbeatCount | 允许的最大心跳检测失败次数    | 5                                                           |
-| XenonOpts.ElectionTimeout          | 选举超时时间(单位为毫秒)      | 10000ms                                                     |
+| XenonOpts.Image                    | xenon(高可用组件)镜像       | radondb/xenon:1.1.5-alpha                                   |
+| XenonOpts.AdmitDefeatHearbeatCount | 允许的最大心跳检测失败次数  | 5                                                           |
+| XenonOpts.ElectionTimeout          | 选举超时时间(单位为毫秒)    | 10000ms                                                     |
 | XenonOpts.Resources                | xenon 容器配额              | 预留: cpu 50m, 内存 128Mi; </br> 限制: cpu 100m, 内存 256Mi |
-| MetricsOpts.Enabled                | 是否启用 Metrics(监控)容器      | false                                                       |
-| MetricsOpts.Image                  | Metrics 容器镜像地址            | prom/mysqld-exporter:v0.12.1                                |
+| MetricsOpts.Enabled                | 是否启用 Metrics(监控)容器  | false                                                       |
+| MetricsOpts.Image                  | Metrics 容器镜像        | prom/mysqld-exporter:v0.12.1                                |
 | MetricsOpts.Resources              | Metrics 容器配额            | 预留: cpu 10m, 内存 32Mi; </br> 限制: cpu 100m, 内存 128Mi  |
 
 ### 节点配置
 
-| 参数                      | 描述                                                | 默认值                   |
-|:------------------------- |:-------------------------------------------------- |:------------------------ |
-| Replicas                  | 集群节点数，只允许为0、2、3、5                        | 3                        |
-| PodPolicy.ImagePullPolicy   | 镜像拉取策略, 只允许为 Always/IfNotPresent/Never     | IfNotPresent             |
-| PodPolicy.Labels            | 节点 pod [标签](#1-标签)                            |     -                     |
-| PodPolicy.Annotations       | 节点 pod [注解](#2-注解)                            |     -                    |
-| PodPolicy.Affinity          | 节点 pod [亲和性](#3-亲和性)                         |     -                  |
-| PodPolicy.PriorityClassName | 节点 pod [优先级](#4-优先级)对象名称                   |     -                  |
-| PodPolicy.Tolerations       | 节点 pod [污点容忍度](#5-容忍)列表                   |     -                |
-| PodPolicy.SchedulerName     | 节点 pod [调度器](#6-调度器)名称                     | -                         |
-| PodPolicy.Resources         | 节点 pod 配额                                        | 预留: cpu 10m, 内存 32Mi |
-| PodPolicy.SidecarImage      | Sidecar 镜像                                        | radondb/mysql-sidecar:0.1       |
-| PodPolicy.BusyboxImage      | Busybox 镜像                                         | busybox:1.32             |
-| PodPolicy.SlowLogTail       | 是否开启慢日志跟踪                                     | false                    |
-| PodPolicy.AuditLogTail      | 是否开启审计日志跟踪                                    | false                    |
+| 参数                        | 描述                                             | 默认值                    |
+| :-------------------------- | :----------------------------------------------- | :------------------------ |
+| Replicas                    | 集群节点数，只允许为0、2、3、5                   | 3                         |
+| PodPolicy.ImagePullPolicy   | 镜像拉取策略, 只允许为 Always/IfNotPresent/Never | IfNotPresent              |
+| PodPolicy.Labels            | 节点 pod [标签](#1-标签)                         | -                         |
+| PodPolicy.Annotations       | 节点 pod [注解](#2-注解)                         | -                         |
+| PodPolicy.Affinity          | 节点 pod [亲和性](#3-亲和性)                     | -                         |
+| PodPolicy.PriorityClassName | 节点 pod [优先级](#4-优先级)对象名称             | -                         |
+| PodPolicy.Tolerations       | 节点 pod [污点容忍度](#5-容忍)列表               | -                         |
+| PodPolicy.SchedulerName     | 节点 pod [调度器](#6-调度器)名称                 | -                         |
+| PodPolicy.ExtraResources    | 节点容器配额（除 MySQL 和 Xenon 之外的容器）     | 预留: cpu 10m, 内存 32Mi  |
+| PodPolicy.SidecarImage      | Sidecar 镜像                                     | radondb/mysql-sidecar:latest |
+| PodPolicy.BusyboxImage      | Busybox 镜像                                     | busybox:1.32              |
+| PodPolicy.SlowLogTail       | 是否开启慢日志跟踪                               | false                     |
+| PodPolicy.AuditLogTail      | 是否开启审计日志跟踪                             | false                     |
 
 ### 持久化配置
 
 | 参数                     | 描述           | 默认值        |
-|:------------------------ |:-------------- |:------------- |
+| :----------------------- | :------------- | :------------ |
 | Persistence.Enabled      | 是否启用持久化 | true          |
 | Persistence.AccessModes  | 存储卷访问模式 | ReadWriteOnce |
-| Persistence.StorageClass | 存储卷类型     |   -            |
-| Persistence.Size         | 存储卷容量     | 10Gi         |
+| Persistence.StorageClass | 存储卷类型     | -             |
+| Persistence.Size         | 存储卷容量     | 10Gi          |
 
 ## 参考
 
