@@ -85,11 +85,11 @@ var (
 		},
 		{
 			Name:  "SERVICE_NAME",
-			Value: "sample-mysql",
+			Value: "sample-mysql-0",
 		},
 		{
 			Name:  "STATEFULSET_NAME",
-			Value: "sample-mysql",
+			Value: "sample-mysql-0",
 		},
 		{
 			Name:  "REPLICAS",
@@ -291,7 +291,7 @@ var (
 			MountPath: utils.InitFileVolumeMountPath,
 		},
 	}
-	initSidecarCase = EnsureContainer("init-sidecar", &testInitSidecarCluster)
+	initSidecarCase = EnsureContainer("init-sidecar", &testInitSidecarCluster, 0)
 )
 
 func TestGetInitSidecarName(t *testing.T) {
@@ -319,7 +319,7 @@ func TestGetInitSidecarEnvVar(t *testing.T) {
 		testTokuDBCluster := mysqlcluster.MysqlCluster{
 			MysqlCluster: &testToKuDBMysqlCluster,
 		}
-		tokudbCase := EnsureContainer("init-sidecar", &testTokuDBCluster)
+		tokudbCase := EnsureContainer("init-sidecar", &testTokuDBCluster, 0)
 		testTokuDBEnv := make([]corev1.EnvVar, len(defaultInitSidecarEnvs))
 		copy(testTokuDBEnv, defaultInitSidecarEnvs)
 		testTokuDBEnv = append(testTokuDBEnv, corev1.EnvVar{
@@ -335,7 +335,7 @@ func TestGetInitSidecarEnvVar(t *testing.T) {
 		testBackupMysqlClusterWraper := mysqlcluster.MysqlCluster{
 			MysqlCluster: &testBackupMysqlCluster,
 		}
-		BackupCase := EnsureContainer("init-sidecar", &testBackupMysqlClusterWraper)
+		BackupCase := EnsureContainer("init-sidecar", &testBackupMysqlClusterWraper, 0)
 		testBackupEnv := make([]corev1.EnvVar, len(defaultInitSidecarEnvs))
 		copy(testBackupEnv, defaultInitSidecarEnvs)
 		testBackupEnv = append(testBackupEnv,
@@ -431,7 +431,7 @@ func TestGetInitSidecarVolumeMounts(t *testing.T) {
 		testTokuDBCluster := mysqlcluster.MysqlCluster{
 			MysqlCluster: &testToKuDBMysqlCluster,
 		}
-		tokudbCase := EnsureContainer("init-sidecar", &testTokuDBCluster)
+		tokudbCase := EnsureContainer("init-sidecar", &testTokuDBCluster, 0)
 		tokuDBVolumeMounts := make([]corev1.VolumeMount, 5, 6)
 		copy(tokuDBVolumeMounts, defaultInitsidecarVolumeMounts)
 		tokuDBVolumeMounts = append(tokuDBVolumeMounts, corev1.VolumeMount{
@@ -447,7 +447,7 @@ func TestGetInitSidecarVolumeMounts(t *testing.T) {
 		testPersistenceCluster := mysqlcluster.MysqlCluster{
 			MysqlCluster: &testPersistenceMysqlCluster,
 		}
-		persistenceCase := EnsureContainer("init-sidecar", &testPersistenceCluster)
+		persistenceCase := EnsureContainer("init-sidecar", &testPersistenceCluster, 0)
 		persistenceVolumeMounts := make([]corev1.VolumeMount, 5, 6)
 		copy(persistenceVolumeMounts, defaultInitsidecarVolumeMounts)
 		persistenceVolumeMounts = append(persistenceVolumeMounts, corev1.VolumeMount{

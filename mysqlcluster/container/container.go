@@ -28,7 +28,7 @@ type container interface {
 	getName() string
 	getImage() string
 	getCommand() []string
-	getEnvVars() []corev1.EnvVar
+	getEnvVars(ordinal int) []corev1.EnvVar
 	getLifecycle() *corev1.Lifecycle
 	getResources() corev1.ResourceRequirements
 	getPorts() []corev1.ContainerPort
@@ -38,7 +38,7 @@ type container interface {
 }
 
 // EnsureContainer ensure a container by the giving name.
-func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container {
+func EnsureContainer(name string, c *mysqlcluster.MysqlCluster, ordinal int) corev1.Container {
 	var ctr container
 	switch name {
 	case utils.ContainerInitSidecarName:
@@ -64,7 +64,7 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 		Image:           ctr.getImage(),
 		ImagePullPolicy: c.Spec.PodPolicy.ImagePullPolicy,
 		Command:         ctr.getCommand(),
-		Env:             ctr.getEnvVars(),
+		Env:             ctr.getEnvVars(ordinal),
 		Lifecycle:       ctr.getLifecycle(),
 		Resources:       ctr.getResources(),
 		Ports:           ctr.getPorts(),

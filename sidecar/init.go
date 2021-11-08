@@ -178,7 +178,7 @@ func runInitCommand(cfg *Config) error {
 			return fmt.Errorf("failed to disable the run restore: %s", err)
 		}
 	}
-
+	log.Info("nice", "hostname", cfg.HostName)
 	log.Info("init command success")
 	return nil
 }

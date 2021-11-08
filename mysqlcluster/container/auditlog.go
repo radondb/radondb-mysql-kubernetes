@@ -47,7 +47,7 @@ func (c *auditLog) getCommand() []string {
 }
 
 // getEnvVars get the container env.
-func (c *auditLog) getEnvVars() []corev1.EnvVar {
+func (c *auditLog) getEnvVars(ordinal int) []corev1.EnvVar {
 	return nil
 }
 

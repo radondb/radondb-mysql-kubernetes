@@ -35,8 +35,9 @@ import (
 var log = logf.Log.WithName("backup.syncer.job")
 
 type jobSyncer struct {
-	job    *batchv1.Job
-	backup *backup.Backup
+	job     *batchv1.Job
+	backup  *backup.Backup
+	ordinal int
 }
 
 // NewJobSyncer returns a syncer for backup jobs

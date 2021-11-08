@@ -48,7 +48,7 @@ func (c *initMysql) getCommand() []string {
 }
 
 // getEnvVars get the container env.
-func (c *initMysql) getEnvVars() []corev1.EnvVar {
+func (c *initMysql) getEnvVars(ordinal int) []corev1.EnvVar {
 	envs := []corev1.EnvVar{
 		{
 			Name:  "MYSQL_ALLOW_EMPTY_PASSWORD",

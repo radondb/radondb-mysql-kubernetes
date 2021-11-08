@@ -17,6 +17,8 @@ limitations under the License.
 package syncer
 
 import (
+	"fmt"
+
 	"github.com/presslabs/controller-util/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,18 +31,19 @@ import (
 )
 
 // NewHeadlessSVCSyncer returns headless service syncer.
-func NewHeadlessSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Interface {
+func NewHeadlessSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster, ordinal int) syncer.Interface {
 	service := &corev1.Service{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Service",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(utils.HeadlessSVC),
+			Name:      c.GetNameForResource(utils.HeadlessSVC) + fmt.Sprintf("-%d", ordinal),
 			Namespace: c.Namespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       "mysql",
 				"app.kubernetes.io/managed-by": "mysql.radondb.com",
+				"mysql.radondb.com/ordinal":    fmt.Sprintf("%d", ordinal),
 			},
 		},
 	}
@@ -51,6 +54,7 @@ func NewHeadlessSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) synce
 		service.Spec.Selector = labels.Set{
 			"app.kubernetes.io/name":       "mysql",
 			"app.kubernetes.io/managed-by": "mysql.radondb.com",
+			"mysql.radondb.com/ordinal":    fmt.Sprintf("%d", ordinal),
 		}
 
 		// Use `publishNotReadyAddresses` to be able to access pods even if the pod is not ready.

@@ -50,7 +50,7 @@ func (c *mysql) getCommand() []string {
 }
 
 // getEnvVars get the container env.
-func (c *mysql) getEnvVars() []corev1.EnvVar {
+func (c *mysql) getEnvVars(ordinal int) []corev1.EnvVar {
 	if c.Spec.MysqlOpts.InitTokuDB {
 		return []corev1.EnvVar{
 			{

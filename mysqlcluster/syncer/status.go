@@ -200,7 +200,8 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 
 	for _, pod := range pods {
 		podName := pod.Name
-		host := fmt.Sprintf("%s.%s.%s", podName, svcName, nameSpace)
+		ordinal, _ := utils.GetOrdinal(podName)
+		host := fmt.Sprintf("%s.%s.%s", podName, fmt.Sprintf("%s-%d", svcName, ordinal), nameSpace)
 		index := s.getNodeStatusIndex(host)
 		node := &s.Status.Nodes[index]
 		node.Message = ""

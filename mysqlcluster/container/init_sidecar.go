@@ -50,7 +50,7 @@ func (c *initSidecar) getCommand() []string {
 }
 
 // getEnvVars get the container env.
-func (c *initSidecar) getEnvVars() []corev1.EnvVar {
+func (c *initSidecar) getEnvVars(ordinal int) []corev1.EnvVar {
 	sctName := c.GetNameForResource(utils.Secret)
 	sctNamebackup := c.Spec.BackupSecretName
 	envs := []corev1.EnvVar{
@@ -73,11 +73,11 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 		},
 		{
 			Name:  "SERVICE_NAME",
-			Value: c.GetNameForResource(utils.HeadlessSVC),
+			Value: c.GetNameForResource(utils.HeadlessSVC) + fmt.Sprintf("-%d", ordinal),
 		},
 		{
 			Name:  "STATEFULSET_NAME",
-			Value: c.GetNameForResource(utils.StatefulSet),
+			Value: c.GetNameForResource(utils.StatefulSet) + fmt.Sprintf("-%d", ordinal),
 		},
 		{
 			Name:  "REPLICAS",

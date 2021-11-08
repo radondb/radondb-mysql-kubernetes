@@ -97,7 +97,7 @@ var (
 			},
 		},
 	}
-	initMysqlCase = EnsureContainer("init-mysql", &testInitMysqlCluster)
+	initMysqlCase = EnsureContainer("init-mysql", &testInitMysqlCluster, 0)
 )
 
 func TestGetInitMysqlName(t *testing.T) {
@@ -124,7 +124,7 @@ func TestGetInitMysqlEnvVar(t *testing.T) {
 		testTokuDBCluster := mysqlcluster.MysqlCluster{
 			MysqlCluster: &testToKuDBMysqlCluster,
 		}
-		tokudbCase := EnsureContainer("init-mysql", &testTokuDBCluster)
+		tokudbCase := EnsureContainer("init-mysql", &testTokuDBCluster, 0)
 		testEnv := append(initMysqlEnvs, corev1.EnvVar{
 			Name:  "INIT_TOKUDB",
 			Value: "1",

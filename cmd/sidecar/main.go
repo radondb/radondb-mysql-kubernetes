@@ -89,6 +89,7 @@ func main() {
 		cmd.AddCommand(reqBackupCmd)
 	} else {
 		initCfg := sidecar.NewInitConfig()
+		log.Info("nice", "hostname", initCfg.HostName)
 		initCmd := sidecar.NewInitCommand(initCfg)
 		cmd.AddCommand(initCmd)
 	}

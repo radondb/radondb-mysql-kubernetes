@@ -51,5 +51,6 @@ func (b *Backup) GetNameForJob() string {
 
 // Create the backup Domain Name.
 func (b *Backup) GetBackupURL(cluster_name string, hostname string) string {
-	return fmt.Sprintf("%s.%s-mysql.%s:%v", hostname, cluster_name, b.Namespace, utils.XBackupPort)
+	ordinal, _ := utils.GetOrdinal(hostname)
+	return fmt.Sprintf("%s.%s-mysql-%d.%s:%v", hostname, cluster_name, ordinal, b.Namespace, utils.XBackupPort)
 }

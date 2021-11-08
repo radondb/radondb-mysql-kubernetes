@@ -41,7 +41,7 @@ var (
 	testAuditlogCluster = mysqlcluster.MysqlCluster{
 		MysqlCluster: &auditlogMysqlCluster,
 	}
-	auditLogCase         = EnsureContainer("auditlog", &testAuditlogCluster)
+	auditLogCase         = EnsureContainer("auditlog", &testAuditlogCluster, 0)
 	auditlogCommand      = []string{"tail", "-f", "/var/log/mysql" + "/mysql-audit.log"}
 	auditlogVolumeMounts = []corev1.VolumeMount{
 		{

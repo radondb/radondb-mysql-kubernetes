@@ -47,7 +47,7 @@ func (c *slowLog) getCommand() []string {
 }
 
 // getEnvVars get the container env.
-func (c *slowLog) getEnvVars() []corev1.EnvVar {
+func (c *slowLog) getEnvVars(ordinal int) []corev1.EnvVar {
 	return nil
 }
 

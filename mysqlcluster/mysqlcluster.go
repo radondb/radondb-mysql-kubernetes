@@ -103,6 +103,11 @@ func (c *MysqlCluster) GetLabels() labels.Set {
 	return labels
 }
 
+func (c *MysqlCluster) AppendOrdinal(labels labels.Set, ordinal int) labels.Set {
+	labels["mysql.radondb.com/ordinal"] = fmt.Sprintf("%d", ordinal)
+	return labels
+}
+
 // GetSelectorLabels returns the labels that will be used as selector
 func (c *MysqlCluster) GetSelectorLabels() labels.Set {
 	return labels.Set{
@@ -218,7 +223,7 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 }
 
 // EnsureVolumeClaimTemplates ensure the volume claim templates.
-func (c *MysqlCluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]corev1.PersistentVolumeClaim, error) {
+func (c *MysqlCluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme, ordinal int) ([]corev1.PersistentVolumeClaim, error) {
 	if !c.Spec.Persistence.Enabled {
 		return nil, nil
 	}
@@ -228,12 +233,15 @@ func (c *MysqlCluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]cor
 			*c.Spec.Persistence.StorageClass = ""
 		}
 	}
-
+	labels := c.GetLabels()
+	if labels != nil {
+		labels = c.AppendOrdinal(labels, ordinal)
+	}
 	data := corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      utils.DataVolumeName,
 			Namespace: c.Namespace,
-			Labels:    c.GetLabels(),
+			Labels:    labels,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: c.Spec.Persistence.AccessModes,

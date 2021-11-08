@@ -48,7 +48,7 @@ var (
 	testMetricsCluster = mysqlcluster.MysqlCluster{
 		MysqlCluster: &metricsMysqlCluster,
 	}
-	metricsCase = EnsureContainer("metrics", &testMetricsCluster)
+	metricsCase = EnsureContainer("metrics", &testMetricsCluster, 0)
 )
 
 func TestGetMetricsName(t *testing.T) {

@@ -18,7 +18,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/presslabs/controller-util/syncer"
 	appsv1 "k8s.io/api/apps/v1"
@@ -27,6 +30,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -115,17 +119,21 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		clustersyncer.NewRoleSyncer(r.Client, instance),
 		clustersyncer.NewRoleBindingSyncer(r.Client, instance),
 		clustersyncer.NewServiceAccountSyncer(r.Client, instance),
-		clustersyncer.NewHeadlessSVCSyncer(r.Client, instance),
+
 		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
 		clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
-		clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, r.SQLRunnerFactory),
+		//clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, r.SQLRunnerFactory),
 		clustersyncer.NewPDBSyncer(r.Client, instance),
 	}
 
 	if instance.Spec.MetricsOpts.Enabled {
-		syncers = append(syncers, clustersyncer.NewMetricsSVCSyncer(r.Client, instance))
+		for ordinal := 0; ordinal < int(*instance.Spec.Replicas); ordinal++ {
+			syncers = append(syncers, clustersyncer.NewMetricsSVCSyncer(r.Client, instance, ordinal))
+		}
 	}
-
+	if err = r.UpdateStatefulSet(ctx, req, instance, cmRev, sctRev, &syncers); err != nil {
+		return ctrl.Result{}, err
+	}
 	// run the syncers
 	for _, sync := range syncers {
 		if err = syncer.Sync(ctx, sync, r.Recorder); err != nil {
@@ -134,6 +142,67 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *MysqlClusterReconciler) UpdateStatefulSet(ctx context.Context,
+	req ctrl.Request, instance *mysqlcluster.MysqlCluster, cmRev, sctRev string,
+	syncers *[]syncer.Interface) error {
+	// check the statefulset num, delete the ordinal overload
+	sfses := appsv1.StatefulSetList{}
+	//lables := instance.GetLabels()
+	if err := r.List(ctx,
+		&sfses,
+		&client.ListOptions{
+			Namespace: req.Namespace,
+			//LabelSelector: lables.AsSelector(),
+		},
+	); err != nil {
+		return err
+	}
+	for _, sfs := range sfses.Items {
+		idx := strings.LastIndexAny(sfs.Name, "-")
+		if idx == -1 {
+			return fmt.Errorf("failed to extract ordinal from name: %s", sfs.Name)
+		}
+		//1. change it to delete follower
+		ordinal, _ := strconv.Atoi(sfs.Name[idx+1:])
+		if ordinal >= int(*instance.Spec.Replicas) {
+			headless := corev1.Service{}
+			namespacedNameService := types.NamespacedName{
+				Name:      sfs.Name,
+				Namespace: req.Namespace,
+			}
+			if err := r.Get(ctx, namespacedNameService, &headless); err != nil {
+				return err
+			}
+			pvc := corev1.PersistentVolumeClaim{}
+			namespacedNamePVC := types.NamespacedName{
+				Name:      "data-" + instance.Name + "-" + strconv.Itoa(ordinal),
+				Namespace: req.Namespace,
+			}
+			if err := r.Get(ctx, namespacedNamePVC, &pvc); err != nil {
+				return err
+			}
+			if err := r.Delete(ctx, &pvc); err != nil {
+				return err
+			}
+
+			if err := r.Delete(ctx, &sfs); err != nil {
+				return err
+			}
+			if err := r.Delete(ctx, &headless); err != nil {
+				return err
+			}
+
+		}
+	}
+	for ordinal := 0; ordinal < int(*instance.Spec.Replicas); ordinal++ {
+		*syncers = append(*syncers,
+			clustersyncer.NewHeadlessSVCSyncer(r.Client, instance, ordinal),
+			clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, ordinal, r.SQLRunnerFactory),
+		)
+	}
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
