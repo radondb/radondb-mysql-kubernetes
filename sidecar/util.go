@@ -63,6 +63,9 @@ var (
 
 	// xcloudCommand is the upload tool file name.
 	xcloudCommand = "xbcloud"
+
+	// clone restore init data directory.
+	backupInitDirectory = "initbackup"
 )
 
 // copyFile the src file to dst.

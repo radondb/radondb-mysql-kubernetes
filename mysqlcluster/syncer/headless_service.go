@@ -56,14 +56,17 @@ func NewHeadlessSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) synce
 		// Use `publishNotReadyAddresses` to be able to access pods even if the pod is not ready.
 		service.Spec.PublishNotReadyAddresses = true
 
-		if len(service.Spec.Ports) != 1 {
-			service.Spec.Ports = make([]corev1.ServicePort, 1)
+		if len(service.Spec.Ports) != 2 {
+			service.Spec.Ports = make([]corev1.ServicePort, 2)
 		}
 
 		service.Spec.Ports[0].Name = utils.MysqlPortName
 		service.Spec.Ports[0].Port = utils.MysqlPort
 		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MysqlPort)
-
+		//xtrabckup
+		service.Spec.Ports[1].Name = utils.XBackupPortName
+		service.Spec.Ports[1].Port = utils.XBackupPort
+		service.Spec.Ports[1].TargetPort = intstr.FromInt(utils.XBackupPort)
 		return nil
 	})
 }

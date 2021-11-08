@@ -108,6 +108,10 @@ var (
 			Value: "",
 		},
 		{
+			Name:  "CLUSTER_NAME",
+			Value: "sample",
+		},
+		{
 			Name: "MYSQL_ROOT_PASSWORD",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{

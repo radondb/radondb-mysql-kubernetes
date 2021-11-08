@@ -18,9 +18,12 @@ package sidecar
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
+	"strings"
 
 	"github.com/blang/semver"
 	"github.com/go-ini/ini"
@@ -116,6 +119,12 @@ type Config struct {
 
 	// directory in S3 bucket for cluster restore from
 	XRestoreFrom string
+
+	// Clone flag
+	CloneFlag bool
+
+	// GtidPurged is the gtid set of the slave cluster to purged.
+	GtidPurged string
 }
 
 // NewInitConfig returns a pointer to Config.
@@ -183,6 +192,10 @@ func NewInitConfig() *Config {
 		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
 		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
 		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
+
+		ClusterName: getEnvValue("CLUSTER_NAME"),
+		CloneFlag:   false,
+		GtidPurged:  "",
 	}
 }
 
@@ -191,7 +204,7 @@ func NewBackupConfig() *Config {
 	return &Config{
 		NameSpace:    getEnvValue("NAMESPACE"),
 		ServiceName:  getEnvValue("SERVICE_NAME"),
-		ClusterName:  getEnvValue("SERVICE_NAME"),
+		ClusterName:  getEnvValue("CLUSTER_NAME"),
 		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
 
 		BackupUser:     getEnvValue("BACKUP_USER"),
@@ -299,48 +312,51 @@ func (cfg *Config) buildXenonConf() []byte {
 	hostName := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
 
 	str := fmt.Sprintf(`{
-    "log": {
-        "level": "INFO"
-    },
-    "server": {
-        "endpoint": "%s:%d",
-        "peer-address": "%s:%d",
-        "enable-apis": true
-    },
-    "replication": {
-        "passwd": "%s",
-        "user": "%s"
-    },
-    "rpc": {
-        "request-timeout": %d
-    },
-    "mysql": {
-        "admit-defeat-ping-count": 3,
-        "admin": "root",
-        "ping-timeout": %d,
-        "passwd": "%s",
-        "host": "localhost",
-        "version": "%s",
-        "master-sysvars": "%s",
-        "slave-sysvars": "%s",
-        "port": 3306,
-        "monitor-disabled": true
-    },
-    "raft": {
-        "election-timeout": %d,
-        "admit-defeat-hearbeat-count": %d,
-        "heartbeat-timeout": %d,
-        "meta-datadir": "/var/lib/xenon/",
-        "leader-start-command": "/scripts/leader-start.sh",
-        "leader-stop-command": "/scripts/leader-stop.sh",
-        "semi-sync-degrade": true,
-        "purge-binlog-disabled": true,
-        "super-idle": false
-    }
-}
-`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser, requestTimeout,
+		"log": {
+			"level": "INFO"
+		},
+		"server": {
+			"endpoint": "%s:%d",
+			"peer-address": "%s:%d",
+			"enable-apis": true
+		},
+		"replication": {
+			"passwd": "%s",
+			"user": "%s",
+			"gtid-purged": "%s"
+		},
+		"rpc": {
+			"request-timeout": %d
+		},
+		"mysql": {
+			"admit-defeat-ping-count": 3,
+			"admin": "root",
+			"ping-timeout": %d,
+			"passwd": "%s",
+			"host": "localhost",
+			"version": "%s",
+			"master-sysvars": "%s",
+			"slave-sysvars": "%s",
+			"port": 3306,
+			"monitor-disabled": true
+		},
+		"raft": {
+			"election-timeout": %d,
+			"admit-defeat-hearbeat-count": %d,
+			"heartbeat-timeout": %d,
+			"meta-datadir": "/var/lib/xenon/",
+			"leader-start-command": "/scripts/leader-start.sh",
+			"leader-stop-command": "/scripts/leader-stop.sh",
+			"semi-sync-degrade": true,
+			"purge-binlog-disabled": true,
+			"super-idle": false
+		}
+	}
+	`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser,
+		cfg.GtidPurged, requestTimeout,
 		pingTimeout, cfg.RootPassword, version, srcSysVars, replicaSysVars, cfg.ElectionTimeout,
 		cfg.AdmitDefeatHearbeatCount, heartbeatTimeout)
+
 	return utils.StringToBytes(str)
 }
 
@@ -523,4 +539,79 @@ func (cfg *Config) executeS3Restore(path string) error {
 		return fmt.Errorf("failed to remove backup directory : %s", err)
 	}
 	return nil
+}
+
+// Do Restore after clone.
+func (cfg *Config) executeCloneRestore() error {
+	// Check directory exist, create if not exist.
+	if _, err := os.Stat(utils.DataVolumeMountPath); os.IsNotExist(err) {
+		os.Mkdir(utils.DataVolumeMountPath, 0755)
+	}
+
+	// Empty the directory.
+	dir, err := ioutil.ReadDir(utils.DataVolumeMountPath)
+	if err != nil {
+		return fmt.Errorf("failed to read datadir %s", err)
+	}
+	for _, d := range dir {
+		os.RemoveAll(path.Join([]string{utils.DataVolumeMountPath, d.Name()}...))
+	}
+	// Xtrabackup prepare and apply-log-only.
+	cmd := exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--apply-log-only", "--target-dir=/backup/"+cfg.XRestoreFrom)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup prepare apply-log-only : %s", err)
+	}
+	// Xtrabackup Prepare.
+	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--target-dir=/backup/"+cfg.XRestoreFrom)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup prepare : %s", err)
+	}
+	// Get the backup binlong info.
+	gtid, err := GetXtrabackupGTIDPurged("/backup/" + cfg.XRestoreFrom)
+	if err == nil {
+		cfg.GtidPurged = gtid
+	}
+	log.Info("get master gtid purged :", "gtid purged", cfg.GtidPurged)
+	// Xtrabackup copy-back.
+	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--datadir="+utils.DataVolumeMountPath, "--copy-back", "--target-dir=/backup/"+cfg.XRestoreFrom)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup copy-back : %s", err)
+	}
+	// Remove Relaybin.
+	// Because the relaybin is not used in the restore process,
+	// we can remove it to prevent it to be used by salve in the future.
+	cmd = exec.Command("rm", "-rf", utils.DataVolumeMountPath+"mysql-relay*")
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to remove relay-bin : %s", err)
+	}
+	// Run chown -R mysql.mysql /var/lib/mysql
+	cmd = exec.Command("chown", "-R", "mysql.mysql", utils.DataVolumeMountPath)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chown -R mysql.mysql : %s", err)
+	}
+	log.Info("execute clone restore success")
+	return nil
+}
+
+// Parse the xtrabackup_binlog_info, the format is filename \t position \t gitid1 \ngitid2 ...
+// or filename \t position\n
+// Get the gtid when it is existed, or return empty string.
+// It used to purged the gtid when start the mysqld slave.
+func GetXtrabackupGTIDPurged(backuppath string) (string, error) {
+	byteStream, err := ioutil.ReadFile(fmt.Sprintf("%s/xtrabackup_binlog_info", backuppath))
+	if err != nil {
+		return "", err
+	}
+	line := strings.TrimSuffix(string(byteStream), "\n")
+	ss := strings.Split(line, "\t")
+	if len(ss) != 3 {
+		return "", fmt.Errorf("info.file.content.invalid[%v]", string(byteStream))
+	}
+	// Replace multi gtidset \n
+	return strings.Replace(ss[2], "\n", "", -1), nil
 }
