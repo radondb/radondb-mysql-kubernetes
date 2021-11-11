@@ -131,17 +131,17 @@ func TestGetSelectorLabels(t *testing.T) {
 }
 
 func TestGetMySQLVersion(t *testing.T) {
-	//other 8.0 ->  5.7.34
+	// Invalid, currently not support: 8.0 -> 0.0.0
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Spec.MysqlVersion = "8.0"
 		testCase := MysqlCluster{
 			&testMysqlCluster,
 		}
-		want := "5.7.34"
+		want := utils.InvalidMySQLVersion
 		assert.Equal(t, want, testCase.GetMySQLVersion())
 	}
-	//MySQLTagsToSemVer 5.7 -> 5.7.34
+	// MySQLTagsToSemVer 5.7 -> 5.7.34
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Spec.MysqlVersion = "5.7"
@@ -151,14 +151,14 @@ func TestGetMySQLVersion(t *testing.T) {
 		want := "5.7.34"
 		assert.Equal(t, want, testCase.GetMySQLVersion())
 	}
-	//MysqlImageVersions 5.7.34 -> 5.7.34
+	// Invalid, not support MysqlImageVersions 5.7.34 -> 5.7.34
 	{
 		testMysqlCluster := mysqlCluster
 		testMysqlCluster.Spec.MysqlVersion = "5.7.34"
 		testCase := MysqlCluster{
 			&testMysqlCluster,
 		}
-		want := "5.7.34"
+		want := utils.InvalidMySQLVersion
 		assert.Equal(t, want, testCase.GetMySQLVersion())
 	}
 }

@@ -54,6 +54,7 @@ var (
 			MetricsOpts: mysqlv1alpha1.MetricsOpts{
 				Enabled: false,
 			},
+			MysqlVersion: "5.7",
 			MysqlOpts: mysqlv1alpha1.MysqlOpts{
 				InitTokuDB: false,
 			},
