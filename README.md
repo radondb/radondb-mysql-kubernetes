@@ -1,1 +1,1 @@
-# krypton-helm
+# operator-charts
