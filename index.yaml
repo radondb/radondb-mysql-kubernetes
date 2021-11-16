@@ -3,12 +3,22 @@ entries:
   mysql-operator:
   - apiVersion: v2
     appVersion: latest
-    created: "2021-11-15T16:31:51.408053249+08:00"
+    created: "2021-11-16T14:46:46.317180987+08:00"
     description: Open Source，High Availability Cluster，based on MySQL.
-    digest: b69ecaca552e39d15ed480bbf7f392522978b00a6cc488157268b4aff65842dc
+    digest: ef1d7d64fe5698de60a37abc4752226d5380b596946c36ed44edba567676bbe6
     name: mysql-operator
     type: application
     urls:
     - https://radondb.github.io/radondb-mysql-kubernetes/mysql-operator-0.1.1.tgz
     version: 0.1.1
-generated: "2021-11-15T16:31:51.407159515+08:00"
+  - apiVersion: v2
+    appVersion: v2.1.0
+    created: "2021-11-16T14:46:46.316113442+08:00"
+    description: Open Source，High Availability Cluster，based on MySQL.
+    digest: 86d0dff77f8bc9a645f4ee6d22d4500f630dca92bbdd9bec4a418e0339e196df
+    name: mysql-operator
+    type: application
+    urls:
+    - https://radondb.github.io/radondb-mysql-kubernetes/mysql-operator-0.1.0.tgz
+    version: 0.1.0
+generated: "2021-11-16T14:46:46.315116517+08:00"
