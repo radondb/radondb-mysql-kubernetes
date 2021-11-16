@@ -189,7 +189,7 @@ func (r *MysqlUserReconciler) reconcileUserInDB(ctx context.Context, mysqlUser *
 	}
 
 	// Remove allowed hosts for user.
-	toRemove := stringDiffIn(mysqlUser.Status.AllowedHosts, mysqlUser.Spec.Hosts)
+	toRemove := utils.StringDiffIn(mysqlUser.Status.AllowedHosts, mysqlUser.Spec.Hosts)
 	for _, host := range toRemove {
 		if err := internal.DropUser(sqlRunner, mysqlUser.Spec.User, host); err != nil {
 			return err
@@ -197,27 +197,6 @@ func (r *MysqlUserReconciler) reconcileUserInDB(ctx context.Context, mysqlUser *
 	}
 
 	return nil
-}
-
-func stringDiffIn(actual, desired []string) []string {
-	diff := []string{}
-	for _, aStr := range actual {
-		// If is not in the desired list remove it.
-		if _, exists := stringIn(aStr, desired); !exists {
-			diff = append(diff, aStr)
-		}
-	}
-
-	return diff
-}
-
-func stringIn(str string, strs []string) (int, bool) {
-	for i, s := range strs {
-		if s == str {
-			return i, true
-		}
-	}
-	return 0, false
 }
 
 func (r *MysqlUserReconciler) dropUserFromDB(ctx context.Context, mysqlUser *mysqluser.MysqlUser) error {

@@ -54,6 +54,8 @@ type StatusReconciler struct {
 
 	// Mysql query runner.
 	internal.SQLRunnerFactory
+	// XenonExecutor is used to execute Xenon HTTP instructions.
+	internal.XenonExecutor
 }
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -92,7 +94,9 @@ func (r *StatusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 	}()
 
-	statusSyncer := clustersyncer.NewStatusSyncer(instance, r.Client, r.SQLRunnerFactory)
+	r.XenonExecutor.SetRootPassword(instance.Spec.MysqlOpts.RootPassword)
+
+	statusSyncer := clustersyncer.NewStatusSyncer(instance, r.Client, r.SQLRunnerFactory, r.XenonExecutor)
 	if err := syncer.Sync(ctx, statusSyncer, r.Recorder); err != nil {
 		return ctrl.Result{}, err
 	}

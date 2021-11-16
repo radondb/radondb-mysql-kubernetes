@@ -18,11 +18,8 @@ package syncer
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"time"
 
 	"github.com/iancoleman/strcase"
@@ -66,10 +63,12 @@ type StatefulSetSyncer struct {
 
 	// Mysql query runner.
 	internal.SQLRunnerFactory
+	// XenonExecutor is used to execute Xenon HTTP instructions.
+	internal.XenonExecutor
 }
 
 // NewStatefulSetSyncer returns a pointer to StatefulSetSyncer.
-func NewStatefulSetSyncer(cli client.Client, c *mysqlcluster.MysqlCluster, cmRev, sctRev string, sqlRunnerFactory internal.SQLRunnerFactory) *StatefulSetSyncer {
+func NewStatefulSetSyncer(cli client.Client, c *mysqlcluster.MysqlCluster, cmRev, sctRev string, sqlRunnerFactory internal.SQLRunnerFactory, xenonExecutor internal.XenonExecutor) *StatefulSetSyncer {
 	return &StatefulSetSyncer{
 		MysqlCluster: c,
 		cli:          cli,
@@ -86,6 +85,7 @@ func NewStatefulSetSyncer(cli client.Client, c *mysqlcluster.MysqlCluster, cmRev
 		cmRev:            cmRev,
 		sctRev:           sctRev,
 		SQLRunnerFactory: sqlRunnerFactory,
+		XenonExecutor:    xenonExecutor,
 	}
 }
 
@@ -422,24 +422,31 @@ func (s *StatefulSetSyncer) preUpdate(ctx context.Context, leader, follower stri
 
 	followerHost := fmt.Sprintf("%s.%s.%s", follower, svcName, nameSpace)
 	if err = retry(time.Second*5, time.Second*60, func() (bool, error) {
-		// Check whether is leader.
-		status, err := checkRole(followerHost, rootPasswd)
-		if err != nil {
-			log.Error(err, "failed to check role", "pod", follower)
-			return false, nil
+		for _, node := range s.Status.Nodes {
+			host := node.Name
+			if host == followerHost && !s.isLeader(host) {
+				if err := s.XenonExecutor.RaftTryToLeader(followerHost); err != nil {
+					return false, err
+				}
+			}
 		}
-		if status == corev1.ConditionTrue {
-			return true, nil
-		}
-
-		// If not leader, try to leader.
-		xenonHttpRequest(followerHost, "POST", "/v1/raft/trytoleader", rootPasswd, nil)
-		return false, nil
+		return true, nil
 	}); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *StatefulSetSyncer) isLeader(host string) bool {
+	raftStatus, err := s.XenonExecutor.RaftStatus(host)
+	if err != nil {
+		return false
+	}
+	if raftStatus.Role == string(utils.Leader) {
+		return true
+	}
+	return false
 }
 
 // mutate set the statefulset.
@@ -654,27 +661,6 @@ func basicEventReason(objKindName string, err error) string {
 	}
 
 	return fmt.Sprintf("%sSyncSuccessfull", strcase.ToCamel(objKindName))
-}
-
-func xenonHttpRequest(host, method, url string, rootPasswd []byte, body io.Reader) (io.ReadCloser, error) {
-	req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%d%s", host, utils.XenonPeerPort, url), body)
-	if err != nil {
-		return nil, err
-	}
-	encoded := base64.StdEncoding.EncodeToString(append([]byte("root:"), rootPasswd...))
-	req.Header.Set("Authorization", "Basic "+encoded)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("get raft status failed, status code is %d", resp.StatusCode)
-	}
-
-	return resp.Body, nil
 }
 
 // check the backup is exist and running
