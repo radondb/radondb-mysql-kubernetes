@@ -199,7 +199,7 @@ type PodPolicy struct {
 
 	// To specify the image that will be used for sidecar container.
 	// +optional
-	// +kubebuilder:default:="radondb/mysql-sidecar:0.1"
+	// +kubebuilder:default:="radondb/mysql-sidecar:latest"
 	SidecarImage string `json:"sidecarImage,omitempty"`
 
 	// The busybox image.

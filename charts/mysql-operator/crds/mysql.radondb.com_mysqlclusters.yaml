@@ -1182,7 +1182,7 @@ spec:
                   schedulerName:
                     type: string
                   sidecarImage:
-                    default: radondb/mysql-sidecar:0.1
+                    default: radondb/mysql-sidecar:latest
                     description: To specify the image that will be used for sidecar
                       container.
                     type: string
