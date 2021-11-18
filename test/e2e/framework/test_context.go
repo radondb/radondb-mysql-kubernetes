@@ -77,23 +77,31 @@ type TestContextType struct {
 // TestContext should be used by all tests to access common context data.
 var TestContext TestContextType
 
-// RegisterCommonFlags registers flags common to all e2e test suites.
-// The flag set can be flag.CommandLine (if desired) or a custom
-// flag set that then gets passed to viperconfig.ViperizeFlags.
-//
-// The other Register*Flags methods below can be used to add more
-// test-specific flags. However, those settings then get added
-// regardless whether the test is actually in the test suite.
-//
-// For tests that have been converted to registering their
-// options themselves, copy flags from test/e2e/framework/config
-// as shown in HandleFlags.
-func RegisterCommonFlags(flags *flag.FlagSet) {
-	flags.StringVar(&TestContext.KubeConfig, clientcmd.RecommendedConfigPathFlag, os.Getenv(clientcmd.RecommendedConfigPathEnvVar), "Path to kubeconfig containing embedded authinfo.")
-	flags.StringVar(&TestContext.KubeContext, clientcmd.FlagContext, "", "kubeconfig context to use/override. If unset, will use value from 'current-context'")
-	flags.StringVar(&TestContext.Host, "host", "", fmt.Sprintf("The host, or apiserver, to connect to. Will default to %s if this argument and --kubeconfig are not set.", defaultHost))
-	flags.StringVar(&TestContext.OutputDir, "e2e-output-dir", "/tmp", "Output directory for interesting/useful test data, like performance data, benchmarks, and other metrics.")
-	flags.BoolVar(&TestContext.DumpLogsOnFailure, "dump-logs-on-failure", true, "If set to true test will dump data about the namespace in which test was running.")
-	flags.BoolVar(&TestContext.DisableLogDump, "disable-log-dump", false, "If set to true, logs from master and nodes won't be gathered after test run.")
-	flag.IntVar(&TestContext.TimeoutSeconds, "pod-wait-timeout", 100, "Timeout to wait for a pod to be ready.")
+// Register flags common to all e2e test suites.
+func RegisterCommonFlags() {
+	// Turn on verbose by default to get spec names
+	config.DefaultReporterConfig.Verbose = true
+
+	// Turn on EmitSpecProgress to get spec progress (especially on interrupt)
+	config.GinkgoConfig.EmitSpecProgress = true
+
+	// Randomize specs as well as suites
+	config.GinkgoConfig.RandomizeAllSpecs = true
+
+	flag.StringVar(&TestContext.KubeHost, "kubernetes-host", "", "The kubernetes host, or apiserver, to connect to")
+	flag.StringVar(&TestContext.KubeConfig, "kubernetes-config", os.Getenv(clientcmd.RecommendedConfigPathEnvVar), "Path to config containing embedded authinfo for kubernetes. Default value is from environment variable "+clientcmd.RecommendedConfigPathEnvVar)
+	flag.StringVar(&TestContext.KubeContext, "kubernetes-context", "", "config context to use for kuberentes. If unset, will use value from 'current-context'")
+
+	flag.StringVar(&TestContext.ReportDir, "report-dir", "", "Optional directory to store junit and pod logs output in. If not specified, no junit or logs files will be output")
+	flag.StringVar(&TestContext.ChartPath, "operator-chart-path", "../../charts/mysql-operator", "The chart name or path for mysql operator")
+
+	flag.StringVar(&TestContext.OperatorImageTag, "operator-image-tag", "latest", "Image tag for mysql operator.")
+
+	flag.IntVar(&TestContext.TimeoutSeconds, "pod-wait-timeout", 1200, "Timeout to wait for a pod to be ready.")
+	flag.BoolVar(&TestContext.DumpLogsOnFailure, "dump-logs-on-failure", true, "Dump pods logs when a test fails.")
+}
+
+func RegisterParseFlags() {
+	RegisterCommonFlags()
+	flag.Parse()
 }

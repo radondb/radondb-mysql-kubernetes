@@ -17,38 +17,17 @@ limitations under the License.
 package e2e
 
 import (
-	"flag"
-	"fmt"
-	"math/rand"
-	"os"
 	"testing"
-	"time"
-
-	"k8s.io/component-base/version"
 
 	"github.com/radondb/radondb-mysql-kubernetes/test/e2e/framework"
+
+	_ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/cluster"
 )
 
-// handleFlags sets up all flags and parses the command line.
-func handleFlags() {
-	framework.RegisterCommonFlags(flag.CommandLine)
-	flag.Parse()
-}
-
-func TestMain(m *testing.M) {
-	var versionFlag bool
-	flag.CommandLine.BoolVar(&versionFlag, "version", false, "Displays version information.")
-
-	// Register test flags, then parse flags.
-	handleFlags()
-
-	if versionFlag {
-		fmt.Printf("%s\n", version.Get())
-		os.Exit(0)
-	}
-
-	rand.Seed(time.Now().UnixNano())
-	os.Exit(m.Run())
+func init() {
+	// framework.ViperizeFlags()
+	testing.Init()
+	framework.RegisterParseFlags()
 }
 
 func TestE2E(t *testing.T) {
