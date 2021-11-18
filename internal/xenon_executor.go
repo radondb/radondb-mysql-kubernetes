@@ -33,7 +33,10 @@ type XenonExecutor interface {
 	GetRootPassword() string
 	SetRootPassword(rootPassword string)
 	RaftStatus(host string) (*apiv1alpha1.RaftStatus, error)
+	XenonPing(host string) error
 	RaftTryToLeader(host string) error
+	ClusterAdd(host string, toAdd string) error
+	ClusterRemove(host string, toRemove string) error
 }
 
 func NewXenonExecutor() XenonExecutor {
@@ -83,6 +86,44 @@ func (executor *xenonExecutor) RaftTryToLeader(host string) error {
 	_, err = executor.httpExecutor.Execute(req)
 	if err != nil {
 		return fmt.Errorf("failed to execute raft/trytoleader at host[%s], err: %s", req.Req.URL, err)
+	}
+	return nil
+}
+
+func (executor *xenonExecutor) XenonPing(host string) error {
+	req, err := NewXenonHttpRequest(NewRequestConfig(host, executor.GetRootPassword(), utils.XenonPing, nil))
+	if err != nil {
+		return err
+	}
+	_, err = executor.httpExecutor.Execute(req)
+	if err != nil {
+		return fmt.Errorf("failed to ping host[%s], err: %s", req.Req.URL, err)
+	}
+	return nil
+}
+
+func (executor *xenonExecutor) ClusterAdd(host string, toAdd string) error {
+	addHost := fmt.Sprintf("{\"address\": \"%s\"}", toAdd)
+	req, err := NewXenonHttpRequest(NewRequestConfig(host, executor.GetRootPassword(), utils.ClusterAdd, addHost))
+	if err != nil {
+		return err
+	}
+	_, err = executor.httpExecutor.Execute(req)
+	if err != nil {
+		return fmt.Errorf("failed to add host[%s] to host[%s], err: %s", addHost, req.Req.URL, err)
+	}
+	return nil
+}
+
+func (executor *xenonExecutor) ClusterRemove(host string, toRemove string) error {
+	removeHost := fmt.Sprintf("{\"address\": \"%s\"}", toRemove)
+	req, err := NewXenonHttpRequest(NewRequestConfig(host, executor.GetRootPassword(), utils.ClusterRemove, removeHost))
+	if err != nil {
+		return err
+	}
+	_, err = executor.httpExecutor.Execute(req)
+	if err != nil {
+		return fmt.Errorf("failed to remove host[%s] from host[%s], err: %s", removeHost, req.Req.URL, err)
 	}
 	return nil
 }

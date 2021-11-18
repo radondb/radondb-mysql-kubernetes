@@ -110,7 +110,6 @@ func StringDiffIn(actual, desired []string) []string {
 			diff = append(diff, aStr)
 		}
 	}
-
 	return diff
 }
 
@@ -120,7 +119,6 @@ func stringIn(str string, strs []string) (int, bool) {
 			return i, true
 		}
 	}
-
 	return 0, false
 }
 
@@ -133,6 +131,5 @@ func UnmarshalJSON(in io.Reader, obj interface{}) error {
 	if err = json.Unmarshal(body, obj); err != nil {
 		return fmt.Errorf("error unmarshal data, error: %s, body: %s", err, string(body))
 	}
-
 	return nil
 }
