@@ -1,6 +1,22 @@
 name: code check
 
-on: [push, pull_request]
+on:   
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - .github/**
+      - charts/**
+      - config/**
+      - docs/**
+      - hack/**
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - .github/**
+      - charts/**
+      - config/**
+      - docs/**
+      - hack/**
 
 jobs:
 
