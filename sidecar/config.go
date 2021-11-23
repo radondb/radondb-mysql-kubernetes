@@ -19,8 +19,8 @@ package sidecar
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
-	"text/template"
 
 	"github.com/blang/semver"
 	"github.com/go-ini/ini"
@@ -543,30 +543,12 @@ curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/ser
 	return utils.StringToBytes(str)
 }
 
-// build S3 restore shell script
-func (cfg *Config) buildS3Restore(path string) error {
-	if len(cfg.XRestoreFrom) == 0 {
-		return fmt.Errorf("do not have restore from")
-	}
-	if len(cfg.XCloudS3EndPoint) == 0 ||
-		len(cfg.XCloudS3AccessKey) == 0 ||
-		len(cfg.XCloudS3SecretKey) == 0 ||
-		len(cfg.XCloudS3Bucket) == 0 {
-		return fmt.Errorf("do not have S3 information")
-	}
-	f, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("create restore.sh fail : %s", err)
-	}
-	defer func() {
-		f.Close()
-	}()
-
-	restoresh := `#!/bin/sh
+/* The function is equivalent to the following shell script template:
+#!/bin/sh
 if [ ! -d {{.DataDir}} ] ; then
     echo "is not exist the var lib mysql"
-    mkdir {{.DataDir}} 
-    chown -R mysql.mysql {{.DataDir}} 
+    mkdir {{.DataDir}}
+    chown -R mysql.mysql {{.DataDir}}
 fi
 mkdir /root/backup
 xbcloud get --storage=S3 \
@@ -583,24 +565,93 @@ xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --ta
 chown -R mysql.mysql /root/backup
 xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-back --target-dir=/root/backup
 chown -R mysql.mysql {{.DataDir}}
-rm -rf /root/backup	
-`
-	template_restore := template.New("restore.sh")
-	template_restore, err = template_restore.Parse(restoresh)
-	if err != nil {
-		return err
+rm -rf /root/backup
+*/
+func (cfg *Config) executeS3Restore(path string) error {
+	if len(cfg.XRestoreFrom) == 0 {
+		return fmt.Errorf("do not have restore from")
 	}
-	err2 := template_restore.Execute(f, struct {
-		Config
-		DataDir        string
-		MyCnfMountPath string
-	}{
-		*cfg,
-		utils.DataVolumeMountPath,
-		utils.ConfVolumeMountPath + "/my.cnf",
-	})
-	if err2 != nil {
-		return err2
+	if len(cfg.XCloudS3EndPoint) == 0 ||
+		len(cfg.XCloudS3AccessKey) == 0 ||
+		len(cfg.XCloudS3SecretKey) == 0 ||
+		len(cfg.XCloudS3Bucket) == 0 {
+		return fmt.Errorf("do not have S3 information")
+	}
+	// Check has directory, and create it.
+	if _, err := os.Stat(utils.DataVolumeMountPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(utils.DataVolumeMountPath, 0755); err != nil {
+			return fmt.Errorf("failed to create data directory : %s", err)
+		}
+	}
+	// mkdir /root/backup.
+	if err := os.MkdirAll("/root/backup", 0755); err != nil {
+		return fmt.Errorf("failed to create backup directory : %s", err)
+	}
+	// Execute xbcloud get.
+	args := []string{
+		"get",
+		"--storage=S3",
+		"--s3-endpoint=" + cfg.XCloudS3EndPoint,
+		"--s3-access-key=" + cfg.XCloudS3AccessKey,
+		"--s3-secret-key=" + cfg.XCloudS3SecretKey,
+		"--s3-bucket=" + cfg.XCloudS3Bucket,
+		"--parallel=10",
+		cfg.XRestoreFrom,
+		"--insecure",
+	}
+	xcloud := exec.Command(xcloudCommand, args...)                    //nolint
+	xbstream := exec.Command("xbstream", "-xv", "-C", "/root/backup") //nolint
+	var err error
+	if xbstream.Stdin, err = xcloud.StdoutPipe(); err != nil {
+		return fmt.Errorf("failed to xbstream and xcloud piped")
+	}
+	xbstream.Stderr = os.Stderr
+	xcloud.Stderr = os.Stderr
+	if err := xcloud.Start(); err != nil {
+		return fmt.Errorf("failed to xcloud start : %s", err)
+	}
+	if err := xbstream.Start(); err != nil {
+		return fmt.Errorf("failed to xbstream start : %s", err)
+	}
+	// Make error channels.
+	errCh := make(chan error, 2)
+	go func() {
+		errCh <- xcloud.Wait()
+	}()
+	go func() {
+		errCh <- xbstream.Wait()
+	}()
+	// Wait for error.
+	for i := 0; i < 2; i++ {
+		if err = <-errCh; err != nil {
+			return err
+		}
+	}
+	// Xtrabackup prepare and apply-log-only.
+	cmd := exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--prepare", "--apply-log-only", "--target-dir=/root/backup")
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup prepare and apply-log-only : %s", err)
+	}
+	// Xtrabackup prepare.
+	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--prepare", "--target-dir=/root/backup")
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup prepare : %s", err)
+	}
+	// Xtrabackup copy-back to /var/lib/mysql.
+	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--datadir="+utils.DataVolumeMountPath, "--copy-back", "--copy-back", "--target-dir=/root/backup")
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup copy-back : %s", err)
+	}
+	// Execute chown -R mysql.mysql /var/lib/mysql.
+	if err := exec.Command("chown", "-R", "mysql.mysql", utils.DataVolumeMountPath).Run(); err != nil {
+		return fmt.Errorf("failed to chown mysql.mysql %s  : %s", utils.DataVolumeMountPath, err)
+	}
+	// Remove /root/backup.
+	if err := os.RemoveAll("/root/backup"); err != nil {
+		return fmt.Errorf("failed to remove backup directory : %s", err)
 	}
 	return nil
 }

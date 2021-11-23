@@ -164,18 +164,8 @@ func runInitCommand(cfg *Config) error {
 
 	// run the restore
 	if len(cfg.XRestoreFrom) != 0 {
-		var restoreName string = "/restore.sh"
-		err_f := cfg.buildS3Restore(restoreName)
-		if err_f != nil {
-			return fmt.Errorf("build restore.sh fail : %s", err_f)
-		}
-		if err = os.Chmod(restoreName, os.FileMode(0755)); err != nil {
-			return fmt.Errorf("failed to chmod scripts: %s", err)
-		}
-		cmd := exec.Command("sh", "-c", restoreName)
-		cmd.Stderr = os.Stderr
-		if err = cmd.Run(); err != nil {
-			return fmt.Errorf("failed to disable the run restore: %s", err)
+		if err = cfg.executeS3Restore(cfg.XRestoreFrom); err != nil {
+			return fmt.Errorf("failed to restore from %s: %s", cfg.XRestoreFrom, err)
 		}
 	}
 
