@@ -38,8 +38,6 @@ type Config struct {
 	ServiceName string
 	// The name of the statefulset.
 	StatefulSetName string
-	// Replicas is the number of pods.
-	Replicas int32
 
 	// The password of the root user.
 	RootPassword string
@@ -134,13 +132,6 @@ func NewInitConfig() *Config {
 		}
 	}
 
-	replicaStr := getEnvValue("REPLICAS")
-	replicas, err := strconv.ParseInt(replicaStr, 10, 32)
-	if err != nil {
-		log.Error(err, "invalid environment values", "REPLICAS", replicaStr)
-		panic(err)
-	}
-
 	initTokuDB := false
 	if len(getEnvValue("INIT_TOKUDB")) > 0 {
 		initTokuDB = true
@@ -162,7 +153,6 @@ func NewInitConfig() *Config {
 		NameSpace:       getEnvValue("NAMESPACE"),
 		ServiceName:     getEnvValue("SERVICE_NAME"),
 		StatefulSetName: getEnvValue("STATEFULSET_NAME"),
-		Replicas:        int32(replicas),
 
 		RootPassword:         getEnvValue("MYSQL_ROOT_PASSWORD"),
 		InternalRootPassword: getEnvValue("INTERNAL_ROOT_PASSWORD"),
@@ -198,17 +188,9 @@ func NewInitConfig() *Config {
 
 // NewBackupConfig returns the configuration file needed for backup container.
 func NewBackupConfig() *Config {
-	replicaStr := getEnvValue("REPLICAS")
-	replicas, err := strconv.ParseInt(replicaStr, 10, 32)
-	if err != nil {
-		log.Error(err, "invalid environment values", "REPLICAS", replicaStr)
-		panic(err)
-	}
-
 	return &Config{
 		NameSpace:    getEnvValue("NAMESPACE"),
 		ServiceName:  getEnvValue("SERVICE_NAME"),
-		Replicas:     int32(replicas),
 		ClusterName:  getEnvValue("SERVICE_NAME"),
 		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
 
@@ -224,17 +206,9 @@ func NewBackupConfig() *Config {
 
 // NewReqBackupConfig returns the configuration file needed for backup job.
 func NewReqBackupConfig() *Config {
-	replicaStr := getEnvValue("REPLICAS")
-	replicas, err := strconv.ParseInt(replicaStr, 10, 32)
-	if err != nil {
-		log.Error(err, "invalid environment values", "REPLICAS", replicaStr)
-		panic(err)
-	}
-
 	return &Config{
 		NameSpace:   getEnvValue("NAMESPACE"),
 		ServiceName: getEnvValue("SERVICE_NAME"),
-		Replicas:    int32(replicas),
 
 		BackupUser:     getEnvValue("BACKUP_USER"),
 		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
@@ -416,111 +390,6 @@ func (cfg *Config) buildClientConfig() (*ini.File, error) {
 	}
 
 	return conf, nil
-}
-
-func (cfg *Config) buildPostStart() ([]byte, error) {
-	ordinal, err := utils.GetOrdinal(cfg.HostName)
-	if err != nil {
-		return nil, err
-	}
-
-	nums := ordinal
-	if cfg.existMySQLData {
-		nums = int(cfg.Replicas)
-	}
-
-	host := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
-
-	str := fmt.Sprintf(`#!/bin/sh
-while true; do
-	info=$(curl -i -X GET -u root:%s http://%s:%d/v1/xenon/ping)
-	code=$(echo $info|grep "HTTP"|awk '{print $2}')
-	if [ "$code" -eq "200" ]; then
-		break
-	fi
-done
-`, cfg.RootPassword, host, utils.XenonPeerPort)
-
-	if !cfg.existMySQLData && ordinal == 0 {
-		str = fmt.Sprintf(`%s
-for i in $(seq 12); do
-	curl -i -X POST -u root:%s http://%s:%d/v1/raft/trytoleader
-	sleep 5
-	curl -i -X GET -u root:%s http://%s:%d/v1/raft/status | grep LEADER
-	if [ $? -eq 0 ] ; then
-		echo "trytoleader success"
-		break
-	fi
-	if [ $i -eq 12 ]; then
-		echo "wait trytoleader failed"
-	fi
-done
-`, str, cfg.RootPassword, host, utils.XenonPeerPort, cfg.RootPassword, host, utils.XenonPeerPort)
-	} else {
-		str = fmt.Sprintf(`%s
-i=0
-while [ $i -lt %d ]; do
-	if [ $i -ne %d ]; then
-		for k in $(seq 12); do
-			res=$(curl -i -X POST -d '{"address": "%s-'$i'.%s.%s:%d"}' -u root:%s http://%s:%d/v1/cluster/add)
-			code=$(echo $res|grep "HTTP"|awk '{print $2}')
-			if [ "$code" -eq "200" ]; then
-				break
-			fi
-		done
-
-		for k in $(seq 12); do
-			res=$(curl -i -X POST -d '{"address": "%s:%d"}' -u root:%s http://%s-$i.%s.%s:%d/v1/cluster/add)
-			code=$(echo $res|grep "HTTP"|awk '{print $2}')
-			if [ "$code" -eq "200" ]; then
-				break
-			fi
-		done
-	fi
-	i=$((i+1))
-done
-`, str, nums, ordinal, cfg.StatefulSetName, cfg.ServiceName, cfg.NameSpace, utils.XenonPort,
-			cfg.RootPassword, host, utils.XenonPeerPort, host, utils.XenonPort, cfg.RootPassword,
-			cfg.StatefulSetName, cfg.ServiceName, cfg.NameSpace, utils.XenonPeerPort)
-	}
-
-	return utils.StringToBytes(str), nil
-}
-
-func (cfg *Config) buildPreStop() []byte {
-	host := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
-
-	str := fmt.Sprintf(`#!/bin/sh
-while true; do
-	info=$(curl -i -X GET -u root:%s http://%s:%d/v1/xenon/ping)
-	code=$(echo $info|grep "HTTP"|awk '{print $2}')
-	if [ "$code" -eq "200" ]; then
-		break
-	fi
-done
-
-curl -i -X PUT -u root:%s http://%s:%d/v1/raft/disable
-for line in $(curl -X GET -u root:%s http://%s:%d/v1/raft/status | jq -r .nodes[] | cut -d : -f 1)
-do
-	if [ "$line" != "%s" ]; then
-		for i in $(seq 12); do
-			info=$(curl -i -X POST -d '{"address": "%s:%d"}' -u root:%s http://$line:%d/v1/cluster/remove)
-			code=$(echo $info|grep "HTTP"|awk '{print $2}')
-			if [ "$code" -eq "200" ]; then
-				break
-			fi
-			if [ $i -eq 12 ]; then
-				echo "remove node failed"
-				break
-			fi
-			sleep 5
-		done
-	fi
-done
-`, cfg.RootPassword, host, utils.XenonPeerPort, cfg.RootPassword, host, utils.XenonPeerPort, cfg.RootPassword,
-		host, utils.XenonPeerPort, host, host, utils.XenonPort, cfg.RootPassword, utils.XenonPeerPort)
-
-	return utils.StringToBytes(str)
 }
 
 // buildLeaderStart build the leader-start.sh.

@@ -41,6 +41,9 @@ var (
 	XenonHttpUrls = map[XenonHttpUrl]string{
 		RaftStatus:      http.MethodGet,
 		RaftTryToLeader: http.MethodPost,
+		XenonPing:       http.MethodGet,
+		ClusterAdd:      http.MethodPost,
+		ClusterRemove:   http.MethodPost,
 	}
 )
 
@@ -161,5 +164,8 @@ type XenonHttpUrl string
 
 const (
 	RaftStatus      XenonHttpUrl = "/v1/raft/status"
+	XenonPing       XenonHttpUrl = "/v1/xenon/ping"
+	ClusterAdd      XenonHttpUrl = "/v1/cluster/add"
+	ClusterRemove   XenonHttpUrl = "/v1/cluster/remove"
 	RaftTryToLeader XenonHttpUrl = "/v1/raft/trytoleader"
 )
