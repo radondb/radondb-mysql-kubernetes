@@ -580,6 +580,12 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 		if pod.DeletionTimestamp != nil {
 			log.Info("pod is being deleted", "pod", pod.Name, "key", s.Unwrap())
 		} else {
+			// If healthy is always `yes`, retry() will exit in advance, which may
+			// cause excessive nodes are deleted at the same time, details: issue#310.
+			pod.ObjectMeta.Labels["healthy"] = "no"
+			if err := s.cli.Update(ctx, pod); err != nil {
+				return err
+			}
 			if err := s.cli.Delete(ctx, pod); err != nil {
 				return err
 			}
