@@ -252,7 +252,7 @@ spec:
                     requests:
                       cpu: 10m
                       memory: 32Mi
-                  sidecarImage: radondb/mysql-sidecar:0.1
+                  sidecarImage: radondb/mysql-sidecar:v2.1.0
                 description: Pod extra specification.
                 properties:
                   affinity:
@@ -1180,7 +1180,7 @@ spec:
                   schedulerName:
                     type: string
                   sidecarImage:
-                    default: radondb/mysql-sidecar:0.1
+                    default: radondb/mysql-sidecar:v2.1.0
                     description: To specify the image that will be used for sidecar
                       container.
                     type: string
