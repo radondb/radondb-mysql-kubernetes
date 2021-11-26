@@ -536,6 +536,10 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 
 // updatePVC used to update the pvc, check and remove the extra pvc.
 func (s *StatefulSetSyncer) updatePVC(ctx context.Context) error {
+	if *s.Spec.Replicas == 0 {
+		log.Info("skip update pvc because replicas is 0")
+		return nil
+	}
 	pvcs := corev1.PersistentVolumeClaimList{}
 	if err := s.cli.List(ctx,
 		&pvcs,
