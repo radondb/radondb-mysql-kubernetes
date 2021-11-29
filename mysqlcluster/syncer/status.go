@@ -118,8 +118,12 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	}
 
 	s.Status.ReadyNodes = len(readyNodes)
+	if err := s.reconcileXenon(s.Status.ReadyNodes); err != nil {
+		clusterCondition.Message = fmt.Sprintf("%s", err)
+		clusterCondition.Type = apiv1alpha1.ConditionError
+	}
 	if s.Status.ReadyNodes == int(*s.Spec.Replicas) && int(*s.Spec.Replicas) != 0 {
-		if err := s.reconcileXenon(s.Status.ReadyNodes); err != nil {
+		if err := s.checkXenon(s.Status.ReadyNodes); err != nil {
 			clusterCondition.Message = fmt.Sprintf("%s", err)
 			clusterCondition.Type = apiv1alpha1.ConditionError
 		} else {
@@ -354,6 +358,27 @@ func (s *StatusSyncer) addNodesInXenon(host string, toAdd []string) error {
 		if err := s.XenonExecutor.ClusterAdd(host, addHost); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (s *StatusSyncer) checkXenon(readyNodes int) error {
+	leader := []string{}
+	follower := []string{}
+	for _, node := range s.Status.Nodes {
+		if node.RaftStatus.Role == string(utils.Leader) {
+			leader = append(leader, node.Name)
+		}
+		if node.RaftStatus.Role == string(utils.Follower) {
+			follower = append(follower, node.Name)
+		}
+	}
+	if len(leader) != 1 {
+		return fmt.Errorf("cluster must have exactly one leader node")
+	}
+	xenonReadyNodes := len(leader) + len(follower)
+	if xenonReadyNodes != readyNodes {
+		return fmt.Errorf("some xenon nodes are not ready")
 	}
 	return nil
 }
