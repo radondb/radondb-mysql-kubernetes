@@ -88,11 +88,7 @@ func (c *mysql) getLivenessProbe() *corev1.Probe {
 	return &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{
-					"sh",
-					"-c",
-					fmt.Sprintf("mysqladmin --defaults-file=%s ping", utils.ConfClientPath),
-				},
+				Command: []string{"pgrep", "mysqld"},
 			},
 		},
 		InitialDelaySeconds: 30,
