@@ -19,8 +19,11 @@ package sidecar
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -32,6 +35,18 @@ const (
 	serverProbeEndpoint  = "/health"
 	serverBackupEndpoint = "/xbackup"
 	serverConnectTimeout = 5 * time.Second
+
+	// DownLoad server url.
+	serverBackupDownLoadEndpoint = "/download"
+
+	// backupStatus http trailer
+	backupStatusTrailer = "X-Backup-Status"
+
+	// success string
+	backupSuccessful = "Success"
+
+	// failure string
+	backupFailed = "Failed"
 )
 
 type server struct {
@@ -53,7 +68,8 @@ func newServer(cfg *Config, stop <-chan struct{}) *server {
 	// Add handle functions.
 	mux.HandleFunc(serverProbeEndpoint, srv.healthHandler)
 	mux.Handle(serverBackupEndpoint, maxClients(http.HandlerFunc(srv.backupHandler), 1))
-
+	mux.Handle(serverBackupDownLoadEndpoint,
+		maxClients(http.HandlerFunc(srv.backupDownLoadHandler), 1))
 	// Shutdown gracefully the http server.
 	go func() {
 		<-stop // wait for stop signal
@@ -85,6 +101,64 @@ func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write([]byte("OK"))
 	}
+}
+
+// DownLoad handler.
+func (s *server) backupDownLoadHandler(w http.ResponseWriter, r *http.Request) {
+
+	if !s.isAuthenticated(r) {
+		http.Error(w, "Not authenticated!", http.StatusForbidden)
+		return
+	}
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "HTTP server does not support streaming!", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Trailer", backupStatusTrailer)
+
+	// nolint: gosec
+	xtrabackup := exec.Command(xtrabackupCommand, s.cfg.XtrabackupArgs()...)
+	xtrabackup.Stderr = os.Stderr
+
+	stdout, err := xtrabackup.StdoutPipe()
+	if err != nil {
+		log.Error(err, "failed to create stdout pipe")
+		http.Error(w, "xtrabackup failed", http.StatusInternalServerError)
+		return
+	}
+
+	defer func() {
+		// don't care
+		_ = stdout.Close()
+	}()
+
+	if err := xtrabackup.Start(); err != nil {
+		log.Error(err, "failed to start xtrabackup command")
+		http.Error(w, "xtrabackup failed", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := io.Copy(w, stdout); err != nil {
+		log.Error(err, "failed to copy buffer")
+		http.Error(w, "buffer copy failed", http.StatusInternalServerError)
+		return
+	}
+
+	if err := xtrabackup.Wait(); err != nil {
+		log.Error(err, "failed waiting for xtrabackup to finish")
+		w.Header().Set(backupStatusTrailer, backupFailed)
+		http.Error(w, "xtrabackup failed", http.StatusInternalServerError)
+		return
+	}
+
+	// success
+	w.Header().Set(backupStatusTrailer, backupSuccessful)
+	flusher.Flush()
 }
 
 func (s *server) isAuthenticated(r *http.Request) bool {
