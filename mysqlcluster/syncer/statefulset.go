@@ -289,7 +289,7 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 // updatePod update the pods, update follower nodes first.
 // This can reduce the number of master-slave switching during the update process.
 func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
-	if s.sfs.Status.UpdatedReplicas >= s.sfs.Status.Replicas {
+	if s.sfs.Status.UpdateRevision == s.sfs.Status.CurrentRevision {
 		return nil
 	}
 
