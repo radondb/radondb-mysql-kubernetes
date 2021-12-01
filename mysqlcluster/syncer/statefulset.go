@@ -317,7 +317,6 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 		return err
 	}
 	var leaderPod corev1.Pod
-	var followerPods []corev1.Pod
 	for _, pod := range pods.Items {
 		// Check if the pod is healthy.
 		if pod.ObjectMeta.Labels["healthy"] != "yes" {
@@ -328,125 +327,16 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 			leaderPod = pod
 			continue
 		}
-		followerPods = append(followerPods, pod)
 		// If pod is not leader, direct update.
 		if err := s.applyNWait(ctx, &pod); err != nil {
 			return err
 		}
 	}
-	// All followers have been updated now, then update leader.
-	if leaderPod.Name != "" {
-		// When replicas is two (one leader and one follower).
-		if *s.sfs.Spec.Replicas == 2 {
-			if err := s.preUpdate(ctx, leaderPod.Name, followerPods[0].Name); err != nil {
-				return err
-			}
-		}
-		// Update the leader.
-		if err := s.applyNWait(ctx, &leaderPod); err != nil {
-			return err
-		}
+	// Update the leader.
+	if err := s.applyNWait(ctx, &leaderPod); err != nil {
+		return err
 	}
-
 	return nil
-}
-
-// preUpdate run before update the leader pod when replicas is 2.
-// Its main function is manually switch the leader node.
-// 1. Get secrets (operator-user, operator-password, root-password).
-// 2. Connect leader mysql.
-// 3. Set leader read only.
-// 4. Make sure the leader has sent all binlog to follower.
-// 5. Check followerHost current role.
-// 6. If followerHost is not leader, switch it to leader through xenon.
-func (s *StatefulSetSyncer) preUpdate(ctx context.Context, leader, follower string) error {
-	leaderRunner, closeConn, err := s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
-		s.cli, s.MysqlCluster.GetClusterKey(), utils.OperatorUser, utils.LeaderHost))
-	if err != nil {
-		return err
-	}
-	defer closeConn()
-
-	// Status.Replicas indicate the number of Pod has been created.
-	// So sfs.Spec.Replicas is 2, May be sfs.Status.Replicas maybe are 3, 5 ,
-	// because it do not update the pods, so it is still the last status.
-	if *s.sfs.Spec.Replicas != 2 {
-		return nil
-	}
-
-	// Touch a new preUpdate file ,indicate that preUpdate is going on
-	// remove it when it is finished.
-	// See https://github.com/radondb/radondb-mysql-kubernetes/issues/178
-	utils.TouchUpdateFile()
-	defer utils.RemoveUpdateFile()
-	sctName := s.GetNameForResource(utils.Secret)
-	svcName := s.GetNameForResource(utils.HeadlessSVC)
-	nameSpace := s.Namespace
-
-	// Get secrets.
-	secret := &corev1.Secret{}
-	if err := s.cli.Get(context.TODO(),
-		types.NamespacedName{
-			Namespace: nameSpace,
-			Name:      sctName,
-		},
-		secret,
-	); err != nil {
-		return fmt.Errorf("failed to get the secret: %s", sctName)
-	}
-
-	rootPasswd, ok := secret.Data["root-password"]
-	if !ok {
-		return fmt.Errorf("failed to get the root password: %s", rootPasswd)
-	}
-
-	if err = retry(time.Second*2, time.Duration(waitLimit)*time.Second, func() (bool, error) {
-		// Set leader read only.
-		if err = leaderRunner.QueryExec(internal.NewQuery("SET GLOBAL super_read_only=on;")); err != nil {
-			log.Error(err, "failed to set leader read only", "node", leader)
-			return false, err
-		}
-
-		// Make sure the master has sent all binlog to slave.
-		success, err := internal.CheckProcesslist(leaderRunner)
-		if err != nil {
-			return false, err
-		}
-		if success {
-			return true, nil
-		}
-		return false, nil
-	}); err != nil {
-		return err
-	}
-
-	followerHost := fmt.Sprintf("%s.%s.%s", follower, svcName, nameSpace)
-	if err = retry(time.Second*5, time.Second*60, func() (bool, error) {
-		for _, node := range s.Status.Nodes {
-			host := node.Name
-			if host == followerHost && !s.isLeader(host) {
-				if err := s.XenonExecutor.RaftTryToLeader(followerHost); err != nil {
-					return false, err
-				}
-			}
-		}
-		return true, nil
-	}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *StatefulSetSyncer) isLeader(host string) bool {
-	raftStatus, err := s.XenonExecutor.RaftStatus(host)
-	if err != nil {
-		return false
-	}
-	if raftStatus.Role == string(utils.Leader) {
-		return true
-	}
-	return false
 }
 
 // mutate set the statefulset.
