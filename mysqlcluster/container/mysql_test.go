@@ -107,7 +107,7 @@ func TestGetMysqlLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "mysqladmin --defaults-file=/etc/mysql/client.conf ping"},
+				Command: []string{"pgrep", "mysqld"},
 			},
 		},
 		InitialDelaySeconds: 30,
