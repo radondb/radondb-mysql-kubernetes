@@ -78,15 +78,16 @@ func CheckServiceExist(cfg *Config, service string) bool {
 
 // Clone from leader or follower.
 func runCloneAndInit(cfg *Config) error {
-	//check leader is exist?
-	serviceURL := ""
-	if len(serviceURL) == 0 && CheckServiceExist(cfg, "leader") {
-		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "leader", utils.XBackupPort)
-	}
 	//check follower is exists?
+	serviceURL := ""
 	if len(serviceURL) == 0 && CheckServiceExist(cfg, "follower") {
 		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "follower", utils.XBackupPort)
 	}
+	//check leader is exist?
+	if len(serviceURL) == 0 && CheckServiceExist(cfg, "leader") {
+		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "leader", utils.XBackupPort)
+	}
+
 	if len(serviceURL) != 0 {
 		// backup at first
 		Args := fmt.Sprintf("rm -rf /backup/initbackup;mkdir -p /backup/initbackup;curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/initbackup; exit ${PIPESTATUS[0]}",
