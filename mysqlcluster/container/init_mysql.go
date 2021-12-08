@@ -124,5 +124,9 @@ func (c *initMysql) getVolumeMounts() []corev1.VolumeMount {
 			Name:      utils.InitFileVolumeName,
 			MountPath: utils.InitFileVolumeMountPath,
 		},
+		{
+			Name:      utils.SysLocalTimeZone,
+			MountPath: utils.SysLocalTimeZoneMountPath,
+		},
 	}
 }

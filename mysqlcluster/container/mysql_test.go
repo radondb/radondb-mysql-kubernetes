@@ -24,6 +24,7 @@ import (
 
 	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
+	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
 var (
@@ -148,6 +149,10 @@ func TestGetMysqlVolumeMounts(t *testing.T) {
 		{
 			Name:      "logs",
 			MountPath: "/var/log/mysql",
+		},
+		{
+			Name:      utils.SysLocalTimeZone,
+			MountPath: "/etc/localtime",
 		},
 	}
 	assert.Equal(t, volumeMounts, mysqlCase.VolumeMounts)

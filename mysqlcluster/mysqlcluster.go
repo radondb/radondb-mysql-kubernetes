@@ -221,6 +221,14 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
+		corev1.Volume{
+			Name: utils.SysLocalTimeZone,
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Path: utils.SysLocalTimeZoneHostPath,
+				},
+			},
+		},
 	)
 
 	return volumes

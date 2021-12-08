@@ -67,6 +67,10 @@ var (
 			Name:      utils.InitFileVolumeName,
 			MountPath: utils.InitFileVolumeMountPath,
 		},
+		{
+			Name:      utils.SysLocalTimeZone,
+			MountPath: utils.SysLocalTimeZoneMountPath,
+		},
 	}
 	optFalse      = false
 	optTrue       = true

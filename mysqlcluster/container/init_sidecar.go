@@ -182,6 +182,10 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			Name:      utils.InitFileVolumeName,
 			MountPath: utils.InitFileVolumeMountPath,
 		},
+		{
+			Name:      utils.SysLocalTimeZone,
+			MountPath: utils.SysLocalTimeZoneMountPath,
+		},
 	}
 
 	if c.Spec.MysqlOpts.InitTokuDB {

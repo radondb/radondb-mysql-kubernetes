@@ -290,6 +290,10 @@ var (
 			Name:      utils.InitFileVolumeName,
 			MountPath: utils.InitFileVolumeMountPath,
 		},
+		{
+			Name:      utils.SysLocalTimeZone,
+			MountPath: utils.SysLocalTimeZoneMountPath,
+		},
 	}
 	initSidecarCase = EnsureContainer("init-sidecar", &testInitSidecarCluster)
 )
@@ -432,7 +436,7 @@ func TestGetInitSidecarVolumeMounts(t *testing.T) {
 			MysqlCluster: &testToKuDBMysqlCluster,
 		}
 		tokudbCase := EnsureContainer("init-sidecar", &testTokuDBCluster)
-		tokuDBVolumeMounts := make([]corev1.VolumeMount, 5, 6)
+		tokuDBVolumeMounts := make([]corev1.VolumeMount, 6, 7)
 		copy(tokuDBVolumeMounts, defaultInitsidecarVolumeMounts)
 		tokuDBVolumeMounts = append(tokuDBVolumeMounts, corev1.VolumeMount{
 			Name:      utils.SysVolumeName,
@@ -448,7 +452,7 @@ func TestGetInitSidecarVolumeMounts(t *testing.T) {
 			MysqlCluster: &testPersistenceMysqlCluster,
 		}
 		persistenceCase := EnsureContainer("init-sidecar", &testPersistenceCluster)
-		persistenceVolumeMounts := make([]corev1.VolumeMount, 5, 6)
+		persistenceVolumeMounts := make([]corev1.VolumeMount, 6, 7)
 		copy(persistenceVolumeMounts, defaultInitsidecarVolumeMounts)
 		persistenceVolumeMounts = append(persistenceVolumeMounts, corev1.VolumeMount{
 			Name:      utils.DataVolumeName,

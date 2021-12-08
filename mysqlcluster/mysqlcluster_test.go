@@ -283,6 +283,14 @@ func TestEnsureVolumes(t *testing.T) {
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
+		{
+			Name: utils.SysLocalTimeZone,
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Path: utils.SysLocalTimeZoneHostPath,
+				},
+			},
+		},
 	}
 	// when disable Persistence
 	{

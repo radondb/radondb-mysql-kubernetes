@@ -25,6 +25,7 @@ import (
 
 	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
+	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
 var (
@@ -131,6 +132,10 @@ func TestGetXenonVolumeMounts(t *testing.T) {
 		{
 			Name:      "xenon",
 			MountPath: "/etc/xenon",
+		},
+		{
+			Name:      utils.SysLocalTimeZone,
+			MountPath: "/etc/localtime",
 		},
 	}
 	assert.Equal(t, volumeMounts, xenonCase.VolumeMounts)
