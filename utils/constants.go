@@ -108,6 +108,15 @@ const (
 	XenonVolumeMountPath    = "/etc/xenon"
 	InitFileVolumeMountPath = "/docker-entrypoint-initdb.d"
 
+	// Volume timezone name.
+	SysLocalTimeZone = "localtime"
+
+	// Volume host path for time zone.
+	SysLocalTimeZoneHostPath = "/etc/localtime"
+
+	// Volume mount path for time zone.
+	SysLocalTimeZoneMountPath = "/etc/localtime"
+
 	// The path to the client MySQL client configuration.
 	// The file used to liveness and readiness check.
 	ConfClientPath = "/etc/mysql/client.conf"
