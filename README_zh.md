@@ -35,6 +35,7 @@ RadonDB MySQL Kubernetes支持在[Kubernetes](https://kubernetes.io)和[KubeSphe
 ### Operator
 
 - [在 Kubernetes 上部署 RadonDB MySQL 集群](docs/kubernetes/deploy_radondb-mysql_operator_on_k8s.md)
+- [在 Rancher 上部署 RadonDB MySQL 集群](/docs/rancher/deploy_radondb-mysql_operator_on_rancher.md)
 
 ## 路线图
 
