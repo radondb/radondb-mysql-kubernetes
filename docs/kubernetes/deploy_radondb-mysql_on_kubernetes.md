@@ -12,9 +12,7 @@ Contents
             * [步骤 1 : 添加仓库](#步骤-1--添加仓库)
             * [步骤 2 : 部署](#步骤-2--部署)
          * [部署校验](#部署校验)
-      * [连接 RadonDB MySQL](#连接-radondb-mysql)
-         * [客户端与 RadonDB MySQL 在同一 NameSpace 中](#客户端与-radondb-mysql-在同一-namespace-中)
-         * [客户端与 RadonDB MySQL 不在同一 NameSpace 中](#客户端与-radondb-mysql-不在同一-namespace-中)
+      * [访问 RadonDB MySQL](#访问-radondb-mysql)
       * [配置](#配置)
       * [持久化](#持久化)
       * [自定义 MYSQL 配置](#自定义-mysql-配置)
@@ -40,15 +38,18 @@ RadonDB MySQL 是基于 MySQL 的开源、高可用、云原生集群解决方�
 执行如下命令，将 RadonDB MySQL Chart 克隆到 Kubernetes 中。
 
 ```bash
-git clone https://github.com/radondb/radondb-mysql-kubernetes.git
+$ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 ```
-
+> **说明**
+> 
 > Chart 代表 [Helm](https://helm.sh/zh/docs/intro/using_helm/) 包，包含在 Kubernetes 集群内部运行应用程序、工具或服务所需的所有资源定义。
 
 #### 步骤 2：部署
 
 在 radondb-mysql-kubernetes 目录路径下，选择如下方式，部署 release 实例。
 
+> **说明**
+> 
 > release 是运行在 Kubernetes 集群中的 Chart 的实例。通过命令方式部署，需指定 release 名称。
 
 以下命令指定 release 名为 `demo`，将创建一个名为 `demo-radondb-mysql` 的有状态副本集。
@@ -56,13 +57,13 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
 * **默认部署方式**
 
    ```bash
-   <For Helm v2>
-    cd charts/helm
-    helm install . demo
+   # For Helm v2
+   $ cd charts/helm
+   $ helm install . demo
 
-   <For Helm v3>
-    cd charts/helm
-    helm install demo .
+   # For Helm v3
+   $ cd charts/helm
+   $ helm install demo .
   ```
 
 * **指定参数部署方式**
@@ -72,8 +73,8 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
   以下示例以创建一个用户名为 `my-user` ，密码为 `my-password` 的标准数据库用户，可访问名为 `my-database` 的数据库。
 
   ```bash
-  cd charts/helm
-  helm install demo \
+  $ cd charts/helm
+  $ helm install demo \
   --set mysql.mysqlUser=my-user,mysql.mysqlPassword=my-password,mysql.database=my-database .
   ```
 
@@ -82,8 +83,8 @@ git clone https://github.com/radondb/radondb-mysql-kubernetes.git
   执行如下命令，可通过 value.yaml 配置文件，在安装时配置指定参数。更多安装过程中可配置的参数，请参考 [配置](#配置) 。
 
   ```bash
-  cd charts/helm
-  helm install demo -f values.yaml .
+  $ cd charts/helm
+  $ helm install demo -f values.yaml .
   ```
 
 ### 通过 repo 部署
@@ -154,65 +155,66 @@ demo-radondb-mysql   3/3     25h
 部署指令执行完成后，查看 RadonDB MySQL 有状态副本集，pod 状态及服务。可查看到相关信息，则 RadonDB MySQL 部署成功。
 
 ```bash
-kubectl get statefulset,pod,svc
+$ kubectl get statefulset,pod,svc
 ```
 
-## 连接 RadonDB MySQL
+## 访问 RadonDB MySQL
 
-您需要准备一个用于连接 RadonDB MySQL 的客户端。
-
-### 客户端与 RadonDB MySQL 在同一 NameSpace 中
-
-当客户端与 RadonDB MySQL 集群在同一个 NameSpace 中时，可使用 leader/follower service 名称代替具体的 ip 和端口。
-
-- 连接主节点(读写节点)。
-   
-   ```bash
-   mysql -h <leader service 名称> -u <用户名> -p
-   ```
-
-- 连接从节点(只读节点)。
-  ```bash
-  mysql -h <follower service 名称> -u <用户名> -p
-  ```
-
-### 客户端与 RadonDB MySQL 不在同一 NameSpace 中
-
-当客户端与 RadonDB MySQL 集群不在同一个 NameSpace 中时，需先分别获取连接所需的节点地址、节点端口、服务名称。
-
-1. 查询 pod 列表和服务列表，分别获取 pod 名称和服务名称。
-
-   ```bash
-   kubectl get pod,svc
-   ```
-
-2. 开启服务网络访问。
-
-   执行如下命令，打开服务配置文件，将 spec 下 type 参数设置为 `NodePort`。
-
-      ```bash
-      kubectl edit svc <服务名称>
-      ```
-
-3. 分别获取 pod 所在的节点地址和节点端口。
-
-   ```bash
-   kubectl describe pod <pod名称>
-   ```
-
-   ```bash
-   kubectl describe svc <服务名称>
-   ```
-
-4. 连接节点。
-
-   ```bash
-   mysql -p <节点地址> -u <用户名> -P <节点端口> -p
-   ```
-
-> **说明**
+> **注意**
 > 
-> 使用外网主机连接可能会出现 `SSL connection error`，需要加上 `--ssl-mode=DISABLE` 参数，关闭 SSL。
+> 准备可用于连接 MySQL 的客户端。
+> 
+> 使用外网客户端连接可能会出现 `SSL connection error`，需要加上 `--ssl-mode=DISABLE` 参数，关闭 SSL。
+
+- 当客户端的与数据库部署在不同 Kubernetes 集群，请参考 [Kubernetes 访问集群中的应用程序](https://kubernetes.io/zh/docs/tasks/access-application-cluster/)，配置端口转发、负载均衡等连接方式。
+
+- 在 Kubernetes 集群内，支持选择使用 `service_name` 或者 `cluster_IP` 方式访问 RadonDB MySQL。
+
+   > **说明**
+   > 
+   > RadonDB MySQL 提供 leader 服务和 follower 服务用于分别访问主从节点。leader 服务始终指向主节点（读写），follower 服务始终指向从节点（只读）。
+
+以下为客户端与数据库在同一 Kubernetes 集群内，访问 RadonDB MySQL 的方式。
+
+### `service_name` 方式
+
+* 连接 leader 服务(RadonDB MySQL 主节点)
+
+    ```shell
+    $ mysql -h <leader_service_name>.<namespace> -u <user_name> -p
+    ```
+
+   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
+
+    ```shell
+    $ mysql -h sample-leader.default -u radondb_usr -p
+    ```
+
+* 连接 follower 服务(RadonDB MySQL 从节点)
+
+    ```shell
+    $ mysql -h <follower_service_name>.<namespace> -u <user_name> -p
+    ```
+
+   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
+
+    ```shell
+    $ mysql -h sample-follower.default -u radondb_usr -p  
+    ```
+
+### `clusterIP` 方式
+
+RadonDB MySQL 的高可用读写 IP 指向 leader 服务的 `clusterIP`，高可用只读 IP 指向 follower 服务的 `clusterIP`。
+
+```shell
+$ mysql -h <clusterIP> -P <mysql_Port> -u <user_name> -p
+```
+
+以下示例用户名为 `radondb_usr`， leader 服务的 clusterIP 为 `10.10.128.136` ，连接示例如下：
+
+```shell
+$ mysql -h 10.10.128.136 -P 3306 -u radondb_usr -p
+```
 
 ## 配置
 
