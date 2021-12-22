@@ -40,7 +40,7 @@ rbac:
 
 rbacProxy:
   create: true
-  image: gcr.azk8s.cn/kubebuilder/kube-rbac-proxy:v0.8.0
+  image: radondb/kube-rbac-proxy:v0.8.0
 
 leaderElection:
   create: true
