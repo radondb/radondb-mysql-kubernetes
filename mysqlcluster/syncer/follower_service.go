@@ -48,7 +48,7 @@ func NewFollowerSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) synce
 			service.Spec.Type = "ClusterIP"
 		}
 		service.Spec.Selector = c.GetSelectorLabels()
-		service.Spec.Selector["role"] = "follower"
+		service.Spec.Selector["role"] = string(utils.Follower)
 		service.Spec.Selector["healthy"] = "yes"
 
 		if len(service.Spec.Ports) != 2 {

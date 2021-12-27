@@ -48,7 +48,7 @@ func NewLeaderSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.
 			service.Spec.Type = "ClusterIP"
 		}
 		service.Spec.Selector = c.GetSelectorLabels()
-		service.Spec.Selector["role"] = "leader"
+		service.Spec.Selector["role"] = string(utils.Leader)
 
 		if len(service.Spec.Ports) != 2 {
 			service.Spec.Ports = make([]corev1.ServicePort, 2)
