@@ -34,7 +34,8 @@ RadonDB MySQL Kubernetes supports deployment and management of RaodnDB MySQL clu
 
 ### Operator
 
-- [Deploy RadonDB MySQL on Kubernetes](docs/kubernetes/deploy_radondb-mysql_operator_on_k8s.md)
+- [Deploy RadonDB MySQL on Kubernetes](/docs/kubernetes/deploy_radondb-mysql_operator_on_k8s.md)
+- [Deploy RadonDB MySQL on Rancher](/docs/rancher/deploy_radondb-mysql_operator_on_rancher.md)
 
 ## Roadmap
 
