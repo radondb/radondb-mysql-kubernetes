@@ -19,6 +19,7 @@ package e2e
 import (
 	"testing"
 
+	// _ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/cluster"
 	"github.com/radondb/radondb-mysql-kubernetes/test/e2e/framework"
 	_ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/simplecase"
 )
