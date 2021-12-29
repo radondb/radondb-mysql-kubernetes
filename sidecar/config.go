@@ -345,8 +345,6 @@ func (cfg *Config) buildXenonConf() []byte {
 			"admit-defeat-hearbeat-count": %d,
 			"heartbeat-timeout": %d,
 			"meta-datadir": "/var/lib/xenon/",
-			"leader-start-command": "/scripts/leader-start.sh",
-			"leader-stop-command": "/scripts/leader-stop.sh",
 			"semi-sync-degrade": true,
 			"purge-binlog-disabled": true,
 			"super-idle": false
@@ -408,25 +406,25 @@ func (cfg *Config) buildClientConfig() (*ini.File, error) {
 	return conf, nil
 }
 
-// buildLeaderStart build the leader-start.sh.
-func (cfg *Config) buildLeaderStart() []byte {
-	str := fmt.Sprintf(`#!/usr/bin/env bash
-curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
---cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
--d '[{"op": "replace", "path": "/metadata/labels/role", "value": "leader"}]'
-`, cfg.NameSpace)
-	return utils.StringToBytes(str)
-}
+// // buildLeaderStart build the leader-start.sh.
+// func (cfg *Config) buildLeaderStart() []byte {
+// 	str := fmt.Sprintf(`#!/usr/bin/env bash
+// curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
+// --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
+// -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "leader"}]'
+// `, cfg.NameSpace)
+// 	return utils.StringToBytes(str)
+// }
 
-// buildLeaderStop build the leader-stop.sh.
-func (cfg *Config) buildLeaderStop() []byte {
-	str := fmt.Sprintf(`#!/usr/bin/env bash
-curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
---cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
--d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
-`, cfg.NameSpace)
-	return utils.StringToBytes(str)
-}
+// // buildLeaderStop build the leader-stop.sh.
+// func (cfg *Config) buildLeaderStop() []byte {
+// 	str := fmt.Sprintf(`#!/usr/bin/env bash
+// curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
+// --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
+// -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
+// `, cfg.NameSpace)
+// 	return utils.StringToBytes(str)
+// }
 
 /* The function is equivalent to the following shell script template:
 #!/bin/sh

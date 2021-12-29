@@ -332,9 +332,12 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 			return err
 		}
 	}
-	// Update the leader.
-	if err := s.applyNWait(ctx, &leaderPod); err != nil {
-		return err
+	// There may be a case where Leader does not exist during the update process.
+	if leaderPod.Name != "" {
+		// Update the leader.
+		if err := s.applyNWait(ctx, &leaderPod); err != nil {
+			return err
+		}
 	}
 	return nil
 }

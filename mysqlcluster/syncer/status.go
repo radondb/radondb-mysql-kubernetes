@@ -232,8 +232,8 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		// update apiv1alpha1.NodeConditionReadOnly.
 		s.updateNodeCondition(node, int(apiv1alpha1.IndexReadOnly), isReadOnly)
 
-		if err = s.setPodHealthy(ctx, &pod, node); err != nil {
-			log.Error(err, "cannot update pod", "name", podName, "namespace", pod.Namespace)
+		if err = s.updatePodLabel(ctx, &pod, node); err != nil {
+			log.Error(err, "failed to update labels", "pod", pod.Name, "namespace", pod.Namespace)
 		}
 	}
 
@@ -358,9 +358,10 @@ func (s *StatusSyncer) addNodesInXenon(host string, toAdd []string) error {
 	return nil
 }
 
-// setPodHealthy set the pod lable healthy.
-func (s *StatusSyncer) setPodHealthy(ctx context.Context, pod *corev1.Pod, node *apiv1alpha1.NodeStatus) error {
+// updatePodLabel update the pod lables.
+func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node *apiv1alpha1.NodeStatus) error {
 	healthy := "no"
+	isPodLabelsUpdated := false
 	if node.Conditions[apiv1alpha1.IndexLagged].Status == corev1.ConditionFalse {
 		if node.Conditions[apiv1alpha1.IndexLeader].Status == corev1.ConditionFalse &&
 			node.Conditions[apiv1alpha1.IndexReadOnly].Status == corev1.ConditionTrue &&
@@ -375,6 +376,13 @@ func (s *StatusSyncer) setPodHealthy(ctx context.Context, pod *corev1.Pod, node 
 
 	if pod.Labels["healthy"] != healthy {
 		pod.Labels["healthy"] = healthy
+		isPodLabelsUpdated = true
+	}
+	if pod.Labels["role"] != node.RaftStatus.Role {
+		pod.Labels["role"] = node.RaftStatus.Role
+		isPodLabelsUpdated = true
+	}
+	if isPodLabelsUpdated {
 		if err := s.cli.Update(ctx, pod); client.IgnoreNotFound(err) != nil {
 			return err
 		}
