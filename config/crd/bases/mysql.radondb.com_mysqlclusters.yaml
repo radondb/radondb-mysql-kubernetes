@@ -1330,6 +1330,10 @@ spec:
                       description: One word, camel-case reason for current status
                         of the condition.
                       type: string
+                    replicas:
+                      description: Replicas is used to record the replicas of every
+                        condition.
+                      type: integer
                     status:
                       description: Status of the condition, one of (\"True\", \"False\",
                         \"Unknown\").
@@ -1340,6 +1344,7 @@ spec:
                       type: string
                   required:
                   - lastTransitionTime
+                  - replicas
                   - status
                   - type
                   type: object

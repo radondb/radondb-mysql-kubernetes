@@ -259,6 +259,8 @@ const (
 	ClusterScaleInState ClusterState = "ScaleIn"
 	// ClusterScaleOutState indicates whether the cluster replicas is increasing.
 	ClusterScaleOutState ClusterState = "ScaleOut"
+	// ClusterFailoverState indicates whether the cluster is in failover.
+	ClusterFailoverState ClusterState = "Failover"
 )
 
 // ClusterConditionType defines type for cluster condition type.
@@ -279,6 +281,8 @@ const (
 	ConditionScaleIn ClusterConditionType = "ScaleIn"
 	// ConditionScaleOut indicates whether the cluster replicas is increasing.
 	ConditionScaleOut ClusterConditionType = "ScaleOut"
+	// ConditionFailover indicates whether the cluster is in failover.
+	ConditionFailover ClusterConditionType = "Failover"
 )
 
 // ClusterCondition defines type for cluster conditions.
@@ -294,6 +298,8 @@ type ClusterCondition struct {
 	Reason string `json:"reason,omitempty"`
 	// Full text reason for current status of the condition.
 	Message string `json:"message,omitempty"`
+	// Replicas is used to record the replicas of every condition.
+	Replicas int `json:"replicas"`
 }
 
 // NodeStatus defines type for status of a node into cluster.

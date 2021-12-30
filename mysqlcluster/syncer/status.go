@@ -19,6 +19,7 @@ package syncer
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/presslabs/controller-util/syncer"
@@ -95,11 +96,25 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	// get ready nodes.
 	var readyNodes []corev1.Pod
 	for _, pod := range list.Items {
+		if s.Status.State == apiv1alpha1.ClusterReadyState && pod.Status.Phase != corev1.PodRunning {
+			s.Status.State = apiv1alpha1.ClusterFailoverState
+			clusterCondition.Type = apiv1alpha1.ConditionFailover
+			clusterCondition.Reason = fmt.Sprintf("pod[%s] is abnormal", pod.Name)
+			continue
+		}
+
 		for _, cond := range pod.Status.Conditions {
 			switch cond.Type {
 			case corev1.ContainersReady:
 				if cond.Status == corev1.ConditionTrue {
 					readyNodes = append(readyNodes, pod)
+				} else {
+					if s.Status.State == apiv1alpha1.ClusterReadyState {
+						s.Status.State = apiv1alpha1.ClusterFailoverState
+						clusterCondition.Type = apiv1alpha1.ConditionFailover
+						clusterCondition.Reason = fmt.Sprintf("container[%s] of pod[%s] is abnormal", getAbnormalContainer(pod), pod.Name)
+						clusterCondition.Message = cond.Message
+					}
 				}
 			case corev1.PodScheduled:
 				if cond.Reason == corev1.PodReasonUnschedulable {
@@ -111,6 +126,7 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 						LastTransitionTime: metav1.NewTime(time.Now()),
 						Reason:             corev1.PodReasonUnschedulable,
 						Message:            cond.Message,
+						Replicas:           s.Status.ReadyNodes,
 					}
 				}
 			}
@@ -118,6 +134,7 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	}
 
 	s.Status.ReadyNodes = len(readyNodes)
+	clusterCondition.Replicas = len(readyNodes)
 	if s.Status.ReadyNodes == int(*s.Spec.Replicas) && int(*s.Spec.Replicas) != 0 {
 		if err := s.reconcileXenon(s.Status.ReadyNodes); err != nil {
 			clusterCondition.Message = fmt.Sprintf("%s", err)
@@ -145,36 +162,54 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 }
 
 // updateClusterStatus update the cluster status and returns condition.
+// Conditions:
+// 1. cluster is initializing: state is empty.
+// 2. cluster is closed: spec.replicas and readynodes is both 0.
+// 3. clutser is scale in/out: state is ready, but spec.replicas is not equal to the latest condition`s replicas.
+// 4. cluster is failover: state is ready, but ready nodes is not equal to spec.replicas.
+// 5. cluster state is not changed.
 func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
 	clusterCondition := apiv1alpha1.ClusterCondition{
 		Type:               apiv1alpha1.ConditionInit,
 		Status:             corev1.ConditionTrue,
 		LastTransitionTime: metav1.NewTime(time.Now()),
+		Replicas:           0,
 	}
 
 	oldState := s.Status.State
-	// If the state does not exist, the cluster is being initialized.
+	// 1. If the state does not exist, the cluster is being initialized.
 	if oldState == "" {
 		s.Status.State = apiv1alpha1.ClusterInitState
 		return clusterCondition
 	}
-	// If the expected number of replicas and the actual number
+	// 2. If the expected number of replicas and the actual number
 	// of replicas are both 0, the cluster has been closed.
 	if int(*s.Spec.Replicas) == 0 && s.Status.ReadyNodes == 0 {
 		clusterCondition.Type = apiv1alpha1.ConditionClose
 		s.Status.State = apiv1alpha1.ClusterCloseState
 		return clusterCondition
 	}
-	// When the cluster is ready or closed, the number of replicas changes,
-	// indicating that the cluster is updating nodes.
-	if oldState == apiv1alpha1.ClusterReadyState || oldState == apiv1alpha1.ClusterCloseState {
-		if int(*s.Spec.Replicas) > s.Status.ReadyNodes {
-			clusterCondition.Type = apiv1alpha1.ConditionScaleOut
-			s.Status.State = apiv1alpha1.ClusterScaleOutState
-			return clusterCondition
-		} else if int(*s.Spec.Replicas) < s.Status.ReadyNodes {
-			clusterCondition.Type = apiv1alpha1.ConditionScaleIn
-			s.Status.State = apiv1alpha1.ClusterScaleInState
+
+	if oldState == apiv1alpha1.ClusterReadyState {
+		lastReplicas := s.Status.Conditions[len(s.Status.Conditions)-1].Replicas
+		// 3. If the expected replicas is not equal to the replicas of last condition record,
+		// the cluster is scale in/out.
+		if lastReplicas != int(*s.Spec.Replicas) {
+			if int(*s.Spec.Replicas) > lastReplicas {
+				clusterCondition.Type = apiv1alpha1.ConditionScaleOut
+				s.Status.State = apiv1alpha1.ClusterScaleOutState
+				return clusterCondition
+			} else if int(*s.Spec.Replicas) < lastReplicas {
+				clusterCondition.Type = apiv1alpha1.ConditionScaleIn
+				s.Status.State = apiv1alpha1.ClusterScaleInState
+				return clusterCondition
+			}
+		}
+		// 4. if the expected replicas is equal to the replicas of last condition record
+		// but not equal to ready nodes, the cluster is failover.
+		if s.Status.ReadyNodes != int(*s.Spec.Replicas) {
+			clusterCondition.Type = apiv1alpha1.ConditionFailover
+			s.Status.State = apiv1alpha1.ClusterFailoverState
 			return clusterCondition
 		}
 	}
@@ -380,4 +415,14 @@ func (s *StatusSyncer) setPodHealthy(ctx context.Context, pod *corev1.Pod, node 
 		}
 	}
 	return nil
+}
+
+func getAbnormalContainer(pod corev1.Pod) string {
+	abnormalContainers := []string{}
+	for _, container := range pod.Status.ContainerStatuses {
+		if !container.Ready {
+			abnormalContainers = append(abnormalContainers, container.Name)
+		}
+	}
+	return strings.Join(abnormalContainers, ",")
 }
