@@ -273,8 +273,8 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 	}
 
 	// Delete node status of nodes that have been deleted.
-	if len(s.Status.Nodes) > len(pods) {
-		s.Status.Nodes = s.Status.Nodes[:len(pods)]
+	if len(s.Status.Nodes) > int(*s.Spec.Replicas) {
+		s.Status.Nodes = s.Status.Nodes[:int(*s.Spec.Replicas)]
 	}
 	return nil
 }
