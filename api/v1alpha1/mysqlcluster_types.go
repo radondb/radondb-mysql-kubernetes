@@ -65,7 +65,7 @@ type MysqlClusterSpec struct {
 
 	// Pod extra specification.
 	// +optional
-	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", resources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "radondb/mysql-sidecar:0.1", busyboxImage: "busybox:1.32"}
+	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", resources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "radondb/mysql-sidecar:v2.1.0", busyboxImage: "busybox:1.32"}
 	PodSpec PodSpec `json:"podSpec,omitempty"`
 
 	// PVC extra specifiaction.
@@ -198,7 +198,7 @@ type PodSpec struct {
 
 	// To specify the image that will be used for sidecar container.
 	// +optional
-	// +kubebuilder:default:="radondb/mysql-sidecar:0.1"
+	// +kubebuilder:default:="radondb/mysql-sidecar:v2.1.0"
 	SidecarImage string `json:"sidecarImage,omitempty"`
 
 	// The busybox image.
@@ -247,7 +247,7 @@ type ClusterState string
 
 const (
 	// ClusterInitState  indicates whether the cluster is initializing.
-	ClusterInitState  ClusterState = "Initializing"
+	ClusterInitState ClusterState = "Initializing"
 	// ClusterUpdateState indicates whether the cluster is being updated.
 	ClusterUpdateState ClusterState = "Updating"
 	// ClusterReadyState indicates whether all containers in the pod are ready.

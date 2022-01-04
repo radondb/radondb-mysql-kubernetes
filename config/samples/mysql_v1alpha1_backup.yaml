@@ -4,6 +4,6 @@ metadata:
   name: backup-sample
 spec:
   # Add fields here
-  image: radondb/mysql-sidecar:latest
+  image: radondb/mysql-sidecar:v2.1.0
   hostname: sample-mysql-0
   clustname: sample

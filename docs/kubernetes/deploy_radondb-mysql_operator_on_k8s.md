@@ -231,7 +231,7 @@ kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysq
 | PodSpec.Tolerations       | 节点 pod [污点容忍度](#5-容忍)列表                   |     -                |
 | PodSpec.SchedulerName     | 节点 pod [调度器](#6-调度器)名称                     | -                         |
 | PodSpec.Resources         | 节点 pod 配额                                        | 预留: cpu 10m, 内存 32Mi |
-| PodSpec.SidecarImage      | Sidecar 镜像                                        | radondb/mysql-sidecar:0.1       |
+| PodSpec.SidecarImage      | Sidecar 镜像                                        | radondb/mysql-sidecar:v2.1.0       |
 | PodSpec.BusyboxImage      | Busybox 镜像                                         | busybox:1.32             |
 | PodSpec.SlowLogTail       | 是否开启慢日志跟踪                                     | false                    |
 | PodSpec.AuditLogTail      | 是否开启审计日志跟踪                                    | false                    |
