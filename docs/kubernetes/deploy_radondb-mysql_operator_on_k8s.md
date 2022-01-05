@@ -5,15 +5,13 @@ Contents
       * [简介](#简介)
       * [部署准备](#部署准备)
       * [部署步骤](#部署步骤)
-         * [步骤 1：克隆代码](#步骤-1-克隆代码)
+         * [步骤 1：添加 Helm 仓库](#步骤-1-添加-helm-仓库)
          * [步骤 2：部署 Operator](#步骤-2-部署-operator)
          * [步骤 3：部署 RadonDB MySQL 集群](#步骤-3-部署-radondb-mysql-集群)
       * [部署校验](#部署校验)
          * [校验 RadonDB MySQL Operator](#校验-radondb-mysql-operator)
          * [校验 RadonDB MySQL 集群](#校验-radondb-mysql-集群)
-      * [连接 RadonDB MySQL](#连接-radondb-mysql)
-         * [同 NameSpace 访问](#同-namespace-访问)
-         * [跨 NameSpace 访问](#跨-namespace-访问)
+      * [访问 RadonDB MySQL](#访问-radondb-mysql)
       * [卸载](#卸载)
          * [卸载 Operator](#卸载-Operator)
          * [卸载 RadonDB MySQL](#卸载-RadonDB-MySQL)
@@ -40,34 +38,36 @@ RadonDB MySQL 支持在 Kubernetes 上安装部署和管理，自动执行与运
 
 ## 部署步骤
 
-### 步骤 1: 克隆代码
+### 步骤 1: 添加 Helm 仓库
 
 ```
-git clone https://github.com/radondb/radondb-mysql-kubernetes.git
+$ helm repo add radondb https://radondb.github.io/radondb-mysql-kubernetes/
+```
+
+校验仓库，可查看到名为 `radondb/mysql-operator` 的 chart。
+```
+$ helm search repo radondb
+NAME                    CHART VERSION   APP VERSION     DESCRIPTION                    
+radondb/mysql-operator  0.1.0           v2.1.0          Open Source，High Availability Cluster，based o...                    
 ```
 
 ### 步骤 2: 部署 Operator
 
-使用 Helm(V3版本) 安装 chart 的指令如下。
-
-```
-helm install [NAME] [CHART] [flags]
-```
-
 以下指定 release 名为 `demo` , 创建一个名为 `demo-mysql-operator` 的 [Deployment](#7-deployments)。
 
 ```
-helm install demo radondb-mysql-kubernetes/charts/mysql-operator
+$ helm install demo radondb/mysql-operator
 ```
 
-> 说明：在这一步骤中默认将同时创建一个名为 `mysqlclusters.mysql.radondb.com` 的 [CRD](#8-CRD)。
+> 说明：在这一步骤中默认将同时创建集群所需的 [CRD](#8-CRD)。
 
 ### 步骤 3: 部署 RadonDB MySQL 集群
 
 执行以下指令，以默认参数为 CRD `mysqlclusters.mysql.radondb.com` 创建一个实例，即创建 RadonDB MySQL 集群。您可以参照[配置](#配置)自定义集群部署参数。
 
 ```kubectl
-kubectl apply -f radondb-mysql-kubernetes/config/samples/mysql_v1alpha1_mysqlcluster.yaml
+$ wget https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1alpha1_mysqlcluster.yaml
+$ kubectl apply -f mysql_v1alpha1_cluster.yaml
 ```
 
 ## 部署校验
@@ -77,10 +77,9 @@ kubectl apply -f radondb-mysql-kubernetes/config/samples/mysql_v1alpha1_mysqlclu
 查看 `demo` 的 Deployment 和对应监控服务，回显如下信息则部署成功。
 
 ```shell
-kubectl get deployment,svc
+$ kubectl get deployment,svc
 NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
 demo-mysql-operator   1/1     1            1           7h50m
-
 
 NAME                             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
 service/mysql-operator-metrics   ClusterIP   10.96.142.22    <none>        8443/TCP   8h
@@ -88,18 +87,19 @@ service/mysql-operator-metrics   ClusterIP   10.96.142.22    <none>        8443/
 
 ### 校验 RadonDB MySQL 集群
 
-执行如下命令，将查看到名为 `mysqlclusters.mysql.radondb.com` 的 CRD。
+执行如下命令，将查看到如下 CRD。
 
 ```shell
-kubectl get crd
-NAME                                                  CREATED AT
-mysqlclusters.mysql.radondb.com                            2021-06-29T02:28:36Z
+$ kubectl get crd | grep mysql.radondb.com
+backups.mysql.radondb.com                             2021-11-02T07:00:01Z
+mysqlclusters.mysql.radondb.com                       2021-11-02T07:00:01Z
+mysqlusers.mysql.radondb.com                          2021-11-02T07:00:01Z
 ```
 
 以默认部署为例，执行如下命令将查看到名为 `sample-mysql` 的三节点 RadonDB MySQL 集群及用于访问节点的服务。
 
 ```shell
-kubectl get statefulset,svc
+$ kubectl get statefulset,svc
 NAME           READY   AGE
 sample-mysql   3/3     7h33m
 
@@ -109,68 +109,61 @@ service/sample-leader            ClusterIP   10.96.111.214   <none>        3306/
 service/sample-mysql             ClusterIP   None            <none>        3306/TCP   7h37m
 ```
 
-## 连接 RadonDB MySQL
+## 访问 RadonDB MySQL
 
-您需要准备一个用于连接 MySQL 的客户端。
+> **注意**
+> 
+> 准备可用于连接 MySQL 的客户端。
 
-### 同 NameSpace 访问
+- 当客户端的与数据库部署在不同 Kubernetes 集群，请参考 [Kubernetes 访问集群中的应用程序](https://kubernetes.io/zh/docs/tasks/access-application-cluster/)，配置端口转发、负载均衡等连接方式。
 
-当客户端与 RadonDB MySQL 集群在同一个 NameSpace 中时，可使用 leader/follower service 名称代替具体的 IP 和端口。
+- 在 Kubernetes 集群内，支持使用 `service_name` 或者 `clusterIP` 方式，访问 RadonDB MySQL。
+  
+   > **说明**
+   > 
+   > RadonDB MySQL 提供 leader 服务和 follower 服务用于分别访问主从节点。leader 服务始终指向主节点（读写），follower 服务始终指向从节点（只读）。
 
-* 连接主节点(读写节点)。
+以下为客户端与数据库在同一 Kubernetes 集群内，访问 RadonDB MySQL 的方式。
 
-    ```shell
-    $ mysql -h <leader service 名称> -u <用户名> -p
-    ```
+### `service_name` 方式
 
-   用户名为 `radondb_usr`，release 名为 `sample` ，连接主节点示例如下：
-
-    ```shell
-    $ mysql -h sample-leader -u radondb_usr -p
-    ```
-
-* 连接从节点(只读节点)。
+* 连接 leader 服务(RadonDB MySQL 主节点)
 
     ```shell
-    $ mysql -h <follower service 名称> -u <用户名> -p
+    $ mysql -h <leader_service_name>.<namespace> -u <user_name> -p
     ```
 
-   用户名为 `radondb_usr`，release 名为 `sample` ，连接从节点示例如下：
+   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
 
     ```shell
-    $ mysql -h sample-follower -u radondb_usr -p  
+    $ mysql -h sample-leader.default -u radondb_usr -p
     ```
 
-### 跨 NameSpace 访问
-
-当客户端与 RadonDB MySQL 集群不在同一个 NameSpace 中时，可以通过 podIP 或服务 ClusterIP 来连接对应节点。
-
-1. 查询 pod 列表和服务列表，分别获取需要连接的节点所在的pod 名称或对应的服务名称。
+* 连接 follower 服务(RadonDB MySQL 从节点)
 
     ```shell
-    $ kubectl get pod,svc
+    $ mysql -h <follower_service_name>.<namespace> -u <user_name> -p
     ```
 
-2. 查看 pod/服务的详细信息，获取对应的IP。
+   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
 
     ```shell
-    $ kubectl describe pod <pod 名称>
-    $ kubectl describe svc <服务名称>
+    $ mysql -h sample-follower.default -u radondb_usr -p  
     ```
 
-    > 注意：pod 重启后 pod IP 会更新，需重新获取 pod IP，建议使用服务的 ClusterIP 来连接节点。
+### `clusterIP` 方式
 
-3. 连接节点。
+RadonDB MySQL 的高可用读写 IP 指向 leader 服务的 `clusterIP`，高可用只读 IP 指向 follower 服务的 `clusterIP`。
 
-    ```shell
-    $ mysql -h <pod IP/服务 ClusterIP> -u <用户名> -p
-    ```
+```shell
+$ mysql -h <clusterIP> -P <mysql_Port> -u <user_name> -p
+```
 
-    用户名为 `radondb_usr`，pod IP 为 `10.10.128.136` ，连接示例如下：
+以下示例用户名为 `radondb_usr`， leader 服务的 clusterIP 为 `10.10.128.136` ，连接示例如下：
 
-    ```shell
-    $ mysql -h 10.10.128.136 -u radondb_usr -p
-    ```
+```shell
+$ mysql -h 10.10.128.136 -P 3306 -u radondb_usr -p
+```
 
 ## 卸载
 
@@ -179,7 +172,7 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
 卸载当前命名空间下 release 名为 `demo` 的 RadonDB MySQL Operator。
 
 ```shell
-helm delete demo
+$ helm delete demo
 ```
 
 ### 卸载 RadonDB MySQL
@@ -187,13 +180,15 @@ helm delete demo
 卸载 release 名为 `sample` RadonDB MySQL 集群。
 
 ```shell
-kubectl delete mysqlclusters.mysql.radondb.com sample
+$ kubectl delete mysqlclusters.mysql.radondb.com sample
 ```
 
 ### 卸载自定义资源
 
 ```shell
-kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysql.radondb.com
+$ kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysql.radondb.com
+$ kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlusers.mysql.radondb.com
+$ kubectl delete customresourcedefinitions.apiextensions.k8s.io backups.mysql.radondb.com
 ```
 
 ## 配置
@@ -201,49 +196,49 @@ kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysq
 ### 容器配置
 
 | 参数                               | 描述                        | 默认值                                                      |
-|:---------------------------------- |:---------------------------|:----------------------------------------------------------- |
+| :--------------------------------- | :-------------------------- | :---------------------------------------------------------- |
 | MysqlVersion                       | MySQL 版本号                | 5.7                                                         |
 | MysqlOpts.RootPassword             | MySQL Root 用户密码         | ""                                                          |
-| MysqlOpts.User                     | 默认新建的 MySQL 用户名称     | radondb_usr                                                      |
-| MysqlOpts.Password                 | 默认新建的 MySQL 用户密码     | RadonDB@123                                                   |
-| MysqlOpts.Database                 | 默认新建的 MySQL 数据库名称   | radondb                                                   |
+| MysqlOpts.User                     | 默认新建的 MySQL 用户名称   | radondb_usr                                                 |
+| MysqlOpts.Password                 | 默认新建的 MySQL 用户密码   | RadonDB@123                                                 |
+| MysqlOpts.Database                 | 默认新建的 MySQL 数据库名称 | radondb                                                     |
 | MysqlOpts.InitTokuDB               | 是否启用TokuDB              | true                                                        |
-| MysqlOpts.MysqlConf                | MySQL 配置                  |  -                                                          |
+| MysqlOpts.MysqlConf                | MySQL 配置                  | -                                                           |
 | MysqlOpts.Resources                | MySQL 容器配额              | 预留: cpu 100m, 内存 256Mi; </br> 限制: cpu 500m, 内存 1Gi  |
-| XenonOpts.Image                    | xenon(高可用组件)镜像       | radondb/xenon:1.1.5-alpha                                    |
-| XenonOpts.AdmitDefeatHearbeatCount | 允许的最大心跳检测失败次数    | 5                                                           |
-| XenonOpts.ElectionTimeout          | 选举超时时间(单位为毫秒)      | 10000ms                                                     |
+| XenonOpts.Image                    | xenon(高可用组件)镜像       | radondb/xenon:1.1.5-alpha                                   |
+| XenonOpts.AdmitDefeatHearbeatCount | 允许的最大心跳检测失败次数  | 5                                                           |
+| XenonOpts.ElectionTimeout          | 选举超时时间(单位为毫秒)    | 10000ms                                                     |
 | XenonOpts.Resources                | xenon 容器配额              | 预留: cpu 50m, 内存 128Mi; </br> 限制: cpu 100m, 内存 256Mi |
-| MetricsOpts.Enabled                | 是否启用 Metrics(监控)容器      | false                                                       |
-| MetricsOpts.Image                  | Metrics 容器镜像地址            | prom/mysqld-exporter:v0.12.1                                |
+| MetricsOpts.Enabled                | 是否启用 Metrics(监控)容器  | false                                                       |
+| MetricsOpts.Image                  | Metrics 容器镜像        | prom/mysqld-exporter:v0.12.1                                |
 | MetricsOpts.Resources              | Metrics 容器配额            | 预留: cpu 10m, 内存 32Mi; </br> 限制: cpu 100m, 内存 128Mi  |
 
 ### 节点配置
 
-| 参数                      | 描述                                                | 默认值                   |
-|:------------------------- |:-------------------------------------------------- |:------------------------ |
-| Replicas                  | 集群节点数，只允许为0、2、3、5                        | 3                        |
-| PodSpec.ImagePullPolicy   | 镜像拉取策略, 只允许为 Always/IfNotPresent/Never     | IfNotPresent             |
-| PodSpec.Labels            | 节点 pod [标签](#1-标签)                            |     -                     |
-| PodSpec.Annotations       | 节点 pod [注解](#2-注解)                            |     -                    |
-| PodSpec.Affinity          | 节点 pod [亲和性](#3-亲和性)                         |     -                  |
-| PodSpec.PriorityClassName | 节点 pod [优先级](#4-优先级)对象名称                   |     -                  |
-| PodSpec.Tolerations       | 节点 pod [污点容忍度](#5-容忍)列表                   |     -                |
-| PodSpec.SchedulerName     | 节点 pod [调度器](#6-调度器)名称                     | -                         |
-| PodSpec.Resources         | 节点 pod 配额                                        | 预留: cpu 10m, 内存 32Mi |
-| PodSpec.SidecarImage      | Sidecar 镜像                                        | radondb/mysql-sidecar:v2.1.0       |
-| PodSpec.BusyboxImage      | Busybox 镜像                                         | busybox:1.32             |
-| PodSpec.SlowLogTail       | 是否开启慢日志跟踪                                     | false                    |
-| PodSpec.AuditLogTail      | 是否开启审计日志跟踪                                    | false                    |
+| 参数                        | 描述                                             | 默认值                    |
+| :-------------------------- | :----------------------------------------------- | :------------------------ |
+| Replicas                    | 集群节点数，只允许为0、2、3、5                   | 3                         |
+| PodPolicy.ImagePullPolicy   | 镜像拉取策略, 只允许为 Always/IfNotPresent/Never | IfNotPresent              |
+| PodPolicy.Labels            | 节点 pod [标签](#1-标签)                         | -                         |
+| PodPolicy.Annotations       | 节点 pod [注解](#2-注解)                         | -                         |
+| PodPolicy.Affinity          | 节点 pod [亲和性](#3-亲和性)                     | -                         |
+| PodPolicy.PriorityClassName | 节点 pod [优先级](#4-优先级)对象名称             | -                         |
+| PodPolicy.Tolerations       | 节点 pod [污点容忍度](#5-容忍)列表               | -                         |
+| PodPolicy.SchedulerName     | 节点 pod [调度器](#6-调度器)名称                 | -                         |
+| PodPolicy.ExtraResources    | 节点容器配额（除 MySQL 和 Xenon 之外的容器）     | 预留: cpu 10m, 内存 32Mi  |
+| PodPolicy.SidecarImage      | Sidecar 镜像                                     | radondb/mysql-sidecar:latest |
+| PodPolicy.BusyboxImage      | Busybox 镜像                                     | busybox:1.32              |
+| PodPolicy.SlowLogTail       | 是否开启慢日志跟踪                               | false                     |
+| PodPolicy.AuditLogTail      | 是否开启审计日志跟踪                             | false                     |
 
 ### 持久化配置
 
 | 参数                     | 描述           | 默认值        |
-|:------------------------ |:-------------- |:------------- |
+| :----------------------- | :------------- | :------------ |
 | Persistence.Enabled      | 是否启用持久化 | true          |
 | Persistence.AccessModes  | 存储卷访问模式 | ReadWriteOnce |
-| Persistence.StorageClass | 存储卷类型     |   -            |
-| Persistence.Size         | 存储卷容量     | 10Gi         |
+| Persistence.StorageClass | 存储卷类型     | -             |
+| Persistence.Size         | 存储卷容量     | 10Gi          |
 
 ## 参考
 
