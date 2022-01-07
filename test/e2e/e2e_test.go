@@ -20,8 +20,9 @@ import (
 	"testing"
 
 	// _ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/cluster"
+	_ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/backup"
 	"github.com/radondb/radondb-mysql-kubernetes/test/e2e/framework"
-	_ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/simplecase"
+	// _ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/simplecase"
 )
 
 func init() {

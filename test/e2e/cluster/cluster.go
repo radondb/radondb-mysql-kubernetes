@@ -24,7 +24,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
@@ -57,7 +56,7 @@ var _ = Describe("MySQL Cluster E2E Tests", func() {
 		Expect(f.Client.Create(context.TODO(), cluster)).To(Succeed(), "failed to create cluster '%s'", cluster.Name)
 
 		By("testing the cluster readiness")
-		waitClusterReadiness(f, cluster)
+		framework.WaitClusterReadiness(f, cluster)
 		Expect(f.Client.Get(context.TODO(), clusterKey, cluster)).To(Succeed(), "failed to get cluster %s", cluster.Name)
 	})
 
@@ -65,38 +64,22 @@ var _ = Describe("MySQL Cluster E2E Tests", func() {
 		By("test cluster is ready after scale out 2 -> 3")
 		cluster.Spec.Replicas = &three
 		Expect(f.Client.Update(context.TODO(), cluster)).To(Succeed())
-		fmt.Println("scale time: ", waitClusterReadiness(f, cluster))
+		fmt.Println("scale time: ", framework.WaitClusterReadiness(f, cluster))
 
 		By("test cluster is ready after scale out 3 -> 5")
 		cluster.Spec.Replicas = &five
 		Expect(f.Client.Update(context.TODO(), cluster)).To(Succeed())
-		fmt.Println("scale time: ", waitClusterReadiness(f, cluster))
+		fmt.Println("scale time: ", framework.WaitClusterReadiness(f, cluster))
 
 		By("test cluster is ready after scale in 5 -> 3")
 		cluster.Spec.Replicas = &three
 		Expect(f.Client.Update(context.TODO(), cluster)).To(Succeed())
-		fmt.Println("scale time: ", waitClusterReadiness(f, cluster))
+		fmt.Println("scale time: ", framework.WaitClusterReadiness(f, cluster))
 
 		By("test cluster is ready after scale in 3 -> 2")
 		cluster.Spec.Replicas = &two
 		Expect(f.Client.Update(context.TODO(), cluster)).To(Succeed())
-		fmt.Println("scale time: ", waitClusterReadiness(f, cluster))
+		fmt.Println("scale time: ", framework.WaitClusterReadiness(f, cluster))
 	})
 
 })
-
-// waitClusterReadiness determine whether the cluster is ready.
-func waitClusterReadiness(f *framework.Framework, cluster *apiv1alpha1.MysqlCluster) time.Duration {
-	startTime := time.Now()
-	timeout := f.Timeout
-	if *cluster.Spec.Replicas > 0 {
-		timeout = time.Duration(*cluster.Spec.Replicas) * f.Timeout
-	}
-	// Wait for pods to be ready.
-	f.ClusterEventuallyReplicas(cluster, timeout)
-	// Wait for xenon to be ready.
-	f.ClusterEventuallyRaftStatus(cluster)
-	// Wait for condition to be ready.
-	f.ClusterEventuallyCondition(cluster, apiv1alpha1.ConditionReady, corev1.ConditionTrue, f.Timeout)
-	return time.Since(startTime)
-}

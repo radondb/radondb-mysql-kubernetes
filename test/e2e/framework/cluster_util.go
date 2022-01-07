@@ -188,7 +188,8 @@ func NewCluster(name, ns string) *apiv1alpha1.MysqlCluster {
 		Spec: apiv1alpha1.MysqlClusterSpec{
 			Replicas: &two,
 			PodPolicy: apiv1alpha1.PodPolicy{
-				SidecarImage: TestContext.SidecarImage,
+				SidecarImage:    TestContext.SidecarImage,
+				ImagePullPolicy: "Always",
 			},
 		},
 	}
@@ -251,4 +252,20 @@ func (f Framework) WaitServiceAvailable(clusterKey types.NamespacedName, roleLab
 		f.Client.Get(context.TODO(), clusterKey, &cluster)
 		return f.IsPodExist(roleLabel, &cluster)
 	}, FAILOVERTIMEOUT, FAILOVERPOLLING).Should(BeTrue(), "service is unavailable")
+}
+
+// WaitClusterReadiness determine whether the cluster is ready.
+func WaitClusterReadiness(f *Framework, cluster *apiv1alpha1.MysqlCluster) time.Duration {
+	startTime := time.Now()
+	timeout := f.Timeout
+	if *cluster.Spec.Replicas > 0 {
+		timeout = time.Duration(*cluster.Spec.Replicas) * f.Timeout
+	}
+	// Wait for pods to be ready.
+	f.ClusterEventuallyReplicas(cluster, timeout)
+	// Wait for xenon to be ready.
+	f.ClusterEventuallyRaftStatus(cluster)
+	// Wait for condition to be ready.
+	f.ClusterEventuallyCondition(cluster, apiv1alpha1.ConditionReady, corev1.ConditionTrue, f.Timeout)
+	return time.Since(startTime)
 }
