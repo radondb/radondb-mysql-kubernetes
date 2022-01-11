@@ -19,9 +19,44 @@ package framework
 import (
 	"flag"
 	"os"
+	"time"
 
-	"github.com/onsi/ginkgo/config"
 	"k8s.io/client-go/tools/clientcmd"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+var Log = logf.Log.WithName("framework.util")
+
+const (
+	// The namespace where the resource created by E2E.
+	RadondbMysqlE2eNamespace = "radondb-mysql-e2e"
+	// The name of the Operator to create.
+	OperatorReleaseName = "e2e-test"
+	// Export POD logs and test overview.
+	DumpLogs = true
+	// Optional directory to store junit and pod logs output in.
+	// If not specified, it will beset to the current date.
+	ReportDirPrefix = ""
+
+	// Specify the directory that Helm Install will be executed.
+	ChartPath = "../../charts/mysql-operator"
+	// Image path of mysql operator.
+	OperatorImagePath = "radondb/mysql-operator"
+	// Image tag of mysql operator.
+	OperatorImageTag = "latest"
+	// Image path for mysql sidecar.
+	SidecarImage = "radondb/mysql-sidecar:latest"
+
+	// How often to Poll pods, nodes and claims.
+	Poll = 2 * time.Second
+	// Time interval of checking cluster status.
+	POLLING = 2 * time.Second
+	// Timeout time of checking cluster status.
+	TIMEOUT = time.Minute
+	// Timeout of deleting namespace.
+	DefaultNamespaceDeletionTimeout = 10 * time.Minute
+	// Timeout of waiting for POD startup.
+	PodStartTimeout = 1 * time.Hour
 )
 
 type TestContextType struct {
@@ -29,43 +64,36 @@ type TestContextType struct {
 	KubeConfig  string
 	KubeContext string
 
-	ReportDir string
+	ReportDirPrefix string
 
 	ChartPath   string
 	ChartValues string
 
-	OperatorImageTag string
-	SidecarImage     string
+	OperatorImagePath string
+	OperatorImageTag  string
+	SidecarImage      string
 
-	TimeoutSeconds    int
-	DumpLogsOnFailure bool
+	TimeoutSeconds int
+	DumpLogs       bool
 }
 
 var TestContext TestContextType
 
 // Register flags common to all e2e test suites.
 func RegisterCommonFlags() {
-	// Turn on verbose by default to get spec names
-	config.DefaultReporterConfig.Verbose = true
-
-	// Turn on EmitSpecProgress to get spec progress (especially on interrupt)
-	config.GinkgoConfig.EmitSpecProgress = true
-
-	// Randomize specs as well as suites
-	config.GinkgoConfig.RandomizeAllSpecs = true
-
 	flag.StringVar(&TestContext.KubeHost, "kubernetes-host", "", "The kubernetes host, or apiserver, to connect to")
 	flag.StringVar(&TestContext.KubeConfig, "kubernetes-config", os.Getenv(clientcmd.RecommendedConfigPathEnvVar), "Path to config containing embedded authinfo for kubernetes. Default value is from environment variable "+clientcmd.RecommendedConfigPathEnvVar)
 	flag.StringVar(&TestContext.KubeContext, "kubernetes-context", "", "config context to use for kuberentes. If unset, will use value from 'current-context'")
 
-	flag.StringVar(&TestContext.ReportDir, "report-dir", "", "Optional directory to store junit and pod logs output in. If not specified, no junit or logs files will be output")
+	flag.StringVar(&TestContext.ReportDirPrefix, "report-dir", ReportDirPrefix, "Optional directory to store logs output in.")
 
-	flag.StringVar(&TestContext.ChartPath, "operator-chart-path", "../../charts/mysql-operator", "The chart name or path for mysql operator")
-	flag.StringVar(&TestContext.OperatorImageTag, "operator-image-tag", "latest", "Image tag for mysql operator.")
-	flag.StringVar(&TestContext.SidecarImage, "sidecar-image", "radondb/mysql-sidecar:latest", "Image path for mysql sidecar.")
+	flag.StringVar(&TestContext.ChartPath, "operator-chart-path", ChartPath, "The chart name or path for mysql operator")
+	flag.StringVar(&TestContext.OperatorImagePath, "operator-image-path", OperatorImagePath, "Image tag of mysql operator.")
+	flag.StringVar(&TestContext.OperatorImageTag, "operator-image-tag", OperatorImageTag, "Image tag of mysql operator.")
+	flag.StringVar(&TestContext.SidecarImage, "sidecar-image", SidecarImage, "Image path of mysql sidecar.")
 
 	flag.IntVar(&TestContext.TimeoutSeconds, "pod-wait-timeout", 1200, "Timeout to wait for a pod to be ready.")
-	flag.BoolVar(&TestContext.DumpLogsOnFailure, "dump-logs-on-failure", true, "Dump pods logs when a test fails.")
+	flag.BoolVar(&TestContext.DumpLogs, "dump-logs-on-failure", DumpLogs, "Dump logs.")
 }
 
 func RegisterParseFlags() {

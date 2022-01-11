@@ -26,7 +26,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 )
 
 // FailurePanic is the value that will be panicked from Fail.
@@ -38,7 +38,7 @@ type FailurePanic struct {
 }
 
 // String makes FailurePanic look like the old Ginkgo panic when printed.
-func (FailurePanic) String() string { return ginkgo.GINKGO_PANIC }
+// func (FailurePanic) String() string { return ginkgo.GINKGO_PANIC }
 
 // Fail wraps ginkgo.Fail so that it panics with more useful
 // information about the failure. This function will panic with a
@@ -76,7 +76,7 @@ type SkipPanic struct {
 }
 
 // String makes SkipPanic look like the old Ginkgo panic when printed.
-func (SkipPanic) String() string { return ginkgo.GINKGO_PANIC }
+// func (SkipPanic) String() string { return ginkgo.GINKGO_PANIC }
 
 // Skip wraps ginkgo.Skip so that it panics with more useful
 // information about why the test is being skipped. This function will
@@ -107,7 +107,7 @@ func Skip(message string, callerSkip ...int) {
 
 // ginkgo adds a lot of test running infrastructure to the stack, so
 // we filter those out
-var stackSkipPattern = regexp.MustCompile(`onsi/ginkgo`)
+var stackSkipPattern = regexp.MustCompile("")
 
 func pruneStack(skip int) string {
 	skip += 2 // one for pruneStack and one for debug.Stack
