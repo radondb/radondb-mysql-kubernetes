@@ -20,23 +20,37 @@ export KUBECONFIG=$HOME/.kube/config
 - Running all cases.
 
 ```
-ginkgo test/e2e/
+go test test/e2e/e2e_test.go -test.v
 ```
 
 - Running all cases labeled `simplecase`.
 
 ```
-ginkgo --label-filter=simplecase test/e2e/
+go test test/e2e/e2e_test.go -test.v --ginkgo.label-filter=simplecase
 ```
 
 - Skip the cases of describing information contains `Namespace`.
 
 ```
-ginkgo --skip "list namespace" test/e2e/
+go test test/e2e/e2e_test.go -test.v --ginkgo.skip="list namespace"
 ```
 
 - Just run the description information contains `Namespace`'s cases.
 
 ```
-ginkgo --focus "list namespace" test/e2e/
+go test test/e2e/e2e_test.go -test.v --ginkgo.focus="list namespace"
 ```
+
+### Supported args
+
+| Args                | Default                        | Description                                                 |
+| ------------------- | ------------------------------ | ----------------------------------------------------------- |
+| kubernetes-host     | ""                             | The kubernetes host, or apiserver, to connect to.           |
+| kubernetes-config   | $KUBECONFIG                    | Path to config containing embedded authinfo for kubernetes. |
+| kubernetes-context  | current-context                | config context to use for kuberentes.                       |
+| log-dir-prefix      | ""                             | Prefix of the log directory.                                |
+| chart-path          | ../../charts/mysql-operator    | The chart name or path for mysql operator.                  |
+| operator-image-path | radondb/mysql-operator:v2.2.0  | Image path of mysql operator.                               |
+| sidecar-image-path  | radondb/mysql57-sidecar:v2.2.0 | Image full path of mysql sidecar.                           |
+| pod-wait-timeout    | 1200                           | Timeout to wait for a pod to be ready.                      |
+| dump-logs           | false                          | Dump logs when test case failed.                            |

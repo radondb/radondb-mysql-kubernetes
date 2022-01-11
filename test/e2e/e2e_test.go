@@ -27,11 +27,9 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtimeutils "k8s.io/apimachinery/pkg/util/runtime"
 	clientset "k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,6 +39,7 @@ import (
 
 	// Test case source.
 	// Comment out the package that you don't want to run.
+	_ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/cluster"
 	_ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/simplecase"
 )
 
@@ -77,13 +76,13 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 
 	if framework.TestContext.DumpLogs {
 		By("Create log dir")
-		os.MkdirAll(fmt.Sprintf("%s_%d", framework.TestContext.ReportDirPrefix, GinkgoRandomSeed()), 0777)
+		os.MkdirAll(fmt.Sprintf("%s_%d", framework.TestContext.LogDirPrefix, GinkgoRandomSeed()), 0777)
 	}
 
-	By("Install RadonDB MySQL Operator")
+	By("Install operator")
 	framework.HelmInstallChart(framework.OperatorReleaseName, framework.RadondbMysqlE2eNamespace)
 	return nil
-}, func(data []byte) {
+}, func(_ []byte) {
 	framework.Logf("Running BeforeSuite actions on all node")
 })
 
@@ -102,7 +101,7 @@ var _ = SynchronizedAfterSuite(func() {
 	client, err := clientset.NewForConfig(kubeCfg)
 	Expect(err).NotTo(HaveOccurred())
 
-	By("Remove operator release")
+	By("Remove operator")
 	framework.HelmPurgeRelease(framework.OperatorReleaseName, framework.RadondbMysqlE2eNamespace)
 
 	By("Delete test namespace")
@@ -115,40 +114,18 @@ var _ = SynchronizedAfterSuite(func() {
 
 var _ = ReportAfterSuite("Collect log", func(report Report) {
 	if framework.TestContext.DumpLogs {
-		f, err := os.OpenFile(path.Join(fmt.Sprintf("%s_%d", framework.TestContext.ReportDirPrefix, GinkgoRandomSeed()), "overview.txt"), os.O_RDWR|os.O_CREATE, 0644)
+		f, err := os.OpenFile(path.Join(fmt.Sprintf("%s_%d", framework.TestContext.LogDirPrefix, GinkgoRandomSeed()), "overview.txt"), os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		// Get the kubernetes client.
-		kubeCfg, err := framework.LoadConfig()
-		if err != nil {
-			fmt.Println("Failed to get kubeconfig!")
-			return
-		}
-		client, err := clientset.NewForConfig(kubeCfg)
-		if err != nil {
-			fmt.Println("Failed to create k8s client!")
-			return
-		}
 		for _, specReport := range report.SpecReports {
-			// Collect the summary of all cases.
-			fmt.Fprintf(f, "%s | %s\n", specReport.FullText(), specReport.State)
-			// Collect the POD log of failure cases.
-			if specReport.State.Is(types.SpecStateFailed) {
-				fileName := fmt.Sprintf("%v.txt", specReport.ContainerHierarchyTexts[len(specReport.ContainerHierarchyTexts)-1])
-				logFile, err := os.OpenFile(path.Join(fmt.Sprintf("%s_%d", framework.TestContext.ReportDirPrefix, GinkgoRandomSeed()), fileName), os.O_RDWR|os.O_CREATE, 0644)
-				if err != nil {
-					fmt.Printf("Failed to open file: %s with error: %s\n", fileName, err)
-					continue
-				}
-				fmt.Fprintf(logFile, "## Start test: %v\n", specReport.ContainerHierarchyTexts)
 
-				framework.LogPodsWithLabels(client, framework.RadondbMysqlE2eNamespace, nil, time.Since(specReport.EndTime.Add(-1*time.Minute)), logFile)
-
-				fmt.Fprintf(logFile, "## END test\n")
-				logFile.Close()
+			if specReport.FullText() != "" {
+				// Collect the summary of all cases.
+				fmt.Fprintf(f, "%s | %s | %v\n", specReport.FullText(), specReport.State, specReport.RunTime)
 			}
+			// TODO: Collect the POD log of failure cases.
 		}
 		f.Close()
 	}
@@ -160,8 +137,6 @@ var _ = ReportAfterSuite("Collect log", func(report Report) {
 // generated in this directory, and cluster logs will also be saved.
 // This function is called on each Ginkgo node in parallel mode.
 func RunE2ETests(t *testing.T) {
-	runtimeutils.ReallyCrash = true
-
 	RegisterFailHandler(ginkgowrapper.Fail)
 
 	// Fetch the current config.
@@ -170,15 +145,13 @@ func RunE2ETests(t *testing.T) {
 	reporterConfig.FullTrace = true
 	// Whether printing more detail.
 	reporterConfig.Verbose = true
-	// Whether to display information of GinkgoWriter.
-	reporterConfig.AlwaysEmitGinkgoWriter = true
 	if framework.TestContext.DumpLogs {
-		if framework.TestContext.ReportDirPrefix == "" {
+		if framework.TestContext.LogDirPrefix == "" {
 			now := time.Now()
-			framework.TestContext.ReportDirPrefix = fmt.Sprintf("logs_%d%d_%d%d", now.Month(), now.Day(), now.Hour(), now.Minute())
+			framework.TestContext.LogDirPrefix = fmt.Sprintf("logs_%d%d_%d%d", now.Month(), now.Day(), now.Hour(), now.Minute())
 		}
 		// Path of JUnitReport.
-		reporterConfig.JUnitReport = path.Join(fmt.Sprintf("%s_%d", framework.TestContext.ReportDirPrefix, GinkgoRandomSeed()), "junit.xml")
+		reporterConfig.JUnitReport = path.Join(fmt.Sprintf("%s_%d", framework.TestContext.LogDirPrefix, GinkgoRandomSeed()), "junit.xml")
 	}
 
 	RunSpecs(t, "MySQL Operator E2E Suite", Label("MySQL Operator"), suiteConfig, reporterConfig)
