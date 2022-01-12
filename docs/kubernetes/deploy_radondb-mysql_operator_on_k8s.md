@@ -48,7 +48,7 @@ $ helm repo add radondb https://radondb.github.io/radondb-mysql-kubernetes/
 ```
 $ helm search repo
 NAME                            CHART VERSION   APP VERSION                     DESCRIPTION                 
-radondb/mysql-operator          0.1.1           latest                          Open Source，High Availability Cluster，based on MySQL                     
+radondb/mysql-operator          0.1.0           v2.1.0                          Open Source，High Availability Cluster，based on MySQL                     
 ```
 
 ### 步骤 2: 部署 Operator
@@ -67,7 +67,8 @@ $ helm install demo radondb/mysql-operator
 执行以下指令，以默认参数为 CRD `mysqlclusters.mysql.radondb.com` 创建一个实例，即创建 RadonDB MySQL 集群。您可以参照[配置](#配置)自定义集群部署参数。
 
 ```kubectl
-$ kubectl apply -f https://raw.githubusercontent.com/radondb/radondb-mysql-kubernetes/main/config/samples/mysql_v1alpha1_mysqlcluster.yaml
+$ wget https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1alpha1_mysqlcluster.yaml
+$ kubectl apply -f mysql_v1alpha1_mysqlcluster.yaml
 ```
 
 ## 部署校验
