@@ -17,9 +17,11 @@ limitations under the License.
 package internal
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Request struct {
@@ -63,7 +65,11 @@ func NewHttpExecutor(httpClient HttpClient) Executor {
 }
 
 func (executor *httpExecutor) Execute(req *Request) (*Response, error) {
-	resp, err := executor.Client.Do(req.Req)
+	// Add timeout to prevent access from not existing POD, this will cause the program to block.
+	// https://github.com/radondb/radondb-mysql-kubernetes/issues/353
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	resp, err := executor.Client.Do(req.Req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
