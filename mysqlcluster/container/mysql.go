@@ -99,7 +99,8 @@ func (c *mysql) getLivenessProbe() *corev1.Probe {
 				Command: []string{
 					"sh",
 					"-c",
-					"if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; pgrep mysqld",
+					"if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; " +
+						"touch /var/lib/mysql/auto.cnf && pgrep mysqld",
 				},
 			},
 		},
@@ -116,6 +117,9 @@ func (c *mysql) getReadinessProbe() *corev1.Probe {
 	return &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
+				/* /var/lib/mysql/sleep-forever is used to prevent mysql's container from exiting.
+				kubectl exec -it sample-mysql-0 -c mysql -- sh -c 'touch /var/lib/mysql/sleep-forever'
+				*/
 				Command: []string{
 					"sh",
 					"-c",

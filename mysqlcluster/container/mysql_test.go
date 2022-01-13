@@ -110,7 +110,7 @@ func TestGetMysqlLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; pgrep mysqld"},
+				Command: []string{"sh", "-c", "if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; touch /var/lib/mysql/auto.cnf && pgrep mysqld"},
 			},
 		},
 		InitialDelaySeconds: 30,
