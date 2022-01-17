@@ -17,9 +17,11 @@ limitations under the License.
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/golang/glog"
@@ -27,20 +29,49 @@ import (
 	"github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtimeutils "k8s.io/apimachinery/pkg/util/runtime"
+	clientset "k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/radondb/radondb-mysql-kubernetes/test/e2e/framework"
 	"github.com/radondb/radondb-mysql-kubernetes/test/e2e/framework/ginkgowrapper"
 )
 
 const (
-	operatorNamespace = "mysql-operator"
+	RadondbMysqlE2eNamespace = "radondb-mysql-e2e"
 )
 
+var releaseName = framework.RandStr(6)
+
 var _ = SynchronizedBeforeSuite(func() []byte {
-	// BeforeSuite logic.
+	kubeCfg, err := framework.LoadConfig()
+	Expect(err).To(Succeed())
+	// restClient := core.NewForConfigOrDie(kubeCfg).RESTClient()
+
+	c, err := client.New(kubeCfg, client.Options{})
+	if err != nil {
+		Fail(fmt.Sprintf("can't instantiate k8s client: %s", err))
+	}
+
+	// ginkgo node 1
+	By("Install operator")
+	operatorNsObj := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: RadondbMysqlE2eNamespace,
+		},
+	}
+	if err := c.Create(context.TODO(), operatorNsObj); err != nil {
+		if !strings.Contains(err.Error(), "already exists") {
+			Fail(fmt.Sprintf("can't create mysql-operator namespace: %s", err))
+		}
+	}
+	framework.HelmInstallChart(releaseName, RadondbMysqlE2eNamespace)
+
 	return nil
+
 }, func(data []byte) {
 	// all other nodes
 	framework.Logf("Running BeforeSuite actions on all node")
@@ -50,7 +81,25 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 // Here, the order of functions is reversed; first, the function which runs everywhere,
 // and then the function that only runs on the first Ginkgo node.
 var _ = SynchronizedAfterSuite(func() {
-	// AfterSuite logic.
+	// Run on all Ginkgo nodes
+	framework.Logf("Running AfterSuite actions on all node")
+	framework.RunCleanupActions()
+
+	// get the kubernetes client
+	kubeCfg, err := framework.LoadConfig()
+	Expect(err).To(Succeed())
+
+	client, err := clientset.NewForConfig(kubeCfg)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("Remove operator release")
+	framework.HelmPurgeRelease(releaseName, RadondbMysqlE2eNamespace)
+
+	By("Delete operator namespace")
+
+	if err := framework.DeleteNS(client, RadondbMysqlE2eNamespace, framework.DefaultNamespaceDeletionTimeout); err != nil {
+		framework.Failf(fmt.Sprintf("Can't delete namespace: %s", err))
+	}
 }, func() {
 	// Run only Ginkgo on node 1
 	framework.Logf("Running AfterSuite actions on node 1")
@@ -84,13 +133,13 @@ func RunE2ETests(t *testing.T) {
 
 			// add logs dumper
 			if framework.TestContext.DumpLogsOnFailure {
-				rps = append(rps, NewLogsPodReporter(operatorNamespace, path.Join(framework.TestContext.ReportDir,
+				rps = append(rps, NewLogsPodReporter(RadondbMysqlE2eNamespace, path.Join(framework.TestContext.ReportDir,
 					fmt.Sprintf("pods_logs_%d_%d.txt", config.GinkgoConfig.RandomSeed, config.GinkgoConfig.ParallelNode))))
 			}
 		} else {
 			// if reportDir is not specified then print logs to stdout
 			if framework.TestContext.DumpLogsOnFailure {
-				rps = append(rps, NewLogsPodReporter(operatorNamespace, ""))
+				rps = append(rps, NewLogsPodReporter(RadondbMysqlE2eNamespace, ""))
 			}
 		}
 		return

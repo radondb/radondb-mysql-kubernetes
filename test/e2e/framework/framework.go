@@ -24,6 +24,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,6 +35,7 @@ import (
 const (
 	maxKubectlExecRetries           = 5
 	DefaultNamespaceDeletionTimeout = 10 * time.Minute
+	RadondbMysqlE2eNamespace        = "radondb-mysql-e2e"
 )
 
 type Framework struct {
@@ -85,13 +87,11 @@ func (f *Framework) BeforeEach() {
 	Expect(err).NotTo(HaveOccurred())
 
 	if !f.SkipNamespaceCreation {
-		namespace, err := f.CreateNamespace(map[string]string{
-			"e2e-framework": f.BaseName,
-		})
-		Expect(err).NotTo(HaveOccurred())
-		By(fmt.Sprintf("create a namespace api object (%s)", namespace.Name))
-
-		f.Namespace = namespace
+		f.Namespace = &core.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: RadondbMysqlE2eNamespace,
+			},
+		}
 	}
 
 }

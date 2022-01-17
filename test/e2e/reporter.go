@@ -44,10 +44,6 @@ type podLogReporter struct {
 	out io.Writer
 }
 
-var radondbMysqlTestLabel = map[string]string{
-	"app.kubernetes.io/managed-by": "mysql.radondb.com",
-}
-
 // NewLogsPodReporter writes the logs for all pods in the specified namespace.
 // if path is specified then the logs are written to that path, else logs are
 // written to GinkgoWriter
@@ -101,7 +97,7 @@ func (r *podLogReporter) SpecDidComplete(specSummary *types.SpecSummary) {
 
 	fmt.Fprintf(r.out, "## Start test: %v\n", specSummary.ComponentTexts)
 
-	LogPodsWithLabels(client, r.namespace, radondbMysqlTestLabel, specSummary.RunTime, r.out)
+	LogPodsWithLabels(client, r.namespace, nil, specSummary.RunTime, r.out)
 
 	fmt.Fprintf(r.out, "## END test\n")
 
