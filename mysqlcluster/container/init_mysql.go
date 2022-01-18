@@ -44,7 +44,8 @@ func (c *initMysql) getImage() string {
 
 // getCommand get the container command.
 func (c *initMysql) getCommand() []string {
-	return nil
+	// Because initialize mysql contain error, so do it in commands.
+	return []string{"sh", "-c", "/docker-entrypoint.sh mysqld;if test -f /docker-entrypoint-initdb.d/special.sh; then /docker-entrypoint-initdb.d/special.sh; fi "}
 }
 
 // getEnvVars get the container env.

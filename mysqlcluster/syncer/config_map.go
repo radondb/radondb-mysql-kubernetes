@@ -51,8 +51,13 @@ func NewConfigMapSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.
 			return fmt.Errorf("failed to create mysql configs: %s", err)
 		}
 
+		dataSpecial, err := buildMysqlSpecialConf(c)
+		if err != nil {
+			return fmt.Errorf("failed to create mysql special configs: %s", err)
+		}
 		cm.Data = map[string]string{
-			"my.cnf": data,
+			"my.cnf":            data,
+			utils.SpecialConfig: dataSpecial,
 		}
 
 		return nil
@@ -65,7 +70,10 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	sec := cfg.Section("mysqld")
 
 	c.EnsureMysqlConf()
-
+	if c.Spec.MysqlVersion == "8.0" {
+		delete(mysqlCommonConfigs, "query_cache_size")
+		delete(mysqlStaticConfigs, "query_cache_type")
+	}
 	addKVConfigsToSection(sec, mysqlSysConfigs, mysqlCommonConfigs, mysqlStaticConfigs, c.Spec.MysqlOpts.MysqlConf)
 
 	if c.Spec.MysqlOpts.InitTokuDB {
@@ -78,6 +86,20 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 		}
 	}
 
+	data, err := writeConfigs(cfg)
+	if err != nil {
+		return "", err
+	}
+
+	return data, nil
+}
+
+// Build the Special Cnf file.
+func buildMysqlSpecialConf(c *mysqlcluster.MysqlCluster) (string, error) {
+	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
+	sec := cfg.Section("mysqld")
+
+	addKVConfigsToSection(sec, specialConfigs)
 	data, err := writeConfigs(cfg)
 	if err != nil {
 		return "", err
