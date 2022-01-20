@@ -85,6 +85,17 @@ type MysqlClusterSpec struct {
 	// Represents NFS ip address where cluster restore from.
 	// +optional
 	NFSServerAddress string `json:"nfsServerAddress,omitempty"`
+
+	// Specify under crontab format interval to take backups
+	// leave it empty to deactivate the backup process
+	// Defaults to ""
+	// +optional
+	BackupSchedule string `json:"backupSchedule,omitempty"`
+
+	// If set keeps last BackupScheduleJobsHistoryLimit Backups
+	// +optional
+	// +kubebuilder:default:=6
+	BackupScheduleJobsHistoryLimit *int `json:"backupScheduleJobsHistoryLimit,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.

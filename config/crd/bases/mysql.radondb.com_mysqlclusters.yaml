@@ -58,6 +58,14 @@ spec:
           spec:
             description: MysqlClusterSpec defines the desired state of MysqlCluster
             properties:
+              backupSchedule:
+                description: Specify under crontab format interval to take backups
+                  leave it empty to deactivate the backup process Defaults to ""
+                type: string
+              backupScheduleJobsHistoryLimit:
+                default: 6
+                description: If set keeps last BackupScheduleJobsHistoryLimit Backups
+                type: integer
               backupSecretName:
                 description: Represents the name of the secret that contains credentials
                   to connect to the storage provider to store backups.

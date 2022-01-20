@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"os"
+	"sync"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -34,6 +35,7 @@ import (
 	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/controllers"
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
+	"github.com/wgliang/cron"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -114,6 +116,16 @@ func main() {
 		SQLRunnerFactory: internal.NewSQLRunner,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MysqlUser")
+		os.Exit(1)
+	}
+	if err = (&controllers.BackupCronReconciler{
+		Client:          mgr.GetClient(),
+		Scheme:          mgr.GetScheme(),
+		Recorder:        mgr.GetEventRecorderFor("controller.BackupCron"),
+		Cron:            cron.New(),
+		LockJobRegister: new(sync.Mutex),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "BackupCron")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
