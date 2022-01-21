@@ -1,6 +1,6 @@
 ![](docs/images/logo_radondb-mysql.png)  <br>
 
-[English](README.md) | 中文 
+[English](README.md) | 简体中文 
 
 # 什么是RadonDB MySQL
 
@@ -25,25 +25,26 @@ RadonDB MySQL Kubernetes支持在[Kubernetes](https://kubernetes.io)和[KubeSphe
     - 主从秒级切换
     - 集群切换的数据强一致性
 - 集群管理
-- [监控告警](docs/deploy_monitoring.md)
-- [备份](docs/deploy_backup_restore_s3.md)
+- [监控告警](docs/zh-cn/deploy_monitoring.md)
+- [备份](docs/zh-cn/deploy_backup_restore_s3.md)
 - 集群日志管理
-- [账户管理](docs/mgt_mysqluser.md)
+- [账户管理](docs/zh-cn/mgt_mysqluser.md)
 
 ## 快速开始
 
 ### Operator
 
-- [在 Kubernetes 上部署 RadonDB MySQL 集群](docs/kubernetes/deploy_radondb-mysql_operator_on_k8s.md)
-- [在 Rancher 上部署 RadonDB MySQL 集群](/docs/rancher/deploy_radondb-mysql_operator_on_rancher.md)
+- [在 Kubernetes 上部署 RadonDB MySQL 集群](docs/zh-cn/deploy_radondb-mysql_operator_on_k8s.md)
+- [在 KubeSphere 上部署 RadonDB MySQL 集群](docs/zh-cn/deploy_radondb-mysql_operator_on_kubesphere.md)
+- [在 Rancher 上部署 RadonDB MySQL 集群](/docs/zh-cn/deploy_radondb-mysql_operator_on_rancher.md)
 
 ## 路线图
 
 | 版本 | 功能  | 实现方式 |
 |------|--------|------| 
-| 1.0 |  集群管理 <br> 监控告警 <br> 集群日志管理 <br> 账户管理 | Helm |
-| 2.0  | 增删节点 <br> 自动扩缩容 <br> 升级集群 <br> 备份与恢复 <br> 故障自动转移 <br> 自动重建节点 <br> 自动重启服务 <br> 账户管理（提供 API 接口）<br> 在线迁移   |  Operator |
 | 3.0  | 自动化运维 <br> 多节点角色 <br> 灾备集群 <br> SSL 传输加密 | Operator |
+| 2.0  | 增删节点 <br> 自动扩缩容 <br> 升级集群 <br> 备份与恢复 <br> 故障自动转移 <br> 自动重建节点 <br> 自动重启服务 <br> 账户管理（提供 API 接口）<br> 在线迁移   |  Operator |
+| 1.0 |  集群管理 <br> 监控告警 <br> 集群日志管理 <br> 账户管理 | Helm |
 
 ## 用户案例
 
@@ -58,7 +59,7 @@ RadonDB MySQL 基于 Apache 2.0 协议，详见 [License](./LICENSE)。
 - 论坛
 
     请加入[KubeSphere 开发者社区](https://kubesphere.com.cn/forum/t/radondb) RadonDB MySQL 话题专区。
-    
+
 - 欢迎关注微信公众号
 
     ![](docs/images/vx_code_258.jpg)
