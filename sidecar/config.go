@@ -375,6 +375,7 @@ GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%' IDENTIFIED BY '
 DROP user IF EXISTS '%s'@'%%';
 GRANT ALL ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s';
 FLUSH PRIVILEGES;
+RESET SLAVE ALL; 
 `, cfg.Database, cfg.RootPassword, cfg.InternalRootPassword, cfg.ReplicationUser, cfg.ReplicationUser, cfg.ReplicationPassword,
 		cfg.MetricsUser, cfg.MetricsUser, cfg.MetricsPassword, cfg.OperatorUser, cfg.OperatorUser,
 		cfg.OperatorPassword, cfg.User, cfg.Database, cfg.User, cfg.Password)
