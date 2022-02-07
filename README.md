@@ -1,6 +1,6 @@
 ![](docs/images/logo_radondb-mysql.png) <br>
 
-English | [中文](README_zh.md) 
+English | [简体中文](README_zh.md) 
 
 # What is RadonDB MySQL
 
@@ -25,25 +25,26 @@ RadonDB MySQL Kubernetes supports deployment and management of RaodnDB MySQL clu
     - Leader-follower switching in second-level
     - Strongly consistent data for cluster switching
 - Cluster management
-- [Monitoring and alerting](docs/deploy_monitoring.md)
-- [Backups](docs/deploy_backup_restore_s3.md)
+- [Monitoring and alerting](docs/zh-cn/deploy_monitoring.md)
+- [Backups](docs/en-us/deploy_backup_restore_s3.md)
 - Logs
-- [Account management](docs/mgt_mysqluser.md)
+- [Account management](docs/zh-cn/mgt_mysqluser.md)
 
 ## Quick Start
 
 ### Operator
 
-- [Deploy RadonDB MySQL on Kubernetes](/docs/kubernetes/deploy_radondb-mysql_operator_on_k8s.md)
-- [Deploy RadonDB MySQL on Rancher](/docs/rancher/deploy_radondb-mysql_operator_on_rancher.md)
+- [Deploy RadonDB MySQL on Kubernetes](/docs/zh-cn/deploy_radondb-mysql_operator_on_k8s.md)
+- [Deploy RadonDB MySQL on KubeSphere](/docs/en-us/deploy_radondb-mysql_operator_on_kubesphere.md)
+- [Deploy RadonDB MySQL on Rancher](/docs/zh-cn/deploy_radondb-mysql_operator_on_rancher.md)
 
 ## Roadmap
 
 | Release | Features  | Mode |
 |------|--------|--------|
-| 1.0 | Cluster management <br> Monitoring and alerting <br> Logs <br> Account management | Helm |
-| 2.0 | Node management <br> Automatic expansion and shrinkage capacity <br> Upgrade <br> Backups and Restorations <br> Automatic failover <br> Automatic rebuild node <br> Automatic restart service（all or signal node）<br> Account management（API）<br> Migrating Data online | Operator |
 | 3.0 | Automatic O&M <br> Multiple node roles <br> Disaster Recovery <br> SSL transmission encryption  | Operator |
+| 2.0 | Node management <br> Automatic expansion and shrinkage capacity <br> Upgrade <br> Backups and Restorations <br> Automatic failover <br> Automatic rebuild node <br> Automatic restart service（all or signal node）<br> Account management（API）<br> Migrating Data online | Operator |
+| 1.0 | Cluster management <br> Monitoring and alerting <br> Logs <br> Account management | Helm |
 
 ## Who are using RadonDB MySQL
 
