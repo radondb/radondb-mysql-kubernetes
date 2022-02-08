@@ -30,11 +30,11 @@ func HelmInstallChart(release, ns string) {
 		"--namespace", ns,
 		"--values", TestContext.ChartValues, "--wait",
 		"--kube-context", TestContext.KubeContext,
+		"--set", fmt.Sprintf("manager.image=%s", TestContext.OperatorImagePath),
 		"--set", fmt.Sprintf("manager.tag=%s", TestContext.OperatorImageTag),
 	}
 
 	cmd := exec.Command("helm", args...)
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	Expect(cmd.Run()).Should(Succeed())

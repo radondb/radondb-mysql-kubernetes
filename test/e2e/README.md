@@ -2,7 +2,8 @@
 
 ## Prerequisites
 
-Prepare a client connected to K8S.
+- Prepare a client connected to K8S.
+- Make sure [Ginkgo V2](https://onsi.github.io/ginkgo/MIGRATING_TO_V2) is installed.
 
 ## Hands-on Lab
 
@@ -14,48 +15,28 @@ export KUBECONFIG=$HOME/.kube/config
 
 ### Step 2: Run test
 
-```
-make e2e-local
-```
-Example output of simplecase:
-```
-$ make e2e-local
-=== RUN   TestE2E
-STEP: Creating framework with timeout: 1200
-Running Suite: MySQL Operator E2E Suite
-=======================================
-Random Seed: 1640785115 - Will randomize all specs
-Will run 1 of 1 specs
+> The Ginkgo version of the following examples is V2.
 
-Namespece test 
-  test list namespace
-  /home/runkecheng/goCode/src/radondb-mysql-kubernetes/test/e2e/simplecase/list_namespace.go:38
-[BeforeEach] Namespece test
-  /home/runkecheng/goCode/src/radondb-mysql-kubernetes/test/e2e/framework/framework.go:62
-STEP: creating a kubernetes client
-STEP: create a namespace api object (e2e-mc-1-cnkbs)
-[BeforeEach] Namespece test
-  /home/runkecheng/goCode/src/radondb-mysql-kubernetes/test/e2e/simplecase/list_namespace.go:34
-STEP: before each
-[It] test list namespace
-  /home/runkecheng/goCode/src/radondb-mysql-kubernetes/test/e2e/simplecase/list_namespace.go:38
-default
-kube-public
-kube-system
-kubesphere-controls-system
-kubesphere-devops-system
-kubesphere-devops-worker
-kubesphere-monitoring-federated
-kubesphere-monitoring-system
-kubesphere-system
-radondb-mysql
-radondb-mysql-kubernetes-system
-[AfterEach] Namespece test
-  /home/runkecheng/goCode/src/radondb-mysql-kubernetes/test/e2e/framework/framework.go:63
-STEP: Collecting logs
-STEP: Run cleanup actions
-STEP: Delete testing namespace
-•
-Ran 1 of 1 Specs in 0.743 seconds
-SUCCESS! -- 1 Passed | 0 Failed | 0 Pending | 0 Skipped
+- Running all cases.
+
+```
+ginkgo test/e2e/
+```
+
+- Running all cases labeled `simplecase`.
+
+```
+ginkgo --label-filter=simplecase test/e2e/
+```
+
+- Skip the cases of describing information contains `Namespace`.
+
+```
+ginkgo --skip "list namespace" test/e2e/
+```
+
+- Just run the description information contains `Namespace`'s cases.
+
+```
+ginkgo --focus "list namespace" test/e2e/
 ```

@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -28,14 +28,17 @@ import (
 )
 
 // Simple and quick test case, used to verify that the E2E framework is available.
-var _ = Describe("Namespece test", func() {
-	f := framework.NewFramework("mc-1")
-
+var _ = Describe("Namespace test", Label("simplecase"), Ordered, func() {
+	var f *framework.Framework
 	BeforeEach(func() {
-		By("before each")
+		f = &framework.Framework{
+			BaseName: "mysqlcluster-e2e",
+			Log:      framework.Log,
+		}
+		f.BeforeEach()
 	})
 
-	It("test list namespace", func() {
+	It("test list namespace", Label("list ns"), func() {
 		namespaces, err := f.ClientSet.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 		Expect(err).Should(BeNil())
 		Expect(len(namespaces.Items)).ShouldNot(BeZero())

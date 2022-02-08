@@ -21,19 +21,15 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apis "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
-)
-
-const (
-	maxKubectlExecRetries           = 5
-	DefaultNamespaceDeletionTimeout = 10 * time.Minute
 )
 
 type Framework struct {
@@ -43,9 +39,6 @@ type Framework struct {
 	Client    client.Client
 	ClientSet clientset.Interface
 
-	cleanupHandle         CleanupActionHandle
-	SkipNamespaceCreation bool
-
 	Timeout time.Duration
 
 	Log logr.Logger
@@ -54,14 +47,9 @@ type Framework struct {
 func NewFramework(baseName string) *Framework {
 	By(fmt.Sprintf("Creating framework with timeout: %v", TestContext.TimeoutSeconds))
 	f := &Framework{
-		BaseName:              baseName,
-		SkipNamespaceCreation: false,
-		Log:                   log,
+		BaseName: baseName,
+		Log:      Log,
 	}
-
-	BeforeEach(f.BeforeEach)
-	AfterEach(f.AfterEach)
-
 	return f
 }
 
@@ -69,7 +57,6 @@ func NewFramework(baseName string) *Framework {
 func (f *Framework) BeforeEach() {
 	// The fact that we need this feels like a bug in ginkgo.
 	// https://github.com/onsi/ginkgo/issues/222
-	f.cleanupHandle = AddCleanupAction(f.AfterEach)
 	f.Timeout = time.Duration(TestContext.TimeoutSeconds) * time.Second
 
 	By("creating a kubernetes client")
@@ -84,34 +71,10 @@ func (f *Framework) BeforeEach() {
 	f.ClientSet, err = clientset.NewForConfig(cfg)
 	Expect(err).NotTo(HaveOccurred())
 
-	if !f.SkipNamespaceCreation {
-		namespace, err := f.CreateNamespace(map[string]string{
-			"e2e-framework": f.BaseName,
-		})
-		Expect(err).NotTo(HaveOccurred())
-		By(fmt.Sprintf("create a namespace api object (%s)", namespace.Name))
-
-		f.Namespace = namespace
-	}
-
-}
-
-// AfterEach deletes the namespace, after reading its events.
-func (f *Framework) AfterEach() {
-	By("Collecting logs")
-	if CurrentGinkgoTestDescription().Failed && TestContext.DumpLogsOnFailure {
-		logFunc := Logf
-		// TODO: log in file if ReportDir is set
-		LogPodsWithLabels(f.ClientSet, f.Namespace.Name, map[string]string{}, logFunc)
-	}
-
-	By("Run cleanup actions")
-	RemoveCleanupAction(f.cleanupHandle)
-
-	By("Delete testing namespace")
-	err := DeleteNS(f.ClientSet, f.Namespace.Name, DefaultNamespaceDeletionTimeout)
-	if err != nil {
-		Failf(fmt.Sprintf("Can't delete namespace: %s", err))
+	f.Namespace = &core.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: RadondbMysqlE2eNamespace,
+		},
 	}
 }
 

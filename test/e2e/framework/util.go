@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -33,18 +32,9 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/radondb/radondb-mysql-kubernetes/test/e2e/framework/ginkgowrapper"
 )
-
-const (
-	PodStartTimeout = 1 * time.Hour
-	// How often to Poll pods, nodes and claims.
-	Poll = 2 * time.Second
-)
-
-var log = logf.Log.WithName("framework.util")
 
 // CreateTestingNS should be used by every test, note that we append a common prefix to the provided test name.
 // Please see NewFramework instead of using this directly.
@@ -137,33 +127,32 @@ func podRunningAndReadyByPhase(pod corev1.Pod) (bool, error) {
 	return false, nil
 }
 
-// deleteNS deletes the provided namespace, waits for it to be completely deleted, and then checks
+// DeleteNS deletes the provided namespace, waits for it to be completely deleted, and then checks
 // whether there are any pods remaining in a non-terminating state.
 func DeleteNS(c clientset.Interface, namespace string, timeout time.Duration) error {
-	startTime := time.Now()
 	if err := c.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 
-	// wait for namespace to delete or timeout.
-	// err := wait.PollImmediate(2*time.Second, timeout, func() (bool, error) {
-	// 	if _, err := c.CoreV1().Namespaces().Get(namespace, metav1.GetOptions{}); err != nil {
-	// 		if apierrs.IsNotFound(err) {
-	// 			return true, nil
-	// 		}
-	// 		Logf("Error while waiting for namespace to be terminated: %v", err)
-	// 		return false, nil
-	// 	}
-	// 	return false, nil
-	// })
-
-	Logf("namespace %v deletion completed in %s", namespace, time.Since(startTime))
+	// Wait for namespace to delete or timeout.
+	if err := wait.PollImmediate(2*time.Second, timeout, func() (bool, error) {
+		if _, err := c.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{}); err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				return true, nil
+			}
+			Logf("Error while waiting for namespace to be terminated: %v", err)
+			return false, nil
+		}
+		return false, nil
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
 func Logf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
-	log.Info(msg)
+	Log.Info(msg)
 }
 
 func Failf(format string, args ...interface{}) {
@@ -183,7 +172,7 @@ func getPreviousPodLogs(c clientset.Interface, namespace, podName, containerName
 	return getPodLogsInternal(c, namespace, podName, containerName, true)
 }
 
-// utility function for gomega Eventually
+// getPodLogsInternal is a utility function for gomega Eventually.
 func getPodLogsInternal(c clientset.Interface, namespace, podName, containerName string, previous bool) (string, error) {
 	logs, err := c.CoreV1().RESTClient().Get().
 		Resource("pods").
@@ -221,18 +210,6 @@ func kubectlLogPod(c clientset.Interface, pod corev1.Pod, containerNameSubstr st
 	}
 }
 
-func LogPodsWithLabels(c clientset.Interface, ns string, match map[string]string, logFunc func(ftm string, args ...interface{})) {
-	podList, err := c.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{LabelSelector: labels.SelectorFromSet(match).String()})
-	if err != nil {
-		logFunc("Error getting pods in namespace %q: %v", ns, err)
-		return
-	}
-	logFunc("Running kubectl logs on pods with labels %v in %v", match, ns)
-	for _, pod := range podList.Items {
-		kubectlLogPod(c, pod, "", logFunc)
-	}
-}
-
 func LogContainersInPodsWithLabels(c clientset.Interface, ns string, match map[string]string, containerSubstr string, logFunc func(ftm string, args ...interface{})) {
 	podList, err := c.CoreV1().Pods(ns).List(context.TODO(), metav1.ListOptions{LabelSelector: labels.SelectorFromSet(match).String()})
 	if err != nil {
@@ -242,15 +219,4 @@ func LogContainersInPodsWithLabels(c clientset.Interface, ns string, match map[s
 	for _, pod := range podList.Items {
 		kubectlLogPod(c, pod, containerSubstr, logFunc)
 	}
-}
-
-func RandStr(length int) string {
-	str := "abcdefghijklmnopqrstuvwxyz"
-	bytes := []byte(str)
-	result := []byte{}
-	rand.Seed(time.Now().UnixNano() + int64(rand.Intn(100)))
-	for i := 0; i < length; i++ {
-		result = append(result, bytes[rand.Intn(len(bytes))])
-	}
-	return string(result)
 }
