@@ -17,6 +17,8 @@ limitations under the License.
 package container
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
@@ -61,7 +63,7 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 
 	return corev1.Container{
 		Name:            ctr.getName(),
-		Image:           ctr.getImage(),
+		Image:           fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), ctr.getImage()),
 		ImagePullPolicy: c.Spec.PodPolicy.ImagePullPolicy,
 		Command:         ctr.getCommand(),
 		Env:             ctr.getEnvVars(),

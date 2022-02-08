@@ -12,6 +12,7 @@ installCRDS: true
 imagePullPolicy: IfNotPresent
 nameOverride: ""
 fullnameOverride: ""
+imagePrefix: ""
 
 manager:
   image: radondb/mysql-operator

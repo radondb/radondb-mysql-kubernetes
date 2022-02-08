@@ -18,6 +18,7 @@ package mysqlcluster
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"testing"
@@ -656,5 +657,30 @@ func TestSizeToBytes(t *testing.T) {
 		result, err := sizeToBytes(testCase)
 		assert.Equal(t, want, result)
 		assert.Equal(t, err, fmt.Errorf("error"))
+	}
+}
+
+func TestGetPrefixFromEnv(t *testing.T) {
+	// Prefix is empty.
+	{
+		guard := Patch(os.Getenv, func(key string) string {
+			return ""
+		})
+		defer guard.Unpatch()
+
+		want := ""
+		result := GetPrefixFromEnv()
+		assert.Equal(t, want, result)
+	}
+	// Prefix is not empty.
+	{
+		guard := Patch(os.Getenv, func(key string) string {
+			return "docker.io"
+		})
+		defer guard.Unpatch()
+
+		want := "docker.io/"
+		result := GetPrefixFromEnv()
+		assert.Equal(t, want, result)
 	}
 }

@@ -29,6 +29,7 @@ import (
 
 	v1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/backup"
+	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
@@ -114,7 +115,7 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 	in.RestartPolicy = corev1.RestartPolicyNever
 	sctName := fmt.Sprintf("%s-secret", s.backup.Spec.ClusterName)
 	in.Containers[0].Name = utils.ContainerBackupName
-	in.Containers[0].Image = s.backup.Spec.Image
+	in.Containers[0].Image = fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), s.backup.Spec.Image)
 	in.Containers[0].Args = []string{
 		"request_a_backup",
 		s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName),
