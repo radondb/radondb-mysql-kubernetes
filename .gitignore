@@ -23,3 +23,7 @@ bin/
 .idea
 # vs code.
 .vscode
+
+# e2e logs
+test/e2e/logs_*
+
