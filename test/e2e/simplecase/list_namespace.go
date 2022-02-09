@@ -31,10 +31,7 @@ import (
 var _ = Describe("Namespace test", Label("simplecase"), Ordered, func() {
 	var f *framework.Framework
 	BeforeEach(func() {
-		f = &framework.Framework{
-			BaseName: "mysqlcluster-e2e",
-			Log:      framework.Log,
-		}
+		f = framework.NewFramework("mysqlcluster-e2e")
 		f.BeforeEach()
 	})
 
