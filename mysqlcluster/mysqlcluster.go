@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 	"unicode"
@@ -374,4 +375,13 @@ func (c *MysqlCluster) GetKey() client.ObjectKey {
 		Namespace: c.Namespace,
 		Name:      c.Name,
 	}
+}
+
+// GetPrefixFromEnv get the image prefix from the environment variable.
+func GetPrefixFromEnv() string {
+	prefix := os.Getenv("IMAGE_PREFIX")
+	if len(prefix) == 0 {
+		return ""
+	}
+	return prefix + "/"
 }
