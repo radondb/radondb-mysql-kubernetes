@@ -61,7 +61,7 @@ helm install demo radondb/mysql-operator
 
 ### 步骤 3: 部署 RadonDB MySQL 集群
 
-执行以下指令，以默认参数为 CRD `mysqlclusters.mysql.radondb.com` 创建一个实例，即创建 RadonDB MySQL 集群。您可参见[配置参数](../config_para.md)说明，自定义集群部署参数。
+执行以下指令，以默认参数为 CRD `mysqlclusters.mysql.radondb.com` 创建一个实例，即创建 RadonDB MySQL 集群。您可参见[配置参数](./config_para.md)说明，自定义集群部署参数。
 
 ```kubectl
 kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1alpha1_mysqlcluster.yaml
