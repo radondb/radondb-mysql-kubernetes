@@ -168,6 +168,8 @@ const (
 	Candidate RaftRole = "CANDIDATE"
 )
 
+const LableRebuild = "rebuild"
+
 // XenonHttpUrl is a http url corresponding to the xenon instruction.
 type XenonHttpUrl string
 

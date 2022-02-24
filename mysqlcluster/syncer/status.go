@@ -25,6 +25,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
@@ -95,6 +96,12 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	// get ready nodes.
 	var readyNodes []corev1.Pod
 	for _, pod := range list.Items {
+		if pod.ObjectMeta.Labels[utils.LableRebuild] == "true" {
+			if err := s.AutoRebuild(ctx, &pod); err != nil {
+				log.Error(err, "failed to AutoRebuild", "pod", pod.Name, "namespace", pod.Namespace)
+			}
+			continue
+		}
 		for _, cond := range pod.Status.Conditions {
 			switch cond.Type {
 			case corev1.ContainersReady:
@@ -181,6 +188,40 @@ func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
 
 	clusterCondition.Type = apiv1alpha1.ClusterConditionType(oldState)
 	return clusterCondition
+}
+
+// Rebuild Pod by deleting and creating it.
+// Notice: This function just delete Pod and PVC,
+// then after k8s recreate pod, it will clone and initial it.
+func (s *StatusSyncer) AutoRebuild(ctx context.Context, pod *corev1.Pod) error {
+	ordinal, err := utils.GetOrdinal(pod.Name)
+	if err != nil {
+		return err
+
+	}
+	// Set Pod UnHealthy.
+	pod.Labels["healthy"] = "no"
+	if err := s.cli.Update(ctx, pod); err != nil {
+		return err
+	}
+	// Delete the Pod.
+	if err := s.cli.Delete(ctx, pod); err != nil {
+		return err
+	}
+	// Delete the pvc.
+	pvcName := fmt.Sprintf("%s-%s-%d", utils.DataVolumeName,
+		s.GetNameForResource(utils.StatefulSet), ordinal)
+	pvc := corev1.PersistentVolumeClaim{}
+
+	if err := s.cli.Get(ctx,
+		types.NamespacedName{Name: pvcName, Namespace: s.Namespace},
+		&pvc); err != nil {
+		return err
+	}
+	if err := s.cli.Delete(ctx, &pvc); err != nil {
+		return err
+	}
+	return nil
 }
 
 // updateNodeStatus update the node status.
