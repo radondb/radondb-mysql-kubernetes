@@ -323,7 +323,7 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 			return fmt.Errorf("can't start/continue 'update': pod[%s] is unhealthy", pod.Name)
 		}
 		// Skip if pod is leader.
-		if pod.ObjectMeta.Labels["role"] == "leader" && leaderPod.Name == "" {
+		if pod.ObjectMeta.Labels["role"] == string(utils.Leader) && leaderPod.Name == "" {
 			leaderPod = pod
 			continue
 		}
@@ -355,7 +355,7 @@ func (s *StatefulSetSyncer) mutate() error {
 	for k, v := range s.Spec.PodPolicy.Labels {
 		s.sfs.Spec.Template.ObjectMeta.Labels[k] = v
 	}
-	s.sfs.Spec.Template.ObjectMeta.Labels["role"] = "candidate"
+	s.sfs.Spec.Template.ObjectMeta.Labels["role"] = string(utils.Candidate)
 	s.sfs.Spec.Template.ObjectMeta.Labels["healthy"] = "no"
 
 	s.sfs.Spec.Template.Annotations = s.Spec.PodPolicy.Annotations
