@@ -4,7 +4,7 @@
 
 FROM golang:1.16 as builder
 
-ARG XENON_BRANCH=feature_adapt_k8s
+ARG XENON_BRANCH=master
 RUN set -ex; \
     mkdir -p /go/src/github.com/radondb; \
     cd /go/src/github.com/radondb; \
