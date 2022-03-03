@@ -58,7 +58,8 @@ func TestGetMysqlImage(t *testing.T) {
 }
 
 func TestGetMysqlCommand(t *testing.T) {
-	assert.Nil(t, mysqlCase.Command)
+	assert.Equal(t, mysqlCase.Command,
+		[]string{"sh", "-c", "while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; /docker-entrypoint.sh mysqld"})
 }
 
 func TestGetMysqlEnvVar(t *testing.T) {
@@ -109,7 +110,7 @@ func TestGetMysqlLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"pgrep", "mysqld"},
+				Command: []string{"sh", "-c", "if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; pgrep mysqld"},
 			},
 		},
 		InitialDelaySeconds: 30,
@@ -125,7 +126,7 @@ func TestGetMysqlReadinessProbe(t *testing.T) {
 	readinessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", `test $(mysql --defaults-file=/etc/mysql/client.conf -NB -e "SELECT 1") -eq 1`},
+				Command: []string{"sh", "-c", `if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql --defaults-file=/etc/mysql/client.conf -NB -e "SELECT 1") -eq 1`},
 			},
 		},
 		InitialDelaySeconds: 10,

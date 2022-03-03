@@ -46,7 +46,11 @@ func (c *mysql) getImage() string {
 
 // getCommand get the container command.
 func (c *mysql) getCommand() []string {
-	return nil
+	return []string{
+		"sh",
+		"-c",
+		"while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; /docker-entrypoint.sh mysqld",
+	}
 }
 
 // getEnvVars get the container env.
@@ -88,7 +92,15 @@ func (c *mysql) getLivenessProbe() *corev1.Probe {
 	return &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"pgrep", "mysqld"},
+
+				/* /var/lib/mysql/sleep-forever is used to prevent mysql's container from exiting.
+				kubectl exec -it sample-mysql-0 -c mysql -- sh -c 'touch /var/lib/mysql/sleep-forever'
+				*/
+				Command: []string{
+					"sh",
+					"-c",
+					"if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; pgrep mysqld",
+				},
 			},
 		},
 		InitialDelaySeconds: 30,
@@ -107,7 +119,7 @@ func (c *mysql) getReadinessProbe() *corev1.Probe {
 				Command: []string{
 					"sh",
 					"-c",
-					fmt.Sprintf(`test $(mysql --defaults-file=%s -NB -e "SELECT 1") -eq 1`, utils.ConfClientPath),
+					fmt.Sprintf(`if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql --defaults-file=%s -NB -e "SELECT 1") -eq 1`, utils.ConfClientPath),
 				},
 			},
 		},
