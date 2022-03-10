@@ -96,7 +96,11 @@ func TestGetXenonLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"pgrep", "xenon"},
+				Command: []string{
+					"sh",
+					"-c",
+					"pgrep xenon && xenoncli xenon ping",
+				},
 			},
 		},
 		InitialDelaySeconds: 30,
