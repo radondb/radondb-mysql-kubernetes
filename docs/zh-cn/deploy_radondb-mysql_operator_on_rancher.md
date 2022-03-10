@@ -108,7 +108,7 @@ RadonDB MySQL 支持在 Rancher 上安装部署和管理，自动执行与运行
 
 1. 下载 [RadonDB MySQL 集群配置样例](/config/samples/mysql_v1alpha1_mysqlcluster.yaml)，修改 YAML 文件中配置参数值。
 
-   详细配置参数说明，请参见[配置参数](../config_para.md)。
+   详细配置参数说明，请参见[配置参数](./config_para.md)。
 
 2. 在 Rancher 集群管理页面，点击右上角 YAML 导入图标。在弹出的窗口中，导入修改后的 YAML 文件。
 
@@ -155,32 +155,6 @@ RadonDB MySQL 支持在 Rancher 上安装部署和管理，自动执行与运行
 
 以下为客户端与数据库在同一 Rancher 集群内，访问 RadonDB MySQL 的方式。
 
-### `service_name` 方式
-
-* 连接 leader 服务(RadonDB MySQL 主节点)
-
-    ```shell
-    $ mysql -h <leader_service_name>.<namespace> -u <user_name> -p
-    ```
-
-   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
-
-    ```shell
-    $ mysql -h sample-leader.default -u radondb_usr -p
-    ```
-
-* 连接 follower 服务(RadonDB MySQL 从节点)
-
-    ```shell
-    $ mysql -h <follower_service_name>.<namespace> -u <user_name> -p
-    ```
-
-   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
-
-    ```shell
-    $ mysql -h sample-follower.default -u radondb_usr -p  
-    ```
-
 ### `clusterIP` 方式
 
 RadonDB MySQL 的高可用读写 IP 指向 leader 服务的 `clusterIP`，高可用只读 IP 指向 follower 服务的 `clusterIP`。
@@ -194,3 +168,35 @@ $ mysql -h <clusterIP> -P <mysql_Port> -u <user_name> -p
 ```shell
 $ mysql -h 10.10.128.136 -P 3306 -u radondb_usr -p
 ```
+
+### `service_name` 方式
+
+Rancher 集群的 Pod 之间支持通过 `service_name` 方式访问 RadonDB MySQL。
+
+> **说明**
+> 
+> `service_name` 方式不适用于从 Rancher 集群的物理机访问数据库 Pod。
+
+* 连接 leader 服务(RadonDB MySQL 主节点)
+
+    ```shell
+    mysql -h <leader_service_name>.<namespace> -u <user_name> -p
+    ```
+
+   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
+
+    ```shell
+    mysql -h sample-leader.default -u radondb_usr -p
+    ```
+
+* 连接 follower 服务(RadonDB MySQL 从节点)
+
+    ```shell
+    mysql -h <follower_service_name>.<namespace> -u <user_name> -p
+    ```
+
+   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
+
+    ```shell
+    mysql -h sample-follower.default -u radondb_usr -p  
+    ```
