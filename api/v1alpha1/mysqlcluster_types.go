@@ -304,8 +304,8 @@ type NodeStatus struct {
 	Message string `json:"message,omitempty"`
 	// RaftStatus is the raft status of the node.
 	RaftStatus RaftStatus `json:"raftStatus,omitempty"`
-	// Conditions contains the list of the node conditions fulfilled.
-	Conditions []NodeCondition `json:"conditions,omitempty"`
+	// NodeConditions contains the list of the node conditions fulfilled.
+	NodeConditions []NodeCondition `json:"nodeConditions,omitempty"`
 }
 
 type RaftStatus struct {
@@ -360,8 +360,8 @@ type MysqlClusterStatus struct {
 	ReadyNodes int `json:"readyNodes,omitempty"`
 	// State
 	State ClusterState `json:"state,omitempty"`
-	// Conditions contains the list of the cluster conditions fulfilled.
-	Conditions []ClusterCondition `json:"conditions,omitempty"`
+	// ClusterConditions contains the list of the cluster conditions fulfilled.
+	ClusterConditions []ClusterCondition `json:"clusterConditions,omitempty"`
 	// Nodes contains the list of the node status fulfilled.
 	Nodes []NodeStatus `json:"nodes,omitempty"`
 }

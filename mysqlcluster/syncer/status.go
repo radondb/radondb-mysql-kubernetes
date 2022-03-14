@@ -128,16 +128,16 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 		}
 	}
 
-	if len(s.Status.Conditions) == 0 {
-		s.Status.Conditions = append(s.Status.Conditions, clusterCondition)
+	if len(s.Status.ClusterConditions) == 0 {
+		s.Status.ClusterConditions = append(s.Status.ClusterConditions, clusterCondition)
 	} else {
-		lastCond := s.Status.Conditions[len(s.Status.Conditions)-1]
+		lastCond := s.Status.ClusterConditions[len(s.Status.ClusterConditions)-1]
 		if lastCond.Type != clusterCondition.Type {
-			s.Status.Conditions = append(s.Status.Conditions, clusterCondition)
+			s.Status.ClusterConditions = append(s.Status.ClusterConditions, clusterCondition)
 		}
 	}
-	if len(s.Status.Conditions) > maxStatusesQuantity {
-		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
+	if len(s.Status.ClusterConditions) > maxStatusesQuantity {
+		s.Status.ClusterConditions = s.Status.ClusterConditions[len(s.Status.ClusterConditions)-maxStatusesQuantity:]
 	}
 
 	// Update ready nodes' status.
@@ -256,7 +256,7 @@ func (s *StatusSyncer) getNodeStatusIndex(name string) int {
 	lastTransitionTime := metav1.NewTime(time.Now())
 	status := apiv1alpha1.NodeStatus{
 		Name: name,
-		Conditions: []apiv1alpha1.NodeCondition{
+		NodeConditions: []apiv1alpha1.NodeCondition{
 			{
 				Type:               apiv1alpha1.NodeConditionLagged,
 				Status:             corev1.ConditionUnknown,
@@ -285,12 +285,12 @@ func (s *StatusSyncer) getNodeStatusIndex(name string) int {
 
 // updateNodeCondition update the node condition.
 func (s *StatusSyncer) updateNodeCondition(node *apiv1alpha1.NodeStatus, idx int, status corev1.ConditionStatus) {
-	if node.Conditions[idx].Status != status {
+	if node.NodeConditions[idx].Status != status {
 		t := time.Now()
 		log.V(3).Info(fmt.Sprintf("Found status change for node %q condition %q: %q -> %q; setting lastTransitionTime to %v",
-			node.Name, node.Conditions[idx].Type, node.Conditions[idx].Status, status, t))
-		node.Conditions[idx].Status = status
-		node.Conditions[idx].LastTransitionTime = metav1.NewTime(t)
+			node.Name, node.NodeConditions[idx].Type, node.NodeConditions[idx].Status, status, t))
+		node.NodeConditions[idx].Status = status
+		node.NodeConditions[idx].LastTransitionTime = metav1.NewTime(t)
 	}
 }
 
@@ -362,14 +362,14 @@ func (s *StatusSyncer) addNodesInXenon(host string, toAdd []string) error {
 func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node *apiv1alpha1.NodeStatus) error {
 	healthy := "no"
 	isPodLabelsUpdated := false
-	if node.Conditions[apiv1alpha1.IndexLagged].Status == corev1.ConditionFalse {
-		if node.Conditions[apiv1alpha1.IndexLeader].Status == corev1.ConditionFalse &&
-			node.Conditions[apiv1alpha1.IndexReadOnly].Status == corev1.ConditionTrue &&
-			node.Conditions[apiv1alpha1.IndexReplicating].Status == corev1.ConditionTrue {
+	if node.NodeConditions[apiv1alpha1.IndexLagged].Status == corev1.ConditionFalse {
+		if node.NodeConditions[apiv1alpha1.IndexLeader].Status == corev1.ConditionFalse &&
+			node.NodeConditions[apiv1alpha1.IndexReadOnly].Status == corev1.ConditionTrue &&
+			node.NodeConditions[apiv1alpha1.IndexReplicating].Status == corev1.ConditionTrue {
 			healthy = "yes"
-		} else if node.Conditions[apiv1alpha1.IndexLeader].Status == corev1.ConditionTrue &&
-			node.Conditions[apiv1alpha1.IndexReplicating].Status == corev1.ConditionFalse &&
-			node.Conditions[apiv1alpha1.IndexReadOnly].Status == corev1.ConditionFalse {
+		} else if node.NodeConditions[apiv1alpha1.IndexLeader].Status == corev1.ConditionTrue &&
+			node.NodeConditions[apiv1alpha1.IndexReplicating].Status == corev1.ConditionFalse &&
+			node.NodeConditions[apiv1alpha1.IndexReadOnly].Status == corev1.ConditionFalse {
 			healthy = "yes"
 		}
 	}

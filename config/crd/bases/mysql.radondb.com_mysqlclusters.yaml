@@ -1313,8 +1313,8 @@ spec:
           status:
             description: MysqlClusterStatus defines the observed state of MysqlCluster
             properties:
-              conditions:
-                description: Conditions contains the list of the cluster conditions
+              clusterConditions:
+                description: ClusterConditions contains the list of the cluster conditions
                   fulfilled.
                 items:
                   description: ClusterCondition defines type for cluster conditions.
@@ -1349,8 +1349,14 @@ spec:
                 items:
                   description: NodeStatus defines type for status of a node into cluster.
                   properties:
-                    conditions:
-                      description: Conditions contains the list of the node conditions
+                    message:
+                      description: Full text reason for current status of the node.
+                      type: string
+                    name:
+                      description: Name of the node.
+                      type: string
+                    nodeConditions:
+                      description: NodeConditions contains the list of the node conditions
                         fulfilled.
                       items:
                         description: NodeCondition defines type for representing node
@@ -1373,12 +1379,6 @@ spec:
                         - type
                         type: object
                       type: array
-                    message:
-                      description: Full text reason for current status of the node.
-                      type: string
-                    name:
-                      description: Name of the node.
-                      type: string
                     raftStatus:
                       description: RaftStatus is the raft status of the node.
                       properties:
