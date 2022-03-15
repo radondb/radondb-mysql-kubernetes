@@ -51,7 +51,7 @@ var (
 func main() {
 	// setup logging
 	logf.SetLogger(zap.New(zap.UseDevMode(true)))
-	stop := make(chan struct{})
+	stop := make(chan struct{}, 1)
 
 	containerName := sidecar.GetContainerType()
 
