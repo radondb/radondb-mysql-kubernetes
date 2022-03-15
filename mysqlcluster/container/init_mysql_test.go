@@ -59,6 +59,7 @@ var (
 		{
 			Name:      utils.DataVolumeName,
 			MountPath: utils.DataVolumeMountPath,
+			SubPath:   utils.MysqlDataSubPath,
 		},
 		{
 			Name:      utils.LogsVolumeName,

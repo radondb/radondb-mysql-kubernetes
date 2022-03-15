@@ -115,6 +115,7 @@ func (c *initMysql) getVolumeMounts() []corev1.VolumeMount {
 		{
 			Name:      utils.DataVolumeName,
 			MountPath: utils.DataVolumeMountPath,
+			SubPath:   utils.MysqlDataSubPath,
 		},
 		{
 			Name:      utils.LogsVolumeName,

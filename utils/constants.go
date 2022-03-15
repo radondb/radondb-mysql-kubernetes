@@ -99,14 +99,17 @@ const (
 	InitFileVolumeName = "init-mysql"
 
 	// volumes mount path.
-	ConfVolumeMountPath     = "/etc/mysql"
-	ConfMapVolumeMountPath  = "/mnt/config-map"
-	LogsVolumeMountPath     = "/var/log/mysql"
-	DataVolumeMountPath     = "/var/lib/mysql"
-	SysVolumeMountPath      = "/host-sys"
-	ScriptsVolumeMountPath  = "/scripts"
-	XenonVolumeMountPath    = "/etc/xenon"
-	InitFileVolumeMountPath = "/docker-entrypoint-initdb.d"
+	ConfVolumeMountPath      = "/etc/mysql"
+	ConfMapVolumeMountPath   = "/mnt/config-map"
+	LogsVolumeMountPath      = "/var/log/mysql"
+	DataVolumeMountPath      = "/var/lib/mysql"
+	XenonDataVolumeMountPath = "/var/lib/xenon"
+	SysVolumeMountPath       = "/host-sys"
+	ScriptsVolumeMountPath   = "/scripts"
+	XenonVolumeMountPath     = "/etc/xenon"
+	InitFileVolumeMountPath  = "/docker-entrypoint-initdb.d"
+	MysqlDataSubPath         = "mysql"
+	XenonDataSubPath         = "xenon"
 
 	// Volume timezone name.
 	SysLocalTimeZone = "localtime"
