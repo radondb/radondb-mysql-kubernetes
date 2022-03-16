@@ -166,6 +166,7 @@ const (
 	Leader    RaftRole = "LEADER"
 	Follower  RaftRole = "FOLLOWER"
 	Candidate RaftRole = "CANDIDATE"
+	Unknown   RaftRole = "UNKNOWN"
 )
 
 // XenonHttpUrl is a http url corresponding to the xenon instruction.
