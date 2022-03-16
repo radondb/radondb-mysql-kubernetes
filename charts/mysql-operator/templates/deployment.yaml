@@ -72,3 +72,22 @@ spec:
 {{ toYaml .Values.manager.resources | indent 10 }}
       serviceAccountName: {{ template "serviceAccountName" . }}
       terminationGracePeriodSeconds: 10
+      tolerations:
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: {{ .Values.tolerationSeconds }}
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: {{ .Values.tolerationSeconds }}
+      affinity: 
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ template "mysql-operator.name" . }} 
+            topologyKey: "kubernetes.io/hostname"

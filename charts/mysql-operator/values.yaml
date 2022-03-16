@@ -14,6 +14,11 @@ nameOverride: ""
 fullnameOverride: ""
 imagePrefix: ""
 
+## node.kubernetes.io/not-ready:NoExecute
+## node.kubernetes.io/unreachable:NoExecute
+## operator`s toleration time of the above two taints.
+tolerationSeconds: 30
+
 manager:
   image: radondb/mysql-operator
   tag: latest
