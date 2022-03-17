@@ -12,3 +12,10 @@ Before you want to rebuild the pod, you need to manually check the security and 
 ```shell
 ./hack/rebuild.sh sample-mysql-2
 ```
+
+# Auto Rebuild
+if you want auto rebuild the pod, such as `sample-mysql-0`
+```shell
+kubectl label pods sample-mysql-0 rebuild=true 
+```
+It will rebuild the pod automatically.
