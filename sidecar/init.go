@@ -17,6 +17,7 @@ limitations under the License.
 package sidecar
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -25,6 +26,7 @@ import (
 	"os/user"
 	"path"
 	"strconv"
+	"time"
 
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	"github.com/spf13/cobra"
@@ -231,8 +233,66 @@ func runInitCommand(cfg *Config) error {
 	return nil
 }
 
+func RunPitr(cfg *Config) {
+	if len(cfg.XCloudS3AccessKey) == 0 || len(cfg.XCloudS3SecretKey) == 0 ||
+		len(cfg.XCloudS3Bucket) == 0 || len(cfg.XCloudS3EndPoint) == 0 {
+		log.Error(errors.New("s3: S3 not set"), "Do not set the S3 enviroment!")
+		return
+	} else {
+		setalias := `mc alias set S3 $S3_ENDPOINT $S3_ACCESSKEY $S3_SECRETKEY`
+		// use bash run setalias
+		cmd := exec.Command("sh", "-c", setalias)
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		if err := cmd.Run(); err != nil {
+			log.Error(err, "failed to set alias")
+			return
+		}
+
+		for {
+			<-time.After(20 * 1000 * time.Millisecond)
+			workstr := `
+				if  grep -q pitr  /etc/podinfo/labels; then
+					echo has pitr
+				else
+					echo do not has pitr lables
+					exit 0
+				fi
+				echo now do the something for binlog
+				cd /var/lib/mysql
+				for i in $(cat mysql-bin.index |cut -d'/' -f5)
+				do
+				 ord=$(echo $i|cut -d'.' -f2)
+				 md5=$(md5sum $i|cut -d' ' -f1)
+				 obj=$(mc find S3/$S3_BUCKET -name binlog-*-$ord)
+				 if [ -z $obj ] ;then
+					 mc cp $i S3/$S3_BUCKET/"binlog-$md5-$ord"
+				 else 
+					 # check md5 are not same
+					 # echo $obj
+					 objmd5=$(echo $obj |cut -d'/' -f3 |cut -d'-' -f2)
+					if  [ $md5 != $objmd5 ]; then
+					   echo "checking the $i md5 changed"
+						 mc cp $i S3/$S3_BUCKET/"binlog-$md5-$ord"
+						 mc rm $obj
+					 fi;
+				 fi
+				done`
+			cmd := exec.Command("sh", "-c", workstr)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+			if err := cmd.Run(); err != nil {
+				log.Info("failed to run mc")
+				continue
+			}
+
+		}
+	}
+}
+
 // start the backup http server.
-func RunHttpServer(cfg *Config, stop <-chan struct{}) error {
+func RunHttpServerAndPitr(cfg *Config, stop <-chan struct{}) error {
+	go RunPitr(cfg)
 	srv := newServer(cfg, stop)
 	return srv.ListenAndServe()
 }

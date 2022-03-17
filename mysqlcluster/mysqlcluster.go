@@ -230,6 +230,21 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 				},
 			},
 		},
+		corev1.Volume{
+			Name: utils.PodInfoVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				DownwardAPI: &corev1.DownwardAPIVolumeSource{
+					Items: []corev1.DownwardAPIVolumeFile{
+						{
+							Path: "labels",
+							FieldRef: &corev1.ObjectFieldSelector{
+								FieldPath: "metadata.labels",
+							},
+						},
+					},
+				},
+			},
+		},
 	)
 
 	return volumes

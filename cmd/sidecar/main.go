@@ -61,7 +61,7 @@ func main() {
 			Use:   "http",
 			Short: "start http server",
 			Run: func(cmd *cobra.Command, args []string) {
-				if err := sidecar.RunHttpServer(backupCfg, stop); err != nil {
+				if err := sidecar.RunHttpServerAndPitr(backupCfg, stop); err != nil {
 					log.Error(err, "run command failed")
 					os.Exit(1)
 				}
