@@ -234,7 +234,8 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		node.Message = ""
 
 		if err := s.updateNodeRaftStatus(node); err != nil {
-			return err
+			log.Error(err, "failed to get/update node raft status", "node", node.Name)
+			node.Message = err.Error()
 		}
 
 		isLagged, isReplicating, isReadOnly := corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown
@@ -337,19 +338,24 @@ func (s *StatusSyncer) updateNodeCondition(node *apiv1alpha1.NodeStatus, idx int
 
 // updateNodeRaftStatus Update Node RaftStatus.
 func (s *StatusSyncer) updateNodeRaftStatus(node *apiv1alpha1.NodeStatus) error {
-	raftStatus, err := s.XenonExecutor.RaftStatus(node.Name)
-	if err != nil {
-		return err
-	}
-	node.RaftStatus = *raftStatus
-
 	isLeader := corev1.ConditionFalse
-	if node.RaftStatus.Role == string(utils.Leader) {
-		isLeader = corev1.ConditionTrue
+	node.RaftStatus = apiv1alpha1.RaftStatus{
+		Role:   string(utils.Unknown),
+		Leader: "UNKNOWN",
+		Nodes:  nil,
 	}
+
+	raftStatus, err := s.XenonExecutor.RaftStatus(node.Name)
+	if err == nil && raftStatus != nil {
+		node.RaftStatus = *raftStatus
+		if raftStatus.Role == string(utils.Leader) {
+			isLeader = corev1.ConditionTrue
+		}
+	}
+
 	// update apiv1alpha1.NodeConditionLeader.
 	s.updateNodeCondition(node, int(apiv1alpha1.IndexLeader), isLeader)
-	return nil
+	return err
 }
 
 func (s *StatusSyncer) reconcileXenon(readyNodes int) error {
