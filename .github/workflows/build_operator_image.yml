@@ -1,13 +1,18 @@
-name: auto build sidecar
+name: Build operator
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-     - cmd/sidecar/*
-     - sidecar/*
-     - utils/*
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_USERNAME:
+        description: 'username of dockerhub'
+        required: true
+      DOCKERHUB_TOKEN:
+        description: 'password of dockerhub'
+        required: true
 
 jobs:
   build:
@@ -30,5 +35,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          file: Dockerfile.sidecar
-          tags: radondb/mysql-sidecar:latest
+          tags: radondb/mysql-operator:${{ inputs.image_tag }}

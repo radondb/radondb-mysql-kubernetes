@@ -1,0 +1,23 @@
+
+name: Draft release
+
+on:
+  workflow_call:
+    secrets:
+      git_token:
+        description: 'token of github'
+        required: true
+    outputs:
+      version:
+        description: "The release version"
+        value: ${{ jobs.update_release_draft.outputs.version }}
+jobs: 
+    update_release_draft:
+      runs-on: ubuntu-latest
+      outputs:
+        version: ${{ steps.draft.outputs.tag_name }}
+      steps:
+      - uses: release-drafter/release-drafter@v5
+        id: draft
+        env:
+          GITHUB_TOKEN: ${{ secrets.git_token }}

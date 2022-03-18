@@ -1,7 +1,11 @@
 name: Publish Charts
 
 on:
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
 
 jobs:
   build:
@@ -17,6 +21,20 @@ jobs:
         with:
           version: v3.6.3
 
+      - name: Modify chart version
+        run: |
+          input=${{ inputs.version }}
+          chart_version=${input#*v}
+          sed -i "/^version:*/cversion: $chart_version" ./charts/mysql-operator/Chart.yaml
+
+      - name: Modify appVersion
+        run: |
+          sed -i '/^appVersion:*/cappVersion: ${{ inputs.version }}' ./charts/mysql-operator/Chart.yaml
+
+      - name: Modify operator image tag
+        run: |
+          sed -i '/^  tag:*/c\  tag: ${{ inputs.version }}' charts/mysql-operator/values.yaml
+
       - name: Packaging the chart
         run: helm package ./charts/mysql-operator/
 
@@ -31,7 +49,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: operator-charts
 
