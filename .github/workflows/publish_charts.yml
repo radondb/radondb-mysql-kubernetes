@@ -1,7 +1,11 @@
 name: Publish Charts
 
 on:
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
 
 jobs:
   build:
@@ -16,6 +20,19 @@ jobs:
         uses: azure/setup-helm@v1
         with:
           version: v3.6.3
+
+      - name: Modify chart version
+        run: |
+          chart_version=${${{ inputs.version }}#*v}
+          sed -i "/^version:*/cversion: chart_version" ./charts/mysql-operator/Chart.yaml
+
+      - name: Modify appVersion
+        run: |
+          sed -i '/^appVersion:*/cappVersion: ${{ inputs.version }}' ./charts/mysql-operator/Chart.yaml
+
+      - name: Modify operator image tag
+        run: |
+          sed -i '/^  tag:*/c\  tag: ${{ inputs.version }}' charts/mysql-operator/values.yaml
 
       - name: Packaging the chart
         run: helm package ./charts/mysql-operator/

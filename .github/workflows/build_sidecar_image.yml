@@ -36,4 +36,4 @@ jobs:
         with:
           push: true
           file: Dockerfile.sidecar
-          tags: radondb/mysql-sidecar:${{ inputs.image_tag }}
+          tags: runkecheng/mysql-sidecar:${{ inputs.image_tag }}

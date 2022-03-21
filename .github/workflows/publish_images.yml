@@ -1,35 +1,65 @@
 name: Publish images
 
 on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_USERNAME:
+        description: 'username of dockerhub'
+        required: true
+      DOCKERHUB_TOKEN:
+        description: 'password of dockerhub'
+        required: true
+
   workflow_dispatch:
     inputs:
       tag:
         description: 'images tag'
         required: true 
         type: string
-      build-operator:
+      build_operator:
         description: ""
         required: true
         default: true
         type: boolean
-      build-sidecar:
+      build_sidecar:
         description: ""
         required: true
         default: true
         type: boolean
 
 jobs:
-  build-operator:
-    uses: radondb/radondb-mysql-kubernetes/.github/workflows/build_operator_image.yml@main
-    if: ${{ github.event.inputs.build-operator }}
+  state_event_type:
+    runs-on: ubuntu-latest
+    steps:
+    - name: if_workflow_call
+      if: github.event.workflow_call
+      run: |
+        build_operator=true
+        build_sidecar=true
+    - name: if_workflow_dispatch
+      if: github.event.workflow_dispatch
+      run: |
+        build_operator=${{ github.event.inputs.build_operator }}
+        build_sidecar=${{ github.event.inputs.build_sidecar }}
+
+  build_operator:
+    uses: runkecheng/radondb-mysql-kubernetes/.github/workflows/build_operator_image.yml@ci_auto_modify_version
+    needs: state_event_type
+    if: build_operator
     with:
       image_tag: ${{ github.event.inputs.tag }}
     secrets: 
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-  build-sidecar:
-    uses: radondb/radondb-mysql-kubernetes/.github/workflows/build_sidecar_image.yml@main
-    if: ${{ github.event.inputs.build-sidecar }}
+
+  build_sidecar:
+    uses: runkecheng/radondb-mysql-kubernetes/.github/workflows/build_sidecar_image.yml@ci_auto_modify_version
+    needs: state_event_type
+    if: build_sidecar
     with:
       image_tag: ${{ github.event.inputs.tag }} 
     secrets: 
