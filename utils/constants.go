@@ -97,6 +97,7 @@ const (
 	ScriptsVolumeName  = "scripts"
 	XenonVolumeName    = "xenon"
 	InitFileVolumeName = "init-mysql"
+	PodInfoVolumeName  = "podinfo"
 
 	// volumes mount path.
 	ConfVolumeMountPath     = "/etc/mysql"
@@ -107,6 +108,7 @@ const (
 	ScriptsVolumeMountPath  = "/scripts"
 	XenonVolumeMountPath    = "/etc/xenon"
 	InitFileVolumeMountPath = "/docker-entrypoint-initdb.d"
+	PodInfoVolumeMountPath  = "/etc/podinfo"
 
 	// Volume timezone name.
 	SysLocalTimeZone = "localtime"

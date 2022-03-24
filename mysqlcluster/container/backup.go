@@ -143,5 +143,9 @@ func (c *backupSidecar) getVolumeMounts() []corev1.VolumeMount {
 			Name:      utils.SysLocalTimeZone,
 			MountPath: utils.SysLocalTimeZoneMountPath,
 		},
+		{
+			Name:      utils.PodInfoVolumeName,
+			MountPath: utils.PodInfoVolumeMountPath,
+		},
 	}
 }

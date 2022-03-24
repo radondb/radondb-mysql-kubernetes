@@ -45,7 +45,10 @@ RUN set -ex; \
     dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb; \
     apt-get update; \
     apt-get install -y --no-install-recommends ${XTRABACKUP_PKG}; \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* ;\
+    wget https://dl.min.io/client/mc/release/linux-amd64/mc --no-check-certificate ; \
+    cp ./mc /usr/local/bin/mc; \
+    chmod +x /usr/local/bin/mc;
 
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
