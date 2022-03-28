@@ -34,9 +34,6 @@ import (
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
-// The max quantity of the statuses.
-const maxStatusesQuantity = 10
-
 // The retry time for check node status.
 const checkNodeStatusRetry = 3
 
@@ -78,8 +75,35 @@ func (s *StatusSyncer) GetOwner() runtime.Object { return s.MysqlCluster }
 
 // Sync persists data into the external store.
 func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
-	clusterCondition := s.updateClusterStatus()
+	s.updateClusterStatus()
 
+	readyNodes, error := s.getReadyPods(ctx)
+	if error != nil {
+		return syncer.SyncResult{}, error
+	}
+
+	s.Status.ReadyNodes = len(readyNodes)
+	if !s.Status.ClusterClosed(*s.Spec.Replicas) {
+		// Only reconcile node which is ready.
+		if err := s.reconcileXenon(s.expectXenonNodes(readyNodes)); err != nil {
+			s.Status.AppendErrorCondition("", fmt.Sprintf("%s", err))
+		}
+	}
+
+	if s.Status.ClusterReady(s.PodReady(s.Status.ReadyNodes)) {
+		s.SetClusterReady()
+	}
+
+	// Update ready nodes' status.
+	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, readyNodes)
+}
+
+// Ready node must meet the following conditions:
+// 1. pod phase is running.
+// 2. podReady condition is true.
+// 3. pod`s xenon can be pinged.
+// Notice: worker crash is still satisfied conditions 1 and 2.
+func (s *StatusSyncer) getReadyPods(ctx context.Context) ([]corev1.Pod, error) {
 	list := corev1.PodList{}
 	err := s.cli.List(
 		ctx,
@@ -90,104 +114,76 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 		},
 	)
 	if err != nil {
-		return syncer.SyncResult{}, err
+		return nil, err
 	}
 
 	// get ready nodes.
 	var readyNodes []corev1.Pod
 	for _, pod := range list.Items {
+		if !s.podInSpec(pod.Name) {
+			continue
+		}
+		if pod.Status.Phase != corev1.PodRunning {
+			continue
+		}
 		if pod.ObjectMeta.Labels[utils.LableRebuild] == "true" {
 			if err := s.AutoRebuild(ctx, &pod); err != nil {
 				log.Error(err, "failed to AutoRebuild", "pod", pod.Name, "namespace", pod.Namespace)
 			}
 			continue
 		}
+		if err := s.XenonExecutor.XenonPing(s.GetPodHostName(pod.Name)); err != nil {
+			s.removeInvalidNodeStatus(s.GetPodHostName(pod.Name))
+			log.Error(err, "failed to ping", "pod", pod.Name, "namespace", pod.Namespace)
+			continue
+		}
+
 		for _, cond := range pod.Status.Conditions {
 			switch cond.Type {
-			case corev1.ContainersReady:
+			case corev1.PodReady:
 				if cond.Status == corev1.ConditionTrue {
 					readyNodes = append(readyNodes, pod)
 				}
 			case corev1.PodScheduled:
-				if cond.Reason == corev1.PodReasonUnschedulable {
-					// When an error occurs, it is first recorded in the condition,
-					// but the cluster status is not updated immediately.
-					clusterCondition = apiv1alpha1.ClusterCondition{
-						Type:               apiv1alpha1.ConditionError,
-						Status:             corev1.ConditionTrue,
-						LastTransitionTime: metav1.NewTime(time.Now()),
-						Reason:             corev1.PodReasonUnschedulable,
-						Message:            cond.Message,
-					}
+				// Temporary unschedulable occurs whenever a new pod is created.
+				if cond.Reason == corev1.PodReasonUnschedulable &&
+					cond.LastTransitionTime.Time.Before(time.Now().Add(-1*time.Minute)) {
+					s.Status.AppendErrorCondition(corev1.PodReasonUnschedulable, cond.Message)
 				}
 			}
 		}
 	}
-
-	s.Status.ReadyNodes = len(readyNodes)
-	if s.Status.ReadyNodes == int(*s.Spec.Replicas) && int(*s.Spec.Replicas) != 0 {
-		if err := s.reconcileXenon(s.Status.ReadyNodes); err != nil {
-			clusterCondition.Message = fmt.Sprintf("%s", err)
-			clusterCondition.Type = apiv1alpha1.ConditionError
-		} else {
-			s.Status.State = apiv1alpha1.ClusterReadyState
-			clusterCondition.Type = apiv1alpha1.ConditionReady
-		}
-	}
-
-	if len(s.Status.Conditions) == 0 {
-		s.Status.Conditions = append(s.Status.Conditions, clusterCondition)
-	} else {
-		lastCond := s.Status.Conditions[len(s.Status.Conditions)-1]
-		if lastCond.Type != clusterCondition.Type {
-			s.Status.Conditions = append(s.Status.Conditions, clusterCondition)
-		}
-	}
-	if len(s.Status.Conditions) > maxStatusesQuantity {
-		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
-	}
-
-	// Update ready nodes' status.
-	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, readyNodes)
+	return readyNodes, nil
 }
 
-// updateClusterStatus update the cluster status and returns condition.
-func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
-	clusterCondition := apiv1alpha1.ClusterCondition{
-		Type:               apiv1alpha1.ConditionInit,
-		Status:             corev1.ConditionTrue,
-		LastTransitionTime: metav1.NewTime(time.Now()),
+// podInSpec returns true if the pod ordinal is meets the expectations.
+func (s *StatusSyncer) podInSpec(podName string) bool {
+	ordinal, err := utils.GetOrdinal(podName)
+	if err != nil {
+		return false
 	}
+	if int32(ordinal) >= *s.Spec.Replicas {
+		return false
+	}
+	return true
+}
 
-	oldState := s.Status.State
-	// If the state does not exist, the cluster is being initialized.
-	if oldState == "" {
-		s.Status.State = apiv1alpha1.ClusterInitState
-		return clusterCondition
-	}
-	// If the expected number of replicas and the actual number
-	// of replicas are both 0, the cluster has been closed.
-	if int(*s.Spec.Replicas) == 0 && s.Status.ReadyNodes == 0 {
-		clusterCondition.Type = apiv1alpha1.ConditionClose
-		s.Status.State = apiv1alpha1.ClusterCloseState
-		return clusterCondition
-	}
-	// When the cluster is ready or closed, the number of replicas changes,
-	// indicating that the cluster is updating nodes.
-	if oldState == apiv1alpha1.ClusterReadyState || oldState == apiv1alpha1.ClusterCloseState {
-		if int(*s.Spec.Replicas) > s.Status.ReadyNodes {
-			clusterCondition.Type = apiv1alpha1.ConditionScaleOut
-			s.Status.State = apiv1alpha1.ClusterScaleOutState
-			return clusterCondition
-		} else if int(*s.Spec.Replicas) < s.Status.ReadyNodes {
-			clusterCondition.Type = apiv1alpha1.ConditionScaleIn
-			s.Status.State = apiv1alpha1.ClusterScaleInState
-			return clusterCondition
-		}
-	}
+func (s *StatusSyncer) updateClusterStatus() {
+	replicas := s.Spec.Replicas
 
-	clusterCondition.Type = apiv1alpha1.ClusterConditionType(oldState)
-	return clusterCondition
+	switch {
+	case s.Status.ClusterInitializing():
+		s.SetClusterInitializing()
+	case s.Status.ClusterClosed(*replicas):
+		s.SetClusterClosed()
+	case s.Status.ClusterError():
+		s.SetClusterError()
+	case s.Status.ClusterUpdating():
+		s.SetClusterUpdating()
+	case s.Status.ClusterScaling():
+		s.SetClusterScaling(*replicas)
+	default:
+	}
 }
 
 // Rebuild Pod by deleting and creating it.
@@ -227,8 +223,7 @@ func (s *StatusSyncer) AutoRebuild(ctx context.Context, pod *corev1.Pod) error {
 // updateNodeStatus update the node status.
 func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, pods []corev1.Pod) error {
 	for _, pod := range pods {
-		podName := pod.Name
-		host := fmt.Sprintf("%s.%s.%s", podName, s.GetNameForResource(utils.HeadlessSVC), s.Namespace)
+		host := s.GetPodHostName(pod.Name)
 		index := s.getNodeStatusIndex(host)
 		node := &s.Status.Nodes[index]
 		node.Message = ""
@@ -280,9 +275,8 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 	}
 
 	// Delete node status of nodes that have been deleted.
-	if len(s.Status.Nodes) > len(pods) {
-		s.Status.Nodes = s.Status.Nodes[:len(pods)]
-	}
+	s.truncateNodeStatus()
+
 	return nil
 }
 
@@ -325,6 +319,31 @@ func (s *StatusSyncer) getNodeStatusIndex(name string) int {
 	return len
 }
 
+func (s *StatusSyncer) truncateNodeStatus() {
+	for index, nodeStatus := range s.Status.Nodes {
+		if !utils.StringExistIn(s.expectNodeStatus(), nodeStatus.Name) {
+			s.Status.Nodes = append(s.Status.Nodes[:index], s.Status.Nodes[index+1:]...)
+		}
+	}
+}
+
+func (s *StatusSyncer) expectNodeStatus() []string {
+	expectXenonNodes := []string{}
+	for i := 0; i < int(*s.Spec.Replicas); i++ {
+		expectXenonNodes = append(expectXenonNodes, s.GetPodHostName(fmt.Sprintf("%s-%d", s.GetNameForResource(utils.HeadlessSVC), i)))
+	}
+	return expectXenonNodes
+}
+
+func (s *StatusSyncer) removeInvalidNodeStatus(name string) {
+	for i, node := range s.Status.Nodes {
+		if node.Name == name {
+			s.Status.Nodes = append(s.Status.Nodes[:i], s.Status.Nodes[i+1:]...)
+			return
+		}
+	}
+}
+
 // updateNodeCondition update the node condition.
 func (s *StatusSyncer) updateNodeCondition(node *apiv1alpha1.NodeStatus, idx int, status corev1.ConditionStatus) {
 	if node.Conditions[idx].Status != status {
@@ -358,14 +377,16 @@ func (s *StatusSyncer) updateNodeRaftStatus(node *apiv1alpha1.NodeStatus) error 
 	return err
 }
 
-func (s *StatusSyncer) reconcileXenon(readyNodes int) error {
-	expectXenonNodes := s.getExpectXenonNodes(readyNodes)
+func (s *StatusSyncer) reconcileXenon(readyNodes []string) error {
 	for _, nodeStatus := range s.Status.Nodes {
-		toRemove := utils.StringDiffIn(nodeStatus.RaftStatus.Nodes, expectXenonNodes)
+		if !utils.StringExistIn(readyNodes, fmt.Sprintf("%s:%d", nodeStatus.Name, utils.XenonPort)) {
+			continue
+		}
+		toRemove := utils.StringDiffIn(nodeStatus.RaftStatus.Nodes, readyNodes)
 		if err := s.removeNodesFromXenon(nodeStatus.Name, toRemove); err != nil {
 			return err
 		}
-		toAdd := utils.StringDiffIn(expectXenonNodes, nodeStatus.RaftStatus.Nodes)
+		toAdd := utils.StringDiffIn(readyNodes, nodeStatus.RaftStatus.Nodes)
 		if err := s.addNodesInXenon(nodeStatus.Name, toAdd); err != nil {
 			return err
 		}
@@ -373,10 +394,10 @@ func (s *StatusSyncer) reconcileXenon(readyNodes int) error {
 	return nil
 }
 
-func (s *StatusSyncer) getExpectXenonNodes(readyNodes int) []string {
+func (s *StatusSyncer) expectXenonNodes(pods []corev1.Pod) []string {
 	expectXenonNodes := []string{}
-	for i := 0; i < readyNodes; i++ {
-		expectXenonNodes = append(expectXenonNodes, fmt.Sprintf("%s:%d", s.GetPodHostName(i), utils.XenonPort))
+	for _, pod := range pods {
+		expectXenonNodes = append(expectXenonNodes, fmt.Sprintf("%s:%d", s.GetPodHostName(pod.Name), utils.XenonPort))
 	}
 	return expectXenonNodes
 }
@@ -435,4 +456,40 @@ func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node
 		}
 	}
 	return nil
+}
+
+func (s *StatusSyncer) GetPodHostName(podName string) string {
+	return fmt.Sprintf("%s.%s.%s", podName, s.GetNameForResource(utils.HeadlessSVC), s.Namespace)
+}
+
+func (s *StatusSyncer) SetClusterReady() {
+	s.Status.AppendReadyCondition()
+	s.Status.State = apiv1alpha1.ClusterReadyState
+}
+
+func (s *StatusSyncer) SetClusterInitializing() {
+	s.Status.AppendInitCondition(*s.Spec.Replicas)
+	s.Status.State = apiv1alpha1.ClusterInitState
+}
+
+func (s *StatusSyncer) SetClusterClosed() {
+	s.Status.AppendClosedCondition()
+	s.Status.State = apiv1alpha1.ClusterCloseState
+}
+
+func (s *StatusSyncer) SetClusterError() {
+	s.Status.State = apiv1alpha1.ClusterErrorState
+}
+
+func (s *StatusSyncer) SetClusterUpdating() {
+	s.Status.State = apiv1alpha1.ClusterUpdateState
+}
+
+func (s *StatusSyncer) SetClusterScaling(replicas int32) {
+	if s.Status.ReadyNodes > int(replicas) {
+		s.Status.State = apiv1alpha1.ClusterScaleInState
+	}
+	if s.Status.ReadyNodes < int(replicas) {
+		s.Status.State = apiv1alpha1.ClusterScaleOutState
+	}
 }

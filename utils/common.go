@@ -122,6 +122,15 @@ func stringIn(str string, strs []string) (int, bool) {
 	return 0, false
 }
 
+func StringExistIn(strs []string, str string) bool {
+	for _, s := range strs {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
 func UnmarshalJSON(in io.Reader, obj interface{}) error {
 	body, err := ioutil.ReadAll(in)
 	if err != nil {

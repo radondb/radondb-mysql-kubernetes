@@ -385,3 +385,7 @@ func GetPrefixFromEnv() string {
 	}
 	return prefix + "/"
 }
+
+func (c *MysqlCluster) PodReady(readyNodes int) bool {
+	return int32(readyNodes) == *c.Spec.Replicas
+}
