@@ -345,7 +345,7 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 // mutate set the statefulset.
 func (s *StatefulSetSyncer) mutate() error {
 	s.sfs.Spec.ServiceName = s.GetNameForResource(utils.StatefulSet)
-	s.sfs.Spec.Replicas = s.Spec.Replicas
+	s.SetStsReplicas()
 	s.sfs.Spec.Selector = metav1.SetAsLabelSelector(s.GetSelectorLabels())
 	s.sfs.Spec.UpdateStrategy = appsv1.StatefulSetUpdateStrategy{
 		Type: appsv1.OnDeleteStatefulSetStrategyType,
@@ -472,7 +472,7 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 	if pod.ObjectMeta.Labels["controller-revision-hash"] == s.sfs.Status.UpdateRevision {
 		log.Info("pod is already updated", "pod name", pod.Name)
 	} else {
-		s.Status.State = apiv1alpha1.ClusterUpdateState
+		s.Status.AppendUpdateCondition()
 		log.Info("updating pod", "pod", pod.Name, "key", s.Unwrap())
 		if pod.DeletionTimestamp != nil {
 			log.Info("pod is being deleted", "pod", pod.Name, "key", s.Unwrap())
@@ -586,4 +586,16 @@ func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func (s *StatefulSetSyncer) SetStsReplicas() {
+	replicas := s.Spec.Replicas
+	currentReplicas := s.sfs.Spec.Replicas
+
+	if *replicas > *currentReplicas {
+		s.Status.AppendScaleOutCondition(*currentReplicas, *replicas)
+	} else if *replicas < *currentReplicas {
+		s.Status.AppendScaleInCondition(*currentReplicas, *replicas)
+	}
+	s.sfs.Spec.Replicas = replicas
 }
