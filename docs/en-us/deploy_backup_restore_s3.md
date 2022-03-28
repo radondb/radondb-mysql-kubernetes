@@ -33,7 +33,7 @@ then, create the secret in k8s.
 ```
 kubectl create -f config/samples/backup_secret.yaml
 ```
-Please add the backupSecretName in mysql_v1apha1_mysqlcluster.yaml, name as secret file:
+Please add the backupSecretName in mysql_v1alpha1_mysqlcluster.yaml, name as secret file:
 ```yaml
 spec:
   replicas: 3
@@ -41,7 +41,7 @@ spec:
   backupSecretName: sample-backup-secret
   ...
 ```
-now create backup yaml file mysql_v1apha1_backup.yaml like this:
+now create backup yaml file mysql_v1alpha1_backup.yaml like this:
 
 ```yaml
 apiVersion: mysql.radondb.com/v1alpha1
