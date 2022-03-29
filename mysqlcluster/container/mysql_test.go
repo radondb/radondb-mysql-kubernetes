@@ -147,6 +147,7 @@ func TestGetMysqlVolumeMounts(t *testing.T) {
 		{
 			Name:      "data",
 			MountPath: "/var/lib/mysql",
+			SubPath:   "mysql",
 		},
 		{
 			Name:      "logs",

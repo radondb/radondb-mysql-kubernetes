@@ -202,6 +202,12 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			corev1.VolumeMount{
 				Name:      utils.DataVolumeName,
 				MountPath: utils.DataVolumeMountPath,
+				SubPath:   utils.MysqlDataSubPath,
+			},
+			corev1.VolumeMount{
+				Name:      utils.DataVolumeName,
+				MountPath: utils.XenonDataVolumeMountPath,
+				SubPath:   utils.XenonDataSubPath,
 			},
 		)
 	}

@@ -45,6 +45,8 @@ var (
 
 	// dataPath is the mysql data path.
 	dataPath = utils.DataVolumeMountPath
+	// xenonMetaDataPath is the xenon metadata path.
+	xenonDataPath = utils.XenonDataVolumeMountPath
 
 	// // scriptsPath is the scripts path used for xenon.
 	// scriptsPath = utils.ScriptsVolumeMountPath

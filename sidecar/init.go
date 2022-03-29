@@ -133,6 +133,10 @@ func runInitCommand(cfg *Config) error {
 		if err = os.Chown(dataPath, uid, gid); err != nil {
 			return fmt.Errorf("failed to chown %s: %s", dataPath, err)
 		}
+		// chown -R mysql:mysql /var/lib/xenon.
+		if err = os.Chown(xenonDataPath, uid, gid); err != nil {
+			return fmt.Errorf("failed to chown %s: %s", xenonDataPath, err)
+		}
 	}
 
 	// copy appropriate my.cnf from config-map to config mount.
