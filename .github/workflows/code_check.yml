@@ -63,7 +63,7 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Install staticcheck
-      run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      run: go install honnef.co/go/tools/cmd/staticcheck@2020.2.1
 
     - name: Run staticcheck
       run: staticcheck -f stylish ./... 
