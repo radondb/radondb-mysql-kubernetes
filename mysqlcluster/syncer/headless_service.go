@@ -51,6 +51,7 @@ func NewHeadlessSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) synce
 		service.Spec.Selector = labels.Set{
 			"app.kubernetes.io/name":       "mysql",
 			"app.kubernetes.io/managed-by": "mysql.radondb.com",
+			"app.kubernetes.io/instance":   c.Name,
 		}
 
 		// Use `publishNotReadyAddresses` to be able to access pods even if the pod is not ready.
