@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-test/deep"
 	"github.com/iancoleman/strcase"
 	"github.com/imdario/mergo"
 	"github.com/presslabs/controller-util/mergo/transformers"
@@ -271,6 +272,8 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 	if equality.Semantic.DeepEqual(existing, s.sfs) {
 		return controllerutil.OperationResultNone, nil
 	}
+	log.Info("update statefulset", "name", s.Name, "diff", deep.Equal(existing, s.sfs))
+
 	// If changed, update statefulset.
 	if err := s.cli.Update(ctx, s.sfs); err != nil {
 		return controllerutil.OperationResultNone, err

@@ -25,6 +25,7 @@ import (
 	"os/user"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	"github.com/spf13/cobra"
@@ -109,25 +110,24 @@ func runCloneAndInit(cfg *Config) error {
 // runInitCommand do some initialization operations.
 func runInitCommand(cfg *Config) error {
 	var err error
+	// Get the mysql user.
+	user, err := user.Lookup("mysql")
+	if err != nil {
+		return fmt.Errorf("failed to get mysql user: %s", err)
+	}
+	uid, err := strconv.Atoi(user.Uid)
+	if err != nil {
+		return fmt.Errorf("failed to get mysql user uid: %s", err)
+	}
+	gid, err := strconv.Atoi(user.Gid)
+	if err != nil {
+		return fmt.Errorf("failed to get mysql user gid: %s", err)
+	}
 
 	if exists, _ := checkIfPathExists(dataPath); exists {
 		// remove lost+found.
 		if err := os.RemoveAll(dataPath + "/lost+found"); err != nil {
 			return fmt.Errorf("removing lost+found: %s", err)
-		}
-
-		// Get the mysql user.
-		user, err := user.Lookup("mysql")
-		if err != nil {
-			return fmt.Errorf("failed to get mysql user: %s", err)
-		}
-		uid, err := strconv.Atoi(user.Uid)
-		if err != nil {
-			return fmt.Errorf("failed to get mysql user uid: %s", err)
-		}
-		gid, err := strconv.Atoi(user.Gid)
-		if err != nil {
-			return fmt.Errorf("failed to get mysql user gid: %s", err)
 		}
 		// chown -R mysql:mysql /var/lib/mysql.
 		if err = os.Chown(dataPath, uid, gid); err != nil {
@@ -160,6 +160,11 @@ func runInitCommand(cfg *Config) error {
 		}
 	}
 
+	// chown -R mysql:mysql /var/lib/mysql.
+	if err = os.Chown(extraConfPath, uid, gid); err != nil {
+		return fmt.Errorf("failed to chown %s: %s", dataPath, err)
+	}
+
 	// Run reset master in init-mysql container.
 	if err = ioutil.WriteFile(initFilePath+"/reset.sql", []byte("reset master;"), 0644); err != nil {
 		return fmt.Errorf("failed to write reset.sql: %s", err)
@@ -176,9 +181,43 @@ func runInitCommand(cfg *Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to build extra.cnf: %s", err)
 	}
-	// save extra.cnf to conf.d.
-	if err := extraConfig.SaveTo(path.Join(extraConfPath, "extra.cnf")); err != nil {
-		return fmt.Errorf("failed to save extra.cnf: %s", err)
+	// Notice: special.cnf cannot be copied to extra-conf when initialized.
+	// check /var/lib/mysql/mysql exists. if exists it means that been initialized.
+	if exists, _ := checkIfPathExists(path.Join(dataPath, "mysql")); exists || strings.HasPrefix(getEnvValue("MYSQL_VERSION"), "5") {
+		if err = copyFile(path.Join(configMapPath, utils.SpecialConfig), path.Join(extraConfPath, utils.SpecialConfig)); err != nil {
+			return fmt.Errorf("failed to copy special.cnf: %s", err)
+		}
+		// save extra.cnf to conf.d.
+		if err := extraConfig.SaveTo(path.Join(extraConfPath, "extra.cnf")); err != nil {
+			return fmt.Errorf("failed to save extra.cnf: %s", err)
+		}
+	} else {
+		log.Info("mysql is not initialized, use shell script copying special.cnf")
+		// save extra.cnf to conf.d.
+		if err := extraConfig.SaveTo(path.Join(initFilePath, "extra.cnf")); err != nil {
+			return fmt.Errorf("failed to save extra.cnf: %s", err)
+		}
+		if err = copyFile(path.Join(configMapPath, utils.SpecialConfig), path.Join(initFilePath, utils.SpecialConfig)); err != nil {
+			return fmt.Errorf("failed to copy special.cnf: %s", err)
+		}
+		src := fmt.Sprintf(`#!/bin/bash
+cp %s %s
+cp %s %s
+chown -R mysql.mysql %s
+chown -R mysql.mysql %s`,
+			// cp special.cnf to /etc/mysql/conf.d/
+			path.Join(initFilePath, utils.SpecialConfig),
+			path.Join(extraConfPath, utils.SpecialConfig),
+			// cp extra.cnf to /etc/mysql/conf.d/
+			path.Join(initFilePath, "extra.cnf"),
+			path.Join(extraConfPath, "extra.cnf"),
+			// chown -R mysql.mysql cnf files
+			path.Join(extraConfPath, utils.SpecialConfig),
+			path.Join(extraConfPath, "extra.cnf"))
+		if err = ioutil.WriteFile(initFilePath+"/special.sh", []byte(src), 0755); err != nil {
+			return fmt.Errorf("failed to write special.sh: %s", err)
+		}
+
 	}
 
 	// // build leader-start.sh.

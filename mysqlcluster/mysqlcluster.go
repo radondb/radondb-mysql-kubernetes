@@ -70,7 +70,12 @@ func (c *MysqlCluster) Validate() error {
 	if utils.StringInArray(c.Spec.MysqlOpts.User, []string{"root", utils.ReplicationUser, utils.OperatorUser, utils.MetricsUser}) {
 		return fmt.Errorf("spec.mysqlOpts.user cannot be root|%s|%s|%s", utils.ReplicationUser, utils.OperatorUser, utils.MetricsUser)
 	}
-
+	// MySQL8 nerver support TokuDB
+	// https://www.percona.com/blog/2021/05/21/tokudb-support-changes-and-future-removal-from-percona-server-for-mysql-8-0/
+	if c.Spec.MysqlVersion == "8.0" && c.Spec.MysqlOpts.InitTokuDB {
+		log.Info("TokuDB is not supported in MySQL 8.0 any more, the value in Cluster.spec.mysqlOpts.initTokuDB should be set false")
+		return nil
+	}
 	// https://github.com/percona/percona-docker/blob/main/percona-server-5.7/ps-entry.sh#L159
 	// ERROR 1396 (HY000): Operation CREATE USER failed for 'root'@'127.0.0.1'.
 	if c.Spec.MysqlOpts.RootHost == "127.0.0.1" {
@@ -91,12 +96,17 @@ func (c *MysqlCluster) GetLabels() labels.Set {
 	if comp, ok := c.Annotations["app.kubernetes.io/component"]; ok {
 		component = comp
 	}
-
+	// version := ""
+	// if _, ok := c.Labels["app.kubernetes.io/version"]; !ok {
+	// 	version = c.GetMySQLVersion()
+	// }
 	labels := labels.Set{
-		"mysql.radondb.com/cluster":    c.Name,
-		"app.kubernetes.io/name":       "mysql",
-		"app.kubernetes.io/instance":   instance,
-		"app.kubernetes.io/version":    c.GetMySQLVersion(),
+		"mysql.radondb.com/cluster":  c.Name,
+		"app.kubernetes.io/name":     "mysql",
+		"app.kubernetes.io/instance": instance,
+		// Notice: if app.kubernetes.io/version changed, then statefulset update will failure, It is not need to do this.
+		// So delete this label.
+		//"app.kubernetes.io/version":    version,
 		"app.kubernetes.io/component":  component,
 		"app.kubernetes.io/managed-by": "mysql.radondb.com",
 	}
