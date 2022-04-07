@@ -135,7 +135,7 @@ func (s *StatefulSetSyncer) Sync(ctx context.Context) (syncer.SyncResult, error)
 	case err != nil:
 		// When Invliad type error occur, and the PVC claims has changed
 		// do the expand PVCs.
-		if k8serrors.IsInvalid(err) && s.canExpandPVC(ctx) {
+		if k8serrors.IsInvalid(err) {
 			result.Operation, err = s.expandPVCs(ctx)
 		} else {
 			result.SetEventData("Warning", basicEventReason(s.Name, err),
@@ -149,28 +149,6 @@ func (s *StatefulSetSyncer) Sync(ctx context.Context) (syncer.SyncResult, error)
 		log.Info(string(result.Operation), "key", key, "kind", kind)
 	}
 	return result, err
-}
-
-// Check whether need to expand PVC.
-func (s *StatefulSetSyncer) canExpandPVC(ctx context.Context) bool {
-	// Get it again. Becaus it has been mutated in Sync.
-	if err := s.cli.Get(ctx, client.ObjectKeyFromObject(s.sfs), s.sfs); err != nil {
-		if k8serrors.IsNotFound(err) {
-			return false
-		}
-	}
-	oldRequest := s.sfs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.DeepCopy()
-	// Here do s.mutate again.
-	if err := s.mutate(); err != nil {
-		return false
-	}
-	newStorage := s.sfs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage()
-	// If newStorage is not greater than oldStorage, do not expand.
-	if newStorage.Cmp(*oldRequest.Storage()) != 1 {
-		log.Info("canExpandPVC", "result", "can not expand", "reason", "new pvc is not larger than old pvc")
-		return false
-	}
-	return true
 }
 
 // expandPVCs by reCreate the statefulset and Expand pvcs.

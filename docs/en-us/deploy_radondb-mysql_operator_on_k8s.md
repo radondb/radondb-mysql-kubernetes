@@ -54,7 +54,10 @@ The following sets the release name to `demo` and creates a [deployment](https:/
 ```
 helm install demo radondb/mysql-operator
 ```
-
+and for webhook to work, you need to run the following command to install certmanager:
+```shell
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.3.1/cert-manager.yaml
+```
 > **Note**
 > 
 > This step also creates the [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) required by the cluster.
