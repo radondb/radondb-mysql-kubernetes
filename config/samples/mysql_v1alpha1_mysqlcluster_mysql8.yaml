@@ -1,27 +1,33 @@
 apiVersion: mysql.radondb.com/v1alpha1
 kind: MysqlCluster
 metadata:
-  name: mysql8-sample
+  name: sample
 spec:
   replicas: 3
   mysqlVersion: "8.0"
+  
   # the backupSecretName specify the secret file name which store S3 information,
   # if you want S3 backup or restore, please create backup_secret.yaml, uncomment below and fill secret name:
   # backupSecretName: 
-
+  
   # if you want create mysqlcluster from S3, uncomment and fill the directory in S3 bucket below:
-  # restoreFrom: "backup_2022324174848"
+  # restoreFrom: 
+  
   mysqlOpts:
     rootPassword: "RadonDB@123"
     rootHost: localhost
     user: radondb_usr
     password: RadonDB@123
     database: radondb
+    ## tokudb is not supported in mysql8.
+    # initTokuDB: false
+
     # A simple map between string and string.
     # Such as:
     #    mysqlConf:
     #      expire_logs_days: "7"
     mysqlConf: {}
+
     resources:
       requests:
         cpu: 100m
@@ -29,10 +35,12 @@ spec:
       limits:
         cpu: 500m
         memory: 1Gi
+
   xenonOpts:
     image: radondb/xenon:1.1.5-alpha
     admitDefeatHearbeatCount: 5
     electionTimeout: 10000
+
     resources:
       requests:
         cpu: 50m
@@ -40,9 +48,11 @@ spec:
       limits:
         cpu: 100m
         memory: 256Mi
+
   metricsOpts:
     enabled: false
     image: prom/mysqld-exporter:v0.12.1
+
     resources:
       requests:
         cpu: 10m
@@ -50,12 +60,15 @@ spec:
       limits:
         cpu: 100m
         memory: 128Mi
+
   podPolicy:
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
     sidecarImage: radondb/mysql80-sidecar:v2.2.0
     busyboxImage: busybox:1.32
+
     slowLogTail: false
     auditLogTail: false
+
     labels: {}
     annotations: {}
     affinity: {}
@@ -67,10 +80,10 @@ spec:
       requests:
         cpu: 10m
         memory: 32Mi
+
   persistence:
     enabled: true
     accessModes:
-      - ReadWriteOnce
+    - ReadWriteOnce
     #storageClass: ""
     size: 20Gi
-  backupSecretName: sample-backup-secret

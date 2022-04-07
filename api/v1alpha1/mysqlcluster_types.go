@@ -120,7 +120,7 @@ type MysqlOpts struct {
 
 	// InitTokuDB represents if install tokudb engine.
 	// +optional
-	// +kubebuilder:default:=true
+	// +kubebuilder:default:=false
 	InitTokuDB bool `json:"initTokuDB,omitempty"`
 
 	// A map[string]string that will be passed to my.cnf file.
