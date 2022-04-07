@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-ini/ini"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	"github.com/spf13/cobra"
 )
@@ -181,43 +182,24 @@ func runInitCommand(cfg *Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to build extra.cnf: %s", err)
 	}
-	// Notice: special.cnf cannot be copied to extra-conf when initialized.
-	// check /var/lib/mysql/mysql exists. if exists it means that been initialized.
-	if exists, _ := checkIfPathExists(path.Join(dataPath, "mysql")); exists || strings.HasPrefix(getEnvValue("MYSQL_VERSION"), "5") {
-		if err = copyFile(path.Join(configMapPath, utils.SpecialConfig), path.Join(extraConfPath, utils.SpecialConfig)); err != nil {
-			return fmt.Errorf("failed to copy special.cnf: %s", err)
-		}
-		// save extra.cnf to conf.d.
-		if err := extraConfig.SaveTo(path.Join(extraConfPath, "extra.cnf")); err != nil {
-			return fmt.Errorf("failed to save extra.cnf: %s", err)
-		}
-	} else {
-		log.Info("mysql is not initialized, use shell script copying special.cnf")
-		// save extra.cnf to conf.d.
-		if err := extraConfig.SaveTo(path.Join(initFilePath, "extra.cnf")); err != nil {
-			return fmt.Errorf("failed to save extra.cnf: %s", err)
-		}
-		if err = copyFile(path.Join(configMapPath, utils.SpecialConfig), path.Join(initFilePath, utils.SpecialConfig)); err != nil {
-			return fmt.Errorf("failed to copy special.cnf: %s", err)
-		}
-		src := fmt.Sprintf(`#!/bin/bash
-cp %s %s
-cp %s %s
-chown -R mysql.mysql %s
-chown -R mysql.mysql %s`,
-			// cp special.cnf to /etc/mysql/conf.d/
-			path.Join(initFilePath, utils.SpecialConfig),
-			path.Join(extraConfPath, utils.SpecialConfig),
-			// cp extra.cnf to /etc/mysql/conf.d/
-			path.Join(initFilePath, "extra.cnf"),
-			path.Join(extraConfPath, "extra.cnf"),
-			// chown -R mysql.mysql cnf files
-			path.Join(extraConfPath, utils.SpecialConfig),
-			path.Join(extraConfPath, "extra.cnf"))
-		if err = ioutil.WriteFile(initFilePath+"/special.sh", []byte(src), 0755); err != nil {
-			return fmt.Errorf("failed to write special.sh: %s", err)
-		}
 
+	// Notice: plugin.cnf cannot be copied to /etc/mysql/conf.d when initialized.
+	// Check /var/lib/mysql/mysql exists. if exists it means that been initialized.
+	if exists, _ := checkIfPathExists(path.Join(dataPath, "mysql")); exists || strings.HasPrefix(getEnvValue("MYSQL_VERSION"), "5") {
+		// Save plugin.cnf and extra.cnf to /etc/mysql/conf.d.
+		saveCnfTo(extraConfPath, extraConfig)
+	} else {
+		log.Info("mysql is not initialized, use shell script copying plugin.cnf")
+		// Save plugin.cnf and extra.cnf to /docker-entrypoint-initdb.d.
+		saveCnfTo(initFilePath, extraConfig)
+
+		src := PluginConfigsSh()
+		// Write plugin.sh to docker-entrypoint-initdb.d/plugin.sh.
+		// In this way, plugin.sh will be performed automatically when Percona docker-entrypoint.sh is executed.
+		// plugin.sh will copy plugin.cnf and extra.cnf to /etc/mysql/conf.d.
+		if err = ioutil.WriteFile(initFilePath+"/plugin.sh", []byte(src), 0755); err != nil {
+			return fmt.Errorf("failed to write plugin.sh: %s", err)
+		}
 	}
 
 	// // build leader-start.sh.
@@ -284,4 +266,31 @@ func RunHttpServer(cfg *Config, stop <-chan struct{}) error {
 func RunRequestBackup(cfg *Config, host string) error {
 	_, err := requestABackup(cfg, host, serverBackupEndpoint)
 	return err
+}
+
+// Save plugin.cnf and extra.cnf to specified path.
+func saveCnfTo(targetPath string, extraCnf *ini.File) error {
+	if err := copyFile(path.Join(configMapPath, utils.PluginConfigs), path.Join(targetPath, utils.PluginConfigs)); err != nil {
+		return fmt.Errorf("failed to copy plugin.cnf: %s", err)
+	}
+	if err := extraCnf.SaveTo(path.Join(targetPath, "extra.cnf")); err != nil {
+		return fmt.Errorf("failed to save extra.cnf: %s", err)
+	}
+	return nil
+}
+
+func PluginConfigsSh() string {
+	return fmt.Sprintf(`#!/bin/bash
+cp %s %s
+cp %s %s
+chown -R mysql.mysql %s
+chown -R mysql.mysql %s`,
+			// cp plugin.cnf to /etc/mysql/conf.d/
+			path.Join(initFilePath, utils.PluginConfigs), path.Join(extraConfPath, utils.PluginConfigs),
+			// cp extra.cnf to /etc/mysql/conf.d/
+			path.Join(initFilePath, "extra.cnf"), path.Join(extraConfPath, "extra.cnf"),
+			// chown -R mysql.mysql plugin.cnf
+			path.Join(extraConfPath, utils.PluginConfigs),
+			// chown -R mysql.mysql extra.cnf
+			path.Join(extraConfPath, "extra.cnf"))
 }
