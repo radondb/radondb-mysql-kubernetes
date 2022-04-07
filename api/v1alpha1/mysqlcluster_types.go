@@ -65,7 +65,7 @@ type MysqlClusterSpec struct {
 
 	// PodPolicy defines the policy to extra specification.
 	// +optional
-	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", extraResources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "radondb/mysql-sidecar:latest", busyboxImage: "busybox:1.32"}
+	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", extraResources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "radondb/mysql57-sidecar:v2.2.0", busyboxImage: "busybox:1.32"}
 	PodPolicy PodPolicy `json:"podPolicy,omitempty"`
 
 	// PVC extra specifiaction.
@@ -120,7 +120,7 @@ type MysqlOpts struct {
 
 	// InitTokuDB represents if install tokudb engine.
 	// +optional
-	// +kubebuilder:default:=true
+	// +kubebuilder:default:=false
 	InitTokuDB bool `json:"initTokuDB,omitempty"`
 
 	// A map[string]string that will be passed to my.cnf file.
@@ -199,7 +199,7 @@ type PodPolicy struct {
 
 	// To specify the image that will be used for sidecar container.
 	// +optional
-	// +kubebuilder:default:="radondb/mysql-sidecar:latest"
+	// +kubebuilder:default:="radondb/mysql57-sidecar:v2.2.0"
 	SidecarImage string `json:"sidecarImage,omitempty"`
 
 	// The busybox image.

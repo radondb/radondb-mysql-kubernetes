@@ -132,8 +132,8 @@ const (
 	// LeaderHost is the alias for leader`s host.
 	LeaderHost = "leader-host"
 
-	// For MySQL8, the configs should deal with alone
-	SpecialConfig = "special.cnf"
+	// PluginConfigs is the alias for mysql plugin config.
+	PluginConfigs = "plugin.cnf"
 )
 
 // ResourceName is the type for aliasing resources that will be created.
