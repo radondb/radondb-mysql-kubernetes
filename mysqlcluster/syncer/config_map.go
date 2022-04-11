@@ -77,7 +77,7 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	case "5.7":
 		addKVConfigsToSection(sec, mysql57Configs)
 	}
-	
+
 	addKVConfigsToSection(sec, mysqlSysConfigs, mysqlCommonConfigs, mysqlStaticConfigs, c.Spec.MysqlOpts.MysqlConf)
 
 	if c.Spec.MysqlOpts.InitTokuDB {

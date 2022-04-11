@@ -285,12 +285,12 @@ cp %s %s
 cp %s %s
 chown -R mysql.mysql %s
 chown -R mysql.mysql %s`,
-			// cp plugin.cnf to /etc/mysql/conf.d/
-			path.Join(initFilePath, utils.PluginConfigs), path.Join(extraConfPath, utils.PluginConfigs),
-			// cp extra.cnf to /etc/mysql/conf.d/
-			path.Join(initFilePath, "extra.cnf"), path.Join(extraConfPath, "extra.cnf"),
-			// chown -R mysql.mysql plugin.cnf
-			path.Join(extraConfPath, utils.PluginConfigs),
-			// chown -R mysql.mysql extra.cnf
-			path.Join(extraConfPath, "extra.cnf"))
+		// cp plugin.cnf to /etc/mysql/conf.d/
+		path.Join(initFilePath, utils.PluginConfigs), path.Join(extraConfPath, utils.PluginConfigs),
+		// cp extra.cnf to /etc/mysql/conf.d/
+		path.Join(initFilePath, "extra.cnf"), path.Join(extraConfPath, "extra.cnf"),
+		// chown -R mysql.mysql plugin.cnf
+		path.Join(extraConfPath, utils.PluginConfigs),
+		// chown -R mysql.mysql extra.cnf
+		path.Join(extraConfPath, "extra.cnf"))
 }

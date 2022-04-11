@@ -132,7 +132,7 @@ const (
 	// LeaderHost is the alias for leader`s host.
 	LeaderHost = "leader-host"
 
-	// 
+	// PluginConfigs is the alias for mysql plugin config.
 	PluginConfigs = "plugin.cnf"
 )
 

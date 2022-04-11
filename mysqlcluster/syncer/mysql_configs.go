@@ -35,31 +35,31 @@ var mysqlSysConfigs = map[string]string{
 	"innodb_open_files":   "655360",
 	"open_files_limit":    "655360",
 
-	"gtid-mode":                 "ON",
-	"enforce-gtid-consistency":  "ON",
-	"slave_parallel_type":       "LOGICAL_CLOCK",
-	"relay_log":                 "/var/lib/mysql/mysql-relay-bin",
-	"relay_log_index":           "/var/lib/mysql/mysql-relay-bin.index",
-	"slow_query_log":            "1",
-	"tmp_table_size":            "32M",
-	"tmpdir":                    "/var/lib/mysql",
+	"gtid-mode":                "ON",
+	"enforce-gtid-consistency": "ON",
+	"slave_parallel_type":      "LOGICAL_CLOCK",
+	"relay_log":                "/var/lib/mysql/mysql-relay-bin",
+	"relay_log_index":          "/var/lib/mysql/mysql-relay-bin.index",
+	"slow_query_log":           "1",
+	"tmp_table_size":           "32M",
+	"tmpdir":                   "/var/lib/mysql",
 }
 
 var pluginConfigs = map[string]string{
-	"plugin-load":                        "\"semisync_master.so;semisync_slave.so;audit_log.so;connection_control.so\"",
+	"plugin-load": "\"semisync_master.so;semisync_slave.so;audit_log.so;connection_control.so\"",
 
 	"rpl_semi_sync_master_enabled":       "OFF",
 	"rpl_semi_sync_slave_enabled":        "ON",
 	"rpl_semi_sync_master_wait_no_slave": "ON",
 	"rpl_semi_sync_master_timeout":       "1000000000000000000",
 
-	"audit_log_file":                     "/var/log/mysql/mysql-audit.log",
-	"audit_log_exclude_accounts":         "\"root@localhost,root@127.0.0.1," + utils.ReplicationUser + "@%," + utils.MetricsUser + "@%\"",
-	"audit_log_buffer_size":              "16M",
-	"audit_log_policy":                                "NONE",
-	"audit_log_rotate_on_size":                        "104857600",
-	"audit_log_rotations":                             "6",
-	"audit_log_format":                                "OLD",
+	"audit_log_file":             "/var/log/mysql/mysql-audit.log",
+	"audit_log_exclude_accounts": "\"root@localhost,root@127.0.0.1," + utils.ReplicationUser + "@%," + utils.MetricsUser + "@%\"",
+	"audit_log_buffer_size":      "16M",
+	"audit_log_policy":           "NONE",
+	"audit_log_rotate_on_size":   "104857600",
+	"audit_log_rotations":        "6",
+	"audit_log_format":           "OLD",
 
 	"connection_control_failed_connections_threshold": "3",
 	"connection_control_min_connection_delay":         "1000",
@@ -74,16 +74,16 @@ var mysql57Configs = map[string]string{
 
 	"expire-logs-days": "7",
 
-	"master_info_repository":    "TABLE",
-	"relay_log_info_repository": "TABLE",
-	"slave_rows_search_algorithms":    "INDEX_SCAN,HASH_SCAN",
+	"master_info_repository":       "TABLE",
+	"relay_log_info_repository":    "TABLE",
+	"slave_rows_search_algorithms": "INDEX_SCAN,HASH_SCAN",
 }
 
 var mysql80Configs = map[string]string{
 	"sql-mode": "STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_VALUE_ON_ZERO,NO_ENGINE_SUBSTITUTION," +
-	"NO_ZERO_DATE,NO_ZERO_IN_DATE,ONLY_FULL_GROUP_BY",
+		"NO_ZERO_DATE,NO_ZERO_IN_DATE,ONLY_FULL_GROUP_BY",
 	// 7 days = 7 * 24 * 60 * 60
-	"binlog_expire_logs_seconds": "604800", 
+	"binlog_expire_logs_seconds": "604800",
 	// use 5.7 auth plugin to be backward compatible
 	"default-authentication-plugin": "mysql_native_password",
 }
