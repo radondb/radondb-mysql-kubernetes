@@ -25,7 +25,9 @@ import (
 	"os/user"
 	"path"
 	"strconv"
+	"strings"
 
+	"github.com/go-ini/ini"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	"github.com/spf13/cobra"
 )
@@ -109,25 +111,24 @@ func runCloneAndInit(cfg *Config) error {
 // runInitCommand do some initialization operations.
 func runInitCommand(cfg *Config) error {
 	var err error
+	// Get the mysql user.
+	user, err := user.Lookup("mysql")
+	if err != nil {
+		return fmt.Errorf("failed to get mysql user: %s", err)
+	}
+	uid, err := strconv.Atoi(user.Uid)
+	if err != nil {
+		return fmt.Errorf("failed to get mysql user uid: %s", err)
+	}
+	gid, err := strconv.Atoi(user.Gid)
+	if err != nil {
+		return fmt.Errorf("failed to get mysql user gid: %s", err)
+	}
 
 	if exists, _ := checkIfPathExists(dataPath); exists {
 		// remove lost+found.
 		if err := os.RemoveAll(dataPath + "/lost+found"); err != nil {
 			return fmt.Errorf("removing lost+found: %s", err)
-		}
-
-		// Get the mysql user.
-		user, err := user.Lookup("mysql")
-		if err != nil {
-			return fmt.Errorf("failed to get mysql user: %s", err)
-		}
-		uid, err := strconv.Atoi(user.Uid)
-		if err != nil {
-			return fmt.Errorf("failed to get mysql user uid: %s", err)
-		}
-		gid, err := strconv.Atoi(user.Gid)
-		if err != nil {
-			return fmt.Errorf("failed to get mysql user gid: %s", err)
 		}
 		// chown -R mysql:mysql /var/lib/mysql.
 		if err = os.Chown(dataPath, uid, gid); err != nil {
@@ -160,6 +161,11 @@ func runInitCommand(cfg *Config) error {
 		}
 	}
 
+	// chown -R mysql:mysql /var/lib/mysql.
+	if err = os.Chown(extraConfPath, uid, gid); err != nil {
+		return fmt.Errorf("failed to chown %s: %s", dataPath, err)
+	}
+
 	// Run reset master in init-mysql container.
 	if err = ioutil.WriteFile(initFilePath+"/reset.sql", []byte("reset master;"), 0644); err != nil {
 		return fmt.Errorf("failed to write reset.sql: %s", err)
@@ -176,9 +182,24 @@ func runInitCommand(cfg *Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to build extra.cnf: %s", err)
 	}
-	// save extra.cnf to conf.d.
-	if err := extraConfig.SaveTo(path.Join(extraConfPath, "extra.cnf")); err != nil {
-		return fmt.Errorf("failed to save extra.cnf: %s", err)
+
+	// Notice: plugin.cnf cannot be copied to /etc/mysql/conf.d when initialized.
+	// Check /var/lib/mysql/mysql exists. if exists it means that been initialized.
+	if exists, _ := checkIfPathExists(path.Join(dataPath, "mysql")); exists || strings.HasPrefix(getEnvValue("MYSQL_VERSION"), "5") {
+		// Save plugin.cnf and extra.cnf to /etc/mysql/conf.d.
+		saveCnfTo(extraConfPath, extraConfig)
+	} else {
+		log.Info("mysql is not initialized, use shell script copying plugin.cnf")
+		// Save plugin.cnf and extra.cnf to /docker-entrypoint-initdb.d.
+		saveCnfTo(initFilePath, extraConfig)
+
+		src := PluginConfigsSh()
+		// Write plugin.sh to docker-entrypoint-initdb.d/plugin.sh.
+		// In this way, plugin.sh will be performed automatically when Percona docker-entrypoint.sh is executed.
+		// plugin.sh will copy plugin.cnf and extra.cnf to /etc/mysql/conf.d.
+		if err = ioutil.WriteFile(initFilePath+"/plugin.sh", []byte(src), 0755); err != nil {
+			return fmt.Errorf("failed to write plugin.sh: %s", err)
+		}
 	}
 
 	// // build leader-start.sh.
@@ -245,4 +266,31 @@ func RunHttpServer(cfg *Config, stop <-chan struct{}) error {
 func RunRequestBackup(cfg *Config, host string) error {
 	_, err := requestABackup(cfg, host, serverBackupEndpoint)
 	return err
+}
+
+// Save plugin.cnf and extra.cnf to specified path.
+func saveCnfTo(targetPath string, extraCnf *ini.File) error {
+	if err := copyFile(path.Join(configMapPath, utils.PluginConfigs), path.Join(targetPath, utils.PluginConfigs)); err != nil {
+		return fmt.Errorf("failed to copy plugin.cnf: %s", err)
+	}
+	if err := extraCnf.SaveTo(path.Join(targetPath, "extra.cnf")); err != nil {
+		return fmt.Errorf("failed to save extra.cnf: %s", err)
+	}
+	return nil
+}
+
+func PluginConfigsSh() string {
+	return fmt.Sprintf(`#!/bin/bash
+cp %s %s
+cp %s %s
+chown -R mysql.mysql %s
+chown -R mysql.mysql %s`,
+		// cp plugin.cnf to /etc/mysql/conf.d/
+		path.Join(initFilePath, utils.PluginConfigs), path.Join(extraConfPath, utils.PluginConfigs),
+		// cp extra.cnf to /etc/mysql/conf.d/
+		path.Join(initFilePath, "extra.cnf"), path.Join(extraConfPath, "extra.cnf"),
+		// chown -R mysql.mysql plugin.cnf
+		path.Join(extraConfPath, utils.PluginConfigs),
+		// chown -R mysql.mysql extra.cnf
+		path.Join(extraConfPath, "extra.cnf"))
 }

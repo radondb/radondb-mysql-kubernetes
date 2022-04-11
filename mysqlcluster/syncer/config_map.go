@@ -51,8 +51,13 @@ func NewConfigMapSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.
 			return fmt.Errorf("failed to create mysql configs: %s", err)
 		}
 
+		dataPlugin, err := buildMysqlPluginConf(c)
+		if err != nil {
+			return fmt.Errorf("failed to create mysql plugin configs: %s", err)
+		}
 		cm.Data = map[string]string{
-			"my.cnf": data,
+			"my.cnf":            data,
+			utils.PluginConfigs: dataPlugin,
 		}
 
 		return nil
@@ -66,6 +71,13 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 
 	c.EnsureMysqlConf()
 
+	switch c.Spec.MysqlVersion {
+	case "8.0":
+		addKVConfigsToSection(sec, mysql80Configs)
+	case "5.7":
+		addKVConfigsToSection(sec, mysql57Configs)
+	}
+
 	addKVConfigsToSection(sec, mysqlSysConfigs, mysqlCommonConfigs, mysqlStaticConfigs, c.Spec.MysqlOpts.MysqlConf)
 
 	if c.Spec.MysqlOpts.InitTokuDB {
@@ -78,6 +90,20 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 		}
 	}
 
+	data, err := writeConfigs(cfg)
+	if err != nil {
+		return "", err
+	}
+
+	return data, nil
+}
+
+// Build the Plugin Cnf file.
+func buildMysqlPluginConf(c *mysqlcluster.MysqlCluster) (string, error) {
+	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
+	sec := cfg.Section("mysqld")
+
+	addKVConfigsToSection(sec, pluginConfigs)
 	data, err := writeConfigs(cfg)
 	if err != nil {
 		return "", err
