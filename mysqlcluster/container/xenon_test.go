@@ -135,11 +135,6 @@ func TestGetXenonVolumeMounts(t *testing.T) {
 			MountPath: "/scripts",
 		},
 		{
-			Name:      "data",
-			MountPath: "/var/lib/xenon",
-			SubPath:   "xenon",
-		},
-		{
 			Name:      "xenon",
 			MountPath: "/etc/xenon",
 		},

@@ -455,18 +455,10 @@ func TestGetInitSidecarVolumeMounts(t *testing.T) {
 		persistenceCase := EnsureContainer("init-sidecar", &testPersistenceCluster)
 		persistenceVolumeMounts := make([]corev1.VolumeMount, 6, 7)
 		copy(persistenceVolumeMounts, defaultInitsidecarVolumeMounts)
-		persistenceVolumeMounts = append(persistenceVolumeMounts,
-			corev1.VolumeMount{
-				Name:      utils.DataVolumeName,
-				MountPath: utils.DataVolumeMountPath,
-				SubPath:   utils.MysqlDataSubPath,
-			},
-			corev1.VolumeMount{
-				Name:      utils.DataVolumeName,
-				MountPath: utils.XenonDataVolumeMountPath,
-				SubPath:   utils.XenonDataSubPath,
-			},
-		)
+		persistenceVolumeMounts = append(persistenceVolumeMounts, corev1.VolumeMount{
+			Name:      utils.DataVolumeName,
+			MountPath: utils.DataVolumeMountPath,
+		})
 		assert.Equal(t, persistenceVolumeMounts, persistenceCase.VolumeMounts)
 	}
 }
