@@ -131,10 +131,13 @@ type Config struct {
 func NewInitConfig() *Config {
 	// check mysql version is supported or not and then get parse mysql semver version
 	var mysqlSemVer semver.Version
+
 	if ver := getEnvValue("MYSQL_VERSION"); ver == utils.InvalidMySQLVersion {
 		panic("invalid mysql version, currently we only support 5.7 or 8.0")
 	} else {
-		mysqlSemVer, err := semver.Parse(ver)
+		var err error
+		// Do not use := here, it will alloc a new semver.Version every time.
+		mysqlSemVer, err = semver.Parse(ver)
 		if err != nil {
 			log.Info("semver get from MYSQL_VERSION is invalid", "semver: ", mysqlSemVer)
 			panic(err)
@@ -310,7 +313,8 @@ func (cfg *Config) buildXenonConf() []byte {
 	}
 
 	hostName := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
-
+	// Because go-sql-driver will translate localhost to 127.0.0.1 or ::1, but never set the hostname
+	// so the host is set to "127.0.0.1" in config file.
 	str := fmt.Sprintf(`{
 		"log": {
 			"level": "INFO"
@@ -333,7 +337,7 @@ func (cfg *Config) buildXenonConf() []byte {
 			"admin": "root",
 			"ping-timeout": %d,
 			"passwd": "%s",
-			"host": "localhost",
+			"host": "127.0.0.1",
 			"version": "%s",
 			"master-sysvars": "%s",
 			"slave-sysvars": "%s",
