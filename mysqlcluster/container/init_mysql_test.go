@@ -53,13 +53,12 @@ var (
 	}
 	initMysqlVolumeMounts = []corev1.VolumeMount{
 		{
-			Name:      utils.ConfVolumeName,
-			MountPath: utils.ConfVolumeMountPath,
+			Name:      utils.MysqlConfVolumeName,
+			MountPath: utils.MysqlConfVolumeMountPath,
 		},
 		{
 			Name:      utils.DataVolumeName,
 			MountPath: utils.DataVolumeMountPath,
-			SubPath:   utils.MysqlDataSubPath,
 		},
 		{
 			Name:      utils.LogsVolumeName,

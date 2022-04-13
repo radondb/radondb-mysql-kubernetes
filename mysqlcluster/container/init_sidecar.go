@@ -163,20 +163,28 @@ func (c *initSidecar) getReadinessProbe() *corev1.Probe {
 func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      utils.ConfVolumeName,
-			MountPath: utils.ConfVolumeMountPath,
+			Name:      utils.MysqlConfVolumeName,
+			MountPath: utils.MysqlConfVolumeMountPath,
 		},
 		{
-			Name:      utils.ConfMapVolumeName,
-			MountPath: utils.ConfMapVolumeMountPath,
+			Name:      utils.MysqlCMVolumeName,
+			MountPath: utils.MysqlCMVolumeMountPath,
+		},
+		{
+			Name:      utils.XenonCMVolumeName,
+			MountPath: utils.XenonCMVolumeMountPath,
+		},
+		{
+			Name:      utils.XenonMetaVolumeName,
+			MountPath: utils.XenonMetaVolumeMountPath,
 		},
 		{
 			Name:      utils.ScriptsVolumeName,
 			MountPath: utils.ScriptsVolumeMountPath,
 		},
 		{
-			Name:      utils.XenonVolumeName,
-			MountPath: utils.XenonVolumeMountPath,
+			Name:      utils.XenonConfVolumeName,
+			MountPath: utils.XenonConfVolumeMountPath,
 		},
 		{
 			Name:      utils.InitFileVolumeName,
@@ -202,12 +210,6 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			corev1.VolumeMount{
 				Name:      utils.DataVolumeName,
 				MountPath: utils.DataVolumeMountPath,
-				SubPath:   utils.MysqlDataSubPath,
-			},
-			corev1.VolumeMount{
-				Name:      utils.DataVolumeName,
-				MountPath: utils.XenonDataVolumeMountPath,
-				SubPath:   utils.XenonDataSubPath,
 			},
 		)
 	}

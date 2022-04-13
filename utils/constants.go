@@ -91,27 +91,28 @@ const (
 	BackupUser = "sys_backup"
 
 	// volumes names.
-	ConfVolumeName     = "conf"
-	ConfMapVolumeName  = "config-map"
-	LogsVolumeName     = "logs"
-	DataVolumeName     = "data"
-	SysVolumeName      = "host-sys"
-	ScriptsVolumeName  = "scripts"
-	XenonVolumeName    = "xenon"
-	InitFileVolumeName = "init-mysql"
+	MysqlConfVolumeName = "mysql-conf"
+	MysqlCMVolumeName   = "mysql-cm"
+	XenonMetaVolumeName = "xenon-meta"
+	XenonCMVolumeName   = "xenon-cm"
+	LogsVolumeName      = "logs"
+	DataVolumeName      = "data"
+	SysVolumeName       = "host-sys"
+	ScriptsVolumeName   = "scripts"
+	XenonConfVolumeName = "xenon-conf"
+	InitFileVolumeName  = "init-mysql"
 
 	// volumes mount path.
-	ConfVolumeMountPath      = "/etc/mysql"
-	ConfMapVolumeMountPath   = "/mnt/config-map"
+	MysqlConfVolumeMountPath = "/etc/mysql"
+	MysqlCMVolumeMountPath   = "/mnt/mysql-cm"
+	XenonMetaVolumeMountPath = "/var/lib/xenon"
+	XenonCMVolumeMountPath   = "/mnt/xenon-cm"
 	LogsVolumeMountPath      = "/var/log/mysql"
 	DataVolumeMountPath      = "/var/lib/mysql"
-	XenonDataVolumeMountPath = "/var/lib/xenon"
 	SysVolumeMountPath       = "/host-sys"
 	ScriptsVolumeMountPath   = "/scripts"
-	XenonVolumeMountPath     = "/etc/xenon"
+	XenonConfVolumeMountPath = "/etc/xenon"
 	InitFileVolumeMountPath  = "/docker-entrypoint-initdb.d"
-	MysqlDataSubPath         = "mysql"
-	XenonDataSubPath         = "xenon"
 
 	// Volume timezone name.
 	SysLocalTimeZone = "localtime"
@@ -162,6 +163,8 @@ const (
 	ServiceAccount ResourceName = "service-account"
 	// PodDisruptionBudget is the name of pod disruption budget for the statefulset.
 	PodDisruptionBudget ResourceName = "pdb"
+	// XenonMetaData is the name of the configmap that contains xenon metadata.
+	XenonMetaData ResourceName = "xenon-metadata"
 )
 
 // JobType

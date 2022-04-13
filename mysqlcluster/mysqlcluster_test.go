@@ -245,7 +245,7 @@ func TestGetPodHostName(t *testing.T) {
 func TestEnsureVolumes(t *testing.T) {
 	volume := []corev1.Volume{
 		{
-			Name: utils.ConfVolumeName,
+			Name: utils.MysqlConfVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
@@ -257,7 +257,7 @@ func TestEnsureVolumes(t *testing.T) {
 			},
 		},
 		{
-			Name: utils.ConfMapVolumeName,
+			Name: utils.MysqlCMVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{
@@ -267,13 +267,29 @@ func TestEnsureVolumes(t *testing.T) {
 			},
 		},
 		{
+			Name: utils.XenonCMVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: "sample-xenon",
+					},
+				},
+			},
+		},
+		{
+			Name: utils.XenonMetaVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+		{
 			Name: utils.ScriptsVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
 		{
-			Name: utils.XenonVolumeName,
+			Name: utils.XenonConfVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},

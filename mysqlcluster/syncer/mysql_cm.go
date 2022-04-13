@@ -31,8 +31,8 @@ import (
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
-// NewConfigMapSyncer returns configmap syncer.
-func NewConfigMapSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Interface {
+// NewMysqlCMSyncer returns mysql configmap syncer.
+func NewMysqlCMSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Interface {
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",

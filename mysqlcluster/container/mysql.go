@@ -135,13 +135,12 @@ func (c *mysql) getReadinessProbe() *corev1.Probe {
 func (c *mysql) getVolumeMounts() []corev1.VolumeMount {
 	return []corev1.VolumeMount{
 		{
-			Name:      utils.ConfVolumeName,
-			MountPath: utils.ConfVolumeMountPath,
+			Name:      utils.MysqlConfVolumeName,
+			MountPath: utils.MysqlConfVolumeMountPath,
 		},
 		{
 			Name:      utils.DataVolumeName,
 			MountPath: utils.DataVolumeMountPath,
-			SubPath:   utils.MysqlDataSubPath,
 		},
 		{
 			Name:      utils.LogsVolumeName,

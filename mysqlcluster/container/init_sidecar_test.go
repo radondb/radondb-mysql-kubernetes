@@ -272,20 +272,28 @@ var (
 	}
 	defaultInitsidecarVolumeMounts = []corev1.VolumeMount{
 		{
-			Name:      utils.ConfVolumeName,
-			MountPath: utils.ConfVolumeMountPath,
+			Name:      utils.MysqlConfVolumeName,
+			MountPath: utils.MysqlConfVolumeMountPath,
 		},
 		{
-			Name:      utils.ConfMapVolumeName,
-			MountPath: utils.ConfMapVolumeMountPath,
+			Name:      utils.MysqlCMVolumeName,
+			MountPath: utils.MysqlCMVolumeMountPath,
+		},
+		{
+			Name:      utils.XenonCMVolumeName,
+			MountPath: utils.XenonCMVolumeMountPath,
+		},
+		{
+			Name:      utils.XenonMetaVolumeName,
+			MountPath: utils.XenonMetaVolumeMountPath,
 		},
 		{
 			Name:      utils.ScriptsVolumeName,
 			MountPath: utils.ScriptsVolumeMountPath,
 		},
 		{
-			Name:      utils.XenonVolumeName,
-			MountPath: utils.XenonVolumeMountPath,
+			Name:      utils.XenonConfVolumeName,
+			MountPath: utils.XenonConfVolumeMountPath,
 		},
 		{
 			Name:      utils.InitFileVolumeName,
@@ -437,7 +445,7 @@ func TestGetInitSidecarVolumeMounts(t *testing.T) {
 			MysqlCluster: &testToKuDBMysqlCluster,
 		}
 		tokudbCase := EnsureContainer("init-sidecar", &testTokuDBCluster)
-		tokuDBVolumeMounts := make([]corev1.VolumeMount, 6, 7)
+		tokuDBVolumeMounts := make([]corev1.VolumeMount, 8, 9)
 		copy(tokuDBVolumeMounts, defaultInitsidecarVolumeMounts)
 		tokuDBVolumeMounts = append(tokuDBVolumeMounts, corev1.VolumeMount{
 			Name:      utils.SysVolumeName,
@@ -453,20 +461,12 @@ func TestGetInitSidecarVolumeMounts(t *testing.T) {
 			MysqlCluster: &testPersistenceMysqlCluster,
 		}
 		persistenceCase := EnsureContainer("init-sidecar", &testPersistenceCluster)
-		persistenceVolumeMounts := make([]corev1.VolumeMount, 6, 7)
+		persistenceVolumeMounts := make([]corev1.VolumeMount, 8, 9)
 		copy(persistenceVolumeMounts, defaultInitsidecarVolumeMounts)
-		persistenceVolumeMounts = append(persistenceVolumeMounts,
-			corev1.VolumeMount{
-				Name:      utils.DataVolumeName,
-				MountPath: utils.DataVolumeMountPath,
-				SubPath:   utils.MysqlDataSubPath,
-			},
-			corev1.VolumeMount{
-				Name:      utils.DataVolumeName,
-				MountPath: utils.XenonDataVolumeMountPath,
-				SubPath:   utils.XenonDataSubPath,
-			},
-		)
+		persistenceVolumeMounts = append(persistenceVolumeMounts, corev1.VolumeMount{
+			Name:      utils.DataVolumeName,
+			MountPath: utils.DataVolumeMountPath,
+		})
 		assert.Equal(t, persistenceVolumeMounts, persistenceCase.VolumeMounts)
 	}
 }
