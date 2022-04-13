@@ -125,6 +125,7 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
 		clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, r.SQLRunnerFactory, r.XenonExecutor),
 		clustersyncer.NewPDBSyncer(r.Client, instance),
+		clustersyncer.NewXenonCMSyncer(r.Client, instance),
 	}
 
 	if instance.Spec.MetricsOpts.Enabled {

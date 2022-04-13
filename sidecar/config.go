@@ -344,7 +344,7 @@ func (cfg *Config) buildXenonConf() []byte {
 			"election-timeout": %d,
 			"admit-defeat-hearbeat-count": %d,
 			"heartbeat-timeout": %d,
-			"meta-datadir": "/var/lib/xenon/",
+			"meta-datadir": "%s",
 			"semi-sync-degrade": true,
 			"purge-binlog-disabled": true,
 			"super-idle": false
@@ -353,7 +353,7 @@ func (cfg *Config) buildXenonConf() []byte {
 	`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser,
 		cfg.GtidPurged, requestTimeout,
 		pingTimeout, cfg.RootPassword, version, srcSysVars, replicaSysVars, cfg.ElectionTimeout,
-		cfg.AdmitDefeatHearbeatCount, heartbeatTimeout)
+		cfg.AdmitDefeatHearbeatCount, heartbeatTimeout, xenonConfigPath)
 
 	return utils.StringToBytes(str)
 }

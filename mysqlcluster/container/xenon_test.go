@@ -135,8 +135,12 @@ func TestGetXenonVolumeMounts(t *testing.T) {
 			MountPath: "/scripts",
 		},
 		{
-			Name:      "xenon",
+			Name:      "xenon-conf",
 			MountPath: "/etc/xenon",
+		},
+		{
+			Name:      "xenon-meta",
+			MountPath: "/var/lib/xenon",
 		},
 		{
 			Name:      utils.SysLocalTimeZone,

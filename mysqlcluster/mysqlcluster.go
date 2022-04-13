@@ -215,13 +215,29 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			},
 		},
 		corev1.Volume{
+			Name: utils.XenonCMVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: c.GetNameForResource(utils.XenonMetaData),
+					},
+				},
+			},
+		},
+		corev1.Volume{
+			Name: utils.XenonMetaVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+		corev1.Volume{
 			Name: utils.ScriptsVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		},
 		corev1.Volume{
-			Name: utils.XenonVolumeName,
+			Name: utils.XenonConfVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
@@ -294,6 +310,8 @@ func (c *MysqlCluster) GetNameForResource(name utils.ResourceName) string {
 		return fmt.Sprintf("%s-metrics", c.Name)
 	case utils.Secret:
 		return fmt.Sprintf("%s-secret", c.Name)
+	case utils.XenonMetaData:
+		return fmt.Sprintf("%s-xenon", c.Name)
 	default:
 		return c.Name
 	}

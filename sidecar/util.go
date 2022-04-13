@@ -34,6 +34,9 @@ var (
 	// mysqlConfigPath is the mysql configs path.
 	mysqlConfigPath = utils.MysqlConfVolumeMountPath
 
+	// xenonConfigPath is the xenon meta path.
+	xenonConfigPath = utils.XenonMetaVolumeMountPath
+
 	// clientConfPath is the client.cnf path.
 	clientConfPath = utils.ConfClientPath
 
@@ -42,6 +45,9 @@ var (
 
 	// mysqlCMPath is the mounted configmap.
 	mysqlCMPath = utils.MysqlCMVolumeMountPath
+
+	// xenonCMPath is the mounted configmap.
+	xenonCMPath = utils.XenonCMVolumeMountPath
 
 	// dataPath is the mysql data path.
 	dataPath = utils.DataVolumeMountPath
@@ -53,7 +59,7 @@ var (
 	sysPath = utils.SysVolumeMountPath
 
 	// xenonPath is the xenon configs path.
-	xenonPath = utils.XenonVolumeMountPath
+	xenonPath = utils.XenonConfVolumeMountPath
 
 	// initFilePath is the init files path for mysql.
 	initFilePath = utils.InitFileVolumeMountPath

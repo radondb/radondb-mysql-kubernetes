@@ -171,12 +171,20 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			MountPath: utils.MysqlCMVolumeMountPath,
 		},
 		{
+			Name:      utils.XenonCMVolumeName,
+			MountPath: utils.XenonCMVolumeMountPath,
+		},
+		{
+			Name:      utils.XenonMetaVolumeName,
+			MountPath: utils.XenonMetaVolumeMountPath,
+		},
+		{
 			Name:      utils.ScriptsVolumeName,
 			MountPath: utils.ScriptsVolumeMountPath,
 		},
 		{
-			Name:      utils.XenonVolumeName,
-			MountPath: utils.XenonVolumeMountPath,
+			Name:      utils.XenonConfVolumeName,
+			MountPath: utils.XenonConfVolumeMountPath,
 		},
 		{
 			Name:      utils.InitFileVolumeName,

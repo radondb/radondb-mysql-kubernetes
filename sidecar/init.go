@@ -141,6 +141,8 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to copy my.cnf: %s", err)
 	}
 
+	buildDefaultXenonMeta(uid, gid)
+
 	// build client.conf.
 	clientConfig, err := cfg.buildClientConfig()
 	if err != nil {
@@ -289,4 +291,22 @@ chown -R mysql.mysql %s`,
 		path.Join(extraConfPath, utils.PluginConfigs),
 		// chown -R mysql.mysql extra.cnf
 		path.Join(extraConfPath, "extra.cnf"))
+}
+
+func buildDefaultXenonMeta(uid, gid int) error {
+	metaFile := fmt.Sprintf("%s/peers.json", xenonConfigPath)
+	// mkdir var/lib/xenon.
+	// https://github.com/radondb/xenon/blob/master/src/raft/raft.go#L118
+	if err := os.MkdirAll(xenonConfigPath, 0777); err != nil {
+		return fmt.Errorf("failed to mkdir %s: %s", xenonConfigPath, err)
+	}
+	// copy appropriate peers.json from config-map to config mount.
+	if err := copyFile(path.Join(xenonCMPath, "peers.json"), path.Join(xenonConfigPath, "peers.json")); err != nil {
+		return fmt.Errorf("failed to copy peers.json: %s", err)
+	}
+	// chown -R mysql:mysql /var/lib/xenon/peers.json.
+	if err := os.Chown(metaFile, uid, gid); err != nil {
+		return fmt.Errorf("failed to chown %s: %s", metaFile, err)
+	}
+	return nil
 }
