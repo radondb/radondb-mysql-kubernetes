@@ -193,7 +193,7 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 
 	volumes = append(volumes,
 		corev1.Volume{
-			Name: utils.ConfVolumeName,
+			Name: utils.MysqlConfVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
@@ -205,7 +205,7 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			},
 		},
 		corev1.Volume{
-			Name: utils.ConfMapVolumeName,
+			Name: utils.MysqlCMVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{

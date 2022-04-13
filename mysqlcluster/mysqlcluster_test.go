@@ -245,7 +245,7 @@ func TestGetPodHostName(t *testing.T) {
 func TestEnsureVolumes(t *testing.T) {
 	volume := []corev1.Volume{
 		{
-			Name: utils.ConfVolumeName,
+			Name: utils.MysqlConfVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
@@ -257,7 +257,7 @@ func TestEnsureVolumes(t *testing.T) {
 			},
 		},
 		{
-			Name: utils.ConfMapVolumeName,
+			Name: utils.MysqlCMVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				ConfigMap: &corev1.ConfigMapVolumeSource{
 					LocalObjectReference: corev1.LocalObjectReference{

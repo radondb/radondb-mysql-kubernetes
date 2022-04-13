@@ -31,17 +31,17 @@ var (
 	// MysqlServerIDOffset represents the offset with which all server ids are shifted from 0
 	mysqlServerIDOffset = 100
 
-	// configPath is the mysql configs path.
-	configPath = utils.ConfVolumeMountPath
+	// mysqlConfigPath is the mysql configs path.
+	mysqlConfigPath = utils.MysqlConfVolumeMountPath
 
 	// clientConfPath is the client.cnf path.
 	clientConfPath = utils.ConfClientPath
 
 	// extraConfPath is the mysql extra configs path.
-	extraConfPath = utils.ConfVolumeMountPath + "/conf.d"
+	extraConfPath = utils.MysqlConfVolumeMountPath + "/conf.d"
 
-	// configMapPath is the mounted configmap.
-	configMapPath = utils.ConfMapVolumeMountPath
+	// mysqlCMPath is the mounted configmap.
+	mysqlCMPath = utils.MysqlCMVolumeMountPath
 
 	// dataPath is the mysql data path.
 	dataPath = utils.DataVolumeMountPath

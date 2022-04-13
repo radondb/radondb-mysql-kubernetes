@@ -272,12 +272,12 @@ var (
 	}
 	defaultInitsidecarVolumeMounts = []corev1.VolumeMount{
 		{
-			Name:      utils.ConfVolumeName,
-			MountPath: utils.ConfVolumeMountPath,
+			Name:      utils.MysqlConfVolumeName,
+			MountPath: utils.MysqlConfVolumeMountPath,
 		},
 		{
-			Name:      utils.ConfMapVolumeName,
-			MountPath: utils.ConfMapVolumeMountPath,
+			Name:      utils.MysqlCMVolumeName,
+			MountPath: utils.MysqlCMVolumeMountPath,
 		},
 		{
 			Name:      utils.ScriptsVolumeName,

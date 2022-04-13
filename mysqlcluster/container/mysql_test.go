@@ -141,7 +141,7 @@ func TestGetMysqlReadinessProbe(t *testing.T) {
 func TestGetMysqlVolumeMounts(t *testing.T) {
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      "conf",
+			Name:      "mysql-conf",
 			MountPath: "/etc/mysql",
 		},
 		{

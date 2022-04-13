@@ -533,19 +533,19 @@ func (cfg *Config) executeS3Restore(path string) error {
 		}
 	}
 	// Xtrabackup prepare and apply-log-only.
-	cmd := exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--prepare", "--apply-log-only", "--target-dir=/root/backup")
+	cmd := exec.Command(xtrabackupCommand, "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--prepare", "--apply-log-only", "--target-dir=/root/backup")
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to xtrabackup prepare and apply-log-only : %s", err)
 	}
 	// Xtrabackup prepare.
-	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--prepare", "--target-dir=/root/backup")
+	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--prepare", "--target-dir=/root/backup")
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to xtrabackup prepare : %s", err)
 	}
 	// Xtrabackup copy-back to /var/lib/mysql.
-	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--datadir="+utils.DataVolumeMountPath, "--copy-back", "--copy-back", "--target-dir=/root/backup")
+	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--datadir="+utils.DataVolumeMountPath, "--copy-back", "--copy-back", "--target-dir=/root/backup")
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to xtrabackup copy-back : %s", err)
@@ -577,13 +577,13 @@ func (cfg *Config) executeCloneRestore() error {
 		os.RemoveAll(path.Join([]string{utils.DataVolumeMountPath, d.Name()}...))
 	}
 	// Xtrabackup prepare and apply-log-only.
-	cmd := exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--apply-log-only", "--target-dir=/backup/"+cfg.XRestoreFrom)
+	cmd := exec.Command(xtrabackupCommand, "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--apply-log-only", "--target-dir=/backup/"+cfg.XRestoreFrom)
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to xtrabackup prepare apply-log-only : %s", err)
 	}
 	// Xtrabackup Prepare.
-	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--target-dir=/backup/"+cfg.XRestoreFrom)
+	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--target-dir=/backup/"+cfg.XRestoreFrom)
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to xtrabackup prepare : %s", err)
@@ -595,7 +595,7 @@ func (cfg *Config) executeCloneRestore() error {
 	}
 	log.Info("get master gtid purged :", "gtid purged", cfg.GtidPurged)
 	// Xtrabackup copy-back.
-	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.ConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--datadir="+utils.DataVolumeMountPath, "--copy-back", "--target-dir=/backup/"+cfg.XRestoreFrom)
+	cmd = exec.Command(xtrabackupCommand, "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--datadir="+utils.DataVolumeMountPath, "--copy-back", "--target-dir=/backup/"+cfg.XRestoreFrom)
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to xtrabackup copy-back : %s", err)

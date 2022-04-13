@@ -99,8 +99,8 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}()
 
-	configMapSyncer := clustersyncer.NewConfigMapSyncer(r.Client, instance)
-	if err = syncer.Sync(ctx, configMapSyncer, r.Recorder); err != nil {
+	mysqlCMSyncer := clustersyncer.NewMysqlCMSyncer(r.Client, instance)
+	if err = syncer.Sync(ctx, mysqlCMSyncer, r.Recorder); err != nil {
 		return ctrl.Result{}, err
 	}
 
@@ -109,7 +109,8 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	cmRev := configMapSyncer.Object().(*corev1.ConfigMap).ResourceVersion
+	// Todo: modify mysql cm will trigger rolling update but it will not be applied.
+	cmRev := mysqlCMSyncer.Object().(*corev1.ConfigMap).ResourceVersion
 	sctRev := secretSyncer.Object().(*corev1.Secret).ResourceVersion
 
 	r.XenonExecutor.SetRootPassword(instance.Spec.MysqlOpts.RootPassword)

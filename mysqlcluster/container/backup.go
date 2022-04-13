@@ -128,8 +128,8 @@ func (c *backupSidecar) getReadinessProbe() *corev1.Probe {
 func (c *backupSidecar) getVolumeMounts() []corev1.VolumeMount {
 	return []corev1.VolumeMount{
 		{
-			Name:      utils.ConfVolumeName,
-			MountPath: utils.ConfVolumeMountPath,
+			Name:      utils.MysqlConfVolumeName,
+			MountPath: utils.MysqlConfVolumeMountPath,
 		},
 		{
 			Name:      utils.DataVolumeName,

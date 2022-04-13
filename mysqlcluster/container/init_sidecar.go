@@ -163,12 +163,12 @@ func (c *initSidecar) getReadinessProbe() *corev1.Probe {
 func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      utils.ConfVolumeName,
-			MountPath: utils.ConfVolumeMountPath,
+			Name:      utils.MysqlConfVolumeName,
+			MountPath: utils.MysqlConfVolumeMountPath,
 		},
 		{
-			Name:      utils.ConfMapVolumeName,
-			MountPath: utils.ConfMapVolumeMountPath,
+			Name:      utils.MysqlCMVolumeName,
+			MountPath: utils.MysqlCMVolumeMountPath,
 		},
 		{
 			Name:      utils.ScriptsVolumeName,

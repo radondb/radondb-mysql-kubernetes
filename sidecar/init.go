@@ -137,7 +137,7 @@ func runInitCommand(cfg *Config) error {
 	}
 
 	// copy appropriate my.cnf from config-map to config mount.
-	if err = copyFile(path.Join(configMapPath, "my.cnf"), path.Join(configPath, "my.cnf")); err != nil {
+	if err = copyFile(path.Join(mysqlCMPath, "my.cnf"), path.Join(mysqlConfigPath, "my.cnf")); err != nil {
 		return fmt.Errorf("failed to copy my.cnf: %s", err)
 	}
 
@@ -266,7 +266,7 @@ func RunRequestBackup(cfg *Config, host string) error {
 
 // Save plugin.cnf and extra.cnf to specified path.
 func saveCnfTo(targetPath string, extraCnf *ini.File) error {
-	if err := copyFile(path.Join(configMapPath, utils.PluginConfigs), path.Join(targetPath, utils.PluginConfigs)); err != nil {
+	if err := copyFile(path.Join(mysqlCMPath, utils.PluginConfigs), path.Join(targetPath, utils.PluginConfigs)); err != nil {
 		return fmt.Errorf("failed to copy plugin.cnf: %s", err)
 	}
 	if err := extraCnf.SaveTo(path.Join(targetPath, "extra.cnf")); err != nil {
