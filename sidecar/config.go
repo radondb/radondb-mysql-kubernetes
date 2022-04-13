@@ -359,7 +359,7 @@ func (cfg *Config) buildXenonConf() []byte {
 }
 
 // buildInitSql used to build init.sql. The file run after the mysql init.
-func (cfg *Config) buildInitSql() []byte {
+func (cfg *Config) buildInitSql(hasInit bool) []byte {
 	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
 CREATE DATABASE IF NOT EXISTS %s;
 DROP user IF EXISTS 'root'@'127.0.0.1';
@@ -381,7 +381,7 @@ DROP user IF EXISTS '%s'@'%%';
 CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
 GRANT ALL ON %s.* TO '%s'@'%%' ;
 FLUSH PRIVILEGES;
-RESET SLAVE ALL;
+
 `,
 		cfg.Database, //database
 		cfg.RootPassword,
@@ -401,6 +401,10 @@ RESET SLAVE ALL;
 		cfg.User,               //drop user
 		cfg.User, cfg.Password, //create user
 		cfg.Database, cfg.User) //grant
+
+	if hasInit {
+		sql += "\nRESET SLAVE ALL;\n"
+	}
 	return utils.StringToBytes(sql)
 }
 
