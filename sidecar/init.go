@@ -168,12 +168,9 @@ func runInitCommand(cfg *Config) error {
 	if err = ioutil.WriteFile(initFilePath+"/reset.sql", []byte("reset master;"), 0644); err != nil {
 		return fmt.Errorf("failed to write reset.sql: %s", err)
 	}
-
+	hasInitialized, _ := checkIfPathExists(path.Join(dataPath, "mysql"))
 	// build init.sql.
 	initSqlPath := path.Join(extraConfPath, "init.sql")
-	if err = ioutil.WriteFile(initSqlPath, cfg.buildInitSql(), 0644); err != nil {
-		return fmt.Errorf("failed to write init.sql: %s", err)
-	}
 
 	// build extra.cnf.
 	extraConfig, err := cfg.buildExtraConfig(initSqlPath)
@@ -183,7 +180,7 @@ func runInitCommand(cfg *Config) error {
 
 	// Notice: plugin.cnf cannot be copied to /etc/mysql/conf.d when initialized.
 	// Check /var/lib/mysql/mysql exists. if exists it means that been initialized.
-	if exists, _ := checkIfPathExists(path.Join(dataPath, "mysql")); exists || strings.HasPrefix(getEnvValue("MYSQL_VERSION"), "5") {
+	if hasInitialized || strings.HasPrefix(getEnvValue("MYSQL_VERSION"), "5") {
 		// Save plugin.cnf and extra.cnf to /etc/mysql/conf.d.
 		saveCnfTo(extraConfPath, extraConfig)
 	} else {
@@ -228,7 +225,7 @@ func runInitCommand(cfg *Config) error {
 	// Check datadir is empty.
 	// if /var/lib/mysql/mysql is empty, then run the restore.
 	// otherwise , it must be has data, then do nothing.
-	if exists, _ := checkIfPathExists(dataPath + "/mysql"); !exists {
+	if !hasInitialized {
 		if len(cfg.XRestoreFrom) != 0 {
 			var err_f error
 			if cfg.CloneFlag {
@@ -241,10 +238,14 @@ func runInitCommand(cfg *Config) error {
 					return fmt.Errorf("failed to restore from %s: %s", cfg.XRestoreFrom, err)
 				}
 			}
-
+			// Check has initialized again.
+			hasInitialized, _ = checkIfPathExists(path.Join(dataPath, "mysql"))
 		}
 	}
-
+	// Build init.sql after restore
+	if err = ioutil.WriteFile(initSqlPath, cfg.buildInitSql(hasInitialized), 0644); err != nil {
+		return fmt.Errorf("failed to write init.sql: %s", err)
+	}
 	// build xenon.json.
 	xenonFilePath := path.Join(xenonPath, "xenon.json")
 	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {
