@@ -17,7 +17,36 @@ jobs:
       outputs:
         version: ${{ steps.draft.outputs.tag_name }}
       steps:
-      - uses: release-drafter/release-drafter@v5
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Draft release 
+        uses: release-drafter/release-drafter@v5
         id: draft
         env:
           GITHUB_TOKEN: ${{ secrets.git_token }}
+
+      - name: Update version
+        run: |
+          sed -i '/^    sidecarImage: radondb\/mysql57-sidecar:*/c\    sidecarImage: radondb\/mysql57-sidecar:${{ steps.draft.outputs.tag_name }}' config/samples/mysql_v1alpha1_mysqlcluster.yaml
+          sed -i '/^    sidecarImage: radondb\/mysql80-sidecar:*/c\    sidecarImage: radondb\/mysql80-sidecar:${{ steps.draft.outputs.tag_name }}' config/samples/mysql_v1alpha1_mysqlcluster_mysql8.yaml
+
+      - name: Upload mysql57 sample yaml
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.git_token }}
+        with:
+          upload_url: ${{ steps.draft.outputs.upload_url }} 
+          asset_path: ./config/samples/mysql_v1alpha1_mysqlcluster.yaml
+          asset_name: mysql_v1alpha1_mysqlcluster.yaml
+          asset_content_type: application/x-yaml
+
+      - name: Upload mysql80 sample yaml
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.git_token }}
+        with:
+          upload_url: ${{ steps.draft.outputs.upload_url }} 
+          asset_path: ./config/samples/mysql_v1alpha1_mysqlcluster_mysql8.yaml
+          asset_name: mysql_v1alpha1_mysqlcluster_mysql8.yaml
+          asset_content_type: application/x-yaml
