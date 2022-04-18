@@ -58,7 +58,7 @@ func NewFollowerSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) synce
 		service.Spec.Ports[0].Name = utils.MysqlPortName
 		service.Spec.Ports[0].Port = utils.MysqlPort
 		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MysqlPort)
-		//xtrabckup
+		// xtrabackup
 		service.Spec.Ports[1].Name = utils.XBackupPortName
 		service.Spec.Ports[1].Port = utils.XBackupPort
 		service.Spec.Ports[1].TargetPort = intstr.FromInt(utils.XBackupPort)

@@ -58,7 +58,7 @@ func NewLeaderSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.
 		service.Spec.Ports[0].Port = utils.MysqlPort
 		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MysqlPort)
 
-		//xtrabckup
+		// xtrabackup
 		service.Spec.Ports[1].Name = utils.XBackupPortName
 		service.Spec.Ports[1].Port = utils.XBackupPort
 		service.Spec.Ports[1].TargetPort = intstr.FromInt(utils.XBackupPort)

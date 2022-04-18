@@ -5,5 +5,7 @@ metadata:
 spec:
   # Add fields here
   image: radondb/mysql-sidecar:latest
+  # hostname if empty, use the leader as hostname
   hostname: sample-mysql-0
   clustname: sample
+  # BackupToNFS: "IP of NFS server"

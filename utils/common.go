@@ -96,9 +96,9 @@ func ExistUpdateFile() bool {
 }
 
 // Build the backup directory name by time.
-func BuildBackupName() string {
+func BuildBackupName(name string) string {
 	cur_time := time.Now()
-	return fmt.Sprintf("backup_%v%v%v%v%v%v", cur_time.Year(), int(cur_time.Month()),
+	return fmt.Sprintf("%s_%v%v%v%v%v%v", name, cur_time.Year(), int(cur_time.Month()),
 		cur_time.Day(), cur_time.Hour(), cur_time.Minute(), cur_time.Second())
 }
 

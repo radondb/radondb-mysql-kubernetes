@@ -23,7 +23,7 @@ import (
 )
 
 // RunTakeBackupCommand starts a backup command
-func RunTakeBackupCommand(cfg *Config, name string) error {
+func RunTakeBackupCommand(cfg *Config) error {
 	// cfg->XtrabackupArgs()
 	xtrabackup := exec.Command(xtrabackupCommand, cfg.XtrabackupArgs()...)
 

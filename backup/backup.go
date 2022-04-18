@@ -49,7 +49,11 @@ func (b *Backup) GetNameForJob() string {
 	return fmt.Sprintf("%s-backup", b.Name)
 }
 
-// Create the backup Domain Name.
-func (b *Backup) GetBackupURL(cluster_name string, hostname string) string {
-	return fmt.Sprintf("%s.%s-mysql.%s:%v", hostname, cluster_name, b.Namespace, utils.XBackupPort)
+// Create the backup Domain Name or leader DNS.
+func (b *Backup) GetBackupURL(clusterName string, hostName string) string {
+	if len(hostName) != 0 {
+		return fmt.Sprintf("%s.%s-mysql.%s:%v", hostName, clusterName, b.Namespace, utils.XBackupPort)
+	} else {
+		return fmt.Sprintf("%s-leader.%s:%v", clusterName, b.Namespace, utils.XBackupPort)
+	}
 }

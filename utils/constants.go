@@ -63,8 +63,12 @@ const (
 	ContainerBackupName    = "backup"
 	ContainerBackupJobName = "backup-job"
 
+	// xtrabackup
 	XBackupPortName = "xtrabackup"
 	XBackupPort     = 8082
+	XtrabackupPV    = "backup"
+	XtrabckupLocal  = "/backup"
+
 	// MySQL port.
 	MysqlPortName = "mysql"
 	MysqlPort     = 3306

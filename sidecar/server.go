@@ -31,14 +31,6 @@ import (
 )
 
 const (
-	serverPort           = utils.XBackupPort
-	serverProbeEndpoint  = "/health"
-	serverBackupEndpoint = "/xbackup"
-	serverConnectTimeout = 5 * time.Second
-
-	// DownLoad server url.
-	serverBackupDownLoadEndpoint = "/download"
-
 	// backupStatus http trailer
 	backupStatusTrailer = "X-Backup-Status"
 
@@ -47,6 +39,14 @@ const (
 
 	// failure string
 	backupFailed = "Failed"
+
+	serverPort           = utils.XBackupPort
+	serverProbeEndpoint  = "/health"
+	serverBackupEndpoint = "/xbackup"
+	serverConnectTimeout = 5 * time.Second
+
+	// DownLoad server url.
+	serverBackupDownLoadEndpoint = "/download"
 )
 
 type server struct {
@@ -68,8 +68,10 @@ func newServer(cfg *Config, stop <-chan struct{}) *server {
 	// Add handle functions.
 	mux.HandleFunc(serverProbeEndpoint, srv.healthHandler)
 	mux.Handle(serverBackupEndpoint, maxClients(http.HandlerFunc(srv.backupHandler), 1))
+
 	mux.Handle(serverBackupDownLoadEndpoint,
 		maxClients(http.HandlerFunc(srv.backupDownLoadHandler), 1))
+
 	// Shutdown gracefully the http server.
 	go func() {
 		<-stop // wait for stop signal
@@ -95,7 +97,7 @@ func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
 		return
 	}
-	err := RunTakeBackupCommand(s.cfg, "")
+	err := RunTakeBackupCommand(s.cfg)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
