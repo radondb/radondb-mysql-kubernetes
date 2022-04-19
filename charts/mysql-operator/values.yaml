@@ -68,3 +68,21 @@ serviceMonitor:
       app.kubernetes.io/managed-by: mysql.radondb.com
       app.kubernetes.io/name: mysql
 
+nfsBackup:
+  installServer: false
+  nfsServerImage: gcr.azk8s.cn/google_containers/volume-nfs:0.8
+  
+  ## You can specify a pvc which you created by yourself or use local pv created by chart.
+  volume:
+    # specifiedPVC: ""
+
+    ## If true, chart will create:
+    ## 1. storage class named `radondb-nfs-local`.
+    ## 2. a pvc which size is `localPVCapacity`.
+    ## 3. a pv which source is `hostPath`.
+    createLocalPV: false
+    ## PV will be deleted when delete release using `helm delete`, use Retain can hold data in the host.
+    reclaimPolicy: Retain
+    localPVCapacity: 50G
+    hostName: ""
+    hostPath: "/mnt/radondb-nfs-backup"
