@@ -15,8 +15,8 @@ spec:
   # restoreFrom: 
   
   # Restore from NFS, uncomment below and set the ip of NFS server
-  # such as restoreFromNFS: "10.233.55.172"
-  # restoreFromNFS: 
+  # such as nfsServerAddress: "10.233.55.172"
+  # nfsServerAddress: 
   mysqlOpts:
     rootPassword: "RadonDB@123"
     rootHost: localhost

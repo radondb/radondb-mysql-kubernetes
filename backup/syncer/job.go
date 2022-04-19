@@ -117,14 +117,14 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 	in.Containers[0].Name = utils.ContainerBackupName
 	in.Containers[0].Image = fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), s.backup.Spec.Image)
 
-	if len(s.backup.Spec.BackupToNFS) != 0 {
+	if len(s.backup.Spec.NFSServerAddress) != 0 {
 		// add volumn about pvc
 		in.Volumes = []corev1.Volume{
 			{
 				Name: utils.XtrabackupPV,
 				VolumeSource: corev1.VolumeSource{
 					NFS: &corev1.NFSVolumeSource{
-						Server: s.backup.Spec.BackupToNFS,
+						Server: s.backup.Spec.NFSServerAddress,
 						Path:   "/",
 					},
 				},
