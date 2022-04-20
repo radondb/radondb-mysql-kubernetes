@@ -123,10 +123,10 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
 		)
 	}
-	if len(c.Spec.RestoreFromNFS) != 0 {
+	if len(c.Spec.NFSServerAddress) != 0 {
 		envs = append(envs, corev1.EnvVar{
 			Name:  "RESTORE_FROM_NFS",
-			Value: c.Spec.RestoreFromNFS,
+			Value: c.Spec.NFSServerAddress,
 		})
 	}
 	if c.Spec.MysqlOpts.InitTokuDB {
@@ -210,7 +210,7 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 		)
 	}
 
-	if len(c.Spec.RestoreFromNFS) != 0 {
+	if len(c.Spec.NFSServerAddress) != 0 {
 		volumeMounts = append(volumeMounts,
 			corev1.VolumeMount{
 				Name:      utils.XtrabackupPV,

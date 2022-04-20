@@ -1,8 +1,7 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  annotations:
-  name: manual
+  name: radondb-nfs-hostpath
 provisioner: kubernetes.io/no-provisioner
 reclaimPolicy: Retain
 volumeBindingMode: WaitForFirstConsumer
@@ -11,11 +10,11 @@ volumeBindingMode: WaitForFirstConsumer
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: backup-pv-volume
+  name: radondb-nfs-pv
   labels:
     type: local
 spec:
-  storageClassName: manual
+  storageClassName: radondb-nfs-hostpath
   # you can set affinity ,for example:
   # nodeAffinity:
   #   required:
@@ -26,8 +25,21 @@ spec:
   #         values:
   #         - node2
   capacity:
-    storage: 40Gi
+    storage: 30Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: "/mnt/backup"
+    path: "/mnt/radondb-nfs-backup"
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: radondb-nfs-pvc
+spec:
+  storageClassName: radondb-nfs-hostpath
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi

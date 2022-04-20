@@ -78,13 +78,13 @@ type MysqlClusterSpec struct {
 	// +optional
 	BackupSecretName string `json:"backupSecretName,omitempty"`
 
-	// Represents the name of the cluster restore from backup path
+	// Represents the name of the cluster restore from backup path.
 	// +optional
 	RestoreFrom string `json:"restoreFrom,omitempty"`
 
 	// Represents NFS ip address where cluster restore from.
 	// +optional
-	RestoreFromNFS string `json:"restoreFromNFS,omitempty"`
+	NFSServerAddress string `json:"nfsServerAddress,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.
