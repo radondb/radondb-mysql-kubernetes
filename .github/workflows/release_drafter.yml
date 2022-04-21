@@ -3,6 +3,10 @@ name: Draft release
 
 on:
   workflow_call:
+    inputs:
+      version:
+        required: false 
+        type: string
     secrets:
       git_token:
         description: 'token of github'
@@ -20,9 +24,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Draft release 
+      - name: Draft release
         uses: release-drafter/release-drafter@v5
         id: draft
+        with:
+          version: ${{ github.event.inputs.version }}
+          name: ${{ github.event.inputs.version }}
+          tag: ${{ github.event.inputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.git_token }}
 
