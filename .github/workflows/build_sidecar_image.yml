@@ -48,4 +48,4 @@ jobs:
           push: true
           file: Dockerfile.sidecar
           tags: radondb/${{ matrix.version }}-sidecar:${{ inputs.image_tag }}
-          build-args: --build-arg XTRABACKUP_PKG=percona-xtrabackup-80
+          build-args: XTRABACKUP_PKG=percona-xtrabackup-80
