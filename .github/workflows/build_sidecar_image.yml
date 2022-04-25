@@ -35,7 +35,7 @@ jobs:
 
       - name: Build and push mysql57 sidecar
         uses: docker/build-push-action@v2
-        if: ${{ matrix.version }} == mysql57
+        if: ${{ matrix.version == 'mysql57'}}
         with:
           push: true
           file: Dockerfile.sidecar
@@ -43,7 +43,7 @@ jobs:
 
       - name: Build and push mysql80 sidecar
         uses: docker/build-push-action@v2
-        if: ${{ matrix.version }} == mysql80
+        if: ${{ matrix.version == 'mysql80' }}
         with:
           push: true
           file: Dockerfile.sidecar
