@@ -10,6 +10,7 @@
 <a href="https://img.shields.io/github/stars/radondb/radondb-mysql-kubernetes"><img src="https://img.shields.io/github/stars/radondb/radondb-mysql-kubernetes"></a>
 <a href="https://img.shields.io/github/issues/radondb/radondb-mysql-kubernetes"><img src="https://img.shields.io/github/issues/radondb/radondb-mysql-kubernetes"></a>
 <a href="https://img.shields.io/github/forks/radondb/radondb-mysql-kubernetes"><img src="https://img.shields.io/github/forks/radondb/radondb-mysql-kubernetes"></a>
+<a href="https://img.shields.io/github/v/release/radondb/radondb-mysql-kubernetes?include_prereleases"><img src="https://img.shields.io/github/v/release/radondb/radondb-mysql-kubernetes?include_prereleases"></a>
 <a href="https://img.shields.io/github/license/radondb/radondb-mysql-kubernetes"><img src="https://img.shields.io/github/license/radondb/radondb-mysql-kubernetes"></a>
 </p>
 
@@ -20,10 +21,6 @@
 **RadonDB MySQL** 是基于 MySQL 的开源、高可用、云原生集群解决方案。支持一主多从高可用架构，并具备安全、自动备份、监控告警、自动扩容等全套管理功能。
 
 **RadonDB MySQL Kubernetes**支持在 [Kubernetes](https://kubernetes.io/) 、[KubeSphere](https://kubesphere.com.cn/) 和 [Rancher](https://rancher.com) 上安装部署和管理，自动执行与运行 RadonDB MySQL 集群有关的任务。
-
-# 最新版本
-
-RadonDB MySQL Kubernetes 2.1.4 全新发布！多项功能优化，带来更好的用户体验，详见 [v2.1.4 发行记录](https://radondb.com/docs/mysql/v2.1.3/release/2.1.3)。
 
 ## 核心特性
 
@@ -86,8 +83,6 @@ kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/la
 ```
 
 ## 操作视频
-
-**部署版本：RadonDB MySQL Kubernetes 2.1.3**
 
 在 Kubernetes 上部署 RadonDB MySQL Operator 和 MySQL 集群，快速查看 👉  [Demo 视频](https://radondb.com/docs/mysql/v2.1.3/vadio/install/#content)
 
