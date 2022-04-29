@@ -27,6 +27,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/go-logr/logr"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
@@ -50,6 +53,8 @@ type StatusSyncer struct {
 	internal.SQLRunnerFactory
 	// XenonExecutor is used to execute Xenon HTTP instructions.
 	internal.XenonExecutor
+	// Logger
+	log logr.Logger
 }
 
 // NewStatusSyncer returns a pointer to StatusSyncer.
@@ -59,6 +64,7 @@ func NewStatusSyncer(c *mysqlcluster.MysqlCluster, cli client.Client, sqlRunnerF
 		cli:              cli,
 		SQLRunnerFactory: sqlRunnerFactory,
 		XenonExecutor:    xenonExecutor,
+		log:              logf.Log.WithName("syncer.StatusSyncer"),
 	}
 }
 
@@ -98,7 +104,7 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	for _, pod := range list.Items {
 		if pod.ObjectMeta.Labels[utils.LableRebuild] == "true" {
 			if err := s.AutoRebuild(ctx, &pod); err != nil {
-				log.Error(err, "failed to AutoRebuild", "pod", pod.Name, "namespace", pod.Namespace)
+				s.log.Error(err, "failed to AutoRebuild", "pod", pod.Name, "namespace", pod.Namespace)
 			}
 			continue
 		}
@@ -234,7 +240,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		node.Message = ""
 
 		if err := s.updateNodeRaftStatus(node); err != nil {
-			log.Error(err, "failed to get/update node raft status", "node", node.Name)
+			s.log.Error(err, "failed to get/update node raft status", "node", node.Name)
 			node.Message = err.Error()
 		}
 
@@ -243,25 +249,25 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 			s.cli, s.MysqlCluster.GetClusterKey(), utils.OperatorUser, host))
 		defer closeConn()
 		if err != nil {
-			log.Error(err, "failed to connect the mysql", "node", node.Name)
+			s.log.Error(err, "failed to connect the mysql", "node", node.Name)
 			node.Message = err.Error()
 		} else {
 			isLagged, isReplicating, err = internal.CheckSlaveStatusWithRetry(sqlRunner, checkNodeStatusRetry)
 			if err != nil {
-				log.Error(err, "failed to check slave status", "node", node.Name)
+				s.log.Error(err, "failed to check slave status", "node", node.Name)
 				node.Message = err.Error()
 			}
 
 			isReadOnly, err = internal.CheckReadOnly(sqlRunner)
 			if err != nil {
-				log.Error(err, "failed to check read only", "node", node.Name)
+				s.log.Error(err, "failed to check read only", "node", node.Name)
 				node.Message = err.Error()
 			}
 
 			if !utils.ExistUpdateFile() &&
 				node.RaftStatus.Role == string(utils.Leader) &&
 				isReadOnly != corev1.ConditionFalse {
-				log.V(1).Info("try to correct the leader writeable", "node", node.Name)
+				s.log.V(1).Info("try to correct the leader writeable", "node", node.Name)
 				sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL read_only=off"))
 				sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL super_read_only=off"))
 			}
@@ -275,7 +281,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		s.updateNodeCondition(node, int(apiv1alpha1.IndexReadOnly), isReadOnly)
 
 		if err = s.updatePodLabel(ctx, &pod, node); err != nil {
-			log.Error(err, "failed to update labels", "pod", pod.Name, "namespace", pod.Namespace)
+			s.log.Error(err, "failed to update labels", "pod", pod.Name, "namespace", pod.Namespace)
 		}
 	}
 
@@ -329,7 +335,7 @@ func (s *StatusSyncer) getNodeStatusIndex(name string) int {
 func (s *StatusSyncer) updateNodeCondition(node *apiv1alpha1.NodeStatus, idx int, status corev1.ConditionStatus) {
 	if node.Conditions[idx].Status != status {
 		t := time.Now()
-		log.V(3).Info(fmt.Sprintf("Found status change for node %q condition %q: %q -> %q; setting lastTransitionTime to %v",
+		s.log.V(3).Info(fmt.Sprintf("Found status change for node %q condition %q: %q -> %q; setting lastTransitionTime to %v",
 			node.Name, node.Conditions[idx].Type, node.Conditions[idx].Status, status, t))
 		node.Conditions[idx].Status = status
 		node.Conditions[idx].LastTransitionTime = metav1.NewTime(t)
