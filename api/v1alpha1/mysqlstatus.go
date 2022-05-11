@@ -143,8 +143,17 @@ const (
 	NodesReady          ClusterConditionType = "NodesReady"
 )
 
-const (	
-	// Reasons for cluster conditions. 
+const (
+	// Events for triggering cluster state transitions.
+	EventInitial  = "Initial"
+	EventScaleIn  = "ScaleIn"
+	EventScaleOut = "ScaleOut"
+	EventUpdate   = "Update"
+	EventError    = "Error"
+	EventClose    = "Close"
+	EventReady    = "Ready"
+
+	// Reasons for cluster conditions.
 	ReasonClose    = "Closed"
 	ReasonScaleIn  = "ScaleIn"
 	ReasonScaleOut = "ScaleOut"
@@ -244,4 +253,52 @@ func (cs *MysqlClusterStatus) RaftReady() bool {
 		}
 	}
 	return leader != "" && raftReadyNodes >= 2
+}
+
+var (
+	// source states.
+	// example: the last state of init state(Initializing) must be "" or "Initializing".
+	// if the last state is same as the current state, fsm will return `no transition`.
+	initSrc     = []string{"", string(ClusterInitState)}
+	updateSrc   = []string{string(ClusterReadyState), string(ClusterUpdateState), string(ClusterCloseState)}
+	scaleInSrc  = []string{string(ClusterReadyState), string(ClusterScaleInState)}
+	scaleOutSrc = []string{string(ClusterReadyState), string(ClusterScaleOutState), string(ClusterCloseState)}
+	errorSrc    = []string{string(ClusterReadyState), string(ClusterErrorState)}
+	closeSrc    = []string{string(ClusterInitState), string(ClusterUpdateState), string(ClusterReadyState),
+		string(ClusterScaleInState), string(ClusterScaleOutState), string(ClusterCloseState), string(ClusterErrorState)}
+	readySrc = []string{string(ClusterInitState), string(ClusterUpdateState), string(ClusterReadyState),
+		string(ClusterScaleInState), string(ClusterScaleOutState), string(ClusterCloseState), string(ClusterErrorState)}
+)
+
+func (cs *MysqlClusterStatus) NewFSM() *fsm.FSM {
+	fsm := fsm.NewFSM(
+		string(cs.State),
+		fsm.Events{
+			{Name: EventInitial, Src: initSrc, Dst: string(ClusterInitState)},
+			{Name: EventUpdate, Src: updateSrc, Dst: string(ClusterUpdateState)},
+			{Name: EventScaleIn, Src: scaleInSrc, Dst: string(ClusterScaleInState)},
+			{Name: EventScaleOut, Src: scaleOutSrc, Dst: string(ClusterScaleOutState)},
+			{Name: EventClose, Src: closeSrc, Dst: string(ClusterCloseState)},
+			{Name: EventReady, Src: readySrc, Dst: string(ClusterReadyState)},
+			{Name: EventError, Src: errorSrc, Dst: string(ClusterErrorState)},
+		},
+		fsm.Callbacks{
+			// enter_Ready called after entering `Ready` state.
+			"enter_Ready": func(e *fsm.Event) {
+				cs.enterReady()
+			},
+		},
+	)
+	for _, cond := range cs.Conditions {
+		fsm.SetMetadata(string(cond.Type), cond)
+	}
+	return fsm
+}
+
+func (cs *MysqlClusterStatus) enterReady() {
+	for i, cond := range cs.Conditions {
+		if cond.Type != ClusterAvailable && cond.Type != NodesReady {
+			cs.Conditions[i].Status = corev1.ConditionFalse
+		}
+	}
 }

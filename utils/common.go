@@ -113,6 +113,15 @@ func StringDiffIn(actual, desired []string) []string {
 	return diff
 }
 
+func StringExistIn(strs []string, str string) bool {
+	for _, s := range strs {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
 func stringIn(str string, strs []string) (int, bool) {
 	for i, s := range strs {
 		if s == str {
