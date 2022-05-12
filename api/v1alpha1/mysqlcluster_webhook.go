@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -59,10 +60,12 @@ func (r *MysqlCluster) ValidateUpdate(old runtime.Object) error {
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected an MysqlCluster but got a %T", old))
 	}
-	if err := r.validateVolumeSize(*oldCluster); err != nil {
+	if err := r.validateVolumeSize(oldCluster); err != nil {
 		return err
 	}
-
+	if err := r.validateLowTableCase(oldCluster); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -74,9 +77,31 @@ func (r *MysqlCluster) ValidateDelete() error {
 	return nil
 }
 
-func (r *MysqlCluster) validateVolumeSize(old MysqlCluster) error {
-	if r.Spec.Persistence.Size < old.Spec.Persistence.Size {
+// Validate volume size, forbidden shrink storage size.
+func (r *MysqlCluster) validateVolumeSize(oldCluster *MysqlCluster) error {
+
+	oldStorageSize, err := resource.ParseQuantity(oldCluster.Spec.Persistence.Size)
+	if err != nil {
+		return err
+	}
+	newStorageSize, err := resource.ParseQuantity(r.Spec.Persistence.Size)
+	if err != nil {
+		return err
+	}
+	// =1 means that old storage size is greater then new
+	if oldStorageSize.Cmp(newStorageSize) == 1 {
 		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("volesize can not be decreased"))
+	}
+	return nil
+}
+
+// Validate low table case for mysqlcluster.
+func (r *MysqlCluster) validateLowTableCase(oldCluster *MysqlCluster) error {
+	oldmyconf := oldCluster.Spec.MysqlOpts.MysqlConf
+	newmyconf := r.Spec.MysqlOpts.MysqlConf
+	if r.Spec.MysqlVersion == "8.0" &&
+		oldmyconf["lower_case_table_names"] != newmyconf["lower_case_table_names"] {
+		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("lower_case_table_names cannot be changed in MySQL8.0+"))
 	}
 	return nil
 }
