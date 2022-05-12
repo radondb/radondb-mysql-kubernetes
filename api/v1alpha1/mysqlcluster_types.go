@@ -373,8 +373,10 @@ type MysqlClusterStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.readyNodes
-// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type == 'Ready')].status",description="The cluster status"
-// +kubebuilder:printcolumn:name="Replicas",type="integer",JSONPath=".spec.replicas",description="The number of desired nodes"
+// +kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.state",description="The cluster status"
+// +kubebuilder:printcolumn:name="Desired",type="integer",JSONPath=".spec.replicas",description="The number of desired replicas"
+// +kubebuilder:printcolumn:name="Current",type="integer",JSONPath=".status.readyNodes",description="The number of current replicas"
+// +kubebuilder:printcolumn:name="Leader",type="string",JSONPath=".status.nodes[?(@.raftStatus.role == 'LEADER')].name",description="Name of the leader node"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:shortName=mysql
 // MysqlCluster is the Schema for the mysqlclusters API

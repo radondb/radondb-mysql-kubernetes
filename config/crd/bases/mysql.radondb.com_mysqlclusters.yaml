@@ -20,13 +20,21 @@ spec:
   versions:
   - additionalPrinterColumns:
     - description: The cluster status
-      jsonPath: .status.conditions[?(@.type == 'Ready')].status
-      name: Ready
+      jsonPath: .status.state
+      name: State
       type: string
-    - description: The number of desired nodes
+    - description: The number of desired replicas
       jsonPath: .spec.replicas
-      name: Replicas
+      name: Desired
       type: integer
+    - description: The number of current replicas
+      jsonPath: .status.readyNodes
+      name: Current
+      type: integer
+    - description: Name of the leader node
+      jsonPath: .status.nodes[?(@.raftStatus.role == 'LEADER')].name
+      name: Leader
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
