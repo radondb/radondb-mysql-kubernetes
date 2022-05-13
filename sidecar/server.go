@@ -18,6 +18,7 @@ package sidecar
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -26,6 +27,10 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
@@ -93,15 +98,17 @@ func (s *server) healthHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("content-type", "text/json")
 	if !s.isAuthenticated(r) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
 		return
 	}
-	err := RunTakeBackupCommand(s.cfg)
+	backName, Datetime, err := RunTakeBackupCommand(s.cfg)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
-		w.Write([]byte("OK"))
+		msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime})
+		w.Write(msg)
 	}
 }
 
@@ -204,6 +211,34 @@ func transportWithTimeout(connectTimeout time.Duration) http.RoundTripper {
 	}
 }
 
+func setAnnonations(cfg *Config, backname string, DateTime string, BackupType string) error {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	job, err := clientset.BatchV1().Jobs(cfg.NameSpace).Get(context.TODO(), cfg.JobName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	if job.Annotations == nil {
+		job.Annotations = make(map[string]string)
+	}
+	job.Annotations[utils.JobAnonationName] = backname
+	job.Annotations[utils.JobAnonationDate] = DateTime
+	job.Annotations[utils.JobAnonationType] = BackupType
+	_, err = clientset.BatchV1().Jobs(cfg.NameSpace).Update(context.TODO(), job, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // requestABackup connects to specified host and endpoint and gets the backup.
 func requestABackup(cfg *Config, host string, endpoint string) (*http.Response, error) {
 	log.Info("initialize a backup", "host", host, "endpoint", endpoint)
@@ -227,6 +262,13 @@ func requestABackup(cfg *Config, host string, endpoint string) (*http.Response, 
 		}
 		return nil, fmt.Errorf("fail to get backup: %s, code: %s", err, status)
 	}
+	defer resp.Body.Close()
+	var result utils.JsonResult
+	json.NewDecoder(resp.Body).Decode(&result)
 
+	err = setAnnonations(cfg, result.BackupName, result.Date, "S3") // set annotation
+	if err != nil {
+		return nil, fmt.Errorf("fail to set annotation: %s", err)
+	}
 	return resp, nil
 }

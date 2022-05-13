@@ -23,27 +23,28 @@ import (
 )
 
 // RunTakeBackupCommand starts a backup command
-func RunTakeBackupCommand(cfg *Config) error {
+func RunTakeBackupCommand(cfg *Config) (string, string, error) {
 	// cfg->XtrabackupArgs()
 	xtrabackup := exec.Command(xtrabackupCommand, cfg.XtrabackupArgs()...)
 
 	var err error
-	xcloud := exec.Command(xcloudCommand, cfg.XCloudArgs()...)
-	log.Info("xargs ", "xargs", strings.Join(cfg.XCloudArgs(), " "))
+	backupName, DateTime := cfg.XBackupName()
+	xcloud := exec.Command(xcloudCommand, cfg.XCloudArgs(backupName)...)
+	log.Info("xargs ", "xargs", strings.Join(cfg.XCloudArgs(backupName), " "))
 	if xcloud.Stdin, err = xtrabackup.StdoutPipe(); err != nil {
 		log.Error(err, "failed to pipline")
-		return err
+		return "", "", err
 	}
 	xtrabackup.Stderr = os.Stderr
 	xcloud.Stderr = os.Stderr
 
 	if err := xtrabackup.Start(); err != nil {
 		log.Error(err, "failed to start xtrabackup command")
-		return err
+		return "", "", err
 	}
 	if err := xcloud.Start(); err != nil {
 		log.Error(err, "fail start xcloud ")
-		return err
+		return "", "", err
 	}
 
 	// pipe command fail one, whole things fail
@@ -57,8 +58,8 @@ func RunTakeBackupCommand(cfg *Config) error {
 
 	for i := 0; i < 2; i++ {
 		if err = <-errorChannel; err != nil {
-			return err
+			return "", "", err
 		}
 	}
-	return nil
+	return backupName, DateTime, nil
 }

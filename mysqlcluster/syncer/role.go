@@ -46,6 +46,11 @@ func NewRoleSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Inter
 				APIGroups: []string{""},
 				Resources: []string{"pods"},
 			},
+			{
+				Verbs:     []string{"get", "update", "patch"},
+				APIGroups: []string{"batch"},
+				Resources: []string{"jobs"},
+			},
 		}
 		return nil
 	})

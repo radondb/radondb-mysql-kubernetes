@@ -21,9 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
+// This is the backup Job CRD.
 // BackupSpec defines the desired state of Backup
 type BackupSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -59,14 +57,21 @@ type BackupStatus struct {
 	// Completed indicates whether the backup is in a final state,
 	// no matter whether its' corresponding job failed or succeeded
 	Completed bool `json:"completed,omitempty"`
-
+	// Get the backup path.
+	BackupName string `json:"backupName,omitempty"`
+	// Get the backup Date
+	BackupDate string `json:"backupDate,omitempty"`
+	// Get the backup Type
+	BackupType string `json:"backupType,omitempty"`
 	// Conditions represents the backup resource conditions list.
 	Conditions []BackupCondition `json:"conditions,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="BackupName",type="string",JSONPath=".status.backupName",description="The Backup name"
+// +kubebuilder:printcolumn:name="BackupDate",type="string",JSONPath=".status.backupDate",description="The Backup Date time"
+// +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".status.backupType",description="The Backup Type"
 // Backup is the Schema for the backups API
 type Backup struct {
 	metav1.TypeMeta   `json:",inline"`
