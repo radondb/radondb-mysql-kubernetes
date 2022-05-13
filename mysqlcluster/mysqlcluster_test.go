@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"testing"
 
-	. "bou.ke/monkey"
+	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -408,18 +408,18 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 				},
 			},
 		}
-		guard := PatchInstanceMethod(reflect.TypeOf(cluster), "GetLabels", func(*MysqlCluster) labels.Set {
+		guard := gomonkey.ApplyMethod(reflect.TypeOf(cluster), "GetLabels", func(*MysqlCluster) labels.Set {
 			return nil
 		})
-		guard1 := Patch(resource.MustParse, func(_ string) resource.Quantity {
+		guard1 := gomonkey.ApplyFunc(resource.MustParse, func(_ string) resource.Quantity {
 			return resource.Quantity{}
 		})
-		guard2 := Patch(controllerutil.SetControllerReference, func(_ metav1.Object, _ metav1.Object, _ *runtime.Scheme) error {
+		guard2 := gomonkey.ApplyFunc(controllerutil.SetControllerReference, func(_ metav1.Object, _ metav1.Object, _ *runtime.Scheme) error {
 			return nil
 		})
-		defer guard.Unpatch()
-		defer guard1.Unpatch()
-		defer guard2.Unpatch()
+		defer guard.Reset()
+		defer guard1.Reset()
+		defer guard2.Reset()
 		result, err := testCase.EnsureVolumeClaimTemplates(&scheme)
 		assert.Equal(t, want, result)
 		assert.Nil(t, err)
@@ -435,10 +435,10 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 		testCase := MysqlCluster{
 			&testMysql,
 		}
-		guard := Patch(controllerutil.SetControllerReference, func(_ metav1.Object, _ metav1.Object, _ *runtime.Scheme) error {
+		guard := gomonkey.ApplyFunc(controllerutil.SetControllerReference, func(_ metav1.Object, _ metav1.Object, _ *runtime.Scheme) error {
 			return nil
 		})
-		defer guard.Unpatch()
+		defer guard.Reset()
 		result, err := testCase.EnsureVolumeClaimTemplates(&scheme)
 
 		assert.Equal(t, &storageClass, result[0].Spec.StorageClassName)
@@ -453,10 +453,10 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 		testCase := MysqlCluster{
 			&testMysql,
 		}
-		guard := Patch(controllerutil.SetControllerReference, func(_ metav1.Object, _ metav1.Object, _ *runtime.Scheme) error {
+		guard := gomonkey.ApplyFunc(controllerutil.SetControllerReference, func(_ metav1.Object, _ metav1.Object, _ *runtime.Scheme) error {
 			return fmt.Errorf("test")
 		})
-		defer guard.Unpatch()
+		defer guard.Reset()
 		result, err := testCase.EnsureVolumeClaimTemplates(&scheme)
 		want := fmt.Errorf("failed setting controller reference: test")
 		assert.Nil(t, result)
@@ -531,10 +531,10 @@ func TestEnsureMysqlConf(t *testing.T) {
 	}
 	// cpu 1 corev1s,memory 1 gb,innodb_buffer_pool_size 600 mb
 	{
-		guard := Patch(sizeToBytes, func(s string) (uint64, error) {
+		guard := gomonkey.ApplyFunc(sizeToBytes, func(s string) (uint64, error) {
 			return uint64(600 * mb), nil
 		})
-		defer guard.Unpatch()
+		defer guard.Reset()
 
 		testMysqlCase := testMysql
 		testMysqlCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = strconv.FormatUint(uint64(600*mb), 10)
@@ -549,10 +549,10 @@ func TestEnsureMysqlConf(t *testing.T) {
 	}
 	// cpu 1 corev1s,memory 2 gb,innodb_buffer_pool_size 1.7 gb
 	{
-		guard := Patch(sizeToBytes, func(s string) (uint64, error) {
+		guard := gomonkey.ApplyFunc(sizeToBytes, func(s string) (uint64, error) {
 			return uint64(1700 * mb), nil
 		})
-		defer guard.Unpatch()
+		defer guard.Reset()
 
 		memoryCase := resource.NewQuantity(2*gb, resource.BinarySI)
 		testMysqlCase := testMysql
@@ -569,10 +569,10 @@ func TestEnsureMysqlConf(t *testing.T) {
 	}
 	// cpu 1 corev1s,memory 2 gb,innodb_buffer_pool_size 1.7 gb, sizeToBytes error
 	{
-		guard := Patch(sizeToBytes, func(s string) (uint64, error) {
+		guard := gomonkey.ApplyFunc(sizeToBytes, func(s string) (uint64, error) {
 			return uint64(1700 * mb), fmt.Errorf("error")
 		})
-		defer guard.Unpatch()
+		defer guard.Reset()
 		memoryCase := resource.NewQuantity(2*gb, resource.BinarySI)
 		testMysqlCase := testMysql
 		testMysqlCase.Spec.MysqlOpts.Resources.Requests["memory"] = *memoryCase
@@ -588,10 +588,10 @@ func TestEnsureMysqlConf(t *testing.T) {
 	}
 	// cpu 8 corev1s,memory 16 gb,innodb_buffer_pool_size 2 gb
 	{
-		guard := Patch(sizeToBytes, func(s string) (uint64, error) {
+		guard := gomonkey.ApplyFunc(sizeToBytes, func(s string) (uint64, error) {
 			return uint64(2 * gb), nil
 		})
-		defer guard.Unpatch()
+		defer guard.Reset()
 
 		memoryCase := resource.NewQuantity(16*gb, resource.BinarySI)
 		limitCpucorev1sCase := resource.NewQuantity(4, resource.DecimalSI)
@@ -650,10 +650,10 @@ func TestSizeToBytes(t *testing.T) {
 	}
 	// it will return the result of ParseUint() when the parameter without unit
 	{
-		guard := Patch(strconv.ParseUint, func(s string, base int, bitSize int) (uint64, error) {
+		guard := gomonkey.ApplyFunc(strconv.ParseUint, func(s string, base int, bitSize int) (uint64, error) {
 			return uint64(666), nil
 		})
-		defer guard.Unpatch()
+		defer guard.Reset()
 
 		testCase := "1000"
 		want := uint64(666)
@@ -663,10 +663,10 @@ func TestSizeToBytes(t *testing.T) {
 	}
 	// ParseUint error
 	{
-		guard := Patch(strconv.ParseUint, func(s string, base int, bitSize int) (uint64, error) {
+		guard := gomonkey.ApplyFunc(strconv.ParseUint, func(s string, base int, bitSize int) (uint64, error) {
 			return uint64(777), fmt.Errorf("error")
 		})
-		defer guard.Unpatch()
+		defer guard.Reset()
 
 		testCase := "1000k"
 		want := uint64(0)
@@ -679,10 +679,10 @@ func TestSizeToBytes(t *testing.T) {
 func TestGetPrefixFromEnv(t *testing.T) {
 	// Prefix is empty.
 	{
-		guard := Patch(os.Getenv, func(key string) string {
+		patch := gomonkey.ApplyFunc(os.Getenv, func(key string) string {
 			return ""
 		})
-		defer guard.Unpatch()
+		defer patch.Reset()
 
 		want := ""
 		result := GetPrefixFromEnv()
@@ -690,10 +690,10 @@ func TestGetPrefixFromEnv(t *testing.T) {
 	}
 	// Prefix is not empty.
 	{
-		guard := Patch(os.Getenv, func(key string) string {
+		patch := gomonkey.ApplyFunc(os.Getenv, func(key string) string {
 			return "docker.io"
 		})
-		defer guard.Unpatch()
+		defer patch.Reset()
 
 		want := "docker.io/"
 		result := GetPrefixFromEnv()
