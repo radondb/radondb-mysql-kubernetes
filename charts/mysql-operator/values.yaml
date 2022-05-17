@@ -22,6 +22,7 @@ tolerationSeconds: 30
 manager:
   image: radondb/mysql-operator
   tag: v2.2.0
+  enabledWebhooks: true
   resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
     # choice for the user. This also increases chances charts run on environments with little
@@ -86,3 +87,14 @@ nfsBackup:
     localPVCapacity: 50G
     hostName: ""
     hostPath: "/mnt/radondb-nfs-backup"
+
+webhook:
+  certManager:
+    # If true, make sure that cert-manager has been installed.
+    enabled: false
+  # If empty and disable certManager, Helm will auto-generate these fields.
+  caBundlePEM: |
+
+  crtPEM: |
+
+  keyPEM: |
