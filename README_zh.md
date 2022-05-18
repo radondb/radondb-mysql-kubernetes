@@ -1,3 +1,4 @@
+> [English](README.md) | 简体中文
 
 <p align="center">
 <a href="https://radondb.com/"><img src="https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/images/logo_radondb-mysql.png?raw=true" alt="banner" width="200px"></a>
