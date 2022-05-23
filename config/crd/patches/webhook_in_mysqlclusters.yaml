@@ -11,6 +11,6 @@ spec:
         service:
           namespace: system
           name: webhook-service
-          path: /convert
+          path: /validate-mysql-radondb-com-v1alpha1-mysqlcluster
       conversionReviewVersions:
       - v1

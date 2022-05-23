@@ -21,6 +21,11 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: "{{ template "webhook.name" . }}-certs"
       containers:
       {{- if .Values.rbacProxy.create }}
       - name: kube-rbac-proxy
@@ -39,6 +44,14 @@ spec:
           name: https
       {{- end }}
       - name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        volumeMounts:
+        - name: cert
+          mountPath: /tmp/k8s-webhook-server/serving-certs/
+          readOnly: true
         command:
         - /manager
         args:
@@ -54,6 +67,8 @@ spec:
         env:
         - name: IMAGE_PREFIX
           value: {{ .Values.imagePrefix }}
+        - name: ENABLED_WEBHOOKS
+          value: {{ .Values.manager.enabledWebhooks | quote }}
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
