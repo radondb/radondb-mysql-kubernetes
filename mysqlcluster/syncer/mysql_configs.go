@@ -18,11 +18,10 @@ package syncer
 
 import (
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // log is for logging in this package.
-var log = logf.Log.WithName("mysqlcluster.syncer")
+// var log = logf.Log.WithName("mysqlcluster.syncer")
 
 // mysqlSysConfigs is the map of mysql system configs.
 var mysqlSysConfigs = map[string]string{

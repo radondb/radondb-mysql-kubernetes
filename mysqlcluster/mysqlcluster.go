@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/go-logr/logr"
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
@@ -47,17 +48,17 @@ const (
 	gb
 )
 
-var log = logf.Log.WithName("mysqlcluster")
-
 // MysqlCluster is the wrapper for apiv1alpha1.MysqlCluster type.
 type MysqlCluster struct {
 	*apiv1alpha1.MysqlCluster
+	log logr.Logger
 }
 
 // New returns a pointer to MysqlCluster.
 func New(mc *apiv1alpha1.MysqlCluster) *MysqlCluster {
 	return &MysqlCluster{
 		MysqlCluster: mc,
+		log:          logf.Log.WithName("mysqlcluster"),
 	}
 }
 
@@ -73,7 +74,7 @@ func (c *MysqlCluster) Validate() error {
 	// MySQL8 nerver support TokuDB
 	// https://www.percona.com/blog/2021/05/21/tokudb-support-changes-and-future-removal-from-percona-server-for-mysql-8-0/
 	if c.Spec.MysqlVersion == "8.0" && c.Spec.MysqlOpts.InitTokuDB {
-		log.Info("TokuDB is not supported in MySQL 8.0 any more, the value in Cluster.spec.mysqlOpts.initTokuDB should be set false")
+		c.log.Info("TokuDB is not supported in MySQL 8.0 any more, the value in Cluster.spec.mysqlOpts.initTokuDB should be set false")
 		return nil
 	}
 	// https://github.com/percona/percona-docker/blob/main/percona-server-5.7/ps-entry.sh#L159
@@ -135,7 +136,7 @@ func (c *MysqlCluster) GetMySQLVersion() string {
 		version = v
 	} else {
 		errmsg := "Invalid mysql version option:" + c.Spec.MysqlVersion
-		log.Error(errors.New(errmsg), "currently we do not support mysql 5.6 or earlier version, default mysql version option should be 5.7 or 8.0")
+		c.log.Error(errors.New(errmsg), "currently we do not support mysql 5.6 or earlier version, default mysql version option should be 5.7 or 8.0")
 		return utils.InvalidMySQLVersion
 	}
 

@@ -23,9 +23,11 @@ import (
 
 	"github.com/go-ini/ini"
 	"github.com/presslabs/controller-util/syncer"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
@@ -66,6 +68,7 @@ func NewMysqlCMSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.In
 
 // buildMysqlConf build the mysql config.
 func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
+	var log = logf.Log.WithName("mysqlcluster.syncer.buildMysqlConf")
 	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
 	sec := cfg.Section("mysqld")
 
@@ -114,6 +117,7 @@ func buildMysqlPluginConf(c *mysqlcluster.MysqlCluster) (string, error) {
 
 // addKVConfigsToSection add a map[string]string to a ini.Section
 func addKVConfigsToSection(s *ini.Section, extraMysqld ...map[string]string) {
+	var log = logf.Log.WithName("mysqlcluster.syncer.addKVConfigsToSection")
 	for _, extra := range extraMysqld {
 		keys := []string{}
 		for key := range extra {

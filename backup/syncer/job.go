@@ -25,15 +25,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/backup"
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
-
-var log = logf.Log.WithName("backup.syncer.job")
 
 type jobSyncer struct {
 	job    *batchv1.Job
@@ -59,7 +56,7 @@ func NewJobSyncer(c client.Client, s *runtime.Scheme, backup *backup.Backup) syn
 
 func (s *jobSyncer) SyncFn() error {
 	if s.backup.Status.Completed {
-		log.V(1).Info("backup already completed", "backup", s.backup)
+		s.backup.Log.V(1).Info("backup already completed", "backup", s.backup)
 		// skip doing anything
 		return syncer.ErrIgnore
 	}

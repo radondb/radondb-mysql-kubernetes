@@ -22,11 +22,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/go-test/deep"
 	"github.com/iancoleman/strcase"
 	"github.com/imdario/mergo"
 	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
+
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -37,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
@@ -66,6 +69,8 @@ type StatefulSetSyncer struct {
 	internal.SQLRunnerFactory
 	// XenonExecutor is used to execute Xenon HTTP instructions.
 	internal.XenonExecutor
+	// logger
+	log logr.Logger
 }
 
 // NewStatefulSetSyncer returns a pointer to StatefulSetSyncer.
@@ -87,6 +92,7 @@ func NewStatefulSetSyncer(cli client.Client, c *mysqlcluster.MysqlCluster, cmRev
 		sctRev:           sctRev,
 		SQLRunnerFactory: sqlRunnerFactory,
 		XenonExecutor:    xenonExecutor,
+		log:              logf.Log.WithName("StatefulSetSyncer"),
 	}
 }
 
@@ -127,10 +133,10 @@ func (s *StatefulSetSyncer) Sync(ctx context.Context) (syncer.SyncResult, error)
 	// Normal: no error.
 	switch {
 	case errors.Is(err, syncer.ErrOwnerDeleted):
-		log.Info(string(result.Operation), "key", key, "kind", kind, "error", err)
+		s.log.Info(string(result.Operation), "key", key, "kind", kind, "error", err)
 		err = nil
 	case errors.Is(err, syncer.ErrIgnore):
-		log.Info("syncer skipped", "key", key, "kind", kind, "error", err)
+		s.log.Info("syncer skipped", "key", key, "kind", kind, "error", err)
 		err = nil
 	case err != nil:
 		// When Invliad type error occur, and the PVC claims has changed
@@ -140,13 +146,13 @@ func (s *StatefulSetSyncer) Sync(ctx context.Context) (syncer.SyncResult, error)
 		} else {
 			result.SetEventData("Warning", basicEventReason(s.Name, err),
 				fmt.Sprintf("%s %s failed syncing: %s", kind, key, err))
-			log.Error(err, string(result.Operation), "key", key, "kind", kind)
+			s.log.Error(err, string(result.Operation), "key", key, "kind", kind)
 		}
 
 	default:
 		result.SetEventData("Normal", basicEventReason(s.Name, err),
 			fmt.Sprintf("%s %s %s successfully", kind, key, result.Operation))
-		log.Info(string(result.Operation), "key", key, "kind", kind)
+		s.log.Info(string(result.Operation), "key", key, "kind", kind)
 	}
 	return result, err
 }
@@ -167,7 +173,7 @@ func (s *StatefulSetSyncer) canExpandPVC(ctx context.Context) bool {
 	newStorage := s.sfs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage()
 	// If newStorage is not greater than oldStorage, do not expand.
 	if newStorage.Cmp(*oldRequest.Storage()) != 1 {
-		log.Info("canExpandPVC", "result", "can not expand", "reason", "new pvc is not larger than old pvc")
+		s.log.Info("canExpandPVC", "result", "can not expand", "reason", "new pvc is not larger than old pvc")
 		return false
 	}
 	return true
@@ -181,7 +187,7 @@ func (s *StatefulSetSyncer) expandPVCs(ctx context.Context) (controllerutil.Oper
 	}
 	// Do expend the PVCs.
 	if err := s.doExpandPVCs(ctx); err != nil {
-		log.Error(err, "expandPVCs")
+		s.log.Error(err, "expandPVCs")
 		return controllerutil.OperationResultNone, err
 	}
 	// Then Create sfs again.
@@ -272,7 +278,7 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 	if equality.Semantic.DeepEqual(existing, s.sfs) {
 		return controllerutil.OperationResultNone, nil
 	}
-	log.Info("update statefulset", "name", s.Name, "diff", deep.Equal(existing, s.sfs))
+	s.log.Info("update statefulset", "name", s.Name, "diff", deep.Equal(existing, s.sfs))
 
 	// If changed, update statefulset.
 	if err := s.cli.Update(ctx, s.sfs); err != nil {
@@ -296,10 +302,10 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 		return nil
 	}
 
-	log.Info("statefulSet was changed, run update")
+	s.log.Info("statefulSet was changed, run update")
 
 	if s.sfs.Status.ReadyReplicas < s.sfs.Status.Replicas {
-		log.Info("can't start/continue 'update': waiting for all replicas are ready")
+		s.log.Info("can't start/continue 'update': waiting for all replicas are ready")
 		return nil
 	}
 
@@ -433,7 +439,7 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 // updatePVC used to update the pvc, check and remove the extra pvc.
 func (s *StatefulSetSyncer) updatePVC(ctx context.Context) error {
 	if *s.Spec.Replicas == 0 {
-		log.Info("skip update pvc because replicas is 0")
+		s.log.Info("skip update pvc because replicas is 0")
 		return nil
 	}
 	pvcs := corev1.PersistentVolumeClaimList{}
@@ -449,18 +455,18 @@ func (s *StatefulSetSyncer) updatePVC(ctx context.Context) error {
 
 	for _, item := range pvcs.Items {
 		if item.DeletionTimestamp != nil {
-			log.Info("pvc is being deleted", "pvc", item.Name, "key", s.Unwrap())
+			s.log.Info("pvc is being deleted", "pvc", item.Name, "key", s.Unwrap())
 			continue
 		}
 
 		ordinal, err := utils.GetOrdinal(item.Name)
 		if err != nil {
-			log.Error(err, "pvc deletion error", "key", s.Unwrap())
+			s.log.Error(err, "pvc deletion error", "key", s.Unwrap())
 			continue
 		}
 
 		if ordinal >= int(*s.Spec.Replicas) {
-			log.Info("cleaning up pvc", "pvc", item.Name, "key", s.Unwrap())
+			s.log.Info("cleaning up pvc", "pvc", item.Name, "key", s.Unwrap())
 			if err := s.cli.Delete(ctx, &item); err != nil {
 				return err
 			}
@@ -473,12 +479,12 @@ func (s *StatefulSetSyncer) updatePVC(ctx context.Context) error {
 func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) error {
 	// Check version, if not latest, delete node.
 	if pod.ObjectMeta.Labels["controller-revision-hash"] == s.sfs.Status.UpdateRevision {
-		log.Info("pod is already updated", "pod name", pod.Name)
+		s.log.Info("pod is already updated", "pod name", pod.Name)
 	} else {
 		s.Status.State = apiv1alpha1.ClusterUpdateState
-		log.Info("updating pod", "pod", pod.Name, "key", s.Unwrap())
+		s.log.Info("updating pod", "pod", pod.Name, "key", s.Unwrap())
 		if pod.DeletionTimestamp != nil {
-			log.Info("pod is being deleted", "pod", pod.Name, "key", s.Unwrap())
+			s.log.Info("pod is being deleted", "pod", pod.Name, "key", s.Unwrap())
 		} else {
 			// If healthy is always `yes`, retry() will exit in advance, which may
 			// cause excessive nodes are deleted at the same time, details: issue#310.
@@ -504,7 +510,7 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 			return false, err
 		}
 		if ordinal >= int(*s.Spec.Replicas) {
-			log.Info("replicas were changed,  should skip", "pod", pod.Name)
+			s.log.Info("replicas were changed,  should skip", "pod", pod.Name)
 			return true, nil
 		}
 

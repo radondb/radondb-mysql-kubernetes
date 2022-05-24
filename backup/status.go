@@ -40,7 +40,7 @@ func (c *Backup) UpdateStatusCondition(condType apiv1alpha1.BackupConditionType,
 	t := time.Now()
 
 	if len(c.Status.Conditions) == 0 {
-		log.V(4).Info(fmt.Sprintf("Setting lastTransitionTime for mysql backup "+
+		c.Log.V(4).Info(fmt.Sprintf("Setting lastTransitionTime for mysql backup "+
 			"%q condition %q to %v", c.Name, condType, t))
 		newCondition.LastTransitionTime = metav1.NewTime(t)
 		c.Status.Conditions = []apiv1alpha1.BackupCondition{newCondition}
@@ -48,18 +48,18 @@ func (c *Backup) UpdateStatusCondition(condType apiv1alpha1.BackupConditionType,
 		if i, exist := c.condExists(condType); exist {
 			cond := c.Status.Conditions[i]
 			if cond.Status != newCondition.Status {
-				log.V(3).Info(fmt.Sprintf("Found status change for mysql backup "+
+				c.Log.V(3).Info(fmt.Sprintf("Found status change for mysql backup "+
 					"%q condition %q: %q -> %q; setting lastTransitionTime to %v",
 					c.Name, condType, cond.Status, status, t))
 				newCondition.LastTransitionTime = metav1.NewTime(t)
 			} else {
 				newCondition.LastTransitionTime = cond.LastTransitionTime
 			}
-			log.V(4).Info(fmt.Sprintf("Setting lastTransitionTime for mysql backup "+
+			c.Log.V(4).Info(fmt.Sprintf("Setting lastTransitionTime for mysql backup "+
 				"%q condition %q to %q", c.Name, condType, status))
 			c.Status.Conditions[i] = newCondition
 		} else {
-			log.V(4).Info(fmt.Sprintf("Setting new condition for mysql backup %q, condition %q to %q",
+			c.Log.V(4).Info(fmt.Sprintf("Setting new condition for mysql backup %q, condition %q to %q",
 				c.Name, condType, status))
 			newCondition.LastTransitionTime = metav1.NewTime(t)
 			c.Status.Conditions = append(c.Status.Conditions, newCondition)

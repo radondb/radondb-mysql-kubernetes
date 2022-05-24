@@ -19,23 +19,24 @@ package backup
 import (
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alhpa1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 )
 
-var log = logf.Log.WithName("backup")
-
 // Backup is a type wrapper over Backup that contains the Business logic
 type Backup struct {
 	*v1alhpa1.Backup
+	Log logr.Logger
 }
 
 // New returns a wraper object over Backup
 func New(backup *v1alhpa1.Backup) *Backup {
 	return &Backup{
 		Backup: backup,
+		Log:    logf.Log.WithName("backup"),
 	}
 }
 
