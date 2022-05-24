@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-test/deep"
@@ -263,20 +264,17 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 		}
 	}
 	// Deep copy the old statefulset from StatefulSetSyncer.
-	existing := s.sfs.DeepCopyObject()
+	existing := s.sfs.DeepCopy()
 	// Sync data from mysqlcluster.spec to statefulset.
 	if err = s.mutate(); err != nil {
 		return controllerutil.OperationResultNone, err
 	}
 	// Check if statefulset changed.
-	if equality.Semantic.DeepEqual(existing, s.sfs) {
-		return controllerutil.OperationResultNone, nil
-	}
-	log.Info("update statefulset", "name", s.Name, "diff", deep.Equal(existing, s.sfs))
-
-	// If changed, update statefulset.
-	if err := s.cli.Update(ctx, s.sfs); err != nil {
-		return controllerutil.OperationResultNone, err
+	if s.stsUpdated(*existing) {
+		// If changed, update statefulset.
+		if err := s.cli.Update(ctx, s.sfs); err != nil {
+			return controllerutil.OperationResultNone, err
+		}
 	}
 	// Update every pods of statefulset.
 	if err := s.updatePod(ctx); err != nil {
@@ -292,7 +290,9 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 // updatePod update the pods, update follower nodes first.
 // This can reduce the number of master-slave switching during the update process.
 func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
-	if s.sfs.Status.UpdateRevision == s.sfs.Status.CurrentRevision {
+	// updatedRevision wiil not update with the currentRevision when using `onDelete`.
+	// https://github.com/kubernetes/kubernetes/pull/106059
+	if s.sfs.Status.UpdatedReplicas == s.sfs.Status.ReadyReplicas {
 		return nil
 	}
 
@@ -475,7 +475,6 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 	if pod.ObjectMeta.Labels["controller-revision-hash"] == s.sfs.Status.UpdateRevision {
 		log.Info("pod is already updated", "pod name", pod.Name)
 	} else {
-		s.Status.State = apiv1alpha1.ClusterUpdateState
 		log.Info("updating pod", "pod", pod.Name, "key", s.Unwrap())
 		if pod.DeletionTimestamp != nil {
 			log.Info("pod is being deleted", "pod", pod.Name, "key", s.Unwrap())
@@ -589,4 +588,28 @@ func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func (s *StatefulSetSyncer) stsUpdated(exist appsv1.StatefulSet) bool {
+	stsUpdated := false
+	if diff := deepEqualIgnoreNilSlice(exist.Spec.Template, s.sfs.Spec.Template); len(diff) > 0 {
+		log.Info("update statefulset", "name", s.Name, "diff", diff)
+		s.Status.UpdateClusterConditions(apiv1alpha1.ClusterUpdating, s.Status.GenerateUpdateCondition())
+		stsUpdated = true
+	}
+	if *exist.Spec.Replicas != *s.sfs.Spec.Replicas && !stsUpdated {
+		s.Status.UpdateClusterConditions(apiv1alpha1.ClusterScaling, s.Status.GenerateScaleCondition(*exist.Spec.Replicas, *s.sfs.Spec.Replicas))
+		stsUpdated = true
+	}
+	return stsUpdated
+}
+
+func deepEqualIgnoreNilSlice(a interface{}, b interface{}) []string {
+	diff := deep.Equal(a, b)
+	for i, v := range diff {
+		if strings.Contains(v, "<nil slice> != []") {
+			diff = append(diff[:i], diff[i+1:]...)
+		}
+	}
+	return diff
 }

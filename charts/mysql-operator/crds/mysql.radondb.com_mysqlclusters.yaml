@@ -31,6 +31,9 @@ spec:
       jsonPath: .status.readyNodes
       name: Current
       type: integer
+    - jsonPath: .status.conditions[?(@.type == 'Available')].status
+      name: Available
+      type: string
     - description: Name of the leader node
       jsonPath: .status.nodes[?(@.raftStatus.role == 'LEADER')].name
       name: Leader
@@ -1346,8 +1349,7 @@ spec:
                         \"Unknown\").
                       type: string
                     type:
-                      description: Type of cluster condition, values in (\"Initializing\",
-                        \"Ready\", \"Error\").
+                      description: Type of cluster condition.
                       type: string
                   required:
                   - lastTransitionTime
