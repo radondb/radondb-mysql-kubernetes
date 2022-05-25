@@ -389,7 +389,6 @@ type MysqlCluster struct {
 }
 
 // +kubebuilder:object:root=true
-
 // MysqlClusterList contains a list of MysqlCluster
 type MysqlClusterList struct {
 	metav1.TypeMeta `json:",inline"`

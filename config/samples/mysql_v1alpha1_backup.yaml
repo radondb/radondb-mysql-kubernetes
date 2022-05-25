@@ -7,5 +7,5 @@ spec:
   image: radondb/mysql57-sidecar:v2.2.0
   # hostname if empty, use the leader as hostname
   hostname: sample-mysql-0
-  clustname: sample
+  clustername: sample
   # nfsServerAddress: ""
