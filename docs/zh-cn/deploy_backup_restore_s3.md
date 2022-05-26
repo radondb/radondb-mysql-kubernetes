@@ -51,13 +51,13 @@ metadata:
 spec:
   # Add fields here
   hostname: sample-mysql-0
-  clustname: sample
+  clustername: sample
 
 ```
 | name | function  | 
 |------|--------|
 |hostname|pod name in cluser|
-|clustname|cluster name|
+|clustername|cluster name|
 
 ### start cluster
 

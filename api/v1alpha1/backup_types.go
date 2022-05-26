@@ -43,7 +43,7 @@ type BackupSpec struct {
 	NFSServerAddress string `json:"nfsServerAddress,omitempty"`
 
 	// ClusterName represents the cluster name to backup
-	ClusterName string `json:"clustname"`
+	ClusterName string `json:"clusterName"`
 
 	// History Limit of job
 	// +optional

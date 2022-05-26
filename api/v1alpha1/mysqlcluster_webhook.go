@@ -79,7 +79,6 @@ func (r *MysqlCluster) ValidateDelete() error {
 
 // Validate volume size, forbidden shrink storage size.
 func (r *MysqlCluster) validateVolumeSize(oldCluster *MysqlCluster) error {
-
 	oldStorageSize, err := resource.ParseQuantity(oldCluster.Spec.Persistence.Size)
 	if err != nil {
 		return err
@@ -88,7 +87,7 @@ func (r *MysqlCluster) validateVolumeSize(oldCluster *MysqlCluster) error {
 	if err != nil {
 		return err
 	}
-	// =1 means that old storage size is greater then new
+	// =1 means that old storage size is greater than new.
 	if oldStorageSize.Cmp(newStorageSize) == 1 {
 		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("volesize can not be decreased"))
 	}
