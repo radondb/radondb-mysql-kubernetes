@@ -5,7 +5,7 @@
 <a href="https://radondb.com/"><img src="https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/images/logo_radondb-mysql.png?raw=true" alt="banner" width="200px"></a>
 </p>
 <p align="center">
-<b><i>Cloud-Native and Databases on Kubernetes</i></b>
+<b><i>Open-source cloud-native database on Kubernetes</i></b>
 </p>
 
 <p align=center>
@@ -21,33 +21,33 @@
 
 # What is RadonDB MySQL
 
-**RadonDB MySQL** is an open-source, cloud-native, highly availability cluster solutions based on MySQL. With the Raft protocol，RadonDB MySQL provides faster failover performance without losing any transactions.
+**RadonDB MySQL** is an open-source, cloud-native, and high-availability cluster solution based on MySQL. It supports the architecture of a primary database and multiple secondary databases, with a full set of management functions for security, automatic backup, monitoring and alarming, and automatic capacity expansion, and so on.
 
-**RadonDB MySQL Kubernetes** supports deployment and management of RaodnDB MySQL clusters on [Kubernetes](https://kubernetes.io/), [KubeSphere](https://kubesphere.com.cn/) and [Rancher](https://rancher.com) automates tasks related to operating a RadonDB MySQL cluster.
+**RadonDB MySQL Kubernetes** supports installation, deployment and management of RadonDB MySQL clusters on [Kubernetes](https://kubernetes.io/), [KubeSphere](https://kubesphere.com.cn/) and [Rancher](https://rancher.com), and automates tasks involved in running a RadonDB MySQL cluster.
 
 ## Features
-🧠 **High Availability MySQL**: Non-centralized automatic leader selection, Leader-follower switching in second-level, Strongly consistent data for cluster switching
- 
-✏️ **Cluster Management**
+🧠 **High-availability MySQL**: Automatic decentralized leader election, failover within seconds, and strong data consistency in cluster switching
 
-💻 **Monitoring and Alerting**
+✏️ **Cluster management**
+
+💻 **Monitoring and alerting**
 
 ✍️ [**Backup for S3**](docs/en-us/deploy_backup_restore_s3.md)
 
-🎈 **Log Management**
+🎈 **Log management**
 
-👨 **Account Management**
+👨 **Account management**
 
 🎨 [**Others**](docs/en-us/)
 
 
 ## Architecture
 
-1. Decentralized leader automatic election through Raft protocol.
+1. Automatic decentralized leader election by the Raft protocol
 
-2. Synchronizing data based on GTID mode through Semi-Sync.
+2. Synchronizing data by Semi-Sync replication based on GTID mode
 
-3. Supporting high-availability through [Xenon](https://github.com/radondb/xenon.git).
+3. Supporting high-availability through [Xenon](https://github.com/radondb/xenon.git)
 
 <p align="center">
 <a href="https://github.com/radondb/"><img src="https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/images/radondb-mysql_Architecture.png?raw=true" alt="banner" width="800px"></a>
@@ -55,46 +55,45 @@
 
 ## Roadmap
 
-| Release | Features  | Mode |
+| Version | Features  | Mode |
 |------|--------|------| 
-| 3.0  | Automatic O&M <br> Multiple Node Roles <br> Disaster Recovery <br> SSL Transmission Encryption | Operator |
-| 2.0  | Node Management <br> Upgrade Cluster <br> Backups and Restorations <br> Automatic Failover <br> Automatic Rebuild Node <br> Account management（API）   |  Operator |
-| 1.0 |  Cluster Management <br> Monitoring and Alerting <br> Log Management <br> Account management | Helm |
+| 3.0  | Automatic O&M <br> Multiple node roles <br> Disaster recovery <br> SSL transmission encryption | Operator |
+| 2.0  | Node management <br> Cluster upgrade <br> Backup and recovery <br> Automatic failover <br> Automatic node rebuilding <br> Account management (API)   |  Operator |
+| 1.0 |  Cluster management <br> Monitoring and alerting <br> Log management <br> Account management | Helm |
 
-# Quick Start
+# Quick start
 
-👀 Demonstrate how to deploy RadonDB MySQL Cluster (operator) on Kubernetes.
+👀 This tutorial demonstrates how to deploy a RadonDB MySQL cluster (Operator) on Kubernetes.
 
-## Prepare
+## Preparation
 
-📦 You need to prepare a Kubernetes cluster.
+📦 Prepare a Kubernetes cluster.
 
-## Deployment steps
+## Steps
 
-### Step 1: Add a Helm Repository
+### Step 1: Add a Helm repository
 
 ```plain
 helm repo add radondb https://radondb.github.io/radondb-mysql-kubernetes/
 ```
 ### Step 2: Install Operator
 
-The following sets the release name to `demo` and creates a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) named `demo-mysql-operator`.
+Set the release name to `demo` and create a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) named `demo-mysql-operator`.
 
 ```plain
 helm install demo radondb/mysql-operator
 ```
-> **Notic**
-> 
+> **Notice**
+
 > This step also creates the [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) required by the cluster.
 
-### Step 3: Install a RadonDB MySQL Cluster
+### Step 3: Deploy a RadonDB MySQL Cluster
 
-Run the following command to create an instance of the `mysqlclusters.mysql.radondb.com` CRD and thereby create a RadonDB MySQL cluster by using the default parameters. You can customize the cluster parameters by referring to [Configuration Parameters](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/zh-cn/config_para.md).
+Run the following command to create an instance of the `mysqlclusters.mysql.radondb.com` CRD and thereby create a RadonDB MySQL cluster by using the default parameters. To customize the cluster parameters, see [Configuration Parameters](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/zh-cn/config_para.md).
 
 ```plain
 kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1alpha1_mysqlcluster.yaml
 ```
-
 
 📖 For more information, see the documentation:
 
@@ -110,12 +109,14 @@ kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/la
 
 ## License
 
-RadonDB MySQL is based on Apache 2.0 protocol. See [License](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/LICENSE)。
+RadonDB MySQL is based on Apache 2.0 protocol. See [License](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/LICENSE).
 
 ## Welcome to join us ❤️
 
 😊 Website: [https://radondb.com/](https://radondb.com/en/)
 
-😁 Forum：Please join the [RadonDB section](https://kubesphere.com.cn/forum/t/RadonDB) of kubesphere Developer Forum.
+😁 Forum: Please join the [RadonDB](https://kubesphere.com.cn/forum/t/RadonDB) section of kubesphere Developer Forum.
 
-🦉 Community wechat group：Please add a group assistant **radondb** to invite you into the group
+🦉 Community WeChat group: Please add the group assistant **radondb** to invite you into the group.
+
+For any bugs, questions, or suggestions about RadonDB MySQL, please create an [issue](https://github.com/radondb/radondb-mysql-kubernetes/issues) on GitHub or feedback on the [forum](https://kubesphere.com.cn/forum/t/RadonDB).
