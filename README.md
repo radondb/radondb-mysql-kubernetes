@@ -98,7 +98,7 @@ kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/la
 📖 For more information, see the documentation:
 
 * [Deploy RadonDB MySQL on Kubernetes](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/en-us/deploy_radondb-mysql_operator_on_k8s.md)
-* [Deploy RadonDB MySQL on Kubernetes](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/en-us/deploy_radondb-mysql_operator_on_kubesphere.md)
+* [Deploy RadonDB MySQL on KubeSphere](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/en-us/deploy_radondb-mysql_operator_on_kubesphere.md)
 * [Deploy RadonDB MySQL on Rancher](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/en-us/deploy_radondb-mysql_operator_on_rancher.md)
 * [All Documents](https://radondb.com/en/docs/mysql/)
 
