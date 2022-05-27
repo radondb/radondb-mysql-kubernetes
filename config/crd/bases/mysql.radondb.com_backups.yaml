@@ -44,7 +44,7 @@ spec:
                 description: History Limit of job
                 format: int32
                 type: integer
-              hostname:
+              hostName:
                 description: HostName represents the host for which to take backup
                   If is empty, is use leader HostName
                 type: string

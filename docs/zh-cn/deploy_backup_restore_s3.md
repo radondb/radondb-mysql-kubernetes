@@ -50,14 +50,14 @@ metadata:
   name: backup-sample1
 spec:
   # Add fields here
-  hostname: sample-mysql-0
-  clustername: sample
+  hostName: sample-mysql-0
+  clusterName: sample
 
 ```
 | name | function  | 
 |------|--------|
-|hostname|pod name in cluser|
-|clustername|cluster name|
+|hostName|pod name in cluser|
+|clusterName|cluster name|
 
 ### start cluster
 
