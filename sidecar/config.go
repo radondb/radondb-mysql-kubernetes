@@ -85,7 +85,8 @@ type Config struct {
 	// for mysql backup
 	// backup user and password for http endpoint
 	ClusterName string
-
+	// Job name if is backup Job
+	JobName string
 	// Backup user name to http Server
 	BackupUser string
 
@@ -232,6 +233,7 @@ func NewReqBackupConfig() *Config {
 
 		BackupUser:     getEnvValue("BACKUP_USER"),
 		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
+		JobName:        getEnvValue("JOB_NAME"),
 	}
 }
 
@@ -261,7 +263,7 @@ func (cfg *Config) XtrabackupArgs() []string {
 }
 
 // Build xbcloud arguments
-func (cfg *Config) XCloudArgs() []string {
+func (cfg *Config) XCloudArgs(backupName string) []string {
 	xcloudArgs := []string{
 		"put",
 		"--storage=S3",
@@ -270,10 +272,15 @@ func (cfg *Config) XCloudArgs() []string {
 		fmt.Sprintf("--s3-secret-key=%s", cfg.XCloudS3SecretKey),
 		fmt.Sprintf("--s3-bucket=%s", cfg.XCloudS3Bucket),
 		"--parallel=10",
-		utils.BuildBackupName(cfg.ClusterName),
+		// utils.BuildBackupName(cfg.ClusterName),
+		backupName,
 		"--insecure",
 	}
 	return xcloudArgs
+}
+
+func (cfg *Config) XBackupName() (string, string) {
+	return utils.BuildBackupName(cfg.ClusterName)
 }
 
 // buildExtraConfig build a ini file for mysql.

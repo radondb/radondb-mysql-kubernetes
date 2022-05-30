@@ -169,6 +169,12 @@ const (
 	PodDisruptionBudget ResourceName = "pdb"
 	// XenonMetaData is the name of the configmap that contains xenon metadata.
 	XenonMetaData ResourceName = "xenon-metadata"
+	// Job Annonations name
+	JobAnonationName = "backupName"
+	// Job Annonations date
+	JobAnonationDate = "backupDate"
+	// Job Annonations type
+	JobAnonationType = "backupType"
 )
 
 // JobType
@@ -196,3 +202,9 @@ const (
 	ClusterRemove   XenonHttpUrl = "/v1/cluster/remove"
 	RaftTryToLeader XenonHttpUrl = "/v1/raft/trytoleader"
 )
+
+type JsonResult struct {
+	Status     string `json:"status"`
+	BackupName string `json:"backupName"`
+	Date       string `json:"date"`
+}
