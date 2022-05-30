@@ -33,7 +33,7 @@ kubectl get svc nfs-server --template={{.spec.clusterIP}}
 
 ```yaml
 # config/samples/mysql_v1alpha1_backup.yaml
-NFSServerAddress: "10.96.253.82"
+nfsServerAddress: "10.96.253.82"
 ```
 
 ### 2. Create a backup

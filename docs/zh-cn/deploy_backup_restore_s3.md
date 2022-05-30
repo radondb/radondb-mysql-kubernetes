@@ -1,16 +1,26 @@
-# mysql-operator
 
-## Quickstart for backup
+Contents
+=============
 
-Install the operator named `test`:
+  - [前提条件](#前提条件)
+  - [简介](#简介)
+  - [配置backup](#配置backup)
+    - [步骤 1: 添加 secret 文件](#1-添加-secret-文件)
+    - [步骤 2: 将 secret 配置到 Operator 集群](#2-将-secret-配置到-Operator-集群)
+  - [启动备份](#启动备份)
+  - [从备份副本恢复到新集群](#从备份副本恢复到新集群)
 
-```shell
-helm install test charts/mysql-operator
-```
+## 前提条件
 
-### configure backup
+* 已部署 [RadonDB MySQL 集群](kubernetes/deploy_radondb-mysql_operator_on_k8s.md)。
 
-add the secret file
+## 简介
+
+本文档介绍如何对部署的 RadonDB MySQL Operator 集群进行备份和恢复。
+
+## 配置backup
+
+### 1. 添加 secret 文件
 ```yaml
 kind: Secret
 apiVersion: v1
@@ -25,15 +35,18 @@ data:
 type: Opaque
 
 ```
-s3-xxxx value is encode by base64, you can get like that
-```shell
-echo -n "hello"|base64
+s3-xxxx 值用 base64 编码,注意不要把换行符编码进去, 可以用如下命令获取base64编码:
 ```
-then, create the secret in k8s.
+echo -n "替换为您的S3-XXX值"|base64
+```
+随后, 用如下命令创建备份secret:
+
 ```
 kubectl create -f config/samples/backup_secret.yaml
 ```
-Please add the backupSecretName in mysql_v1alpha1_mysqlcluster.yaml, name as secret file:
+### 2. 将 secret 配置到 Operator 集群
+将备份secret名称添加到mysql_v1alpha1_mysqlcluster.yaml中, 本例中名称为sample-backup-secret:
+
 ```yaml
 spec:
   replicas: 3
@@ -56,72 +69,36 @@ spec:
 ```
 | name | function  | 
 |------|--------|
-|hostName|pod name in cluser|
-|clusterName|cluster name|
+|hostName| 集群中Pod的名称 |
+|clusterName| 数据库集群名称 |
 
-### start cluster
 
-```shell
-kubectl apply -f config/samples/mysql_v1alpha1_mysqlcluster.yaml     
-```
-### start backup
-After run cluster success
+##  启动备份
+启动集群后,才可以进行备份操作
 ```shell
 kubectl apply -f config/samples/mysql_v1alpha1_backup.yaml
 ```
-
-## Uninstall
-
-Uninstall the cluster named `sample`:
-
-```shell
-kubectl delete mysqlclusters.mysql.radondb.com sample
+执行成功后, 可以通过如下命令查看备份状况
+```
+kubectl get backups.mysql.radondb.com 
+NAME            BACKUPNAME             BACKUPDATE            TYPE
+backup-sample   sample_2022526155115   2022-05-26T15:51:15   S3
 ```
 
-Uninstall the operator name `test`:
+## 从备份副本恢复到新集群
+检查您的 s3 bucket, 得到您需要的备份文件夹如 `sample_2022526155115`.
+添加 RestoreFrom 字段到 mysql_v1alpha1_backup.yaml 中, 如下:
 
-```shell
-helm uninstall test
-kubectl delete -f config/samples/mysql_v1alpha1_backup.yaml
-```
-
-Uninstall the crd:
-
-```shell
-kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysql.radondb.com
-```
-
-
-## restore cluster from backup copy
-check your s3 bucket, get the directory where your backup to， such as `backup_2021720827`.
-add  it to RestoreFrom in yaml file
 ```yaml
 ...
 spec:
   replicas: 3
   mysqlVersion: "5.7"
   backupSecretName: sample-backup-secret
-  restoreFrom: "backup_2021720827"
+  restoreFrom: "sample_2022526155115"
 ...
 ```
-Then you use:
+随后, 启动集群, 将会从备份文件夹中恢复数据库.:
 ```shell
 kubectl apply -f config/samples/mysql_v1alpha1_mysqlcluster.yaml     
-```
-could restore a cluster from the `backup_2021720827 ` copy in the S3 bucket. 
-
-
- ## build your own image
- such as :
- ```
- docker build -f Dockerfile.sidecar -t  acekingke/sidecar:0.1 . && docker push acekingke/sidecar:0.1
- docker build -t acekingke/controller:0.1 . && docker push acekingke/controller:0.1
- ```
- you can replace acekingke/sidecar:0.1 with your own tag
-
- ## deploy your own manager
-```shell
-make manifests
-make install 
-make deploy  IMG=acekingke/controller:0.1 KUSTOMIZE=~/radondb-mysql-kubernetes/bin/kustomize 
 ```
