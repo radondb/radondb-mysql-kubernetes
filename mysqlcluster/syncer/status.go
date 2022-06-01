@@ -240,7 +240,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		node.Message = ""
 
 		if err := s.updateNodeRaftStatus(node); err != nil {
-			s.log.Error(err, "failed to get/update node raft status", "node", node.Name)
+			s.log.V(1).Info("failed to get/update node raft status", "node", node.Name, "error", err)
 			node.Message = err.Error()
 		}
 
@@ -249,18 +249,18 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 			s.cli, s.MysqlCluster.GetClusterKey(), utils.OperatorUser, host))
 		defer closeConn()
 		if err != nil {
-			s.log.Error(err, "failed to connect the mysql", "node", node.Name)
+			s.log.V(1).Info("failed to connect the mysql", "node", node.Name, "error", err)
 			node.Message = err.Error()
 		} else {
 			isLagged, isReplicating, err = internal.CheckSlaveStatusWithRetry(sqlRunner, checkNodeStatusRetry)
 			if err != nil {
-				s.log.Error(err, "failed to check slave status", "node", node.Name)
+				s.log.V(1).Info("failed to check slave status", "node", node.Name, "error", err)
 				node.Message = err.Error()
 			}
 
 			isReadOnly, err = internal.CheckReadOnly(sqlRunner)
 			if err != nil {
-				s.log.Error(err, "failed to check read only", "node", node.Name)
+				s.log.V(1).Info("failed to check read only", "node", node.Name, "error", err)
 				node.Message = err.Error()
 			}
 
@@ -281,7 +281,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		s.updateNodeCondition(node, int(apiv1alpha1.IndexReadOnly), isReadOnly)
 
 		if err = s.updatePodLabel(ctx, &pod, node); err != nil {
-			s.log.Error(err, "failed to update labels", "pod", pod.Name, "namespace", pod.Namespace)
+			s.log.V(1).Info("failed to update labels", "pod", pod.Name, "error", err)
 		}
 	}
 

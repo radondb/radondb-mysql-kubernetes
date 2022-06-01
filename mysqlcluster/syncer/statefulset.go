@@ -482,9 +482,9 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 		s.log.Info("pod is already updated", "pod name", pod.Name)
 	} else {
 		s.Status.State = apiv1alpha1.ClusterUpdateState
-		s.log.Info("updating pod", "pod", pod.Name, "key", s.Unwrap())
+		s.log.Info("updating pod", "pod", pod.Name)
 		if pod.DeletionTimestamp != nil {
-			s.log.Info("pod is being deleted", "pod", pod.Name, "key", s.Unwrap())
+			s.log.Info("pod is being deleted", "pod", pod.Name)
 		} else {
 			// If healthy is always `yes`, retry() will exit in advance, which may
 			// cause excessive nodes are deleted at the same time, details: issue#310.
@@ -510,7 +510,7 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 			return false, err
 		}
 		if ordinal >= int(*s.Spec.Replicas) {
-			s.log.Info("replicas were changed,  should skip", "pod", pod.Name)
+			s.log.Info("replicas were changed, should skip", "pod", pod.Name)
 			return true, nil
 		}
 
