@@ -333,7 +333,14 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 	newLeader := ""
 	for _, pod := range pods.Items {
 		// Check if the pod is healthy.
-		if pod.ObjectMeta.Labels["healthy"] != "yes" {
+		err := wait.PollImmediate(time.Second*2, time.Minute, func() (bool, error) {
+			s.cli.Get(ctx, client.ObjectKeyFromObject(&pod), &pod)
+			if pod.ObjectMeta.Labels["healthy"] == "yes" {
+				return true, nil
+			}
+			return false, nil
+		})
+		if err != nil {
 			return fmt.Errorf("can't start/continue 'update': pod[%s] is unhealthy", pod.Name)
 		}
 		// Skip if pod is leader.
