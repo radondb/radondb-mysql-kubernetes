@@ -299,10 +299,11 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 // updatePod update the pods, update follower nodes first.
 // This can reduce the number of master-slave switching during the update process.
 func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
-	if s.sfs.Status.UpdateRevision == s.sfs.Status.CurrentRevision {
+	// updatedRevision will not update with the currentRevision when using `onDelete`.
+	// https://github.com/kubernetes/kubernetes/pull/106059
+	if s.sfs.Status.UpdatedReplicas == *s.sfs.Spec.Replicas {
 		return nil
 	}
-
 	s.log.Info("statefulSet was changed, run update")
 
 	if s.sfs.Status.ReadyReplicas < s.sfs.Status.Replicas {
