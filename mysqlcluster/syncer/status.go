@@ -426,6 +426,10 @@ func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node
 			healthy = "yes"
 		}
 	}
+	if pod.DeletionTimestamp != nil || pod.Status.Phase != corev1.PodRunning {
+		healthy = "no"
+		node.RaftStatus.Role = string(utils.Unknown)
+	}
 
 	if pod.Labels["healthy"] != healthy {
 		pod.Labels["healthy"] = healthy
@@ -436,7 +440,7 @@ func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node
 		isPodLabelsUpdated = true
 	}
 	if isPodLabelsUpdated {
-		if err := s.cli.Update(ctx, pod); client.IgnoreNotFound(err) != nil {
+		if err := s.cli.Patch(ctx, pod, client.MergeFrom(pod)); client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}
