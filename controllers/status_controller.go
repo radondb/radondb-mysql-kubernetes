@@ -84,12 +84,12 @@ func (r *StatusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{}, err
 	}
 
-	status := *instance.Status.DeepCopy()
+	oldInstance := instance.DeepCopy()
 	defer func() {
-		if !reflect.DeepEqual(status, instance.Status) {
-			sErr := r.Status().Update(ctx, instance.Unwrap())
+		if !reflect.DeepEqual(oldInstance.Status, instance.Status) {
+			sErr := r.Status().Patch(ctx, instance.Unwrap(), client.MergeFrom(oldInstance))
 			if sErr != nil {
-				log.Error(sErr, "failed to update cluster status")
+				log.V(1).Info("failed to update cluster status", "error", sErr)
 			}
 		}
 	}()
