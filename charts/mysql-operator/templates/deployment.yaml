@@ -26,6 +26,9 @@ spec:
         secret:
           defaultMode: 420
           secretName: "{{ template "webhook.name" . }}-certs"
+      - name: timezone
+        hostPath:
+          path: /etc/localtime
       containers:
       {{- if .Values.rbacProxy.create }}
       - name: kube-rbac-proxy
@@ -42,6 +45,9 @@ spec:
         ports:
         - containerPort: 8443
           name: https
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
       {{- end }}
       - name: manager
         ports:
@@ -52,6 +58,8 @@ spec:
         - name: cert
           mountPath: /tmp/k8s-webhook-server/serving-certs/
           readOnly: true
+        - name: timezone
+          mountPath: /etc/localtime
         command:
         - /manager
         args:
