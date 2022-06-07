@@ -96,6 +96,9 @@ type MysqlClusterSpec struct {
 	// +optional
 	// +kubebuilder:default:=6
 	BackupScheduleJobsHistoryLimit *int `json:"backupScheduleJobsHistoryLimit,omitempty"`
+	// Containing CA (ca.crt) and server cert (tls.crt) ,server private key (tls.key) for SSL
+	//+optional
+	TlsSecretName string `json:"tlsSecretName,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.

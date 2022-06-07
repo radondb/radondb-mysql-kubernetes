@@ -139,6 +139,10 @@ const (
 
 	// PluginConfigs is the alias for mysql plugin config.
 	PluginConfigs = "plugin.cnf"
+	// TlsVolumeName  is the volume name for tls
+	TlsVolumeName = "tls"
+	// TlsMountPath is the volume mount path for tls
+	TlsMountPath = "/etc/mysql-ssl"
 )
 
 // ResourceName is the type for aliasing resources that will be created.

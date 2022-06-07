@@ -152,3 +152,10 @@ var mysqlBooleanConfigs = []string{
 	"log-slave-updates",
 	"!includedir /etc/mysql/conf.d",
 }
+
+// mysqlSSLConfigs is the ist of the mysql ssl configs.
+var mysqlSSLConfigs = map[string]string{
+	"ssl_ca":   "/etc/mysql-ssl/ca.crt",
+	"ssl_cert": "/etc/mysql-ssl/tls.crt",
+	"ssl_key":  "/etc/mysql-ssl/tls.key",
+}

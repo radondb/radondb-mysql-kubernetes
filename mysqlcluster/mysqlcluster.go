@@ -270,6 +270,22 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			},
 		})
 	}
+	// Add the ssl secret mounts.
+	if len(c.Spec.TlsSecretName) != 0 {
+		volumes = append(volumes, corev1.Volume{
+			Name: utils.TlsVolumeName + "-sidecar",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: c.Spec.TlsSecretName,
+				},
+			},
+		}, corev1.Volume{
+			Name: utils.TlsVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		})
+	}
 	return volumes
 }
 
