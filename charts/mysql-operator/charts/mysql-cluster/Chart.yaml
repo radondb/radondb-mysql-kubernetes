@@ -1,6 +1,6 @@
 apiVersion: v2
-name: mysql-operator
-description: Open Source，High Availability Cluster，based on MySQL
+name: mysqlcluster
+description: A Helm chart for installing radondb mysql cluster.
 
 # A chart can be either an 'application' or a 'library' chart.
 #

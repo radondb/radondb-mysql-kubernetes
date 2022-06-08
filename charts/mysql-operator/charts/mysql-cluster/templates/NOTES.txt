@@ -1,0 +1,3 @@
+How to use?
+
+https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/en-us/deploy_radondb-mysql_operator_on_k8s.md#access-radondb-mysql

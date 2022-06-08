@@ -1,0 +1,61 @@
+install: true
+
+replicas: 3
+
+name: "sample"
+namespace: "default"
+
+mysqlVersion: "8.0"
+operatorVersion: v2.2.0
+
+sidecar:
+  metrics: false
+  slowLogTail: false
+  auditLogTail: false
+
+schedule:
+  podAntiaffinity: true
+  nodeSelector: {}
+  tolerations: []
+
+persistence:
+  storageClass: ""
+  size: 20Gi
+
+mysqlResources:
+  limits:
+    cpu: 256m
+    memory: 500Mi
+  requests:
+    cpu: 256m
+    memory: 500Mi
+
+mycnf: {}
+
+images: 
+# Deafult:
+# sidecar: radondb/mysql80-sidecar:v2.2.0
+# xenon: radondb/xenon:1.1.5-alpha
+# metrics: prom/mysqld-exporter:v0.12.1
+# busybox: busybox:1.32
+  sidecar: ""
+  xenon: ""
+  metrics: "" 
+  busybox: ""
+
+superUser:
+  create: true
+  name: "super_usr"
+  password: "radondb_123" 
+
+# TODO
+# backup: 
+#   s3:
+#     endpoint: 
+#     accessKey: 
+#     secretKey: 
+#     bucket: 
+#   nfs:
+#     serverAddress: ""
+#   restore:
+#     from: ""
