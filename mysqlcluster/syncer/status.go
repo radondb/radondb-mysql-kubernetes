@@ -413,6 +413,7 @@ func (s *StatusSyncer) addNodesInXenon(host string, toAdd []string) error {
 
 // updatePodLabel update the pod lables.
 func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node *apiv1alpha1.NodeStatus) error {
+	oldPod := pod.DeepCopy()
 	healthy := "no"
 	isPodLabelsUpdated := false
 	if node.Conditions[apiv1alpha1.IndexLagged].Status == corev1.ConditionFalse {
@@ -440,7 +441,7 @@ func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node
 		isPodLabelsUpdated = true
 	}
 	if isPodLabelsUpdated {
-		if err := s.cli.Patch(ctx, pod, client.MergeFrom(pod)); client.IgnoreNotFound(err) != nil {
+		if err := s.cli.Patch(ctx, pod, client.MergeFrom(oldPod)); client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}
