@@ -1,3 +1,4 @@
+{{- if .Values.manager.enableWebhooks }}
 {{- $certManagerEnabled := .Values.webhook.certManager.enabled -}}
 {{- $caCertPEM := include "webhook.caBundleCertPEM" . -}}
 {{- $tlsCertPEM := include "webhook.certPEM" . -}}
@@ -70,4 +71,5 @@ data:
   ca.crt: {{ b64enc $caCertPEM }}
   tls.crt: {{ b64enc $tlsCertPEM }}
   tls.key: {{ b64enc $tlsKeyPEM }}
+{{- end }}
 {{- end }}

@@ -21,6 +21,7 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
+      {{- if .Values.manager.enableWebhooks }}
       volumes:
       - name: cert
         secret:
@@ -54,6 +55,7 @@ spec:
         - containerPort: 9443
           name: webhook-server
           protocol: TCP
+        {{- if .Values.manager.enableWebhooks }}
         volumeMounts:
         - name: cert
           mountPath: /tmp/k8s-webhook-server/serving-certs/
@@ -75,8 +77,8 @@ spec:
         env:
         - name: IMAGE_PREFIX
           value: {{ .Values.imagePrefix }}
-        - name: ENABLED_WEBHOOKS
-          value: {{ .Values.manager.enabledWebhooks | quote }}
+        - name: ENABLE_WEBHOOKS
+          value: {{ .Values.manager.enableWebhooks | quote }}
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
