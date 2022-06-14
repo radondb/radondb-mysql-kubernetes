@@ -1,4 +1,5 @@
 Contents
+=============
 
 - [在 Kubernetes 上离线部署 RadonDB MySQL 集群](#在-kubernetes-上离线部署-radondb-mysql-集群)
   - [简介](#简介)
@@ -36,16 +37,16 @@ RadonDB MySQL 支持在 Kubernetes 上安装部署和管理，自动执行与运
 
 ### 步骤 1: 准备部署资源
 
-```shell
-## 下载离线部署资源
-wget https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/radondb-mysql-resources.tar.gz
+#### 下载离线部署资源
+从docker hub 下载镜像`radondb/mysql-operator, radondb/mysql57-sidecar, radondb/mysql80-sidercar,percona/percona-server:5.7.34, percona/percona-server:8.0.25`, 放入到各个worker节点
 
-## 解压
-tar -xvzf radondb-mysql-resources.tar.gz
 
-## 导入镜像（需要在每个运行数据库的 worker 上执行）
-ls radondb-mysql-resources/images/*.tar|awk '{print $NF}'|sed -r 's#(.*)#sudo docker load -i \1#' |bash
+#### 导入镜像（需要在每个运行数据库的 worker 上执行）
+
 ```
+docker load -i XXXX
+```
+将XXXX 替换为以上下载的镜像文件名
 
 ### 步骤 2: 部署 Operator
 
@@ -57,7 +58,7 @@ helm install demo radondb-mysql-resources/operator-chart .
 
 > **说明**
 > 
-> 在这一步骤中默认将同时创建集群所需的 [CRD](https://kubernetes.io/zh/docs/concepts/extend-kubernetes/api-extension/custom-resources/)。
+> 在这一步骤中默认将同时创建集群所需的 CRD 从[relese](https://github.com/radondb/radondb-mysql-kubernetes/releases) 找对应版本.
 
 ### 步骤 3: 部署 RadonDB MySQL 集群
 
