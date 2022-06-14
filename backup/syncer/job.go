@@ -74,8 +74,9 @@ func (s *jobSyncer) SyncFn() error {
 		"Host": s.backup.Spec.HostName,
 		"Type": utils.BackupJobTypeName,
 	}
-
+	var backoff int32 = 3
 	s.job.Spec.Template.Spec = s.ensurePodSpec(s.job.Spec.Template.Spec)
+	s.job.Spec.BackoffLimit = &backoff
 	return nil
 }
 
