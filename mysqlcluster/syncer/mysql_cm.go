@@ -108,6 +108,12 @@ func buildMysqlPluginConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
 	sec := cfg.Section("mysqld")
 
+	for k, v := range c.Spec.MysqlOpts.MysqlConf {
+		if _, ok := pluginConfigs[k]; ok {
+			pluginConfigs[k] = v
+		}
+	}
+
 	addKVConfigsToSection(sec, pluginConfigs)
 	data, err := writeConfigs(cfg)
 	if err != nil {
