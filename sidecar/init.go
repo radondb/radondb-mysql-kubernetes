@@ -141,6 +141,10 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to copy my.cnf: %s", err)
 	}
 
+	// SSL settings.
+	if exists, _ := checkIfPathExists(utils.TlsMountPath); exists {
+		buildSSLdata()
+	}
 	buildDefaultXenonMeta(uid, gid)
 
 	// build client.conf.
@@ -163,7 +167,6 @@ func runInitCommand(cfg *Config) error {
 	if err = os.Chown(extraConfPath, uid, gid); err != nil {
 		return fmt.Errorf("failed to chown %s: %s", dataPath, err)
 	}
-
 	// Run reset master in init-mysql container.
 	if err = ioutil.WriteFile(initFilePath+"/reset.sql", []byte("reset master;"), 0644); err != nil {
 		return fmt.Errorf("failed to write reset.sql: %s", err)
@@ -312,6 +315,22 @@ func buildDefaultXenonMeta(uid, gid int) error {
 	// chown -R mysql:mysql /var/lib/xenon/peers.json.
 	if err := os.Chown(metaFile, uid, gid); err != nil {
 		return fmt.Errorf("failed to chown %s: %s", metaFile, err)
+	}
+	return nil
+}
+
+func buildSSLdata() error {
+	// cp -rp /tmp/myssl/* /etc/mysql/ssl/ Refer https://stackoverflow.com/questions/31467153/golang-failed-exec-command-that-works-in-terminal
+	shellCmd := "cp  /tmp/mysql-ssl/* " + utils.TlsMountPath
+	cmd := exec.Command("sh", "-c", shellCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to copy ssl: %s", err)
+	}
+
+	cronCmd := "chown -R mysql.mysql " + utils.TlsMountPath
+	cmd = exec.Command("sh", "-c", cronCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to copy ssl: %s", err)
 	}
 	return nil
 }

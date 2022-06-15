@@ -133,7 +133,7 @@ func (c *mysql) getReadinessProbe() *corev1.Probe {
 
 // getVolumeMounts get the container volumeMounts.
 func (c *mysql) getVolumeMounts() []corev1.VolumeMount {
-	return []corev1.VolumeMount{
+	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      utils.MysqlConfVolumeName,
 			MountPath: utils.MysqlConfVolumeMountPath,
@@ -151,4 +151,13 @@ func (c *mysql) getVolumeMounts() []corev1.VolumeMount {
 			MountPath: utils.SysLocalTimeZoneMountPath,
 		},
 	}
+	if c.Spec.TlsSecretName != "" {
+		volumeMounts = append(volumeMounts,
+			corev1.VolumeMount{
+				Name:      utils.TlsVolumeName,
+				MountPath: utils.TlsMountPath,
+			},
+		)
+	}
+	return volumeMounts
 }

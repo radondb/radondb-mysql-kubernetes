@@ -92,7 +92,9 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 			log.Error(err, "failed to add boolean key to config section", "key", key)
 		}
 	}
-
+	if len(c.Spec.TlsSecretName) != 0 {
+		addKVConfigsToSection(sec, mysqlSSLConfigs)
+	}
 	data, err := writeConfigs(cfg)
 	if err != nil {
 		return "", err

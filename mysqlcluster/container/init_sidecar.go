@@ -200,7 +200,17 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			MountPath: utils.SysLocalTimeZoneMountPath,
 		},
 	}
-
+	if c.Spec.TlsSecretName != "" {
+		volumeMounts = append(volumeMounts,
+			corev1.VolumeMount{
+				Name:      utils.TlsVolumeName + "-sidecar",
+				MountPath: "/tmp/mysql-ssl",
+			}, corev1.VolumeMount{
+				Name:      utils.TlsVolumeName,
+				MountPath: utils.TlsMountPath,
+			},
+		)
+	}
 	if c.Spec.MysqlOpts.InitTokuDB {
 		volumeMounts = append(volumeMounts,
 			corev1.VolumeMount{

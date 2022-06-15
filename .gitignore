@@ -26,4 +26,8 @@ bin/
 
 # e2e logs
 test/e2e/logs_*
+# vscode local
+.devcontainer
 
+# vs debug files
+__debug_*
