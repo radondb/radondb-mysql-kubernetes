@@ -129,12 +129,12 @@ var mysqlStaticConfigs = map[string]string{
 	"slave_parallel_workers":      "8",
 	"slave_pending_jobs_size_max": "1073741824",
 	"innodb_log_buffer_size":      "16777216",
-	"innodb_log_file_size":        "1073741824",
-	"innodb_log_files_in_group":   "2",
-	"innodb_flush_method":         "O_DIRECT",
-	"innodb_use_native_aio":       "1",
-	"innodb_autoinc_lock_mode":    "2",
-	"performance_schema":          "1",
+	//"innodb_log_file_size":        "1073741824",
+	"innodb_log_files_in_group": "2",
+	"innodb_flush_method":       "O_DIRECT",
+	"innodb_use_native_aio":     "1",
+	"innodb_autoinc_lock_mode":  "2",
+	"performance_schema":        "1",
 }
 
 // mysqlTokudbConfigs is the map of the mysql tokudb configs.

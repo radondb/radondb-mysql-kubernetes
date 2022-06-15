@@ -36,6 +36,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
+
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
@@ -377,6 +378,49 @@ func (c *MysqlCluster) EnsureMysqlConf() {
 	instances := math.Max(math.Min(math.Ceil(float64(cpu)/float64(1000)), math.Floor(float64(innodbBufferPoolSize)/float64(gb))), 1)
 	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = strconv.FormatUint(innodbBufferPoolSize, 10)
 	c.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_instances"] = strconv.Itoa(int(instances))
+
+	// innodb_log_file_size = 25 % of innodb_buffer_pool_size
+	// Minimum Value (≥ 5.7.11)	4194304
+	// Minimum Value (≤ 5.7.10)	1048576
+	// Maximum Value	512GB / innodb_log_files_in_group
+	// but wet set it not over than 8G, you should set it in the config file when you want over 8G.
+	// See https://dev.mysql.com/doc/refman/5.7/en/innodb-parameters.html#sysvar_innodb_log_file_size
+
+	const innodbDefaultLogFileSize uint64 = 1073741824
+	var innodbLogFileSize uint64 = innodbDefaultLogFileSize // 1GB, default value
+	// if innodb_log_file_size is not set, calculate it
+	if _, ok := c.Spec.MysqlOpts.MysqlConf["innodb_log_file_size"]; !ok {
+		logGroups, err := strconv.Atoi(c.Spec.MysqlOpts.MysqlConf["innodb_log_file_groups"])
+		if err != nil {
+			logGroups = 1
+		}
+
+		// https://dev.mysql.com/doc/refman/8.0/en/innodb-dedicated-server.html
+		// Table 15.9 Automatically Configured Log File Size
+		// Buffer Pool Size	Log File Size
+		// Less than 8GB	512MiB
+		// 8GB to 128GB	1024MiB
+		// Greater than 128GB	2048MiB
+		if innodbBufferPoolSize < (8 * gb) {
+			innodbLogFileSize = (512 * mb) / (uint64(logGroups))
+		} else if innodbBufferPoolSize <= (128 * gb) {
+			innodbLogFileSize = 1 * gb
+		} else {
+			innodbLogFileSize = 2 * gb
+		}
+		// Check if the innodb_log_file_size is bigger than persistent volume size
+		q, err := resource.ParseQuantity(c.Spec.Persistence.Size)
+		if err != nil {
+			c.log.Error(err, "failed to parse persistent volume size")
+		} else {
+			if uint64(q.Value()/2) < innodbLogFileSize {
+				c.log.Error(err, "log file size too larger than persistent volume size")
+				innodbLogFileSize = innodbDefaultLogFileSize
+			}
+			c.Spec.MysqlOpts.MysqlConf["innodb_log_file_size"] = strconv.FormatUint(innodbLogFileSize, 10)
+		}
+
+	}
 }
 
 // sizeToBytes parses a string formatted by ByteSize as bytes.
