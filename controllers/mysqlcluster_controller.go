@@ -92,7 +92,7 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	oldInstance := instance.DeepCopy()
 	defer func() {
 		// TODO: Remove Status().Patch in mysqlcluster controller.
-		if !reflect.DeepEqual(oldInstance.Status, instance.Status) {
+		if instance.ObjectMeta.DeletionTimestamp == nil && !reflect.DeepEqual(oldInstance.Status, instance.Status) {
 			sErr := r.Status().Patch(ctx, instance.Unwrap(), client.MergeFrom(oldInstance))
 			if sErr != nil {
 				log.V(1).Info("failed to update cluster status", "error", sErr)
