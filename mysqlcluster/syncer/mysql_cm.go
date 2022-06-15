@@ -81,7 +81,7 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 		addKVConfigsToSection(sec, mysql57Configs)
 	}
 
-	addKVConfigsToSection(sec, mysqlSysConfigs, mysqlCommonConfigs, mysqlStaticConfigs, c.Spec.MysqlOpts.MysqlConf)
+	addKVConfigsToSection(sec, mysqlSysConfigs, mysqlCommonConfigs, mysqlStaticConfigs)
 
 	if c.Spec.MysqlOpts.InitTokuDB {
 		addKVConfigsToSection(sec, mysqlTokudbConfigs)
@@ -95,6 +95,13 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	if len(c.Spec.TlsSecretName) != 0 {
 		addKVConfigsToSection(sec, mysqlSSLConfigs)
 	}
+
+	for _, para := range c.Spec.MysqlOpts.MysqlConf {
+		if sec.HasKey(para) {
+			sec.Key(para).SetValue(c.Spec.MysqlOpts.MysqlConf[para])
+		}
+	}
+
 	data, err := writeConfigs(cfg)
 	if err != nil {
 		return "", err
@@ -107,6 +114,12 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 func buildMysqlPluginConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
 	sec := cfg.Section("mysqld")
+
+	for k, v := range c.Spec.MysqlOpts.MysqlConf {
+		if _, ok := pluginConfigs[k]; ok {
+			pluginConfigs[k] = v
+		}
+	}
 
 	addKVConfigsToSection(sec, pluginConfigs)
 	data, err := writeConfigs(cfg)
