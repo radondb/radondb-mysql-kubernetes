@@ -21,12 +21,13 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-      {{- if .Values.manager.enableWebhooks }}
       volumes:
+      {{- if .Values.manager.enableWebhooks }}
       - name: cert
         secret:
           defaultMode: 420
           secretName: "{{ template "webhook.name" . }}-certs"
+      {{- end }}
       - name: timezone
         hostPath:
           path: /etc/localtime
@@ -55,11 +56,12 @@ spec:
         - containerPort: 9443
           name: webhook-server
           protocol: TCP
-        {{- if .Values.manager.enableWebhooks }}
         volumeMounts:
+        {{- if .Values.manager.enableWebhooks }}
         - name: cert
           mountPath: /tmp/k8s-webhook-server/serving-certs/
           readOnly: true
+        {{- end }}
         - name: timezone
           mountPath: /etc/localtime
         command:
