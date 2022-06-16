@@ -1,27 +1,35 @@
-[TOC]
+目录
+=============
+   * [为 MySQL 客户端开启加密连接](#为-MySQL-客户端开启加密连接)
+      * [TLS （传输层加密）简介](#TLS-（传输层加密）简介)
+      * [配置 MySQL Operator 使用加密连接](#配置-MySQL-Operator-使用加密连接)
+         * [准备证书](#准备证书)
+         * [根据证书文件创建 Secret](#根据证书文件创建-Secret)
+         * [配置 RadonDB MySQL 集群使用 TLS](#配置-RadonDB-MySQL-集群使用-TLS)
+         * [验证测试](#验证测试)
 
-# 为MySQL客户端开启加密连接
+# 为 MySQL 客户端开启加密连接
 
-# `TLS`(传输层加密)简介
+## `TLS` （传输层加密）简介
 
 RadonDB MySQL Operator 默认采用非加密连接，如果具备网络嗅探及监视的第三方工具可能截获服务端与客户端之间的数据，容易造成信息泄露，因此建议开启加密连接来确保数据安全。
 
-RadonDB MySQL Operator 服务端支持`TLS`,协议为MySQL支持的加密协议，如`5.7`版本支持`TLS 1.0、TLS 1.1、TLS 1.2`、`8.0`版本支持`TLS 1.0、TLS 1.1、TLS 1.2、TLS 1.3`。
+RadonDB MySQL Operator 服务端支持 `TLS`，协议为 MySQL 支持的加密协议，如 `5.7` 版本支持 `TLS 1.0`、`TLS 1.1` 和 `TLS 1.2`；`8.0` 版本支持 `TLS 1.0`、`TLS 1.1`、`TLS 1.2` 和 `TLS 1.3`。
 
 使用加密连接需要满足两个条件：
 
 * MySQL Operator 服务端开启加密连接支持
 * 客户端使用加密连接
 
-# 配置`MySQL Operator`使用加密连接
+## 配置 `MySQL Operator` 使用加密连接
 
-## 准备证书
+### 准备证书
 
-* `ca.crt` - 服务端`CA`证书
+* `ca.crt` - 服务端 `CA` 证书
 * `tls.key` - 服务端证书私钥
 * `tls.crt` - 服务端证书
 
-可以用`OpenSSL`生成，也可以用`MySQL`自带的`mysql_ssl_rsa_setup`快捷生成：
+可以用 `OpenSSL` 生成，也可以用 `MySQL` 自带的 `mysql_ssl_rsa_setup` 快捷生成：
 
 `mysql_ssl_rsa_setup --datadir=/tmp/certs`
 
@@ -41,7 +49,7 @@ certs
 
 
 
-### 根据证书文件创建secret
+### 根据证书文件创建 Secret
 
 ```shell
 kubectl create secret generic sample-ssl --from-file=tls.crt=server.pem --
@@ -49,17 +57,17 @@ from-file=tls.key=server-key.pem --from-file=ca.crt=ca.pem --
 type=kubernetes.io/tls
 ```
 
-### 配置RadonDB MySQL 集群使用`TLS`
+### 配置 RadonDB MySQL 集群使用 `TLS`
 
 ```shell
 kubectl patch mysqlclusters.mysql.radondb.com sample  --type=merge -p '{"spec":{"tlsSecretName":"sample-ssl"}}'
 ```
 
-> 配置之后会触发`rolling update`即集群会重启
+> 配置之后会触发 `rolling update` 即集群会重启
 
 ### 验证测试
 
-* 不使用`SSL`连接
+* 不使用 `SSL` 连接
 
   ```shell
   kubectl exec -it sample-mysql-0 -c mysql -- mysql -uradondb_usr -p"RadonDB@123"  -e "\s"
@@ -86,7 +94,7 @@ kubectl patch mysqlclusters.mysql.radondb.com sample  --type=merge -p '{"spec":{
 
   
 
-* 使用`SSL`连接
+* 使用 `SSL` 连接
 
 ```shell
  kubectl exec -it sample-mysql-0 -c mysql -- mysql -uradondb_usr -p"RadonDB@123" --ssl-mode=REQUIRED -e "\s"

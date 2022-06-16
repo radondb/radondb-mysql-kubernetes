@@ -1,7 +1,7 @@
-Contents
+目录
 =============
 
-   * [在 Kubernetes 上部署 RadonDB MySQL 集群](#在-kubernetes-上部署-radondb-mysql-集群)
+   * [在 Kubernetes 上部署 RadonDB MySQL 集群（Operator）](#在-kubernetes-上部署-radondb-mysql-集群（Operator）)
       * [简介](#简介)
       * [部署准备](#部署准备)
       * [部署步骤](#部署步骤)
@@ -17,7 +17,7 @@ Contents
          * [卸载 RadonDB MySQL](#卸载-RadonDB-MySQL)
          * [卸载自定义资源](#卸载自定义资源)
 
-# 在 Kubernetes 上部署 RadonDB MySQL 集群(Operator)
+# 在 Kubernetes 上部署 RadonDB MySQL 集群（Operator）
 
 ## 简介
 

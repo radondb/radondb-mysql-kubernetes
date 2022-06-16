@@ -36,11 +36,11 @@ Contents
 
 ## `Master_SysVars`
 
-在 master 节点上执行的 MySQL 配置参数.
+在 master 节点上执行的 MySQL 配置参数。
 
 ## `Slave_SysVars`
 
-在 slave 节点上执行的 MySQL 配置参数.
+在 slave 节点上执行的 MySQL 配置参数。
 
 ## `LEADER_START_CMD`
 

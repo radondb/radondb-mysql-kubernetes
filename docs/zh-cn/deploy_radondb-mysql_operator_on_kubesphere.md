@@ -1,12 +1,12 @@
 [English](../en-us/deploy_radondb-mysql_operator_on_kubesphere.md) | 简体中文 
 
-Contents
+目录
 =============
 
    * [在 KubeSphere 中部署 RadonDB MySQL Operator 和 RadonDB MySQL 集群](#在-kubesphere-中部署-radondb-mysql-operator-和-radondb-mysql-集群)
       * [部署准备](#部署准备)
       * [动手实验](#动手实验)
-         * [步骤 1：添加应用仓库仓库](#步骤-1添加应用仓库)
+         * [步骤 1：添加应用仓库](#步骤-1添加应用仓库)
          * [步骤 2：部署 RadonDB MySQL Operator](#步骤-2部署-radondb-mysql-operator)
          * [步骤 3：部署 RadonDB MySQL 集群](#步骤-3部署-radondb-mysql-集群)
       * [部署校验](#部署校验)
