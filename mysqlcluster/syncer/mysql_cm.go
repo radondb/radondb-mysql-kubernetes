@@ -96,9 +96,9 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 		addKVConfigsToSection(sec, mysqlSSLConfigs)
 	}
 
-	for _, para := range c.Spec.MysqlOpts.MysqlConf {
-		if sec.HasKey(para) {
-			sec.Key(para).SetValue(c.Spec.MysqlOpts.MysqlConf[para])
+	for k, v := range c.Spec.MysqlOpts.MysqlConf {
+		if sec.HasKey(k) {
+			sec.Key(k).SetValue(v)
 		}
 	}
 
