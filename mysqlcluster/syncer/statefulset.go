@@ -328,9 +328,6 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 		return err
 	}
 	var leaderPod corev1.Pod
-	// newLeader saves the nodes (follower) that have been updated.
-	// The old leader will switch the leader to the newLeader after all follower nodes are updated.
-	newLeader := ""
 	for _, pod := range pods.Items {
 		// Check if the pod is healthy.
 		err := wait.PollImmediate(time.Second*2, time.Minute, func() (bool, error) {
@@ -352,14 +349,9 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 		if err := s.applyNWait(ctx, &pod); err != nil {
 			return err
 		}
-		newLeader = fmt.Sprintf("%s.%s.%s", pod.Name, s.GetNameForResource(utils.HeadlessSVC), pod.Namespace)
 	}
 	// There may be a case where Leader does not exist during the update process.
-	if leaderPod.Name != "" && newLeader != "" {
-		if err := s.XenonExecutor.RaftTryToLeader(newLeader); err != nil {
-			return err
-		}
-		s.log.V(1).Info("leader switch to", "pod", newLeader)
+	if leaderPod.Name != "" {
 		// Update the leader.
 		if err := s.applyNWait(ctx, &leaderPod); err != nil {
 			return err
