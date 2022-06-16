@@ -153,8 +153,8 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
 	}
 
-	// Update ready nodes' status.
-	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, readyNodes)
+	// Update all nodes' status.
+	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, list.Items)
 }
 
 // updateClusterStatus update the cluster status and returns condition.
