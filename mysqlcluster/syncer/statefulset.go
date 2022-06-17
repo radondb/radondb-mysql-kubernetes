@@ -270,24 +270,27 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 		}
 	}
 	// Deep copy the old statefulset from StatefulSetSyncer.
-	existing := s.sfs.DeepCopyObject()
+	existing := s.sfs.DeepCopy()
 	// Sync data from mysqlcluster.spec to statefulset.
 	if err = s.mutate(); err != nil {
 		return controllerutil.OperationResultNone, err
 	}
 	// Check if statefulset changed.
-	if equality.Semantic.DeepEqual(existing, s.sfs) {
+	if !s.sfsUpdated(existing) {
 		return controllerutil.OperationResultNone, nil
 	}
-	s.log.Info("update statefulset", "name", s.Name, "diff", deep.Equal(existing, s.sfs))
 
 	// If changed, update statefulset.
 	if err := s.cli.Update(ctx, s.sfs); err != nil {
 		return controllerutil.OperationResultNone, err
 	}
-	// Update every pods of statefulset.
-	if err := s.updatePod(ctx); err != nil {
-		return controllerutil.OperationResultNone, err
+	// Need roll update.
+	if !equality.Semantic.DeepEqual(existing.Spec.Template, s.sfs.Spec.Template) {
+		s.log.Info("update statefulset pods", "name", s.Name, "diff", deep.Equal(existing.Spec.Template, s.sfs.Spec.Template))
+		// Update every pods of statefulset.
+		if err := s.updatePod(ctx); err != nil {
+			return controllerutil.OperationResultNone, err
+		}
 	}
 	// Update pvc.
 	if err := s.updatePVC(ctx); err != nil {
@@ -578,4 +581,11 @@ func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// Updates to statefulset spec for fields other than 'replicas', 'template', and 'updateStrategy' are forbidden.
+func (s *StatefulSetSyncer) sfsUpdated(existing *appsv1.StatefulSet) bool {
+	return existing.Spec.Replicas != s.sfs.Spec.Replicas ||
+		!equality.Semantic.DeepEqual(existing.Spec.Template, s.sfs.Spec.Template) ||
+		existing.Spec.UpdateStrategy != s.sfs.Spec.UpdateStrategy
 }
