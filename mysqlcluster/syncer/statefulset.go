@@ -497,6 +497,9 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 			if err := s.cli.Get(ctx, types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, pod); err != nil {
 				return false, nil
 			}
+			if *s.Spec.Replicas == 0 { // If replicas is 0, don't retry.
+				return true, nil
+			}
 			if pod.DeletionTimestamp != nil {
 				return false, nil
 			}
