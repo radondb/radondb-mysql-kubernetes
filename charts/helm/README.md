@@ -1,3 +1,7 @@
+# **DEPRECATED !**
+
+This version is **no longer maintained**, it is recommended to use the [operator version](https://github.com/radondb/radondb-mysql-kubernetes#quick-start)
+
 # RadonDB MySQL
 
 RadonDB MySQL is an open-source, cloud-native, High-Availability cluster solutions based on MySQL.
