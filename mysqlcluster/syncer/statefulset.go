@@ -422,10 +422,19 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, s.MysqlCluster)
 	initContainers := []corev1.Container{initSidecar, initMysql}
 
-	mysql := container.EnsureContainer(utils.ContainerMysqlName, s.MysqlCluster)
-	xenon := container.EnsureContainer(utils.ContainerXenonName, s.MysqlCluster)
-	backup := container.EnsureContainer(utils.ContainerBackupName, s.MysqlCluster)
-	containers := []corev1.Container{mysql, xenon, backup}
+	containers := []corev1.Container{}
+	existContainers := s.sfs.Spec.Template.Spec.Containers
+	if len(existContainers) >= 3 &&
+		existContainers[0].Name == utils.ContainerMysqlName &&
+		existContainers[1].Name == utils.ContainerXenonName &&
+		existContainers[2].Name == utils.ContainerBackupName {
+		containers = append(containers, existContainers[:3]...)
+	} else {
+		mysql := container.EnsureContainer(utils.ContainerMysqlName, s.MysqlCluster)
+		xenon := container.EnsureContainer(utils.ContainerXenonName, s.MysqlCluster)
+		backup := container.EnsureContainer(utils.ContainerBackupName, s.MysqlCluster)
+		containers = append(containers, mysql, xenon, backup)
+	}
 	if s.Spec.MetricsOpts.Enabled {
 		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, s.MysqlCluster))
 	}
