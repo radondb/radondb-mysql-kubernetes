@@ -120,7 +120,7 @@ func TestGetXenonReadinessProbe(t *testing.T) {
 			},
 		},
 		InitialDelaySeconds: 10,
-		TimeoutSeconds:      1,
+		TimeoutSeconds:      5,
 		PeriodSeconds:       10,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
