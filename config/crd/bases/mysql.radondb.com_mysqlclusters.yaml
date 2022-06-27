@@ -134,7 +134,7 @@ spec:
               mysqlOpts:
                 default:
                   database: radondb
-                  initTokuDB: true
+                  initTokuDB: false
                   password: RadonDB@123
                   resources:
                     limits:
