@@ -91,6 +91,12 @@ func runCloneAndInit(cfg *Config) error {
 	}
 
 	if len(serviceURL) != 0 {
+		// Check has initialized. If so just return.
+		hasInitialized, _ := checkIfPathExists(path.Join(dataPath, "mysql"))
+		if hasInitialized {
+			log.Info("MySQL data directory existing!")
+			return nil
+		}
 		// backup at first
 		Args := fmt.Sprintf("rm -rf /backup/initbackup;mkdir -p /backup/initbackup;curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/initbackup; exit ${PIPESTATUS[0]}",
 			serviceURL)
