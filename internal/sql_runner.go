@@ -139,6 +139,15 @@ func NewSQLRunner(cfg *Config, errs ...error) (SQLRunner, closeFunc, error) {
 	if err != nil {
 		return nil, close, err
 	}
+	db.SetConnMaxIdleTime(10 * time.Second)
+	db.SetConnMaxLifetime(1 * time.Minute)
+	if err := db.Ping(); err != nil {
+		internalLog.V(1).Info("failed to ping mysql", "error", err)
+		if cErr := db.Close(); cErr != nil {
+			internalLog.Error(cErr, "failed closing the database connection")
+		}
+		return nil, close, err
+	}
 
 	// Close connection function.
 	close = func() {
