@@ -43,7 +43,7 @@ type MysqlClusterSpec struct {
 
 	// MysqlOpts is the options of MySQL container.
 	// +optional
-	// +kubebuilder:default:={rootPassword: "", rootHost: "localhost", user: "radondb_usr", password: "RadonDB@123", database: "radondb", initTokuDB: true, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}
+	// +kubebuilder:default:={rootPassword: "", rootHost: "localhost", user: "radondb_usr", password: "RadonDB@123", database: "radondb", initTokuDB: false, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}
 	MysqlOpts MysqlOpts `json:"mysqlOpts,omitempty"`
 
 	// XenonOpts is the options of xenon container.
