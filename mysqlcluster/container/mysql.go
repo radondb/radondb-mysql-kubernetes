@@ -124,7 +124,7 @@ func (c *mysql) getReadinessProbe() *corev1.Probe {
 			},
 		},
 		InitialDelaySeconds: 10,
-		TimeoutSeconds:      1,
+		TimeoutSeconds:      5,
 		PeriodSeconds:       10,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
