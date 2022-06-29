@@ -232,6 +232,7 @@ func (s *StatusSyncer) AutoRebuild(ctx context.Context, pod *corev1.Pod) error {
 
 // updateNodeStatus update the node status.
 func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, pods []corev1.Pod) error {
+	closeCh := make(chan func())
 	for _, pod := range pods {
 		podName := pod.Name
 		host := fmt.Sprintf("%s.%s.%s", podName, s.GetNameForResource(utils.HeadlessSVC), s.Namespace)
@@ -245,13 +246,33 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		}
 
 		isLagged, isReplicating, isReadOnly := corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown
-		sqlRunner, closeConn, err := s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
-			s.cli, s.MysqlCluster.GetClusterKey(), utils.OperatorUser, host))
-		defer closeConn()
-		if err != nil {
-			s.log.V(1).Info("failed to connect the mysql", "node", node.Name, "error", err)
-			node.Message = err.Error()
-		} else {
+		var sqlRunner internal.SQLRunner
+		var closeConn func()
+		errCh := make(chan error)
+		go func(sqlRunner *internal.SQLRunner, errCh chan error, closeCh chan func()) {
+			var err error
+			*sqlRunner, closeConn, err = s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
+				s.cli, s.MysqlCluster.GetClusterKey(), utils.OperatorUser, host))
+			if err != nil {
+				s.log.V(1).Info("failed to get sql runner", "node", node.Name, "error", err)
+				errCh <- err
+				return
+			}
+			if closeConn != nil {
+				closeCh <- closeConn
+				return
+			}
+			errCh <- nil
+		}(&sqlRunner, errCh, closeCh)
+
+		var err error
+		select {
+		case <-errCh:
+		case closeConn := <-closeCh:
+			defer closeConn()
+		case <-time.After(time.Second * 5):
+		}
+		if sqlRunner != nil {
 			isLagged, isReplicating, err = internal.CheckSlaveStatusWithRetry(sqlRunner, checkNodeStatusRetry)
 			if err != nil {
 				s.log.V(1).Info("failed to check slave status", "node", node.Name, "error", err)
