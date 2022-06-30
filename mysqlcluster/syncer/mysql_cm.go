@@ -99,6 +99,13 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	for k, v := range c.Spec.MysqlOpts.MysqlConf {
 		if sec.HasKey(k) {
 			sec.Key(k).SetValue(v)
+		} else { // Not in sec.
+			if _, ok := pluginConfigs[k]; !ok { // Not in pluginconfig.
+				// Add it to sec
+				if _, err := sec.NewKey(k, v); err != nil {
+					return "", fmt.Errorf("failed to add key to config section: %s", err)
+				}
+			}
 		}
 	}
 
