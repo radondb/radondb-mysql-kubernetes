@@ -137,7 +137,7 @@ func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request
 		// at first check backup status completed.
 		backup := backup.New(&apiv1alpha1.Backup{})
 		namespacedName := types.NamespacedName{
-			Name:      strings.TrimSuffix(job.Name, "-backup"),
+			Name:      strings.TrimSuffix(job.Name, "-bak"),
 			Namespace: job.Namespace,
 		}
 		if err := r.Get(context.TODO(), namespacedName, backup.Unwrap()); err != nil {
