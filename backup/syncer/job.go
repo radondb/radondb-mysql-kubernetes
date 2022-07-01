@@ -73,6 +73,9 @@ func (s *jobSyncer) SyncFn() error {
 	s.job.Labels = map[string]string{
 		"Host": s.backup.Spec.HostName,
 		"Type": utils.BackupJobTypeName,
+
+		// Cluster used as selector.
+		"Cluster": s.backup.Spec.ClusterName,
 	}
 	var backoff int32 = 3
 	s.job.Spec.Template.Spec = s.ensurePodSpec(s.job.Spec.Template.Spec)

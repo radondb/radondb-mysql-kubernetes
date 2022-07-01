@@ -99,17 +99,17 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	// Clear the backup, Just keep historyLimit len
-	if err = r.clearHistoryJob(ctx, req, *backup.Spec.HistoryLimit); err != nil {
+	if err = r.clearHistoryJob(ctx, req, *backup.Spec.HistoryLimit, backup.Spec.ClusterName); err != nil {
 		return reconcile.Result{}, err
 	}
 	return ctrl.Result{}, nil
 }
 
 // Clear the History finished Jobs over HistoryLimit.
-func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request, historyLimit int32) error {
+func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request, historyLimit int32, clusterName string) error {
 	log := log.Log.WithName("controllers").WithName("Backup")
 	backupJobs := batchv1.JobList{}
-	labelSet := labels.Set{"Type": utils.BackupJobTypeName}
+	labelSet := labels.Set{"Type": utils.BackupJobTypeName, "Cluster": clusterName}
 	if err := r.List(context.TODO(), &backupJobs, &client.ListOptions{
 		Namespace: req.Namespace, LabelSelector: labelSet.AsSelector(),
 	}); err != nil {
@@ -137,7 +137,7 @@ func (r *BackupReconciler) clearHistoryJob(ctx context.Context, req ctrl.Request
 		// at first check backup status completed.
 		backup := backup.New(&apiv1alpha1.Backup{})
 		namespacedName := types.NamespacedName{
-			Name:      strings.TrimSuffix(job.Name, "-backup"),
+			Name:      strings.TrimSuffix(job.Name, "-bak"),
 			Namespace: job.Namespace,
 		}
 		if err := r.Get(context.TODO(), namespacedName, backup.Unwrap()); err != nil {

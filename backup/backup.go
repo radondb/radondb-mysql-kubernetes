@@ -47,7 +47,7 @@ func (b *Backup) Unwrap() *v1alhpa1.Backup {
 
 // GetNameForJob returns the name of the job
 func (b *Backup) GetNameForJob() string {
-	return fmt.Sprintf("%s-backup", b.Name)
+	return fmt.Sprintf("%s-bak", b.Name)
 }
 
 // Create the backup Domain Name or leader DNS.
