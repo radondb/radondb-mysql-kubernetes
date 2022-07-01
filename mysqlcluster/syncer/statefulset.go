@@ -590,9 +590,15 @@ func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
 
 // Updates to statefulset spec for fields other than 'replicas', 'template', and 'updateStrategy' are forbidden.
 func (s *StatefulSetSyncer) sfsUpdated(existing *appsv1.StatefulSet) bool {
+	var resizeVolume = false
+	// TODO: this is a temporary workaround until we figure out a better way to do this.
+	if len(existing.Spec.VolumeClaimTemplates) > 0 && len(s.sfs.Spec.VolumeClaimTemplates) > 0 {
+		resizeVolume = existing.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage().Cmp(*s.sfs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage()) != 0
+	}
 	return *existing.Spec.Replicas != *s.sfs.Spec.Replicas ||
 		!equality.Semantic.DeepEqual(existing.Spec.Template, s.sfs.Spec.Template) ||
-		existing.Spec.UpdateStrategy != s.sfs.Spec.UpdateStrategy
+		existing.Spec.UpdateStrategy != s.sfs.Spec.UpdateStrategy ||
+		resizeVolume
 }
 
 func (s *StatefulSetSyncer) podsAllUpdated(ctx context.Context) bool {
