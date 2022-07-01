@@ -95,14 +95,19 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	if len(c.Spec.TlsSecretName) != 0 {
 		addKVConfigsToSection(sec, mysqlSSLConfigs)
 	}
+	keys := []string{}
+	for k := range c.Spec.MysqlOpts.MysqlConf {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 
-	for k, v := range c.Spec.MysqlOpts.MysqlConf {
+	for _, k := range keys {
 		if sec.HasKey(k) {
-			sec.Key(k).SetValue(v)
+			sec.Key(k).SetValue(c.Spec.MysqlOpts.MysqlConf[k])
 		} else { // Not in sec.
 			if _, ok := pluginConfigs[k]; !ok { // Not in pluginconfig.
 				// Add it to sec
-				if _, err := sec.NewKey(k, v); err != nil {
+				if _, err := sec.NewKey(k, c.Spec.MysqlOpts.MysqlConf[k]); err != nil {
 					return "", fmt.Errorf("failed to add key to config section: %s", err)
 				}
 			}
