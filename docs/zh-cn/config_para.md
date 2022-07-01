@@ -1,3 +1,5 @@
+[English](../en-us/config_para.md) | 简体中文
+
 目录
 =============
 
@@ -23,10 +25,10 @@
 | XenonOpts.Image                    | Xenon （高可用组件）镜像       | radondb/xenon:1.1.5-alpha                                   |
 | XenonOpts.AdmitDefeatHearbeatCount | 允许的最大心跳检测失败次数  | 5                                                           |
 | XenonOpts.ElectionTimeout          | 选举超时时间（单位为毫秒）    | 10000ms                                                     |
-| XenonOpts.Resources                | Xenon 容器配额              | 预留: CPU 50M，内存 128Mi；</br> 限制: CPU 100M, 内存 256Mi |
-| MetricsOpts.Enabled                | 是否启用 Metrics(监控)容器  | false                                                       |
+| XenonOpts.Resources                | Xenon 容器配额              | 预留：CPU 50M，内存 128Mi；</br> 限制：CPU 100M，内存 256Mi |
+| MetricsOpts.Enabled                | 是否启用 Metrics（监控）容器  | false                                                       |
 | MetricsOpts.Image                  | Metrics 容器镜像        | prom/mysqld-exporter:v0.12.1                                |
-| MetricsOpts.Resources              | Metrics 容器配额            | 预留: CPU 10M，内存 32Mi；</br> 限制: CPU 100M，内存 128Mi  |
+| MetricsOpts.Resources              | Metrics 容器配额            | 预留：CPU 10M，内存 32Mi；</br> 限制：CPU 100M，内存 128Mi  |
 
 ## 节点配置
 
@@ -34,13 +36,13 @@
 | :-------------------------- | :----------------------------------------------- | :------------------------ |
 | Replicas                    | 集群节点数，只允许为0、2、3 和 5                   | 3                         |
 | PodPolicy.ImagePullPolicy   | 镜像拉取策略, 只允许为 Always/IfNotPresent/Never | IfNotPresent              |
-| PodPolicy.Labels            | 节点 pod [标签](https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/labels/)                         | -                         |
-| PodPolicy.Annotations       | 节点 pod [注解](https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/annotations/)                         | -                         |
-| PodPolicy.Affinity          | 节点 pod [亲和性](https://kubernetes.io/zh/docs/concepts/scheduling-eviction/assign-pod-node/#%E4%BA%B2%E5%92%8C%E6%80%A7%E4%B8%8E%E5%8F%8D%E4%BA%B2%E5%92%8C%E6%80%A7)                     | -                         |
-| PodPolicy.PriorityClassName | 节点 pod [优先级](https://kubernetes.io/zh/docs/concepts/configuration/pod-priority-preemption/)对象名称             | -                         |
+| PodPolicy.Labels            | 节点 Pod [标签](https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/labels/)                         | -                         |
+| PodPolicy.Annotations       | 节点 Pod [注解](https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/annotations/)                         | -                         |
+| PodPolicy.Affinity          | 节点 Pod [亲和性](https://kubernetes.io/zh/docs/concepts/scheduling-eviction/assign-pod-node/#%E4%BA%B2%E5%92%8C%E6%80%A7%E4%B8%8E%E5%8F%8D%E4%BA%B2%E5%92%8C%E6%80%A7)                     | -                         |
+| PodPolicy.PriorityClassName | 节点 Pod [优先级](https://kubernetes.io/zh/docs/concepts/configuration/pod-priority-preemption/)对象名称             | -                         |
 | PodPolicy.Tolerations       | 节点 pod [污点容忍度](https://kubernetes.io/zh/docs/concepts/scheduling-eviction/taint-and-toleration/)列表               | -                         |
-| PodPolicy.SchedulerName     | 节点 pod [调度器](https://kubernetes.io/zh/docs/concepts/scheduling-eviction/kube-scheduler/)名称                 | -                         |
-| PodPolicy.ExtraResources    | 节点容器配额（除 MySQL 和 Xenon 之外的容器）     | 预留: CPU 10M, 内存 32Mi  |
+| PodPolicy.SchedulerName     | 节点 Pod [调度器](https://kubernetes.io/zh/docs/concepts/scheduling-eviction/kube-scheduler/)名称                 | -                         |
+| PodPolicy.ExtraResources    | 节点容器配额（除 MySQL 和 Xenon 之外的容器）     | 预留：CPU 10M，内存 32Mi  |
 | PodPolicy.SidecarImage      | Sidecar 镜像                                     | radondb/mysql-sidecar:latest |
 | PodPolicy.BusyboxImage      | Busybox 镜像                                     | busybox:1.32              |
 | PodPolicy.SlowLogTail       | 是否开启慢日志跟踪                               | false                     |

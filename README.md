@@ -21,7 +21,7 @@
 
 # What is RadonDB MySQL
 
-**RadonDB MySQL** is an open-source, cloud-native, and high-availability cluster solution based on MySQL. It supports the architecture of a primary database and multiple secondary databases, with a full set of management functions for security, automatic backup, monitoring and alarming, and automatic capacity expansion, and so on.
+**RadonDB MySQL** is an open-source, cloud-native, and high-availability cluster solution based on MySQL. It supports the architecture of one leader node and multiple replicas, with a set of management functions for security, automatic backup, monitoring and alarming, automatic scaling, and so on.
 
 **RadonDB MySQL Kubernetes** supports installation, deployment and management of RadonDB MySQL clusters on [Kubernetes](https://kubernetes.io/), [KubeSphere](https://kubesphere.com.cn/) and [Rancher](https://rancher.com), and automates tasks involved in running a RadonDB MySQL cluster.
 

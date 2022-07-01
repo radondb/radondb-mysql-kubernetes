@@ -1,4 +1,6 @@
-Contents
+[English](../en-us/mysql.md) | 简体中文
+
+目录
 =================
 
    * [简介](#简介)
@@ -25,7 +27,7 @@ Contents
 
 指定 root 超级账户密码，可以为空。
 
-**注意**: 在命令行上设置 MySQL root 用户密码是不安全的。
+**注意**：在命令行上设置 MySQL root 用户密码是不安全的。
 
 ## `MYSQL_REPL_PASSWORD`
 

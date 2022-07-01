@@ -1,4 +1,6 @@
-Contents
+[English](../en-us/xenon.md) | 简体中文
+
+目录
 =================
 
    * [简介](#简介)
@@ -14,7 +16,7 @@ Contents
 
 # 简介
 
-[Xenon](https://hub.docker.com/repository/docker/radondb/xenon) 镜像已经发布在 docker hub，当前可用版本：
+[Xenon](https://hub.docker.com/repository/docker/radondb/xenon) 镜像已经发布在 Docker Hub，当前可用版本：
 
     radondb/xenon (tag: 1.1.5-alpha)
 
@@ -36,11 +38,11 @@ Contents
 
 ## `Master_SysVars`
 
-在 master 节点上执行的 MySQL 配置参数。
+在 leader 节点上执行的 MySQL 配置参数。
 
 ## `Slave_SysVars`
 
-在 slave 节点上执行的 MySQL 配置参数。
+在 replica 节点上执行的 MySQL 配置参数。
 
 ## `LEADER_START_CMD`
 

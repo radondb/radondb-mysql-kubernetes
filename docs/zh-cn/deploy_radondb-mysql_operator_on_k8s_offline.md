@@ -1,3 +1,5 @@
+[English](../en-us/deploy_radondb-mysql_operator_on_k8s_offline.md) | 简体中文
+
 目录
 =============
 
@@ -35,10 +37,10 @@ RadonDB MySQL 支持在 Kubernetes 上安装部署和管理，自动执行与运
 
 ## 部署步骤
 
-### 步骤 1: 准备部署资源
+### 步骤 1：准备部署资源
 
 #### 下载离线部署资源
-从docker hub 下载镜像`radondb/mysql-operator, radondb/mysql57-sidecar, radondb/mysql80-sidercar,percona/percona-server:5.7.34, percona/percona-server:8.0.25`, 放入到各个worker节点
+从docker hub 下载镜像`radondb/mysql-operator, radondb/mysql57-sidecar, radondb/mysql80-sidercar,percona/percona-server:5.7.34, percona/percona-server:8.0.25`，放入到各个worker节点。
 
 
 #### 导入镜像（需要在每个运行数据库的 worker 上执行）
@@ -46,11 +48,11 @@ RadonDB MySQL 支持在 Kubernetes 上安装部署和管理，自动执行与运
 ```
 docker load -i XXXX
 ```
-将XXXX 替换为以上下载的镜像文件名
+将 `XXXX` 替换为以上下载的镜像文件名
 
-### 步骤 2: 部署 Operator
+### 步骤 2：部署 Operator
 
-以下指定 release 名为 `demo` , 创建一个名为 `demo-mysql-operator` 的 [Deployment](https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/)。
+以下指定 release 名为 `demo`，创建一个名为 `demo-mysql-operator` 的 [Deployment](https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/)。
 
 ```
 helm install demo radondb-mysql-resources/operator-chart .
@@ -58,9 +60,9 @@ helm install demo radondb-mysql-resources/operator-chart .
 
 > **说明**
 > 
-> 在这一步骤中默认将同时创建集群所需的 CRD 从[relese](https://github.com/radondb/radondb-mysql-kubernetes/releases) 找对应版本.
+> 在这一步骤中默认将同时创建集群所需的 CRD 从[relese](https://github.com/radondb/radondb-mysql-kubernetes/releases) 找对应版本。
 
-### 步骤 3: 部署 RadonDB MySQL 集群
+### 步骤 3：部署 RadonDB MySQL 集群
 
 执行以下指令，以默认参数为 CRD `mysqlclusters.mysql.radondb.com` 创建一个实例，即创建 RadonDB MySQL 集群。您可参见[配置参数](./config_para.md)说明，自定义集群部署参数。
 
@@ -127,25 +129,25 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
 
 ### `service_name` 方式
 
-- 连接 leader 服务(RadonDB MySQL 主节点)
+- 连接 leader 服务（RadonDB MySQL 主节点）
   
   ```shell
   mysql -h <leader_service_name>.<namespace> -u <user_name> -p
   ```
   
-  用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
+  用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default`，连接示例如下：
   
   ```shell
   mysql -h sample-leader.default -u radondb_usr -p
   ```
   
-- 连接 follower 服务(RadonDB MySQL 从节点)
+- 连接 follower 服务（RadonDB MySQL 从节点）
   
   ```shell
   mysql -h <follower_service_name>.<namespace> -u <user_name> -p
   ```
   
-  用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
+  用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default`，连接示例如下：
   
   ```shell
   mysql -h sample-follower.default -u radondb_usr -p  

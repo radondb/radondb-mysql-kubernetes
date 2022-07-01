@@ -1,3 +1,4 @@
+[English](../en-us/deploy_backup_restore_s3.md) | 简体中文
 
 目录
 =============
@@ -5,14 +6,14 @@
   - [前提条件](#前提条件)
   - [简介](#简介)
   - [配置 backup](#配置-backup)
-    - [步骤 1: 添加 secret 文件](#1-添加-secret-文件)
-    - [步骤 2: 将 secret 配置到 Operator 集群](#2-将-secret-配置到-Operator-集群)
+    - [步骤 1: 添加 Secret 文件](#1-添加-secret-文件)
+    - [步骤 2: 将 Secret 配置到 Operator 集群](#2-将-secret-配置到-Operator-集群)
   - [启动备份](#启动备份)
   - [从备份副本恢复到新集群](#从备份副本恢复到新集群)
 
 ## 前提条件
 
-* 已部署 [RadonDB MySQL 集群](kubernetes/deploy_radondb-mysql_operator_on_k8s.md)。
+* 已部署 [RadonDB MySQL 集群](./deploy_radondb-mysql_operator_on_k8s.md)。
 
 ## 简介
 
@@ -20,7 +21,7 @@
 
 ## 配置 backup
 
-### 1. 添加 secret 文件
+### 步骤 1: 添加 Secret 文件
 ```yaml
 kind: Secret
 apiVersion: v1
@@ -44,7 +45,7 @@ echo -n "替换为您的S3-XXX值"|base64
 ```
 kubectl create -f config/samples/backup_secret.yaml
 ```
-### 2. 将 Secret 配置到 Operator 集群
+### 步骤 2: 将 Secret 配置到 Operator 集群
 将备份 Secret 名称添加到 mysql_v1alpha1_mysqlcluster.yaml 中，本例中名称为 sample-backup-secret：
 
 ```yaml
@@ -54,7 +55,7 @@ spec:
   backupSecretName: sample-backup-secret
   ...
 ```
-now create backup yaml file mysql_v1alpha1_backup.yaml like this:
+如下创建备份YAML文件`mysql_v1alpha1_backup`.yaml：
 
 ```yaml
 apiVersion: mysql.radondb.com/v1alpha1
@@ -67,7 +68,7 @@ spec:
   clusterName: sample
 
 ```
-| name | function  | 
+| 参数名 | 描述  | 
 |------|--------|
 |hostName| 集群中Pod的名称 |
 |clusterName| 数据库集群名称 |

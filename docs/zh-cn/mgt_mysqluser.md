@@ -1,3 +1,5 @@
+[English](../en-us/mgt_mysqlusser.md) | 简体中文
+
 目录
 ==========
    * [1. 前提条件](#1.-前提条件)
@@ -48,7 +50,7 @@ kubectl apply -f https://raw.githubusercontent.com/radondb/radondb-mysql-kuberne
 kubectl apply -f https://raw.githubusercontent.com/radondb/radondb-mysql-kubernetes/main/config/samples/mysql_v1alpha1_mysqluser.yaml 
 ```
 
-> 注意；直接修改 spec.user(用户名) 等同于以新用户名创建一个用户。如需创建多个用户，请确保 metadata.name(CR 实例名) 与 spec.user（用户名）一一对应。
+> **注意：** 直接修改 `spec.user` （用户名）等同于以新用户名创建一个用户。如需创建多个用户，请确保 metadata.name （CR 实例名）与 spec.user（用户名）一一对应。
 
 ##  3. 修改用户帐号
 

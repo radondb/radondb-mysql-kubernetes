@@ -166,6 +166,6 @@ kubectl exec -it <pod_name> -c mysql -n <project_name> -- mysql --user=<user_nam
 - **pod_name** 为 `sample-mysql-0`
 - **project_name** 为 `demo-project`  
 - **user_name** 为 `radondb_usr`  
-- **user_password** 为  `RadonDB@123`
+- **user_password** 为 `RadonDB@123`
 
 ![访问 RadonDB MySQL](_images/kubectl_terminal.png)

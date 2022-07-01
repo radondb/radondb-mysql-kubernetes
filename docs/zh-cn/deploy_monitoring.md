@@ -1,3 +1,5 @@
+[English](../en-us/deploy_monitoring.md) | 简体中文
+
 目录
 =================
 
@@ -31,7 +33,7 @@ RadonDB MySQL 监控引擎基于 [Prometheus MySQLd Exporter](https://github.com
 
 ## 部署步骤
 
-### 步骤 1: 配置 serviceMonitor
+### 步骤 1：配置 serviceMonitor
 
 `serviceMonitor` 是定义 RadonDB MySQL Operator 自动监控引擎的参数，开启后将自动绑定 `mysqld_exporter` 与 Prometheus。
 
@@ -61,9 +63,9 @@ serviceMonitor:
 - 新部署 Operator 时， `serviceMonitor.enabled` 默认为 **true**，表示默认开启。
 - 已部署 Operator 2.1.0 以下版本的集群，需重新部署 Operator。
 
-### 步骤 2: 配置 metricsOpts
+### 步骤 2：配置 metricsOpts
 
-`metricsOpts` 是 CRD  `mysqlclusters.mysql.radondb.com` 中定义 RadonDB MySQL 集群监控的参数，可通过配置`mysql_v1alpha1_mysqlcluster.yaml` 文件中参数值开启监控服务。
+`metricsOpts` 是 CRD `mysqlclusters.mysql.radondb.com` 中定义 RadonDB MySQL 集群监控的参数，可通过配置`mysql_v1alpha1_mysqlcluster.yaml` 文件中参数值开启监控服务。
 
 `metricsOpts` 参数包含如下字段：
 
@@ -183,7 +185,7 @@ KubeSphere 的监控引擎基于 Prometheus 和 Prometheus Operator。使用 Kub
 
 [Grafana](https://github.com/grafana/grafana) 是一个跨平台、开源的数据可视化网络应用程序平台。通过 Prometheus + Grafana 平台查看监控基本原理如下：
 
-- 通过 [mysql_exporter](https://github.com/prometheus/mysqld_exporter) 获取 RadonDB MySQL 服务监控数据.
+- 通过 [mysql_exporter](https://github.com/prometheus/mysqld_exporter) 获取 RadonDB MySQL 服务监控数据。
 - 通过 [node_exporter](https://github.com/prometheus/node_exporter) 获得 RadonDB MySQL 服务器的监控数据。
 - 将监控数据传到 [Prometheus](https://prometheus.io/download/) 后，通过配置数据源，最终在 Grafana 呈现丰富的监控数据图表和警告。
 

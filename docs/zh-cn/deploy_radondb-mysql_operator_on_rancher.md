@@ -1,3 +1,5 @@
+[English](../en-us/deploy_radondb-mysql_operator_on_rancher.md) | 简体中文
+
 目录
 =============
 
