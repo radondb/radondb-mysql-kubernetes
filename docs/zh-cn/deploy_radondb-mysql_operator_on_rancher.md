@@ -1,17 +1,19 @@
-Contents
+[English](../en-us/deploy_radondb-mysql_operator_on_rancher.md) | 简体中文
+
+目录
 =============
 
-   * [在 Rancher 上部署 RadonDB MySQL 集群](#在-rancher-上部署-radondb-mysql-集群)
+   * [在 Rancher 上部署 RadonDB MySQL 集群（Operator）](#在-rancher-上部署-radondb-mysql-集群（Operator）)
       * [简介](#简介)
       * [部署准备](#部署准备)
       * [部署步骤](#部署步骤)
          * [步骤 1：添加 Helm 仓库](#步骤-1-添加-helm-仓库)
          * [步骤 2：部署 Operator](#步骤-2-部署-operator)
          * [步骤 3：部署 RadonDB MySQL 集群](#步骤-3-部署-radondb-mysql-集群)
-         * [部署校验](#部署校验)
+         * [部署验证](#部署验证)
       * [访问 RadonDB MySQL](#访问-radondb-mysql)
 
-# 在 Rancher 上部署 RadonDB MySQL 集群(Operator)
+# 在 Rancher 上部署 RadonDB MySQL 集群（Operator）
 
 ## 简介
 
@@ -183,7 +185,7 @@ Rancher 集群的 Pod 之间支持通过 `service_name` 方式访问 RadonDB MyS
     mysql -h <leader_service_name>.<namespace> -u <user_name> -p
     ```
 
-   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default` ，连接示例如下：
+   用户名为 `radondb_usr`，release 名为 `sample`，RadonDB MySQL 命名空间为 `default`，连接示例如下：
 
     ```shell
     mysql -h sample-leader.default -u radondb_usr -p

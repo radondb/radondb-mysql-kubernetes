@@ -1,7 +1,9 @@
-Contents
+[English](../en-us/deploy_radondb-mysql_operator_on_k8s.md) | 简体中文
+
+目录
 =============
 
-   * [在 Kubernetes 上部署 RadonDB MySQL 集群](#在-kubernetes-上部署-radondb-mysql-集群)
+   * [在 Kubernetes 上部署 RadonDB MySQL 集群（Operator）](#在-kubernetes-上部署-radondb-mysql-集群（Operator）)
       * [简介](#简介)
       * [部署准备](#部署准备)
       * [部署步骤](#部署步骤)
@@ -17,7 +19,7 @@ Contents
          * [卸载 RadonDB MySQL](#卸载-RadonDB-MySQL)
          * [卸载自定义资源](#卸载自定义资源)
 
-# 在 Kubernetes 上部署 RadonDB MySQL 集群(Operator)
+# 在 Kubernetes 上部署 RadonDB MySQL 集群（Operator）
 
 ## 简介
 
@@ -25,7 +27,7 @@ RadonDB MySQL 是一款基于 MySQL 的开源、高可用、云原生集群解�
 
 RadonDB MySQL 支持在 Kubernetes 上安装部署和管理，自动执行与运行 RadonDB MySQL 集群有关的任务。
 
-本教程主要演示如何在 Kubernetes 上部署 RadonDB MySQL 集群(Operator)。
+本教程主要演示如何在 Kubernetes 上部署 RadonDB MySQL 集群（Operator）。
 
 ## 部署准备
 
@@ -49,7 +51,7 @@ radondb/mysql-operator          0.1.0           v2.1.0                          
 
 ### 步骤 2: 部署 Operator
 
-以下指定 release 名为 `demo` , 创建一个名为 `demo-mysql-operator` 的 [Deployment](https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/)。
+以下指定 release 名为 `demo`，创建一个名为 `demo-mysql-operator` 的 [Deployment](https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/)。
 
 ```
 helm install demo radondb/mysql-operator
@@ -145,7 +147,7 @@ Kubernetes 集群的 Pod 之间支持通过 `service_name` 方式访问 RadonDB 
 > 
 > `service_name` 方式不适用于从 Kubernetes 集群的物理机访问数据库 Pod。
 
-* 连接 leader 服务(RadonDB MySQL 主节点)
+* 连接 leader 服务（RadonDB MySQL 主节点）
 
     ```shell
     mysql -h <leader_service_name>.<namespace> -u <user_name> -p
@@ -157,7 +159,7 @@ Kubernetes 集群的 Pod 之间支持通过 `service_name` 方式访问 RadonDB 
     mysql -h sample-leader.default -u radondb_usr -p
     ```
 
-* 连接 follower 服务(RadonDB MySQL 从节点)
+* 连接 follower 服务（RadonDB MySQL 从节点）
 
     ```shell
     mysql -h <follower_service_name>.<namespace> -u <user_name> -p

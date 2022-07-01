@@ -1,41 +1,41 @@
-[English](../en-us/how_to_use_tls.md) | 简体中文
+English | [简体中文](../zh-cn/how_to_use_tls.md)
 
-目录
+Contents
 =============
-   * [为 MySQL 客户端开启加密连接](#为-MySQL-客户端开启加密连接)
-      * [TLS （传输层加密）简介](#TLS-（传输层加密）简介)
-      * [配置 MySQL Operator 使用加密连接](#配置-MySQL-Operator-使用加密连接)
-         * [准备证书](#准备证书)
-         * [根据证书文件创建 Secret](#根据证书文件创建-Secret)
-         * [配置 RadonDB MySQL 集群使用 TLS](#配置-RadonDB-MySQL-集群使用-TLS)
-         * [验证测试](#验证测试)
+   * [Enable encrypted connection for MySQL client](#Enable-encrypted-connection-for-MySQL-client)
+      * [`TLS` overview](#TLS-overview)
+      * [Configure `MySQL Operator` for encrypted connection](#Configure-MySQL-Operator-for-encrypted-connection)
+         * [Prepare certificates](#Prepare-certificates)
+         * [Create Secret with the certificate files](#Create-Secret-with-the-certificate-files)
+         * [Configure the RadonDB MySQL cluster to use TLS](#Configure-the-RadonDB-MySQL-cluster-to-use-TLS)
+         * [Verification](#Verification)
 
-# 为 MySQL 客户端开启加密连接
+# Enable encrypted connection for MySQL client
 
-## `TLS` 简介
+## `TLS` overview
 
-RadonDB MySQL Operator 默认采用非加密连接，如果具备网络嗅探及监视的第三方工具可能截获服务端与客户端之间的数据，容易造成信息泄露，因此建议开启加密连接来确保数据安全。
+RadonDB MySQL Operator uses non-encrypted connections by default. Third-party tools able to sniff and monitor the network may intercept data transferred between the server and client, leading to the leakage of information. Therefore, you are advised to enable the encrypted connection for security.
 
-RadonDB MySQL Operator 服务端支持 `TLS` （传输层加密）。该协议为 MySQL 支持的加密协议。如，RadonDB MySQL Operator `5.7` 版本支持 `TLS 1.0`、`TLS 1.1` 和 `TLS 1.2`；`8.0` 版本支持 `TLS 1.0`、`TLS 1.1`、`TLS 1.2` 和 `TLS 1.3`。
+The RadonDB MySQL Operator server supports connections based on the TLS (Transport Layer Security). The protocol is supported by MySQL. RadonDB version `5.7` supports `TLS 1.0`, `1.1`, and `1.2`. Version `8.0` supports `TLS 1.0`, `1.1`,` 1.2`, and `1.3`.
 
-使用加密连接需要满足两个条件：
+Two requirements for encrypted connection:
 
-* MySQL Operator 服务端开启加密连接支持。
-* 客户端使用加密连接。
+* Encrypted connection is enabled on the MySQL Operator server.
+* Encrypted connection is used by the client.
 
-## 配置 `MySQL Operator` 启用加密连接
+## Configure `MySQL Operator` for encrypted connection
 
-### 准备证书
+### Prepare certificates
 
-* `ca.crt` - 服务端 `CA` 证书
-* `tls.key` - 服务端证书私钥
-* `tls.crt` - 服务端证书
+* `ca.crt` - Server `CA` certificate
+* `tls.key` - Private key of server certificate
+* `tls.crt` - Server certificate
 
-可以用 `OpenSSL` 生成，也可以用 `MySQL` 自带的 `mysql_ssl_rsa_setup` 快捷生成：
+The certificates and keys can be generated with `OpenSSL`, or simply with `mysql_ssl_rsa_setup` included in `MySQL`.
 
 `mysql_ssl_rsa_setup --datadir=/tmp/certs`
 
-运行该命令后会生成如下文件：
+The following files are generated:
 
 ```shell
 certs
@@ -49,9 +49,7 @@ certs
 └── server-key.pem
 ```
 
-
-
-### 根据证书文件创建 Secret
+### Create Secret with the certificate files
 
 ```shell
 kubectl create secret generic sample-ssl --from-file=tls.crt=server.pem --
@@ -59,17 +57,17 @@ from-file=tls.key=server-key.pem --from-file=ca.crt=ca.pem --
 type=kubernetes.io/tls
 ```
 
-### 配置 RadonDB MySQL 集群使用 `TLS`
+### Configure the RadonDB MySQL cluster to use TLS
 
 ```shell
 kubectl patch mysqlclusters.mysql.radondb.com sample  --type=merge -p '{"spec":{"tlsSecretName":"sample-ssl"}}'
 ```
 
-> 配置之后会触发 `rolling update` 即集群会重启
+> The configuration will trigger `rolling update` and the cluster will restart.
 
-### 验证测试
+### Verification
 
-* 不使用 `SSL` 连接
+* Non-`SSL` connection
 
   ```shell
   kubectl exec -it sample-mysql-0 -c mysql -- mysql -uradondb_usr -p"RadonDB@123"  -e "\s"
@@ -96,7 +94,7 @@ kubectl patch mysqlclusters.mysql.radondb.com sample  --type=merge -p '{"spec":{
 
   
 
-* 使用 `SSL` 连接
+* `SSL` connection
 
 ```shell
  kubectl exec -it sample-mysql-0 -c mysql -- mysql -uradondb_usr -p"RadonDB@123" --ssl-mode=REQUIRED -e "\s"

@@ -1,9 +1,11 @@
-# 为什么需要 rebuild ?
+[English](../en-us/rebuild.md) | 简体中文
 
-RadonDB 集群是一种半同步的MySQL复制集群, 由于半同步复制存在机会使得slave的数据更新量比master多, 因此当xenon检查到INVALID pod时, 需要重新构建INVALID pod.
+# 为什么需要重新构建 Pod？
 
-# 如何使用 ?
-在执行 rebuild 之前, 请手动检查集群数据是否一致, 并且确认 rebuild 动作是安全的
+RadonDB 集群是一种半同步的MySQL复制集群。在某些情况下，半同步复制可能使从节点的数据更新量比主节点多，因此当 Xenon 检查到 INVALID Pod 时，需要重新构建该 Pod。
+
+# 如何使用？
+在执行 rebuild 之前，请手动检查集群数据是否一致，并且确认 rebuild 动作是安全的。
 
 ```shell
 ./hack/rebuild.sh PODNAME

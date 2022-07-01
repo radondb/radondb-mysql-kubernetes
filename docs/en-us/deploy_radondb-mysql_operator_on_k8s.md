@@ -1,31 +1,34 @@
+
+English | [简体中文](../zh-cn/deploy_radondb-mysql_operator_on_k8s.md)
+
 Contents
 ===
 
-* [Install a RadonDB MySQL Cluster on Kubernetes](#install-a-radondb-mysql-cluster-operator-on-kubernetes)
-  * [Introduction](#introduction)
+* [Install a RadonDB MySQL cluster on Kubernetes](#install-a-radondb-mysql-cluster-on-kubernetes)
+  * [Overview](#Overview)
   * [Prerequisites](#prerequisites)
   * [Procedure](#procedure)
-    * [Step 1: Add a Helm Repository](#step-1-add-a-helm-repository)
+    * [Step 1: Add a Helm repository](#step-1-add-a-helm-repository)
     * [Step 2: Install Operator](#step-2-install-operator)
-    * [Step 3: Install a RadonDB MySQL Cluster](#step-3-install-a-radondb-mysql-cluster)
+    * [Step 3: Deploy a RadonDB MySQL cluster](#step-3-Deploy-a-radondb-mysql-cluster)
   * [Verification](#verification)
     * [Verify RadonDB MySQL Operator](#verify-radondb-mysql-operator)
-    * [Verify the RadonDB MySQL Cluster](#verify-the-radondb-mysql-cluster)
+    * [Verify the RadonDB MySQL cluster](#verify-the-radondb-mysql-cluster)
   * [Access RadonDB MySQL](#access-radondb-mysql)
   * [Uninstallation](#uninstallation)
     * [Uninstall Operator](#uninstall-operator)
     * [Uninstall RadonDB MySQL](#uninstall-radondb-mysql)
-    * [Uninstall the Custom Resources](#uninstall-the-custom-resources)
+    * [Uninstall the custom resources](#uninstall-the-custom-resources)
 
-# Install a RadonDB MySQL Cluster (Operator) on Kubernetes
+# Install a RadonDB MySQL cluster on Kubernetes
 
-## Introduction
+## Overview
 
-RadonDB MySQL is an open-source, highly available, and cloud-native database cluster solution based on MySQL. It supports a high availability (HA) architecture with one leader node and multiple follower nodes, and supports a full set of management features such as security, automatic backup, monitoring and alerting, and automatic scaling. RadonDB MySQL has been widely used in production by enterprises such as banks, insurance enterprises, and other traditional large enterprises.
+RadonDB MySQL is an open-source, high-availability, and cloud-native database cluster solution based on MySQL. It supports the high-availability architecture of one leader node and multiple replicas, with a set of management functions for security, automatic backup, monitoring and alarming, automatic scaling, and so on. RadonDB MySQL has been widely used in production by **banks, insurance enterprises, and other traditional large enterprises**.
 
-RadonDB MySQL can be installed and managed on Kubernetes so that tasks relevant to RadonDB MySQL clusters are run automatically.
+RadonDB MySQL can be deployed and managed on Kubernetes to automate tasks relevant to RadonDB MySQL clusters.
 
-This tutorial demonstrates how to install a RadonDB MySQL cluster (Operator) on Kubernetes.
+This tutorial demonstrates how to deploy a RadonDB MySQL cluster (Operator) on Kubernetes.
 
 ## Prerequisites
 
@@ -33,7 +36,7 @@ This tutorial demonstrates how to install a RadonDB MySQL cluster (Operator) on 
 
 ## Procedure
 
-### Step 1: Add a Helm Repository
+### Step 1: Add a Helm repository.
 
 ```shell
 helm repo add radondb https://radondb.github.io/radondb-mysql-kubernetes/
@@ -49,7 +52,7 @@ radondb/mysql-operator          0.1.0           v2.1.0                          
 
 ### Step 2: Install Operator
 
-The following sets the release name to `demo` and creates a [deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) named `demo-mysql-operator`.
+The following sets the release name to `demo` and creates a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) named `demo-mysql-operator`.
 
 ```
 helm install demo radondb/mysql-operator
@@ -59,9 +62,9 @@ helm install demo radondb/mysql-operator
 > 
 > This step also creates the [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) required by the cluster.
 
-### Step 3: Install a RadonDB MySQL Cluster
+### Step 3: Deploy a RadonDB MySQL cluster
 
-Run the following command to create an instance of the `mysqlclusters.mysql.radondb.com` CRD and thereby create a RadonDB MySQL cluster by using the default parameters. You can customize the cluster parameters by referring to [Configuration Parameters](../zh-cn/config_para.md).
+Create an instance of the `mysqlclusters.mysql.radondb.com` CRD and thereby create a RadonDB MySQL cluster with default parameters as follows. To set cluster parameters, see [Configuration Parameters](../zh-cn/config_para.md).
 
 ```kubectl
 kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1alpha1_mysqlcluster.yaml
@@ -71,7 +74,7 @@ kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/la
 
 ### Verify RadonDB MySQL Operator
 
-Run the following command to check the `demo` deployment and its monitoring service. If the following information is displayed, the installation is successful.
+Check the demo Deployment and its monitoring service. The deployment is successful if the following information is displayed.
 
 ```kubectl
 $ kubectl get deployment,svc
@@ -83,7 +86,7 @@ NAME                             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(
 service/mysql-operator-metrics   ClusterIP   10.96.142.22    <none>        8443/TCP   8h
 ```
 
-### Verify the RadonDB MySQL Cluster
+### Verify the RadonDB MySQL cluster
 
 Run the following command to check the CRDs:
 
@@ -113,9 +116,9 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
 > 
 > You need to prepare a client used to connect to MySQL.
 
-- If the client is installed in a different Kubernetes cluster from the database, you need to configure port forwarding rules and load balancing by referring to [Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/).
+- If the client is installed in a different Kubernetes cluster, see [Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/) to configure port forwarding and load balancing.
 
-- In the Kubernetes cluster, you can access RadonDB MySQL by using service names or cluster IP addresses.
+- You can use service_name or clusterIP to access RadonDB MySQL in the Kubernetes cluster.
   
   > **Note**
   > 
@@ -123,27 +126,27 @@ service/sample-mysql             ClusterIP   None            <none>        3306/
 
 The following demonstrates how to access RadonDB MySQL by using a client in the same Kubernetes cluster as the database.
 
-### Use a Cluster IP Address
+### Use ClusterIP
 
-The HA read-and-write IP address of RadonDB MySQL points to the cluster IP address of the leader service, and the HA read-only IP address points to the IP address of the follower service.
+The HA read/write IP address of RadonDB MySQL points to the `clusterIP` of the leader service, and the HA read-only IP address points to the `clusterIP` of the follower services.
 
 ```shell
 mysql -h <clusterIP> -P <mysql_Port> -u <user_name> -p
 ```
 
-For example, run the following command to access the leader service, where the username is `radondb_usr` and the cluster IP address of the leader service is `10.10.128.136`:
+For example, run the following command to access a leader service. The username is `radondb_usr`, and the clusterIP of the leader service is `10.10.128.136`.
 
 ```shell
 mysql -h 10.10.128.136 -P 3306 -u radondb_usr -p
 ```
 
-### Use a Service Name
+### Use service_name
 
-Pods in the Kubernetes cluster can access RadonDB MySQL by using a service name.
+Pods in the Kubernetes cluster can access RadonDB MySQL by using service_name.
 
 > **Note**
 > 
-> Service names cannot be used to access RadonDB MySQL from the host machines of the Kubernetes cluster.
+> `service_name` cannot be used to access database pods from the host machines in the Kubernetes cluster.
 
 * Access the leader service (RadonDB MySQL leader node)
   
@@ -151,19 +154,19 @@ Pods in the Kubernetes cluster can access RadonDB MySQL by using a service name.
   mysql -h <leader_service_name>.<namespace> -u <user_name> -p
   ```
   
-  For example, run the following command to access the leader service, where the username is `radondb_usr`, the release name is `sample`, and the namespace of RadonDB MySQL is `default`:
+  For example, run the following command to access the leader service. The username is `radondb_usr`, the release name is `sample`, and the namespace of RadonDB MySQL is `default`.
   
   ```shell
   mysql -h sample-leader.default -u radondb_usr -p
   ```
 
-* Access the follower service (RadonDB MySQL follower nodes)
+* Access the follower service (RadonDB MySQL replicas)
   
   ```shell
   mysql -h <follower_service_name>.<namespace> -u <user_name> -p
   ```
-  
-  For example, run the following command to access the follower service, where the username is `radondb_usr`, the release name is `sample`, and the namespace of RadonDB MySQL is `default`:
+
+  For example, run the following command to access the follower service. The username is `radondb_usr`, the release name is `sample`, and the namespace of RadonDB MySQL is `default`.
   
   ```shell
   mysql -h sample-follower.default -u radondb_usr -p  
@@ -187,7 +190,7 @@ Uninstall the RadonDB MySQL cluster with the release name `sample`.
 kubectl delete mysqlclusters.mysql.radondb.com sample
 ```
 
-### Uninstall the Custom Resources
+### Uninstall the custom resources
 
 ```kubectl
 kubectl delete customresourcedefinitions.apiextensions.k8s.io mysqlclusters.mysql.radondb.com

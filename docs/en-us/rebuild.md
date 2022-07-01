@@ -1,21 +1,22 @@
-# Why need rebuild ?
-RadonDB cluster is semisynchronous replication mysql cluster. Because MySQL Semisynchronous Replication, It has a chance that the slave has more data than master, So when the xenon check it, It will lable the pod INVALID. When it happend, You
-need rebuild the INVALID pod.
+English | [简体中文](../zh-cn/rebuild.md)
 
-# How to use ?
-Before you want to rebuild the pod, you need to manually check the security and consistency of the cluster.
+# Reason for rebuilding Pod
+RadonDB cluster implements MySQL semisynchronous replication. Semisynchronous replication may cause the replica nodes to update more data than the source node. So, the Pod needs to be rebuilt when it is detected as invalid by Xenon. 
+
+# How to rebuild Pod
+Before rebuilding, please manually ensure that the data in the cluster is consistent, and the rebuilding is safe.
 
 ```shell
 ./hack/rebuild.sh PODNAME
 ```
-**for example**
+**Example**
 ```shell
 ./hack/rebuild.sh sample-mysql-2
 ```
 
-# Auto Rebuild
-if you want auto rebuild the pod, such as `sample-mysql-0`
+# Automatic rebuilding
+Automatically rebuild the Pod, taking `sample-mysql-0` as an example:
+
 ```shell
 kubectl label pods sample-mysql-0 rebuild=true 
 ```
-It will rebuild the pod automatically.

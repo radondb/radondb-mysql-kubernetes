@@ -1,33 +1,35 @@
+English | [简体中文](../zh-cn/deploy_radondb-mysql_operator_on_rancher.md)
+
 Contents
 ===
 
-* [Install a RadonDB MySQL Cluster on Rancher](#install-a-radondb-mysql-cluster-on-rancher)
+* [Install a RadonDB MySQL cluster on Rancher](#install-a-radondb-mysql-cluster-on-rancher)
   * [Introduction](#introduction)
   * [Prerequisites](#prerequisites)
   * [Procedure](#procedure)
-    * [Step 1: Add a Helm Repository](#step-1-add-a-helm-repository)
+    * [Step 1: Add a Helm repository](#step-1-add-a-helm-repository)
     * [Step 2: Install Operator](#step-2-install-operator)
-    * [Step 3: Install a RadonDB MySQL Cluster](#step-3-install-a-radondb-mysql-cluster)
+    * [Step 3: Install a RadonDB MySQL cluster](#step-3-install-a-radondb-mysql-cluster)
   * [Verification](#verification)
   * [Access RadonDB MySQL](#access-radondb-mysql)
 
-# Install a RadonDB MySQL Cluster on Rancher
+# Deploy a RadonDB MySQL cluster on Rancher
 
 ## Introduction
 
-RadonDB MySQL is an open-source, highly available, and cloud-native database cluster solution based on MySQL. It supports a high availability (HA) architecture with one leader node and multiple follower nodes, and supports a full set of management features such as security, automatic backup, monitoring and alerting, and automatic scaling. RadonDB MySQL has been widely used in production by enterprises such as banks, insurance enterprises, and other traditional large enterprises.
+RadonDB MySQL is an open-source, high-availability, and cloud-native database cluster solution based on MySQL. It supports the high-availability architecture of one leader node and multiple replicas, with a set of management functions for security, automatic backup, monitoring and alarming, automatic scaling, and so on. RadonDB MySQL has been widely used in production by **banks, insurance enterprises, and other traditional large enterprises**.
 
-RadonDB MySQL can be installed and managed on Rancher so that tasks relevant to RadonDB MySQL clusters are run automatically.
+RadonDB MySQL can be deployed and managed on Rancher to automate tasks relevant to RadonDB MySQL clusters.
 
-This tutorial demonstrates how to install RadonDB MySQL Operator and a RadonDB MySQL cluster on Rancher.
+This tutorial demonstrates how to deploy RadonDB MySQL Operator and a RadonDB MySQL cluster on Rancher.
 
 ## Prerequisites
 
-- You need to [install a Rancher cluster](https://rancher.com/docs/rancher/v2.6/en/quick-start-guide/deployment/quickstart-manual-setup/) and obtain the username and password for logging in to Rancher.
+- You need to [install a Rancher cluster](https://rancher.com/docs/rancher/v2.6/en/quick-start-guide/deployment/quickstart-manual-setup/) and obtain the username and password to log in to Rancher.
 
 ## Procedure
 
-### Step 1: Add a Helm Repository
+### Step 1: Add a Helm repository.
 
 1. Log in to the Rancher console.
 
@@ -41,11 +43,11 @@ This tutorial demonstrates how to install RadonDB MySQL Operator and a RadonDB M
    
    - **Target**: Select the HTTP(S) mode and set **Index URL** to `https://radondb.github.io/radondb-mysql-kubernetes/`.
 
-5. Click **Create** to return to the repository management page.
+5. Click **Create** and return to the repository management page.
    
-   When **State** of the repository changes to `Active`, the repository is running properly.
+   If the **State** of the repository changes to `Active`, the repository is running properly.
 
-### Step 2: Install Operator
+### Step 2: Install Operator.
 
 You only need to install RadonDB MySQL Operator once for a Rancher cluster.
 
@@ -54,38 +56,32 @@ You only need to install RadonDB MySQL Operator once for a Rancher cluster.
 2. Locate **mysql-operator** to install RadonDB MySQL Operator.
    
    You can select a version of the mysql-operator chart.
-   
-   ![Charts](_images/mysql_operator_chart.png)
+
 
 3. Click **Install** and configure the application basic information.
    
    You can select **Customize Helm options before install**.
-   
-   ![Metadata](_images/mysql_operator_metadata.png)
+
 
 4. (Optional) Click **Next** to customize the YAML settings of the application.
-   
-   ![Values](_images/mysql_operator_values.png)
+
 
 5. Click **Next** to configure the deployment options.
-   
-   ![Helm Options](_images/helm_options.png)
 
 6. Click **Install** to go to the **Installed App** page.
    
    You can view the installation progress and status in the pane below the list. After the application installation process is complete, you can view the installed application in the list.
 
-### Step 3: Install a RadonDB MySQL cluster
+### Step 3: Deploy a RadonDB MySQL cluster.
 
 #### Use the CLI
 
 1. On the cluster management page, click the kubectl command icon in the upper-right corner.
    
-   ![kubectl command pane](_images/kubectl_command.png)
 
-2. In the command pane, enter the command for installing a cluster.
+2. In the command pane, enter the command to deploy a cluster.
    
-   The following command installs a three-node cluster as an example.
+   The following command deploys a three-node cluster.
    
    ```shell
    # Run kubectl commands inside here
@@ -100,7 +96,7 @@ You only need to install RadonDB MySQL Operator once for a Rancher cluster.
    EOF
    ```
 
-3. Press **Enter**. If `created` is displayed in the command output, the installation is successful.
+3. Press **Enter**. If `created` is displayed in the command output, the deployment is successful.
    
    The following is an example of the command output:
    
@@ -115,8 +111,6 @@ You only need to install RadonDB MySQL Operator once for a Rancher cluster.
    For details about the parameters, see [Configuration Parameters](../zh-cn/config_para.md).
 
 2. On the cluster management page of Rancher, click the YAML import icon in the upper-right corner. In the displayed dialog box, import the modified YAML file.
-   
-   ![Import YAML](_images/import_yaml.png)
 
 ## Verification
 
@@ -140,8 +134,6 @@ You only need to install RadonDB MySQL Operator once for a Rancher cluster.
    
    The following figure shows the command output of a database with normal connections:
    
-   ![Pod Running](_images/pod_running.png)
-
 ## Access RadonDB MySQL
 
 > **Note**

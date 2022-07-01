@@ -1,26 +1,27 @@
+[English](../en-us/deploy_backup_restore_s3.md) | 简体中文
 
-Contents
+目录
 =============
 
   - [前提条件](#前提条件)
   - [简介](#简介)
-  - [配置backup](#配置backup)
-    - [步骤 1: 添加 secret 文件](#1-添加-secret-文件)
-    - [步骤 2: 将 secret 配置到 Operator 集群](#2-将-secret-配置到-Operator-集群)
+  - [配置 backup](#配置-backup)
+    - [步骤 1: 添加 Secret 文件](#1-添加-secret-文件)
+    - [步骤 2: 将 Secret 配置到 Operator 集群](#2-将-secret-配置到-Operator-集群)
   - [启动备份](#启动备份)
   - [从备份副本恢复到新集群](#从备份副本恢复到新集群)
 
 ## 前提条件
 
-* 已部署 [RadonDB MySQL 集群](kubernetes/deploy_radondb-mysql_operator_on_k8s.md)。
+* 已部署 [RadonDB MySQL 集群](./deploy_radondb-mysql_operator_on_k8s.md)。
 
 ## 简介
 
 本文档介绍如何对部署的 RadonDB MySQL Operator 集群进行备份和恢复。
 
-## 配置backup
+## 配置 backup
 
-### 1. 添加 secret 文件
+### 步骤 1: 添加 Secret 文件
 ```yaml
 kind: Secret
 apiVersion: v1
@@ -35,17 +36,17 @@ data:
 type: Opaque
 
 ```
-s3-xxxx 值用 base64 编码,注意不要把换行符编码进去, 可以用如下命令获取base64编码:
+s3-xxxx 值用 base64 编码，注意不要把换行符编码进去，可以用如下命令获取 base64 编码：
 ```
 echo -n "替换为您的S3-XXX值"|base64
 ```
-随后, 用如下命令创建备份secret:
+随后，用如下命令创建备份 Secret：
 
 ```
 kubectl create -f config/samples/backup_secret.yaml
 ```
-### 2. 将 secret 配置到 Operator 集群
-将备份secret名称添加到mysql_v1alpha1_mysqlcluster.yaml中, 本例中名称为sample-backup-secret:
+### 步骤 2: 将 Secret 配置到 Operator 集群
+将备份 Secret 名称添加到 mysql_v1alpha1_mysqlcluster.yaml 中，本例中名称为 sample-backup-secret：
 
 ```yaml
 spec:
@@ -54,7 +55,7 @@ spec:
   backupSecretName: sample-backup-secret
   ...
 ```
-now create backup yaml file mysql_v1alpha1_backup.yaml like this:
+如下创建备份YAML文件`mysql_v1alpha1_backup`.yaml：
 
 ```yaml
 apiVersion: mysql.radondb.com/v1alpha1
@@ -67,18 +68,18 @@ spec:
   clusterName: sample
 
 ```
-| name | function  | 
+| 参数名 | 描述  | 
 |------|--------|
 |hostName| 集群中Pod的名称 |
 |clusterName| 数据库集群名称 |
 
 
 ##  启动备份
-启动集群后,才可以进行备份操作
+启动集群后，才可以进行备份操作。
 ```shell
 kubectl apply -f config/samples/mysql_v1alpha1_backup.yaml
 ```
-执行成功后, 可以通过如下命令查看备份状况
+执行成功后，可以通过如下命令查看备份状况
 ```
 kubectl get backups.mysql.radondb.com 
 NAME            BACKUPNAME             BACKUPDATE            TYPE
@@ -86,8 +87,8 @@ backup-sample   sample_2022526155115   2022-05-26T15:51:15   S3
 ```
 
 ## 从备份副本恢复到新集群
-检查您的 s3 bucket, 得到您需要的备份文件夹如 `sample_2022526155115`.
-添加 RestoreFrom 字段到 mysql_v1alpha1_backup.yaml 中, 如下:
+检查您的 S3 bucket，得到您需要的备份文件夹如 `sample_2022526155115`。
+添加 RestoreFrom 字段到 mysql_v1alpha1_backup.yaml 中，如下：
 
 ```yaml
 ...
@@ -98,7 +99,7 @@ spec:
   restoreFrom: "sample_2022526155115"
 ...
 ```
-随后, 启动集群, 将会从备份文件夹中恢复数据库.:
+随后，启动集群，将会从备份文件夹中恢复数据库：
 ```shell
 kubectl apply -f config/samples/mysql_v1alpha1_mysqlcluster.yaml     
 ```
