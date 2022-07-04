@@ -334,9 +334,10 @@ func columnValue(scanArgs []interface{}, slaveCols []string, colName string) str
 }
 
 // CreateUserIfNotExists creates a user if it doesn't already exist and it gives it the specified permissions.
-func CreateUserIfNotExists(
-	sqlRunner SQLRunner, user, pass string, hosts []string, permissions []apiv1alpha1.UserPermission,
-) error {
+func CreateUserIfNotExists(sqlRunner SQLRunner, user *apiv1alpha1.MysqlUser, pass string) error {
+	userName := user.Spec.User
+	hosts := user.Spec.Hosts
+	permissions := user.Spec.Permissions
 
 	// Throw error if there are no allowed hosts.
 	if len(hosts) == 0 {
@@ -344,12 +345,12 @@ func CreateUserIfNotExists(
 	}
 
 	queries := []Query{
-		getCreateUserQuery(user, pass, hosts),
+		getCreateUserQuery(userName, pass, hosts),
 		// todo: getAlterUserQuery.
 	}
 
 	if len(permissions) > 0 {
-		queries = append(queries, permissionsToQuery(permissions, user, hosts))
+		queries = append(queries, permissionsToQuery(permissions, userName, hosts, user.Spec.WithGrantOption))
 	}
 
 	query := BuildAtomicQuery(queries...)
@@ -397,7 +398,7 @@ func DropUser(sqlRunner SQLRunner, user, host string) error {
 	return nil
 }
 
-func permissionsToQuery(permissions []apiv1alpha1.UserPermission, user string, allowedHosts []string) Query {
+func permissionsToQuery(permissions []apiv1alpha1.UserPermission, user string, allowedHosts []string, withGrant bool) Query {
 	permQueries := []Query{}
 
 	for _, perm := range permissions {
@@ -416,6 +417,9 @@ func permissionsToQuery(permissions []apiv1alpha1.UserPermission, user string, a
 			idsTmpl, idsArgs := getUsersIdentification(user, nil, allowedHosts)
 
 			query := "GRANT " + strings.Join(escPerms, ", ") + " ON " + schemaTable + " TO" + idsTmpl
+			if withGrant {
+				query += " WITH GRANT OPTION"
+			}
 			args = append(args, idsArgs...)
 
 			permQueries = append(permQueries, NewQuery(query, args...))

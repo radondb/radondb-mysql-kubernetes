@@ -95,6 +95,11 @@ spec:
                     description: NameSpace is the nameSpace of cluster.
                     type: string
                 type: object
+              withGrantOption:
+                default: false
+                description: WithGrantOption is the flag to indicate whether the user
+                  has grant option.
+                type: boolean
             type: object
           status:
             description: UserStatus defines the observed state of MysqlUser.

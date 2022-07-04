@@ -51,6 +51,11 @@ type UserSpec struct {
 	// Permissions is the list of roles that user has in the specified database.
 	// +optional
 	Permissions []UserPermission `json:"permissions,omitempty"`
+
+	// WithGrantOption is the flag to indicate whether the user has grant option.
+	// +optional
+	// +kubebuilder:default:=false
+	WithGrantOption bool `json:"withGrantOption,omitempty"`
 }
 
 type UserOwner struct {

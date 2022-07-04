@@ -5,6 +5,7 @@ metadata:
 spec:
   ## User to operate.
   user: sample_user
+  withGrantOption: false
   hosts: 
     - "%"
   permissions:
