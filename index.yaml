@@ -2,8 +2,18 @@ apiVersion: v1
 entries:
   mysql-operator:
   - apiVersion: v2
+    appVersion: v2.2.0
+    created: "2022-07-04T10:13:59.206586945Z"
+    description: Open Source，High Availability Cluster，based on MySQL
+    digest: b67ef928d2959f637f97c00d859e5fea60e788db674dcebc3e2a9a329d6b2be8
+    name: mysql-operator
+    type: application
+    urls:
+    - https://radondb.github.io/radondb-mysql-kubernetes/mysql-operator-2.2.0.tgz
+    version: 2.2.0
+  - apiVersion: v2
     appVersion: v2.1.4
-    created: "2022-04-02T07:13:49.03362422Z"
+    created: "2022-07-04T10:13:59.205591008Z"
     description: Open Source，High Availability Cluster，based on MySQL
     digest: 09a80a6cde8b1e91722235b86185dc006233aad8248c7a3aa9a9f89740cfca56
     name: mysql-operator
@@ -13,7 +23,7 @@ entries:
     version: 2.1.4
   - apiVersion: v2
     appVersion: v2.1.3
-    created: "2022-04-02T07:13:49.032666912Z"
+    created: "2022-07-04T10:13:59.204769179Z"
     description: Open Source，High Availability Cluster，based on MySQL
     digest: 9ce5d374ddfdda8f5bb764adb14c24762619080178644b52fc000edd564bd645
     name: mysql-operator
@@ -23,7 +33,7 @@ entries:
     version: 2.1.3
   - apiVersion: v2
     appVersion: v2.1.2
-    created: "2022-04-02T07:13:49.031042199Z"
+    created: "2022-07-04T10:13:59.202574699Z"
     description: Open Source，High Availability Cluster，based on MySQL
     digest: 3c35075705ef930719a9642e4ed4eccab5b26f8b1fa83efa520b1a152df3e524
     name: mysql-operator
@@ -33,7 +43,7 @@ entries:
     version: 0.1.1
   - apiVersion: v2
     appVersion: v2.1.0
-    created: "2022-04-02T07:13:49.030153992Z"
+    created: "2022-07-04T10:13:59.201135747Z"
     description: Open Source，High Availability Cluster，based on MySQL
     digest: 86d0dff77f8bc9a645f4ee6d22d4500f630dca92bbdd9bec4a418e0339e196df
     name: mysql-operator
@@ -41,4 +51,4 @@ entries:
     urls:
     - https://radondb.github.io/radondb-mysql-kubernetes/mysql-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2022-04-02T07:13:49.029144883Z"
+generated: "2022-07-04T10:13:59.199976205Z"
