@@ -569,18 +569,17 @@ func basicEventReason(objKindName string, err error) string {
 // check the backup is exist and running
 func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
 	backuplist := apiv1alpha1.BackupList{}
+	labelSet := labels.Set{"cluster": s.Name}
 	if err := s.cli.List(ctx,
 		&backuplist,
 		&client.ListOptions{
-			Namespace: s.sfs.Namespace,
+			Namespace:     s.sfs.Namespace,
+			LabelSelector: labelSet.AsSelector(),
 		},
 	); err != nil {
 		return false, err
 	}
 	for _, bcp := range backuplist.Items {
-		if bcp.ClusterName != s.ClusterName {
-			continue
-		}
 		if !bcp.Status.Completed {
 			return true, nil
 		}
