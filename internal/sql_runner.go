@@ -345,7 +345,7 @@ func CreateUserIfNotExists(sqlRunner SQLRunner, user *apiv1alpha1.MysqlUser, pas
 	}
 
 	queries := []Query{
-		getCreateUserQuery(userName, pass, hosts),
+		getCreateUserQuery(userName, pass, hosts, user.Spec.TLSOptions),
 		// todo: getAlterUserQuery.
 	}
 
@@ -362,10 +362,15 @@ func CreateUserIfNotExists(sqlRunner SQLRunner, user *apiv1alpha1.MysqlUser, pas
 	return nil
 }
 
-func getCreateUserQuery(user, pwd string, allowedHosts []string) Query {
+func getCreateUserQuery(user, pwd string, allowedHosts []string, tlsOption apiv1alpha1.TLSOptions) Query {
 	idsTmpl, idsArgs := getUsersIdentification(user, &pwd, allowedHosts)
+	idsTmpl += getUserTLSRequire(tlsOption)
 
 	return NewQuery(fmt.Sprintf("CREATE USER IF NOT EXISTS%s", idsTmpl), idsArgs...)
+}
+
+func getUserTLSRequire(tlsOption apiv1alpha1.TLSOptions) string {
+	return fmt.Sprintf(" REQUIRE %s", tlsOption.Type)
 }
 
 func getUsersIdentification(user string, pwd *string, allowedHosts []string) (ids string, args []interface{}) {

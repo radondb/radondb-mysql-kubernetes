@@ -6,6 +6,9 @@ spec:
   ## User to operate.
   user: sample_user
   withGrantOption: false
+  tlsOptions:
+    ## NONE/SSL/X509
+    type: NONE
   hosts: 
     - "%"
   permissions:

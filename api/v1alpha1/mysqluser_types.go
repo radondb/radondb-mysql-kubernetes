@@ -56,6 +56,12 @@ type UserSpec struct {
 	// +optional
 	// +kubebuilder:default:=false
 	WithGrantOption bool `json:"withGrantOption,omitempty"`
+
+	// TLSOptions contains the TLS parameter of the MySQL user.
+	// Enabling SSL/TLS will encrypt the data being sent to and from the database.
+	// https://dev.mysql.com/doc/refman/5.7/en/create-user.html
+	// +kubebuilder:default:={type: "NONE"}
+	TLSOptions TLSOptions `json:"tlsOptions,omitempty"`
 }
 
 type UserOwner struct {
@@ -88,6 +94,15 @@ type UserPermission struct {
 	// Optional parameters can refer to: https://dev.mysql.com/doc/refman/5.7/en/privileges-provided.html.
 	// +kubebuilder:validation:MinItems=1
 	Privileges []string `json:"privileges,omitempty"`
+}
+
+type TLSOptions struct {
+	// TLS options for the client certificates
+	// +kubebuilder:default:=NONE
+	// +kubebuilder:validation:Enum=NONE;SSL;X509;
+	Type string `json:"type,omitempty"`
+
+	// TODO: support Issuer, Subject and Cipher.
 }
 
 // UserStatus defines the observed state of MysqlUser.

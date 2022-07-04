@@ -79,6 +79,22 @@ spec:
                     description: SecretName is the name of secret object.
                     type: string
                 type: object
+              tlsOptions:
+                default:
+                  type: NONE
+                description: TLSOptions contains the TLS parameter of the MySQL user.
+                  Enabling SSL/TLS will encrypt the data being sent to and from the
+                  database. https://dev.mysql.com/doc/refman/5.7/en/create-user.html
+                properties:
+                  type:
+                    default: NONE
+                    description: TLS options for the client certificates
+                    enum:
+                    - NONE
+                    - SSL
+                    - X509
+                    type: string
+                type: object
               user:
                 description: Username is the name of user to be operated. This field
                   should be immutable.
