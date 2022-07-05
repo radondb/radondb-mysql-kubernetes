@@ -20,12 +20,14 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/presslabs/controller-util/meta"
 	"github.com/presslabs/controller-util/syncer"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -37,6 +39,8 @@ import (
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	clustersyncer "github.com/radondb/radondb-mysql-kubernetes/mysqlcluster/syncer"
 )
+
+var clusterFinalizer string = "mysqlcluster-finalizer"
 
 // MysqlClusterReconciler reconciles a MysqlCluster object
 type MysqlClusterReconciler struct {
@@ -99,7 +103,17 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			}
 		}
 	}()
-
+	// Add finalizer if is not added on the resource.
+	if !meta.HasFinalizer(&instance.ObjectMeta, clusterFinalizer) {
+		meta.AddFinalizer(&instance.ObjectMeta, clusterFinalizer)
+		if err = r.Update(ctx, instance.Unwrap()); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+	if !instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		// Delete all the backup cr
+		return ctrl.Result{}, r.deleteAllBackup(ctx, req, instance.Unwrap())
+	}
 	mysqlCMSyncer := clustersyncer.NewMysqlCMSyncer(r.Client, instance)
 	if err = syncer.Sync(ctx, mysqlCMSyncer, r.Recorder); err != nil {
 		return ctrl.Result{}, err
@@ -156,4 +170,37 @@ func (r *MysqlClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Secret{}).
 		Owns(&policyv1beta1.PodDisruptionBudget{}).
 		Complete(r)
+}
+
+// Delte all backup cr
+func (r *MysqlClusterReconciler) deleteAllBackup(ctx context.Context, req ctrl.Request, instance *apiv1alpha1.MysqlCluster) error {
+	log := log.FromContext(ctx).WithName("controllers").WithName("MysqlCluster")
+	if !meta.HasFinalizer(&instance.ObjectMeta, clusterFinalizer) {
+		return nil
+	}
+	defer func() {
+		meta.RemoveFinalizer(&instance.ObjectMeta, clusterFinalizer)
+		// Update resource so it will remove the finalizer.
+		if err := r.Update(ctx, instance); err != nil {
+			log.Error(err, "failed to update cluster")
+		}
+	}()
+	labelSet := labels.Set{"cluster": instance.Name}
+	backuplist := apiv1alpha1.BackupList{}
+	if err := r.List(ctx,
+		&backuplist,
+		&client.ListOptions{
+			Namespace:     instance.Namespace,
+			LabelSelector: labelSet.AsSelector(),
+		},
+	); err != nil {
+		return err
+	}
+	for _, bcp := range backuplist.Items {
+		if err := r.Delete(context.TODO(), &bcp); err != nil {
+			log.Error(err, "failed to delete a backup", "backup", bcp)
+		}
+	}
+
+	return nil
 }
