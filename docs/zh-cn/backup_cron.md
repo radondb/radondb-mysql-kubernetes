@@ -16,19 +16,19 @@ spec:
 
 ## cron 表达式格式
 
-cron 表达式的格式为: `[second] [minute] [hour] [day of month] [month] [day of week]`，即由6个使用空格分隔的字段组成的时间组合。
+cron 表达式的格式为: `[秒] [分] [时] [日] [月] [星期]`，即由6个使用空格分隔的字段组成的时间组合。
 
 
 字段名   | 必配 | 允许值  | 允许的特殊符号
 ----------   | ---------- | --------------  | --------------------------
-Seconds      | Yes        | 0-59            | * / , -
-Minutes      | Yes        | 0-59            | * / , -
-Hours        | Yes        | 0-23            | * / , -
-Day of month | Yes        | 1-31            | * / , - ?
-Month        | Yes        | 1-12 or JAN-DEC | * / , -
-Day of week  | Yes        | 0-6 or SUN-SAT  | * / , - ?
+秒      | 是        | 0-59            | * / , -
+分      | 是        | 0-59            | * / , -
+时        | 是        | 0-23            | * / , -
+日 | 是        | 1-31            | * / , - ?
+月        | 是        | 1-12 or JAN-DEC | * / , -
+星期  | 是        | 0-6 or SUN-SAT  | * / , - ?
 
-> 注意：`Month` 和 `Day of week` 字段值大小写不敏感，即 `SUN`, `Sun`, 和 `sun` 均接受。
+> 注意：`月` 和 `星期` 字段值大小写不敏感，即 `SUN`, `Sun`, 和 `sun` 均接受。
 
 ### 特殊字符
 星号（*）
@@ -55,10 +55,10 @@ Day of week  | Yes        | 0-6 or SUN-SAT  | * / , - ?
 
 你可以用如下的预定义时间来代替 cron 表达式。
 
-Entry                  | Description                                | Equivalent To
+值                  | 描述                                     | 等同于
 -----                  | -----------                                | -------------
-@yearly (or @annually) | Run once a year, midnight, Jan. 1st        | 0 0 0 1 1 *
-@monthly               | Run once a month, midnight, first of month | 0 0 0 1 * *
-@weekly                | Run once a week, midnight between Sat/Sun  | 0 0 0 * * 0
-@daily (or @midnight)  | Run once a day, midnight                   | 0 0 0 * * *
-@hourly                | Run once an hour, beginning of hour        | 0 0 * * * *
+@yearly（或 @annually） | 每年执行一次，在 1 月 1 日夜晚 12 点执行     | 0 0 0 1 1 *
+@monthly               | 每月执行一次，在每月第 1 天 夜晚 12 点执行    | 0 0 0 1 * *
+@weekly                | 每周执行一次，在周六和周日之间的夜晚 12 点执行 | 0 0 0 * * 0
+@daily（或 @midnight）  | 每日执行一次，在夜晚 12 点执行               | 0 0 0 * * *
+@hourly                | 每小时执行一次，在第 1 分钟执行              | 0 0 * * * *
