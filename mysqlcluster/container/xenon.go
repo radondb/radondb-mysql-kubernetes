@@ -50,7 +50,7 @@ func (c *xenon) getCommand() []string {
 func (c *xenon) getEnvVars() []corev1.EnvVar {
 	return []corev1.EnvVar{
 		{
-			Name: "NameSpace",
+			Name: "NAMESPACE",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
 					APIVersion: "v1",
@@ -72,7 +72,26 @@ func (c *xenon) getEnvVars() []corev1.EnvVar {
 
 // getLifecycle get the container lifecycle.
 func (c *xenon) getLifecycle() *corev1.Lifecycle {
-	return nil
+	return &corev1.Lifecycle{
+		PreStop: &corev1.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/bin/bash",
+					"-c",
+					"/xenonchecker preStop",
+				},
+			},
+		},
+		PostStart: &corev1.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/bin/bash",
+					"-c",
+					"/xenonchecker postStart",
+				},
+			},
+		},
+	}
 }
 
 // getResources get the container resources.

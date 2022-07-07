@@ -70,7 +70,7 @@ func TestGetXenonCommand(t *testing.T) {
 func TestGetXenonEnvVar(t *testing.T) {
 	assert.Equal(t, []corev1.EnvVar{
 		{
-			Name: "NameSpace",
+			Name: "NAMESPACE",
 			ValueFrom: &corev1.EnvVarSource{
 				FieldRef: &corev1.ObjectFieldSelector{
 					APIVersion: "v1",
@@ -91,7 +91,28 @@ func TestGetXenonEnvVar(t *testing.T) {
 }
 
 func TestGetXenonLifecycle(t *testing.T) {
-	assert.Nil(t, xenonCase.Lifecycle)
+	lifeCycle := &corev1.Lifecycle{
+		PreStop: &corev1.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/bin/bash",
+					"-c",
+					"/xenonchecker preStop",
+				},
+			},
+		},
+		PostStart: &corev1.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/bin/bash",
+					"-c",
+					"/xenonchecker postStart",
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, lifeCycle, xenonCase.Lifecycle)
 }
 
 func TestGetXenonResources(t *testing.T) {
