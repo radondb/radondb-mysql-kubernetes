@@ -16,7 +16,46 @@ spec:
     singular: mysqluser
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: The name of the MySQL user
+      jsonPath: .spec.user
+      name: UserName
+      type: string
+    - description: Whether the user can grant other users
+      jsonPath: .spec.withGrantOption
+      name: SuperUser
+      type: boolean
+    - description: The hosts that the user is allowed to connect from
+      jsonPath: .spec.hosts
+      name: Hosts
+      type: string
+    - description: TLS type of user
+      jsonPath: .spec.tlsOptions.type
+      name: TLSType
+      type: string
+    - description: The cluster of the user
+      jsonPath: .spec.userOwner.clusterName
+      name: Cluster
+      type: string
+    - description: The namespace of the user
+      jsonPath: .spec.userOwner.nameSpace
+      name: NameSpace
+      type: string
+    - description: The availability of the user
+      jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Available
+      type: string
+    - description: The name of the secret object
+      jsonPath: .spec.secretSelector.secretName
+      name: SecretName
+      priority: 1
+      type: string
+    - description: The key of the secret object
+      jsonPath: .spec.secretSelector.secretKey
+      name: SecretKey
+      priority: 1
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: MysqlUser is the Schema for the users API.

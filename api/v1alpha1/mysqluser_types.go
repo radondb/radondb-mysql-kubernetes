@@ -142,6 +142,15 @@ type MySQLUserCondition struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:subresource:finalizers
+// +kubebuilder:printcolumn:name="UserName",type="string",JSONPath=".spec.user",description="The name of the MySQL user"
+// +kubebuilder:printcolumn:name="SuperUser",type="boolean",JSONPath=".spec.withGrantOption",description="Whether the user can grant other users"
+// +kubebuilder:printcolumn:name="Hosts",type="string",JSONPath=".spec.hosts",description="The hosts that the user is allowed to connect from"
+// +kubebuilder:printcolumn:name="TLSType",type="string",JSONPath=".spec.tlsOptions.type",description="TLS type of user"
+// +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".spec.userOwner.clusterName",description="The cluster of the user"
+// +kubebuilder:printcolumn:name="NameSpace",type="string",JSONPath=".spec.userOwner.nameSpace",description="The namespace of the user"
+// +kubebuilder:printcolumn:name="Available",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description="The availability of the user"
+// +kubebuilder:printcolumn:name="SecretName",type="string",priority=1,JSONPath=".spec.secretSelector.secretName",description="The name of the secret object"
+// +kubebuilder:printcolumn:name="SecretKey",type="string",priority=1,JSONPath=".spec.secretSelector.secretKey",description="The key of the secret object"
 // MysqlUser is the Schema for the users API.
 type MysqlUser struct {
 	metav1.TypeMeta   `json:",inline"`
