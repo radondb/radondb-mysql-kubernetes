@@ -88,7 +88,7 @@ backup-sample   sample_2022526155115   2022-05-26T15:51:15   S3
 
 ## 从备份副本恢复到新集群
 检查您的 S3 bucket，得到您需要的备份文件夹如 `sample_2022526155115`。
-添加 RestoreFrom 字段到 mysql_v1alpha1_backup.yaml 中，如下：
+添加 RestoreFrom 字段到 mysql_v1alpha1_mysqlcluster.yaml 中，如下：
 
 ```yaml
 ...
