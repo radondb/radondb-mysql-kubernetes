@@ -1,4 +1,4 @@
-English | [简体中文](../zh-cn/deploy_backup_restore_nfs.md)
+English | [简体中文](../zh-cn/backup_and_restoration_nfs.md)
 
 # Quickstart for NFS backups
 
@@ -31,7 +31,7 @@ In this way, you can install the Pod and Service of the NFS server in the cluste
 ### 2. Install by kubectl
 ```shell
 kubectl apply -f config/samples/nfs_pv.yaml 
- kubectl apply -f config/samples/nfs_server.yaml 
+kubectl apply -f config/samples/nfs_server.yaml 
 ```
 
 ## Obtain `nfsServerAddress`
@@ -75,7 +75,7 @@ Configure the `nfsServerAddress` attribute to the NFS server address in the `mys
  nfsServerAddress: 10.96.253.82
  ```
  
- > Notice: `restoreFrom` stands for the pathname of the backup. You can get it by checking the path loaded by the NFS server.
+ > Notice: `restoreFrom` stands for the path name of the backup. You can get it by checking the path loaded by the NFS server.
 
 Restore cluster from NFS backup as follows.
 

@@ -32,7 +32,7 @@
 
 💻 [**监控告警**](docs/zh-cn/deploy_monitoring.md)
 
-✍️ [**备份**](docs/zh-cn/deploy_backup_restore_s3.md)
+✍️ [**S3 备份**](docs/zh-cn/backup_and_restoration_s3.md)和 [**NFS 备份**](docs/zh-cn/backup_and_restoration_nfs.md)
 
 🎈 **集群日志管理**
 

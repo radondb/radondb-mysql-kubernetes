@@ -1,4 +1,4 @@
-[English](../en-us/deploy_backup_restore_nfs.md) | 简体中文
+[English](../en-us/backup_restoration_nfs.md) | 简体中文
 
 # NFS 备份快速手册
 

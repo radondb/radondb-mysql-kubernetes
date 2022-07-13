@@ -1,11 +1,12 @@
-English | [简体中文](../zh-cn/deploy_backup_restore_s3.md)
+English | [简体中文](../zh-cn/backup_and_restoration_s3.md)
 
-Contents
-=============
+# Quickstart for S3 backups
+
+## Contents
 
   - [Prerequisites](#Prerequisites)
   - [Overview](#Overview)
-  - [Configure the backup for S3](#Configure-the-backup-for-S3)
+  - [Configure the backup](#Configure-the-backup)
     - [Step 1: Create the Secret file](#Step-1-Create-the-Secret-file)
     - [Step 2: Configure the Secret for the Operator cluster](#Step-2-Configure-the-Secret-for-the-Operator-cluster)
   - [Start the backup](#Start-the-backup)
@@ -17,7 +18,7 @@ Contents
 ## Overview
 This tutorial displays how to back up and restore the deployed RadonDB MySQL Operator cluster.
 
-## Configure the S3 backup
+## Configure the backup
 
 ### Step 1: Create the Secret file
 ```yaml
@@ -44,7 +45,7 @@ Then, create the backup Secret.
 kubectl create -f config/samples/backup_secret.yaml
 ```
 
-### Step 2: Configure the Secret for the Operator cluster
+### Step 2: Configure the backup Secret for the Operator cluster
 Configure the `backupSecretName` property in `mysql_v1alpha1_mysqlcluster.yaml`, for example, `sample-backup-secre`.
 
 ```yaml
@@ -67,14 +68,14 @@ spec:
   clusterName: sample
 
 ```
-| Name | Description  | 
-|------|--------|
-|hostName|pod name in cluser|
-|clusterName|cluster name|
+| Parameter   | Description  |
+| ----------- | ------------ |
+| hostName    | Pod name     |
+| clusterName | Cluster name |
 
 ## Start the backup
 
-Before starting backup, you need to start the cluster.
+Before starting the backup, you need to start the cluster.
 
 ```shell
 kubectl apply -f config/samples/mysql_v1alpha1_backup.yaml
@@ -89,7 +90,7 @@ backup-sample   sample_2022526155115   2022-05-26T15:51:15   S3
 ```
 
 ## Restore the cluster from the backup
-Check the S3 bucket and set the `RestoreFrom` property in the `mysql_v1alpha1_backup.yaml` file to the backup directory, for example, `sample_2022526155115`.
+Check the S3 bucket and set the `RestoreFrom` property in the `mysql_v1alpha1_mysqlcluster.yaml` file to the backup directory, for example, `sample_2022526155115`.
 
 ```yaml
 ...
