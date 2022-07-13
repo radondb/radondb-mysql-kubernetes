@@ -68,7 +68,26 @@ func TestGetXenonCommand(t *testing.T) {
 }
 
 func TestGetXenonEnvVar(t *testing.T) {
-	assert.Nil(t, xenonCase.Env)
+	assert.Equal(t, []corev1.EnvVar{
+		{
+			Name: "NameSpace",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.namespace",
+				},
+			},
+		},
+		{
+			Name: "POD_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.name",
+				},
+			},
+		},
+	}, xenonCase.Env)
 }
 
 func TestGetXenonLifecycle(t *testing.T) {

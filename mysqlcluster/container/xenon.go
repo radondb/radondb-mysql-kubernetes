@@ -48,7 +48,26 @@ func (c *xenon) getCommand() []string {
 
 // getEnvVars get the container env.
 func (c *xenon) getEnvVars() []corev1.EnvVar {
-	return nil
+	return []corev1.EnvVar{
+		{
+			Name: "NameSpace",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.namespace",
+				},
+			},
+		},
+		{
+			Name: "POD_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.name",
+				},
+			},
+		},
+	}
 }
 
 // getLifecycle get the container lifecycle.
