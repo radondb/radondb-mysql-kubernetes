@@ -15,7 +15,7 @@
       * [5.1 Secret](#5.1-Secret)
       * [5.2 MysqlUser](#5.2-MysqlUser)
 
-# 使用 MysqlUser CRD 管理 MySQL用户
+# 使用 MysqlUser CRD 管理 MySQL 用户
 
 ##  1. 前提条件
 
