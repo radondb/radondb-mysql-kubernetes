@@ -362,7 +362,9 @@ func (cfg *Config) buildXenonConf() []byte {
 			"meta-datadir": "%s",
 			"semi-sync-degrade": true,
 			"purge-binlog-disabled": true,
-			"super-idle": false
+			"super-idle": false,
+			"leader-start-command": "/xenonchecker leaderStart",
+			"leader-stop-command"	: "/xenonchecker leaderStop"
 		}
 	}
 	`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser,

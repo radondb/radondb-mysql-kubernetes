@@ -263,7 +263,6 @@ func runInitCommand(cfg *Config) error {
 	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
 	}
-
 	log.Info("init command success")
 	return nil
 }
