@@ -250,7 +250,7 @@ func postStart() error {
 		}
 		gtidSubSet, query, err := HaveErrantTransactions(db, leaderSet, mySet)
 		if err != nil {
-			log.Errorf("can not get errant transactions: %s", err, query)
+			log.Errorf("can not get errant transactions: %s, %s", err, query)
 			return err
 		}
 		if !gtidSubSet {
