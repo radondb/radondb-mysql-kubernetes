@@ -48,6 +48,10 @@ func (c *xenon) getCommand() []string {
 
 // getEnvVars get the container env.
 func (c *xenon) getEnvVars() []corev1.EnvVar {
+	autoRebuild := "false"
+	if c.Spec.XenonOpts.EnableAutoRebuild {
+		autoRebuild = "true"
+	}
 	return []corev1.EnvVar{
 		{
 			Name: "NAMESPACE",
@@ -66,6 +70,10 @@ func (c *xenon) getEnvVars() []corev1.EnvVar {
 					FieldPath:  "metadata.name",
 				},
 			},
+		},
+		{
+			Name:  "AUTO_REBUILD",
+			Value: autoRebuild,
 		},
 	}
 }
