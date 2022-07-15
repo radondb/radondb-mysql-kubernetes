@@ -364,7 +364,7 @@ func (cfg *Config) buildXenonConf() []byte {
 			"purge-binlog-disabled": true,
 			"super-idle": false,
 			"leader-start-command": "/xenonchecker leaderStart",
-			"leader-stop-command"	: "/xenonchecker leaderStop"
+			"leader-stop-command": "/xenonchecker leaderStop"
 		}
 	}
 	`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser,
