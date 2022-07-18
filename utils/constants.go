@@ -191,7 +191,7 @@ const (
 	Leader    RaftRole = "LEADER"
 	Follower  RaftRole = "FOLLOWER"
 	Candidate RaftRole = "CANDIDATE"
-	Unknown   RaftRole = "UNKNOWN"
+	Unknown   RaftRole = "UNKNOW"
 )
 
 const LableRebuild = "rebuild"

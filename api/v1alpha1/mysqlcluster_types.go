@@ -96,6 +96,7 @@ type MysqlClusterSpec struct {
 	// +optional
 	// +kubebuilder:default:=6
 	BackupScheduleJobsHistoryLimit *int `json:"backupScheduleJobsHistoryLimit,omitempty"`
+
 	// Containing CA (ca.crt) and server cert (tls.crt) ,server private key (tls.key) for SSL
 	//+optional
 	TlsSecretName string `json:"tlsSecretName,omitempty"`
@@ -167,6 +168,11 @@ type XenonOpts struct {
 	// +optional
 	// +kubebuilder:default:=10000
 	ElectionTimeout *int32 `json:"electionTimeout,omitempty"`
+
+	// If true, when the data is inconsistent, Xenon will automatically rebuild the invalid node.
+	// +optional
+	// +kubebuilder:default:=false
+	EnableAutoRebuild bool `json:"enableAutoRebuild,omitempty"`
 
 	// The compute resource requirements.
 	// +optional

@@ -1293,6 +1293,11 @@ spec:
                       is millisecond.
                     format: int32
                     type: integer
+                  enableAutoRebuild:
+                    default: false
+                    description: If true, when the data is inconsistent, Xenon will
+                      automatically rebuild the invalid node.
+                    type: boolean
                   image:
                     default: radondb/xenon:1.1.5-alpha
                     description: To specify the image that will be used for xenon
