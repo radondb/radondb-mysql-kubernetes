@@ -97,23 +97,26 @@ type MysqlClusterSpec struct {
 	// +kubebuilder:default:=6
 	BackupScheduleJobsHistoryLimit *int `json:"backupScheduleJobsHistoryLimit,omitempty"`
 
-	// Containing CA (ca.crt) and server cert (tls.crt) ,server private key (tls.key) for SSL
-	//+optional
+	// Containing CA (ca.crt) and server cert (tls.crt), server private key (tls.key) for SSL
+	// +optional
 	TlsSecretName string `json:"tlsSecretName,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.
 type MysqlOpts struct {
+	// Unchangeable: Use super users instead
 	// Password for the root user, can be empty or 8~32 characters long.
 	// Only be a combination of uppercase letters, lowercase letters, numbers or special characters.
 	// Special characters are supported: @#$%^&*_+-=.
 	// +optional
 	// +kubebuilder:default:=""
-	// +kubebuilder:validation:Pattern="^$|^[A-Za-z0-9@#$%^&*_+\\-=]{8,32}$"
+	// +kubebuilder:validation:Enum=""
 	RootPassword string `json:"rootPassword,omitempty"`
 
+	// Unchangeable: Use super users instead.
 	// The root user's host.
 	// +optional
+	// +kubebuilder:validation:Enum=localhost
 	// +kubebuilder:default:="localhost"
 	RootHost string `json:"rootHost,omitempty"`
 

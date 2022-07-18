@@ -14,8 +14,6 @@ spec:
   # restoreFrom: 
   
   mysqlOpts:
-    rootPassword: "RadonDB@123"
-    rootHost: localhost
     user: radondb_usr
     password: RadonDB@123
     database: radondb
