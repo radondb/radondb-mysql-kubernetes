@@ -132,9 +132,12 @@ var mysqlStaticConfigs = map[string]string{
 	//"innodb_log_file_size":        "1073741824",
 	"innodb_log_files_in_group": "2",
 	"innodb_flush_method":       "O_DIRECT",
-	"innodb_use_native_aio":     "1",
-	"innodb_autoinc_lock_mode":  "2",
-	"performance_schema":        "1",
+
+	// TODO(cluster): Some machine do not support native aio.
+	//"innodb_use_native_aio": "1",
+
+	"innodb_autoinc_lock_mode": "2",
+	"performance_schema":       "1",
 }
 
 // mysqlTokudbConfigs is the map of the mysql tokudb configs.
