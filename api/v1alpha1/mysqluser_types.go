@@ -51,6 +51,17 @@ type UserSpec struct {
 	// Permissions is the list of roles that user has in the specified database.
 	// +optional
 	Permissions []UserPermission `json:"permissions,omitempty"`
+
+	// WithGrantOption is the flag to indicate whether the user has grant option.
+	// +optional
+	// +kubebuilder:default:=false
+	WithGrantOption bool `json:"withGrantOption,omitempty"`
+
+	// TLSOptions contains the TLS parameter of the MySQL user.
+	// Enabling SSL/TLS will encrypt the data being sent to and from the database.
+	// https://dev.mysql.com/doc/refman/5.7/en/create-user.html
+	// +kubebuilder:default:={type: "NONE"}
+	TLSOptions TLSOptions `json:"tlsOptions,omitempty"`
 }
 
 type UserOwner struct {
@@ -83,6 +94,15 @@ type UserPermission struct {
 	// Optional parameters can refer to: https://dev.mysql.com/doc/refman/5.7/en/privileges-provided.html.
 	// +kubebuilder:validation:MinItems=1
 	Privileges []string `json:"privileges,omitempty"`
+}
+
+type TLSOptions struct {
+	// TLS options for the client certificates
+	// +kubebuilder:default:=NONE
+	// +kubebuilder:validation:Enum=NONE;SSL;X509;
+	Type string `json:"type,omitempty"`
+
+	// TODO: support Issuer, Subject and Cipher.
 }
 
 // UserStatus defines the observed state of MysqlUser.
@@ -122,6 +142,15 @@ type MySQLUserCondition struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:subresource:finalizers
+// +kubebuilder:printcolumn:name="UserName",type="string",JSONPath=".spec.user",description="The name of the MySQL user"
+// +kubebuilder:printcolumn:name="SuperUser",type="boolean",JSONPath=".spec.withGrantOption",description="Whether the user can grant other users"
+// +kubebuilder:printcolumn:name="Hosts",type="string",JSONPath=".spec.hosts",description="The hosts that the user is allowed to connect from"
+// +kubebuilder:printcolumn:name="TLSType",type="string",JSONPath=".spec.tlsOptions.type",description="TLS type of user"
+// +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".spec.userOwner.clusterName",description="The cluster of the user"
+// +kubebuilder:printcolumn:name="NameSpace",type="string",JSONPath=".spec.userOwner.nameSpace",description="The namespace of the user"
+// +kubebuilder:printcolumn:name="Available",type="string",JSONPath=".status.conditions[?(@.type==\"Ready\")].status",description="The availability of the user"
+// +kubebuilder:printcolumn:name="SecretName",type="string",priority=1,JSONPath=".spec.secretSelector.secretName",description="The name of the secret object"
+// +kubebuilder:printcolumn:name="SecretKey",type="string",priority=1,JSONPath=".spec.secretSelector.secretKey",description="The key of the secret object"
 // MysqlUser is the Schema for the users API.
 type MysqlUser struct {
 	metav1.TypeMeta   `json:",inline"`

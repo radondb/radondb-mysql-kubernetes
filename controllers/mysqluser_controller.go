@@ -183,8 +183,7 @@ func (r *MysqlUserReconciler) reconcileUserInDB(ctx context.Context, mysqlUser *
 
 	// Create/Update user in database.
 	userLog.Info("creating mysql user", "key", mysqlUser.GetKey(), "username", mysqlUser.Spec.User, "cluster", mysqlUser.GetClusterKey())
-	if err := internal.CreateUserIfNotExists(sqlRunner, mysqlUser.Spec.User, password, mysqlUser.Spec.Hosts,
-		mysqlUser.Spec.Permissions); err != nil {
+	if err := internal.CreateUserIfNotExists(sqlRunner, mysqlUser.Unwrap(), password); err != nil {
 		return err
 	}
 
