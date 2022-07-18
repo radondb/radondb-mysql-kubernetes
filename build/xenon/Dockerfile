@@ -4,12 +4,12 @@
 
 FROM golang:1.16 as builder
 
-ARG XENON_BRANCH=origin_test
+ARG XENON_BRANCH=master
 RUN go env -w GOPROXY=https://goproxy.cn,direct && go env -w GO111MODULE=off; 
 RUN set -ex; \
     mkdir -p /go/src/github.com/radondb; \
     cd /go/src/github.com/radondb; \
-    git clone --branch $XENON_BRANCH https://github.com/zhl003/xenon.git; \
+    git clone --branch $XENON_BRANCH https://github.com/radondb/xenon.git; \
     cd xenon;  \
     make build
 WORKDIR /workspace

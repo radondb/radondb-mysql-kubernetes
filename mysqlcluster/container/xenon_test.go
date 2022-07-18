@@ -87,6 +87,10 @@ func TestGetXenonEnvVar(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name:  "AUTO_REBUILD",
+			Value: "false",
+		},
 	}, xenonCase.Env)
 }
 
