@@ -280,10 +280,12 @@ func enableAutoRebuild() bool {
 }
 
 func runCommandLocal(cmd []string) (bytes.Buffer, string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
 	var stdout, stderr bytes.Buffer
 	var err error
 	log.Debugf("command to execute is [%s]", strings.Join(cmd, " "))
-	cmd_ := exec.Command(cmd[0], cmd[1:]...)
+	cmd_ := exec.CommandContext(ctx, cmd[0], cmd[1:]...)
 	cmd_.Stdout = &stdout
 	cmd_.Stderr = &stderr
 	err = cmd_.Run()
@@ -437,6 +439,7 @@ func disableMyRaft() error {
 	raftDisableCommand := []string{"bash", "-c", raftDisableCommand}
 	if _, stdErr, err := runCommandLocal(raftDisableCommand); err != nil {
 		log.Errorf("failed to disable my raft: %s", stdErr)
+		return err
 	}
 	return nil
 }
