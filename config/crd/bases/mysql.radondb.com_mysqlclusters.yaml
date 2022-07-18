@@ -205,15 +205,19 @@ spec:
                     type: object
                   rootHost:
                     default: localhost
-                    description: The root user's host.
+                    description: 'Unchangeable: Use super users instead. The root
+                      user''s host.'
+                    enum:
+                    - localhost
                     type: string
                   rootPassword:
                     default: ""
-                    description: 'Password for the root user, can be empty or 8~32
-                      characters long. Only be a combination of uppercase letters,
-                      lowercase letters, numbers or special characters. Special characters
-                      are supported: @#$%^&*_+-=.'
-                    pattern: ^$|^[A-Za-z0-9@#$%^&*_+\-=]{8,32}$
+                    description: 'Unchangeable: Use super users instead Password for
+                      the root user, can be empty or 8~32 characters long. Only be
+                      a combination of uppercase letters, lowercase letters, numbers
+                      or special characters. Special characters are supported: @#$%^&*_+-=.'
+                    enum:
+                    - ""
                     type: string
                   user:
                     default: radondb_usr
@@ -1265,7 +1269,7 @@ spec:
                   path.
                 type: string
               tlsSecretName:
-                description: Containing CA (ca.crt) and server cert (tls.crt) ,server
+                description: Containing CA (ca.crt) and server cert (tls.crt), server
                   private key (tls.key) for SSL
                 type: string
               xenonOpts:
