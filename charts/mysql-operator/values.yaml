@@ -51,6 +51,8 @@ rbacProxy:
 
 leaderElection:
   create: true
+  leaseDuration: 15s
+  renewDeadline: 10s
 
 serviceMonitor:
   enabled: true
