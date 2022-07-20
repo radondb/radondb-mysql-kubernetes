@@ -36,7 +36,7 @@
 
 🎈 **集群日志管理**
 
-👨 [**账户管理**](docs/zh-cn/mgt_mysqluser.md)
+👨 [**账户管理**](docs/zh-cn/manage_mysql_user.md)
 
 
 ## 架构图
