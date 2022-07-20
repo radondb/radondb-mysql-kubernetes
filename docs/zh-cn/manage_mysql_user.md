@@ -1,4 +1,4 @@
-[English](../en-us/mgt_mysqlusser.md) | 简体中文
+[English](../en-us/manage_mysql_user.md) | 简体中文
 
 目录
 ==========
