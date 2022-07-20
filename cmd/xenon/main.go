@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
@@ -15,10 +16,25 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	. "github.com/radondb/radondb-mysql-kubernetes/utils"
 	log "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/remotecommand"
 )
+
+type KubeAPI struct {
+	Client *kubernetes.Clientset
+	Config *rest.Config
+}
+
+type runRemoteCommandConfig struct {
+	container, namespace, podName string
+}
 
 const (
 	leaderStopCommand  = "kill -9 $(pidof mysqld)"
@@ -115,65 +131,80 @@ func leaderStop() error {
 		log.Info("I am readonly, skip the leader stop")
 		os.Exit(0)
 	}
+	ch := make(chan error)
+	go func() {
+		defer func() {
+			if err := enableMyRaft(); err != nil {
+				log.Error(err)
+			}
+		}()
 
-	// Step 1: disable event scheduler
-	log.Info("Disabling event scheduler")
-	stmt, err := SetEventScheduler(conn, false)
-	if err != nil {
-		return fmt.Errorf("failed to disable event scheduler: %s", err.Error())
+		log.Info("Raft disable")
+		if err := disableMyRaft(); err != nil {
+			log.Errorf("failed to failover: %v", err)
+			ch <- err
+		}
+
+		// Step 1: disable event scheduler
+		log.Info("Disabling event scheduler")
+		stmt, err := SetEventScheduler(conn, false)
+		if err != nil {
+			ch <- err
+		}
+		log.Infof("set event scheduler to false: %s", stmt)
+
+		// Step 2: set readonly
+		log.Info("Setting readonly")
+		stmt, err = SetReadOnly(conn, true)
+		if err != nil {
+			ch <- err
+		}
+		log.Infof("set readonly to true: %s", stmt)
+
+		// Step 3: check long running writes
+		log.Info("Checking long running writes")
+		num, stmt, err := CheckLongRunningWrites(conn, 4)
+		if err != nil {
+			ch <- err
+		}
+		log.Infof("%d,long running writes: %s", num, stmt)
+
+		// TODO: Step 4: set max connections
+
+		// Step 5: kill threads
+		log.Info("Killing threads")
+		err = KillThreads(conn)
+		if err != nil {
+			ch <- err
+		}
+
+		// Step 6: FlushTablesWithReadLock
+		log.Info("Flushing tables with read lock")
+		stmt, err = FlushTablesWithReadLock(conn)
+		if err != nil {
+			ch <- err
+		}
+		log.Info("flushed tables with read lock: ", stmt)
+
+		// Step 7: FlushBinaryLogs
+		log.Info("Flushing binary logs")
+		stmt, err = FlushBinaryLogs(conn)
+		if err != nil {
+			ch <- err
+		}
+		log.Info("flushed binary logs:", stmt)
+	}()
+	select {
+	case err := <-ch:
+		return err
+	case <-time.After(5 * time.Second):
+		log.Info("timeout")
+		if err := killMysqld(); err != nil {
+			return err
+		}
+		return nil
 	}
-	log.Infof("set event scheduler to false: %s", stmt)
 
-	// Step 2: set readonly
-	log.Info("Setting readonly")
-	stmt, err = SetReadOnly(conn, true)
-	if err != nil {
-		return fmt.Errorf("failed to set readonly: %s", err.Error())
-	}
-	log.Infof("set readonly to true: %s", stmt)
-
-	// Step 3: check long running writes
-	log.Info("Checking long running writes")
-	num, stmt, err := CheckLongRunningWrites(conn, 4)
-	if err != nil {
-		return fmt.Errorf("failed to check long running writes: %s", err.Error())
-	}
-	log.Infof("%d,long running writes: %s", num, stmt)
-
-	// TODO: Step 4: set max connections
-
-	// Step 5: kill threads
-	log.Info("Killing threads")
-	err = KillThreads(conn)
-	if err != nil {
-		return fmt.Errorf("failed to kill threads: %s", err.Error())
-	}
-
-	// Step 6: FlushTablesWithReadLock
-	log.Info("Flushing tables with read lock")
-	stmt, err = FlushTablesWithReadLock(conn)
-	if err != nil {
-		return fmt.Errorf("failed to flush tables with read lock: %s", err.Error())
-	}
-	log.Info("flushed tables with read lock: ", stmt)
-
-	// Step 7: FlushBinaryLogs
-	log.Info("Flushing binary logs")
-	stmt, err = FlushBinaryLogs(conn)
-	if err != nil {
-		return fmt.Errorf("failed to flush binary logs: %s", err.Error())
-	}
-	log.Info("flushed binary logs:", stmt)
-
-	// Step 8: Failover
-	log.Info("Failover")
-	time.Sleep(2 * time.Second)
-	if err := DoFailOver(); err != nil {
-		return fmt.Errorf("failed to failover: %s", err.Error())
-	}
-
-	log.Info("leader stop finished")
-	return nil
 }
 
 func liveness() error {
@@ -424,7 +455,7 @@ func DoFailOver() error {
 	if err := disableMyRaft(); err != nil {
 		return err
 	}
-	return WaitForNewLeader(time.Minute * 2)
+	return nil
 }
 
 func enableMyRaft() error {
@@ -531,6 +562,94 @@ func patchPodLabel(n MySQLNode, patch string) error {
 	_, err = clientset.CoreV1().Pods(n.Namespace).Patch(context.TODO(), n.PodName, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (k *KubeAPI) Exec(namespace, pod, container string, stdin io.Reader, command []string) (string, string, error) {
+	var stdout, stderr bytes.Buffer
+
+	var Scheme = runtime.NewScheme()
+	if err := corev1.AddToScheme(Scheme); err != nil {
+		log.Fatalf("failed to add to scheme: %v", err)
+		return "", "", err
+	}
+	var ParameterCodec = runtime.NewParameterCodec(Scheme)
+
+	request := k.Client.CoreV1().RESTClient().Post().
+		Resource("pods").SubResource("exec").
+		Namespace(namespace).Name(pod).
+		VersionedParams(&corev1.PodExecOptions{
+			Container: container,
+			Command:   command,
+			Stdin:     stdin != nil,
+			Stdout:    true,
+			Stderr:    true,
+		}, ParameterCodec)
+
+	exec, err := remotecommand.NewSPDYExecutor(k.Config, "POST", request.URL())
+
+	if err == nil {
+		err = exec.Stream(remotecommand.StreamOptions{
+			Stdin:  stdin,
+			Stdout: &stdout,
+			Stderr: &stderr,
+		})
+	}
+
+	return stdout.String(), stderr.String(), err
+}
+
+func runRemoteCommand(kubeapi *KubeAPI, cfg runRemoteCommandConfig, cmd []string) (string, string, error) {
+	bashCmd := []string{"bash"}
+	reader := strings.NewReader(strings.Join(cmd, " "))
+	return kubeapi.Exec(cfg.namespace, cfg.podName, cfg.container, reader, bashCmd)
+}
+
+func NewForConfig(config *rest.Config) (*KubeAPI, error) {
+	var api KubeAPI
+	var err error
+
+	api.Config = config
+	api.Client, err = kubernetes.NewForConfig(api.Config)
+
+	return &api, err
+}
+
+func NewConfig() (*rest.Config, error) {
+	// The default loading rules try to read from the files specified in the
+	// environment or from the home directory.
+	loader := clientcmd.NewDefaultClientConfigLoadingRules()
+
+	// The deferred loader tries an in-cluster config if the default loading
+	// rules produce no results.
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		loader, &clientcmd.ConfigOverrides{}).ClientConfig()
+}
+
+func killMysqld() error {
+	config, err := NewConfig()
+	if err != nil {
+		panic(err)
+	}
+	k, err := NewForConfig(config)
+	if err != nil {
+		panic(err)
+	}
+	cfg := runRemoteCommandConfig{
+		podName:   podName,
+		namespace: ns,
+		container: "mysql",
+	}
+
+	killMySQLCommand := []string{leaderStopCommand}
+	log.Infof("killing mysql command: %s", leaderStopCommand)
+	var output, stderr string
+	output, stderr, err = runRemoteCommand(k, cfg, killMySQLCommand)
+	log.Info("output=[" + output + "]")
+	log.Info("stderr=[" + stderr + "]")
+	if err != nil {
+		log.Fatal(err)
 	}
 	return nil
 }
