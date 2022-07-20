@@ -57,7 +57,7 @@ kubectl exec -it svc/sample-leader -c mysql -- mysql -usuper_user -pRadonDB@123
 
 ##  4. 删除用户
 
-运行如下指令将删除示例中创建的 MysqlUser CRD 和对应的用户。
+运行如下指令将删除示例中创建的 `MysqlUser` CRD 和对应的用户。
 
 ```plain
 kubectl delete mysqluser normal-user super-user
@@ -81,4 +81,4 @@ kubectl delete mysqluser normal-user super-user
 
 > 详情请参考 https://dev.mysql.com/doc/refman/5.7/en/account-management-statements.html
 
-> **注意：** 直接修改 `spec.user` （用户名）等同于以新用户名创建一个用户。如需创建多个用户，请确保 `metadata.name`（CR 实例名）与 `spec.user`（用户名）一一对应。
+> **注意：** 直接修改 `spec.user` （用户名）等同于以新用户名创建一个用户。如需创建多个用户，请确保 `metadata.name`（CRD 实例名）与 `spec.user`（用户名）一一对应。
