@@ -64,7 +64,7 @@ func TestGetXenonImage(t *testing.T) {
 }
 
 func TestGetXenonCommand(t *testing.T) {
-	assert.Nil(t, xenonCase.Command)
+	assert.Equal(t, []string{"xenon", "-c", "/etc/xenon/xenon.json"}, xenonCase.Command)
 }
 
 func TestGetXenonEnvVar(t *testing.T) {

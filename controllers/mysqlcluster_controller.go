@@ -38,6 +38,7 @@ import (
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	clustersyncer "github.com/radondb/radondb-mysql-kubernetes/mysqlcluster/syncer"
+	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
 var clusterFinalizer string = "mysqlcluster-finalizer"
@@ -137,12 +138,23 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		clustersyncer.NewServiceAccountSyncer(r.Client, instance),
 		clustersyncer.NewHeadlessSVCSyncer(r.Client, instance),
 		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
-		clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
-		clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, r.SQLRunnerFactory, r.XenonExecutor),
-		clustersyncer.NewPDBSyncer(r.Client, instance),
-		clustersyncer.NewXenonCMSyncer(r.Client, instance),
 	}
-
+	if *instance.Unwrap().Spec.Replicas == 1 {
+		// Delete follower service
+		r.deleteFollowerService(ctx, req, instance.Unwrap())
+		syncers = append(syncers,
+			clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, r.SQLRunnerFactory, r.XenonExecutor),
+			clustersyncer.NewPDBSyncer(r.Client, instance),
+			clustersyncer.NewXenonCMSyncer(r.Client, instance),
+		)
+	} else {
+		syncers = append(syncers,
+			clustersyncer.NewFollowerSVCSyncer(r.Client, instance),
+			clustersyncer.NewStatefulSetSyncer(r.Client, instance, cmRev, sctRev, r.SQLRunnerFactory, r.XenonExecutor),
+			clustersyncer.NewPDBSyncer(r.Client, instance),
+			clustersyncer.NewXenonCMSyncer(r.Client, instance),
+		)
+	}
 	if instance.Spec.MetricsOpts.Enabled {
 		syncers = append(syncers, clustersyncer.NewMetricsSVCSyncer(r.Client, instance))
 	}
@@ -202,5 +214,27 @@ func (r *MysqlClusterReconciler) deleteAllBackup(ctx context.Context, req ctrl.R
 		}
 	}
 
+	return nil
+}
+
+// For SingleNode, follower service do not need.
+func (r *MysqlClusterReconciler) deleteFollowerService(ctx context.Context, req ctrl.Request, instance *apiv1alpha1.MysqlCluster) error {
+	log := log.FromContext(ctx).WithName("controllers").WithName("MysqlCluster")
+	labelSet := labels.Set{"mysql.radondb.com/service-type": string(utils.FollowerService)}
+	serviceList := corev1.ServiceList{}
+	if err := r.List(ctx,
+		&serviceList,
+		&client.ListOptions{
+			Namespace:     instance.Namespace,
+			LabelSelector: labelSet.AsSelector(),
+		},
+	); err != nil {
+		return err
+	}
+	for _, svc := range serviceList.Items {
+		if err := r.Delete(context.TODO(), &svc); err != nil {
+			log.Error(err, "failed to delete a backup", "backup", svc)
+		}
+	}
 	return nil
 }

@@ -43,7 +43,11 @@ func (c *xenon) getImage() string {
 
 // getCommand get the container command.
 func (c *xenon) getCommand() []string {
-	return nil
+	if *c.Spec.Replicas == 1 {
+		return []string{"xenon", "-c", "/etc/xenon/xenon.json", "-r", "LEADER"}
+	}
+	// If return nil, statefulset never update command , And I don't know why.
+	return []string{"xenon", "-c", "/etc/xenon/xenon.json"}
 }
 
 // getEnvVars get the container env.
