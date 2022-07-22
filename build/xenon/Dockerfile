@@ -5,7 +5,7 @@
 FROM golang:1.16 as builder
 
 ARG XENON_BRANCH=master
-RUN RUN if [ $(cat /etc/timezone) = "Asia/Shanghai" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi && go env -w GO111MODULE=off; 
+RUN if [ $(cat /etc/timezone) = "Asia/Shanghai" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi && go env -w GO111MODULE=off; 
 RUN set -ex; \
     mkdir -p /go/src/github.com/radondb; \
     cd /go/src/github.com/radondb; \
