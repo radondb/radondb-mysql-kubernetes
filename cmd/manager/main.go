@@ -20,6 +20,7 @@ import (
 	"flag"
 	"os"
 	"sync"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -55,11 +56,15 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var leaseDuration time.Duration
+	var renewDeadline time.Duration
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.DurationVar(&leaseDuration, "lease-duration", time.Second*15, "The duration that non-leader candidates will wait to force acquire leadership, this is measured against time of last observed ack.")
+	flag.DurationVar(&renewDeadline, "renew-deadline", time.Second*10, "The duration that the acting controlplane will retry refreshing leadership before giving up.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -75,6 +80,8 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "2175edb9.radondb.com",
+		LeaseDuration:          &leaseDuration,
+		RenewDeadline:          &renewDeadline,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
