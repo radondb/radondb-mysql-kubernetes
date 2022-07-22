@@ -52,8 +52,8 @@ var (
 	// dataPath is the mysql data path.
 	dataPath = utils.DataVolumeMountPath
 
-	// // scriptsPath is the scripts path used for xenon.
-	// scriptsPath = utils.ScriptsVolumeMountPath
+	// scriptsPath is the scripts path used for xenon.
+	scriptsPath = utils.ScriptsVolumeMountPath
 
 	// sysPath is the linux kernel path used for install tokudb.
 	sysPath = utils.SysVolumeMountPath
