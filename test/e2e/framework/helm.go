@@ -20,18 +20,23 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	. "github.com/onsi/gomega"
 )
 
 func HelmInstallChart(release, ns string) {
+	strs := strings.Split(TestContext.OperatorImagePath, ":")
+	if len(strs) != 2 {
+		Failf(fmt.Sprintf("Invalid operator image path: %s", TestContext.OperatorImagePath))
+	}
 	args := []string{
 		"install", release, "./" + TestContext.ChartPath,
 		"--namespace", ns,
 		"--values", TestContext.ChartValues, "--wait",
 		"--kube-context", TestContext.KubeContext,
-		"--set", fmt.Sprintf("manager.image=%s", TestContext.OperatorImagePath),
-		"--set", fmt.Sprintf("manager.tag=%s", TestContext.OperatorImageTag),
+		"--set", fmt.Sprintf("manager.image=%s", strs[0]),
+		"--set", fmt.Sprintf("manager.tag=%s", strs[1]),
 	}
 
 	cmd := exec.Command("helm", args...)

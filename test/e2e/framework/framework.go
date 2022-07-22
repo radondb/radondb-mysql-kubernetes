@@ -59,7 +59,7 @@ func (f *Framework) BeforeEach() {
 	// https://github.com/onsi/ginkgo/issues/222
 	f.Timeout = time.Duration(TestContext.TimeoutSeconds) * time.Second
 
-	By("creating a kubernetes client")
+	By("Creating a kubernetes client")
 	cfg, err := LoadConfig()
 	Expect(err).NotTo(HaveOccurred())
 

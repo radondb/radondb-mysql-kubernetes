@@ -27,25 +27,25 @@ import (
 
 var Log = logf.Log.WithName("framework.util")
 
+// Default values of the test config.
 const (
-	// The namespace where the resource created by E2E.
-	RadondbMysqlE2eNamespace = "radondb-mysql-e2e"
-	// The name of the Operator to create.
-	OperatorReleaseName = "e2e-test"
 	// Export POD logs and test overview.
 	DumpLogs = true
 	// Optional directory to store junit and pod logs output in.
 	// If not specified, it will beset to the current date.
-	ReportDirPrefix = ""
+	LogDirPrefix = ""
 
 	// Specify the directory that Helm Install will be executed.
 	ChartPath = "../../charts/mysql-operator"
 	// Image path of mysql operator.
-	OperatorImagePath = "radondb/mysql-operator"
-	// Image tag of mysql operator.
-	OperatorImageTag = "latest"
+	OperatorImagePath = "radondb/mysql-operator:v2.2.0-alpha.1"
 	// Image path for mysql sidecar.
-	SidecarImage = "radondb/mysql-sidecar:latest"
+	SidecarImagePath = "radondb/mysql57-sidecar:v2.2.0-alpha.1"
+
+	// The namespace where the resource created by E2E.
+	RadondbMysqlE2eNamespace = "radondb-mysql-e2e"
+	// The name of the Operator to create.
+	OperatorReleaseName = "e2e-test"
 
 	// How often to Poll pods, nodes and claims.
 	Poll = 2 * time.Second
@@ -64,14 +64,15 @@ type TestContextType struct {
 	KubeConfig  string
 	KubeContext string
 
-	ReportDirPrefix string
+	LogDirPrefix string
 
 	ChartPath   string
 	ChartValues string
 
 	OperatorImagePath string
-	OperatorImageTag  string
-	SidecarImage      string
+	SidecarImagePath  string
+
+	MysqlVersion string
 
 	TimeoutSeconds int
 	DumpLogs       bool
@@ -85,15 +86,16 @@ func RegisterCommonFlags() {
 	flag.StringVar(&TestContext.KubeConfig, "kubernetes-config", os.Getenv(clientcmd.RecommendedConfigPathEnvVar), "Path to config containing embedded authinfo for kubernetes. Default value is from environment variable "+clientcmd.RecommendedConfigPathEnvVar)
 	flag.StringVar(&TestContext.KubeContext, "kubernetes-context", "", "config context to use for kuberentes. If unset, will use value from 'current-context'")
 
-	flag.StringVar(&TestContext.ReportDirPrefix, "report-dir", ReportDirPrefix, "Optional directory to store logs output in.")
+	flag.StringVar(&TestContext.LogDirPrefix, "log-dir-prefix", LogDirPrefix, "Prefix of the log directory.")
 
-	flag.StringVar(&TestContext.ChartPath, "operator-chart-path", ChartPath, "The chart name or path for mysql operator")
-	flag.StringVar(&TestContext.OperatorImagePath, "operator-image-path", OperatorImagePath, "Image tag of mysql operator.")
-	flag.StringVar(&TestContext.OperatorImageTag, "operator-image-tag", OperatorImageTag, "Image tag of mysql operator.")
-	flag.StringVar(&TestContext.SidecarImage, "sidecar-image", SidecarImage, "Image path of mysql sidecar.")
+	flag.StringVar(&TestContext.ChartPath, "chart-path", ChartPath, "The chart name or path for mysql operator")
+	flag.StringVar(&TestContext.OperatorImagePath, "operator-image-path", OperatorImagePath, "Image path of mysql operator.")
+	flag.StringVar(&TestContext.SidecarImagePath, "sidecar-image-path", SidecarImagePath, "Image path of mysql sidecar.")
+
+	flag.StringVar(&TestContext.MysqlVersion, "mysql-version", "5.7", "The version of mysql to be installed.")
 
 	flag.IntVar(&TestContext.TimeoutSeconds, "pod-wait-timeout", 1200, "Timeout to wait for a pod to be ready.")
-	flag.BoolVar(&TestContext.DumpLogs, "dump-logs-on-failure", DumpLogs, "Dump logs.")
+	flag.BoolVar(&TestContext.DumpLogs, "dump-logs", false, "Dump logs when test case failed.")
 }
 
 func RegisterParseFlags() {
