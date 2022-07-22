@@ -17,11 +17,16 @@ on:
         required: true
         default: true
         type: boolean
+      build_xenon:
+        description: ""
+        required: true
+        default: true
+        type: boolean
 
 jobs:
   build_operator:
     uses: radondb/radondb-mysql-kubernetes/.github/workflows/build_operator_image.yml@main
-    if: ${{ github.event.inputs.build_operator }}
+    if: ${{ github.event.inputs.build_operator == 'true' }}
     with:
       image_tag: ${{ github.event.inputs.tag }}
     secrets: 
@@ -30,7 +35,16 @@ jobs:
 
   build_sidecar:
     uses: radondb/radondb-mysql-kubernetes/.github/workflows/build_sidecar_image.yml@main
-    if: ${{ github.event.inputs.build_sidecar }}
+    if: ${{ github.event.inputs.build_sidecar == 'true' }}
+    with:
+      image_tag: ${{ github.event.inputs.tag }} 
+    secrets: 
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  build_xenon:
+    uses: radondb/radondb-mysql-kubernetes/.github/workflows/build_xenon_image.yml@main
+    if: ${{ github.event.inputs.build_xenon == 'true' }}
     with:
       image_tag: ${{ github.event.inputs.tag }} 
     secrets: 
