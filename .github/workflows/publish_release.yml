@@ -10,14 +10,14 @@ on:
 
 jobs: 
   update_release_draft:
-    uses: radondb/radondb-mysql-kubernetes/.github/workflows/release_drafter.yml@main
+    uses: ./.github/workflows/release_drafter.yml
     with:
       version: ${{ github.event.inputs.version }}
     secrets:
       git_token: ${{ secrets.GITHUB_TOKEN }}
   
   build_operator:
-    uses: radondb/radondb-mysql-kubernetes/.github/workflows/build_operator_image.yml@main
+    uses: ./.github/workflows/build_operator_image.yml
     needs: update_release_draft
     with:
       image_tag: ${{ needs.update_release_draft.outputs.version }}
@@ -26,7 +26,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   build_sidecar:
-    uses: radondb/radondb-mysql-kubernetes/.github/workflows/build_sidecar_image.yml@main
+    uses: ./.github/workflows/build_sidecar_image.yml
     needs: update_release_draft
     with:
       image_tag: ${{ needs.update_release_draft.outputs.version }} 
@@ -35,7 +35,7 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   publish_chart:
-    uses: radondb/radondb-mysql-kubernetes/.github/workflows/publish_charts.yml@main
+    uses: ./.github/workflows/publish_charts.yml
     if: ${{ github.event.inputs.version == '' }}
     needs: update_release_draft
     with:
