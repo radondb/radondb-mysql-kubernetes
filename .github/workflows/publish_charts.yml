@@ -6,6 +6,9 @@ on:
       version:
         required: true
         type: string
+      upload_url:
+        required: true 
+        type: string
 
 jobs:
   build:
@@ -22,9 +25,11 @@ jobs:
           version: v3.6.3
 
       - name: Modify chart version
+        id: chart_version
         run: |
           input=${{ inputs.version }}
           chart_version=${input#*v}
+          echo "::set-output name=asset_name::mysql-operator-$chart_version.tgz"
           sed -i "/^version:*/cversion: $chart_version" ./charts/mysql-operator/Chart.yaml
 
       - name: Modify appVersion
@@ -38,10 +43,20 @@ jobs:
       - name: Packaging the chart
         run: helm package ./charts/mysql-operator/
 
+      - name: Upload asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ inputs.upload_url }} 
+          asset_path: ./${{ steps.chart_version.outputs.asset_name }}
+          asset_name: ${{ steps.chart_version.outputs.asset_name }}
+          asset_content_type: application/gzip
+
       - uses: actions/upload-artifact@v2
         with:
           name: mysql-operator-chart
-          path: ./mysql-operator-*.tgz
+          path: ./${{ steps.chart_version.outputs.asset_name }}
           retention-days: 1
 
   publish:

@@ -15,11 +15,16 @@ on:
       version:
         description: "The release version"
         value: ${{ jobs.update_release_draft.outputs.version }}
+      upload_url:
+        description: "The URL of uploading assets"
+        value: ${{ jobs.update_release_draft.outputs.upload_url }}
+
 jobs: 
     update_release_draft:
       runs-on: ubuntu-latest
       outputs:
         version: ${{ steps.draft.outputs.tag_name }}
+        upload_url: ${{ steps.draft.outputs.upload_url }}
       steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -57,4 +62,14 @@ jobs:
           upload_url: ${{ steps.draft.outputs.upload_url }} 
           asset_path: ./config/samples/mysql_v1alpha1_mysqlcluster_mysql8.yaml
           asset_name: mysql_v1alpha1_mysqlcluster_mysql8.yaml
+          asset_content_type: application/x-yaml
+
+      - name: Upload mysqluser sample yaml
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.git_token }}
+        with:
+          upload_url: ${{ steps.draft.outputs.upload_url }} 
+          asset_path: ./config/samples/mysql_v1alpha1_mysqluser.yaml
+          asset_name: mysql_v1alpha1_mysqluser.yaml
           asset_content_type: application/x-yaml
