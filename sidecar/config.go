@@ -326,6 +326,7 @@ func (cfg *Config) buildXenonConf() []byte {
 	hostName := fmt.Sprintf("%s.%s.%s", cfg.HostName, cfg.ServiceName, cfg.NameSpace)
 	// Because go-sql-driver will translate localhost to 127.0.0.1 or ::1, but never set the hostname
 	// so the host is set to "127.0.0.1" in config file.
+
 	str := fmt.Sprintf(`{
 		"log": {
 			"level": "INFO"
@@ -363,8 +364,8 @@ func (cfg *Config) buildXenonConf() []byte {
 			"semi-sync-degrade": true,
 			"purge-binlog-disabled": true,
 			"super-idle": false,
-			"leader-start-command": "/xenonchecker leaderStart",
-			"leader-stop-command": "/xenonchecker leaderStop"
+			"leader-start-command": "/scripts/leader-stop.sh",
+			"leader-stop-command": "/scripts/leader-stop.sh"
 		}
 	}
 	`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser,
@@ -459,15 +460,13 @@ func (cfg *Config) buildClientConfig() (*ini.File, error) {
 // 	return utils.StringToBytes(str)
 // }
 
-// // buildLeaderStop build the leader-stop.sh.
-// func (cfg *Config) buildLeaderStop() []byte {
-// 	str := fmt.Sprintf(`#!/usr/bin/env bash
-// curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
-// --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
-// -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
-// `, cfg.NameSpace)
-// 	return utils.StringToBytes(str)
-// }
+// buildLeaderStop build the leader-stop.sh.
+func (cfg *Config) buildLeaderStop() []byte {
+	str := fmt.Sprintf(`#!/usr/bin/env bash
+	curl -X DELETE -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json"  --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/$NAMESPACE/services/%s-leader
+`, cfg.ClusterName)
+	return utils.StringToBytes(str)
+}
 
 /* The function is equivalent to the following shell script template:
 #!/bin/sh

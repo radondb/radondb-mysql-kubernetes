@@ -53,7 +53,12 @@ func NewLeaderSVCSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.
 		if len(service.Spec.Ports) != 2 {
 			service.Spec.Ports = make([]corev1.ServicePort, 2)
 		}
+		if service.Spec.Type == "ClusterIP" {
+			if ip, ok := c.ObjectMeta.Annotations["ClusterIP"]; ok {
+				service.Spec.ClusterIP = ip
+			}
 
+		}
 		service.Spec.Ports[0].Name = utils.MysqlPortName
 		service.Spec.Ports[0].Port = utils.MysqlPort
 		service.Spec.Ports[0].TargetPort = intstr.FromInt(utils.MysqlPort)
