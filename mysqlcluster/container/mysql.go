@@ -49,7 +49,7 @@ func (c *mysql) getCommand() []string {
 	return []string{
 		"sh",
 		"-c",
-		"while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; /docker-entrypoint.sh mysqld",
+		"while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; /docker-entrypoint.sh mysqld --safe-user-create --skip-symbolic-links",
 	}
 }
 
