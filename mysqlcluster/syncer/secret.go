@@ -69,7 +69,7 @@ func NewSecretSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Int
 		}
 
 		if c.Spec.MetricsOpts.Enabled {
-			dataSource := fmt.Sprintf("%s:%s@(localhost:3306)/", utils.MetricsUser, utils.BytesToString(secret.Data["metrics-password"]))
+			dataSource := fmt.Sprintf("%s:%s@(127.0.0.1:3306)/", utils.MetricsUser, utils.BytesToString(secret.Data["metrics-password"]))
 			secret.Data["data-source"] = []byte(dataSource)
 		}
 
