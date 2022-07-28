@@ -45,7 +45,7 @@ var mysqlSysConfigs = map[string]string{
 }
 
 var pluginConfigs = map[string]string{
-	"plugin-load": "\"semisync_master.so;semisync_slave.so;audit_log.so;connection_control.so\"",
+	"plugin-load": "\"semisync_master.so;semisync_slave.so;audit_log.so;validate_password.so;connection_control.so\"",
 
 	"rpl_semi_sync_master_enabled":       "OFF",
 	"rpl_semi_sync_slave_enabled":        "ON",
@@ -63,6 +63,13 @@ var pluginConfigs = map[string]string{
 	"connection_control_failed_connections_threshold": "3",
 	"connection_control_min_connection_delay":         "1000",
 	"connection_control_max_connection_delay":         "2147483647",
+
+	"validate_password_policy":             "MEDIUM",
+	"validate_password_length":             "8",
+	"validate_password_mixed_case_count":   "1",
+	"validate_password_number_count":       "1",
+	"validate_password_special_char_count": "1",
+	"validate_password_check_user_name":    "OFF",
 }
 
 var mysql57Configs = map[string]string{

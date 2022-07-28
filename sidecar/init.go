@@ -331,11 +331,17 @@ func buildSSLdata() error {
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to copy ssl: %s", err)
 	}
-
+	// chown -R mysql:mysql /etc/mysql/ssl
 	cronCmd := "chown -R mysql.mysql " + utils.TlsMountPath
 	cmd = exec.Command("sh", "-c", cronCmd)
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to copy ssl: %s", err)
+		return fmt.Errorf("failed to chown : %s", err)
+	}
+	// chmod -R 0400 /etc/mysql/ssl/
+	shellCmd = "chmod -R 0400 " + utils.TlsMountPath
+	cmd = exec.Command("sh", "-c", shellCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chmod : %s", err)
 	}
 	return nil
 }

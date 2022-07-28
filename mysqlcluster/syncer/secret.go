@@ -17,9 +17,11 @@ limitations under the License.
 package syncer
 
 import (
+	"crypto/rand"
 	"fmt"
+	"io"
+	"math/big"
 
-	"github.com/presslabs/controller-util/rand"
 	"github.com/presslabs/controller-util/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +33,13 @@ import (
 
 const (
 	// The length of the secret string.
-	rStrLen = 12
+	rStrLen = 24
+	// policyASCII is the list of acceptable characters from which to generate an ASCII password.
+	policyASCII = `` +
+		`()*+,-./` + `:;<=>?@` + `[]^_` + `{|}` +
+		`ABCDEFGHIJKLMNOPQRSTUVWXYZ` +
+		`abcdefghijklmnopqrstuvwxyz` +
+		`0123456789`
 )
 
 // NewSecretSyncer returns secret syncer.
@@ -101,11 +109,53 @@ func NewSecretSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Int
 func addRandomPassword(data map[string][]byte, key string) error {
 	if len(data[key]) == 0 {
 		// NOTE: use only alpha-numeric string, this strings are used unescaped in MySQL queries.
-		random, err := rand.AlphaNumericString(rStrLen)
+		random, err := GenerateASCIIPassword(rStrLen)
 		if err != nil {
 			return err
 		}
 		data[key] = []byte(random)
 	}
 	return nil
+}
+
+// GenerateASCIIPassword returns a random string of printable ASCII characters.
+func GenerateASCIIPassword(length int) (string, error) {
+	var randomASCII = randomCharacter(rand.Reader, policyASCII)
+	return accumulate(length, randomASCII)
+}
+
+// accumulate gathers n bytes from f and returns them as a string. It returns
+// an empty string when f returns an error.
+func accumulate(n int, f func() (byte, error)) (string, error) {
+	result := make([]byte, n)
+
+	for i := range result {
+		if b, err := f(); err == nil {
+			result[i] = b
+		} else {
+			return "", err
+		}
+	}
+
+	return string(result), nil
+}
+
+// randomCharacter builds a function that returns random bytes from class.
+func randomCharacter(random io.Reader, class string) func() (byte, error) {
+	if random == nil {
+		panic("requires a random source")
+	}
+	if len(class) == 0 {
+		panic("class cannot be empty")
+	}
+
+	size := big.NewInt(int64(len(class)))
+
+	return func() (byte, error) {
+		if i, err := rand.Int(random, size); err == nil {
+			return class[int(i.Int64())], nil
+		} else {
+			return 0, err
+		}
+	}
 }
