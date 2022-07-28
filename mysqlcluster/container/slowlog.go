@@ -66,14 +66,13 @@ func (c *slowLog) getPorts() []corev1.ContainerPort {
 	return nil
 }
 
-// getLivenessProbe get the container livenessProbe.
-func (c *slowLog) getLivenessProbe() *corev1.Probe {
-	return nil
-}
-
-// getReadinessProbe get the container readinessProbe.
-func (c *slowLog) getReadinessProbe() *corev1.Probe {
-	return nil
+// getProbeSet get the set of livenessProbe, ReadinessProbe and StartupProbe.
+func (c *slowLog) getProbeSet() *ProbeSet {
+	return &ProbeSet{
+		LivenessProbe:  nil,
+		ReadinessProbe: nil,
+		StartupProbe:   nil,
+	}
 }
 
 // getVolumeMounts get the container volumeMounts.

@@ -34,9 +34,14 @@ type container interface {
 	getLifecycle() *corev1.Lifecycle
 	getResources() corev1.ResourceRequirements
 	getPorts() []corev1.ContainerPort
-	getLivenessProbe() *corev1.Probe
-	getReadinessProbe() *corev1.Probe
+	getProbeSet() *ProbeSet
 	getVolumeMounts() []corev1.VolumeMount
+}
+
+type ProbeSet struct {
+	LivenessProbe  *corev1.Probe
+	ReadinessProbe *corev1.Probe
+	StartupProbe   *corev1.Probe
 }
 
 // EnsureContainer ensure a container by the giving name.
@@ -60,6 +65,7 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 	case utils.ContainerBackupName:
 		ctr = &backupSidecar{c, name}
 	}
+	probeSet := ctr.getProbeSet()
 
 	return corev1.Container{
 		Name:            ctr.getName(),
@@ -70,8 +76,9 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 		Lifecycle:       ctr.getLifecycle(),
 		Resources:       ctr.getResources(),
 		Ports:           ctr.getPorts(),
-		LivenessProbe:   ctr.getLivenessProbe(),
-		ReadinessProbe:  ctr.getReadinessProbe(),
+		LivenessProbe:   probeSet.LivenessProbe,
+		ReadinessProbe:  probeSet.ReadinessProbe,
+		StartupProbe:    probeSet.StartupProbe,
 		VolumeMounts:    ctr.getVolumeMounts(),
 	}
 }

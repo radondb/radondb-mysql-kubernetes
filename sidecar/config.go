@@ -423,29 +423,29 @@ FLUSH PRIVILEGES;
 	return utils.StringToBytes(sql)
 }
 
-// buildClientConfig used to build client.conf.
-func (cfg *Config) buildClientConfig() (*ini.File, error) {
-	conf := ini.Empty()
-	sec := conf.Section("client")
+// // buildClientConfig used to build client.conf.
+// func (cfg *Config) buildClientConfig() (*ini.File, error) {
+// 	conf := ini.Empty()
+// 	sec := conf.Section("client")
 
-	if _, err := sec.NewKey("host", "127.0.0.1"); err != nil {
-		return nil, err
-	}
+// 	if _, err := sec.NewKey("host", "127.0.0.1"); err != nil {
+// 		return nil, err
+// 	}
 
-	if _, err := sec.NewKey("port", fmt.Sprintf("%d", utils.MysqlPort)); err != nil {
-		return nil, err
-	}
+// 	if _, err := sec.NewKey("port", fmt.Sprintf("%d", utils.MysqlPort)); err != nil {
+// 		return nil, err
+// 	}
 
-	if _, err := sec.NewKey("user", cfg.OperatorUser); err != nil {
-		return nil, err
-	}
+// 	if _, err := sec.NewKey("user", cfg.OperatorUser); err != nil {
+// 		return nil, err
+// 	}
 
-	if _, err := sec.NewKey("password", cfg.OperatorPassword); err != nil {
-		return nil, err
-	}
+// 	if _, err := sec.NewKey("password", cfg.OperatorPassword); err != nil {
+// 		return nil, err
+// 	}
 
-	return conf, nil
-}
+// 	return conf, nil
+// }
 
 // // buildLeaderStart build the leader-start.sh.
 // func (cfg *Config) buildLeaderStart() []byte {

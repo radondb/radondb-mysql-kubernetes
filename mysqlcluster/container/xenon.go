@@ -117,39 +117,38 @@ func (c *xenon) getPorts() []corev1.ContainerPort {
 	}
 }
 
-// getLivenessProbe get the container livenessProbe.
-func (c *xenon) getLivenessProbe() *corev1.Probe {
-	return &corev1.Probe{
-		Handler: corev1.Handler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"sh",
-					"-c",
-					"pgrep xenon && xenoncli xenon ping",
+// getProbeSet get the set of livenessProbe, ReadinessProbe and StartupProbe.
+func (c *xenon) getProbeSet() *ProbeSet {
+	return &ProbeSet{
+		LivenessProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"sh",
+						"-c",
+						"pgrep xenon && xenoncli xenon ping",
+					},
 				},
 			},
+			InitialDelaySeconds: 30,
+			TimeoutSeconds:      5,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			FailureThreshold:    3,
 		},
-		InitialDelaySeconds: 30,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		FailureThreshold:    3,
-	}
-}
-
-// getReadinessProbe get the container readinessProbe.
-func (c *xenon) getReadinessProbe() *corev1.Probe {
-	return &corev1.Probe{
-		Handler: corev1.Handler{
-			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "xenoncli xenon ping"},
+		ReadinessProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{"sh", "-c", "xenoncli xenon ping"},
+				},
 			},
+			InitialDelaySeconds: 10,
+			TimeoutSeconds:      5,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			FailureThreshold:    3,
 		},
-		InitialDelaySeconds: 10,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		FailureThreshold:    3,
+		StartupProbe: nil,
 	}
 }
 

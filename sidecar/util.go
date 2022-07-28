@@ -37,8 +37,8 @@ var (
 	// xenonConfigPath is the xenon meta path.
 	xenonConfigPath = utils.XenonMetaVolumeMountPath
 
-	// clientConfPath is the client.cnf path.
-	clientConfPath = utils.ConfClientPath
+	// // clientConfPath is the client.cnf path.
+	// clientConfPath = utils.ConfClientPath
 
 	// extraConfPath is the mysql extra configs path.
 	extraConfPath = utils.MysqlConfVolumeMountPath + "/conf.d"
