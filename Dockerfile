@@ -7,7 +7,8 @@ COPY go.mod go.mod
 COPY go.sum go.sum
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
-RUN if [ $(cat /etc/timezone) = "Asia/Shanghai" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi
+# RUN if [ $(date +%z) = "+0800" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi
+RUN go env -w GOPROXY=https://goproxy.cn,direct
 RUN  go mod download
 
 # Copy the go source
@@ -25,7 +26,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager cmd/manager/mai
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM radondb/distroless:nonroot
 # If you make a image manually, the cn environment may not be able to access .io, you can switch to the following path
 # FROM radondb/distroless:nonroot
 WORKDIR /

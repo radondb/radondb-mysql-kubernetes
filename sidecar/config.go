@@ -378,6 +378,7 @@ func (cfg *Config) buildXenonConf() []byte {
 // buildInitSql used to build init.sql. The file run after the mysql init.
 func (cfg *Config) buildInitSql(hasInit bool) []byte {
 	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
+UNINSTALL PLUGIN  validate_password;
 CREATE DATABASE IF NOT EXISTS %s;
 DROP user IF EXISTS 'root'@'127.0.0.1';
 CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY '%s';
@@ -396,6 +397,7 @@ CREATE USER '%s'@'%%' IDENTIFIED BY '%s' REQUIRE SSL;
 GRANT ALL ON %s.* TO '%s'@'%%';
 
 FLUSH PRIVILEGES;
+INSTALL PLUGIN validate_password SONAME 'validate_password.so';
 
 `,
 		cfg.Database, //database
