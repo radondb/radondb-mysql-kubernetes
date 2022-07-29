@@ -153,15 +153,15 @@ func runInitCommand(cfg *Config) error {
 	}
 	buildDefaultXenonMeta(uid, gid)
 
-	// build client.conf.
-	clientConfig, err := cfg.buildClientConfig()
-	if err != nil {
-		return fmt.Errorf("failed to build client.conf: %s", err)
-	}
-	// save client.conf to /etc/mysql.
-	if err := clientConfig.SaveTo(path.Join(clientConfPath)); err != nil {
-		return fmt.Errorf("failed to save client.conf: %s", err)
-	}
+	// // build client.conf.
+	// clientConfig, err := cfg.buildClientConfig()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to build client.conf: %s", err)
+	// }
+	// // save client.conf to /etc/mysql.
+	// if err := clientConfig.SaveTo(path.Join(clientConfPath)); err != nil {
+	// 	return fmt.Errorf("failed to save client.conf: %s", err)
+	// }
 
 	if err = os.Mkdir(extraConfPath, os.FileMode(0755)); err != nil {
 		if !os.IsExist(err) {
@@ -169,10 +169,6 @@ func runInitCommand(cfg *Config) error {
 		}
 	}
 
-	// chown -R mysql:mysql /var/lib/mysql.
-	if err = os.Chown(extraConfPath, uid, gid); err != nil {
-		return fmt.Errorf("failed to chown %s: %s", dataPath, err)
-	}
 	// Run reset master in init-mysql container.
 	if err = ioutil.WriteFile(initFilePath+"/reset.sql", []byte("reset master;"), 0644); err != nil {
 		return fmt.Errorf("failed to write reset.sql: %s", err)
@@ -258,6 +254,20 @@ func runInitCommand(cfg *Config) error {
 	if err = ioutil.WriteFile(initSqlPath, cfg.buildInitSql(hasInitialized), 0644); err != nil {
 		return fmt.Errorf("failed to write init.sql: %s", err)
 	}
+
+	// Chown -R -h mysql:root /etc/mysql
+	arg := "chown -R -h mysql:root " + mysqlConfigPath
+	cmd := exec.Command("/bin/bash", "-c", "--", arg)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chown mysql config path")
+	}
+
+	// Chmod 0600 /etc/mysql/my.cnf
+	if err = os.Chmod(path.Join(mysqlConfigPath, "my.cnf"), os.FileMode(0600)); err != nil {
+		return fmt.Errorf("failed to chmod /etc/mysql/my.cnf: %s", err)
+	}
+
 	// build xenon.json.
 	xenonFilePath := path.Join(xenonPath, "xenon.json")
 	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {

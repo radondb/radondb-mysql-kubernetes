@@ -55,7 +55,7 @@ type Config struct {
 }
 
 // NewConfigFromClusterKey returns a new Config based on a MySQLCluster key.
-func NewConfigFromClusterKey(c client.Client, clusterKey client.ObjectKey, userName, host string) (*Config, error) {
+func NewConfigFromClusterKey(c client.Client, clusterKey client.ObjectKey, host string) (*Config, error) {
 	cluster := &apiv1alpha1.MysqlCluster{}
 	if err := c.Get(context.TODO(), clusterKey, cluster); err != nil {
 		return nil, err
@@ -71,40 +71,22 @@ func NewConfigFromClusterKey(c client.Client, clusterKey client.ObjectKey, userN
 	if host == utils.LeaderHost {
 		host = fmt.Sprintf("%s-leader.%s", cluster.Name, cluster.Namespace)
 	}
-
-	switch userName {
-	case utils.OperatorUser:
-		password, ok := secret.Data["operator-password"]
-		if !ok {
-			return nil, fmt.Errorf("operator-password cannot be empty")
-		}
-		return &Config{
-			User:     utils.OperatorUser,
-			Password: string(password),
-			Host:     host,
-			Port:     utils.MysqlPort,
-		}, nil
-
-	case utils.RootUser:
-		password, ok := secret.Data["internal-root-password"]
-		if !ok {
-			return nil, fmt.Errorf("internal-root-password cannot be empty")
-		}
-		return &Config{
-			User:     utils.RootUser,
-			Password: string(password),
-			Host:     host,
-			Port:     utils.MysqlPort,
-		}, nil
-	default:
-		return nil, fmt.Errorf("MySQL user %s are not supported", userName)
+	password, ok := secret.Data["operator-password"]
+	if !ok {
+		return nil, fmt.Errorf("operator-password cannot be empty")
 	}
 
+	return &Config{
+		User:     utils.OperatorUser,
+		Password: string(password),
+		Host:     host,
+		Port:     utils.MysqlPort,
+	}, nil
 }
 
 // GetMysqlDSN returns a data source name.
 func (c *Config) GetMysqlDSN() string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/?timeout=5s&multiStatements=true&interpolateParams=true",
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/?timeout=5s&multiStatements=true&interpolateParams=true&tls=skip-verify",
 		c.User, c.Password, c.Host, c.Port,
 	)
 }

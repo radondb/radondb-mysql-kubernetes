@@ -96,14 +96,13 @@ func (c *initMysql) getPorts() []corev1.ContainerPort {
 	return nil
 }
 
-// getLivenessProbe get the container livenessProbe.
-func (c *initMysql) getLivenessProbe() *corev1.Probe {
-	return nil
-}
-
-// getReadinessProbe get the container readinessProbe.
-func (c *initMysql) getReadinessProbe() *corev1.Probe {
-	return nil
+// getProbeSet get the set of livenessProbe, ReadinessProbe and StartupProbe.
+func (c *initMysql) getProbeSet() *ProbeSet {
+	return &ProbeSet{
+		LivenessProbe:  nil,
+		ReadinessProbe: nil,
+		StartupProbe:   nil,
+	}
 }
 
 // getVolumeMounts get the container volumeMounts.

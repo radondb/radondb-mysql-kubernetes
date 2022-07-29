@@ -74,37 +74,36 @@ func (c *metrics) getPorts() []corev1.ContainerPort {
 	}
 }
 
-// getLivenessProbe get the container livenessProbe.
-func (c *metrics) getLivenessProbe() *corev1.Probe {
-	return &corev1.Probe{
-		Handler: corev1.Handler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path: "/",
-				Port: intstr.FromInt(utils.MetricsPort),
+// getProbeSet get the set of livenessProbe, ReadinessProbe and StartupProbe.
+func (c *metrics) getProbeSet() *ProbeSet {
+	return &ProbeSet{
+		LivenessProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/",
+					Port: intstr.FromInt(utils.MetricsPort),
+				},
 			},
+			InitialDelaySeconds: 15,
+			TimeoutSeconds:      5,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			FailureThreshold:    3,
 		},
-		InitialDelaySeconds: 15,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		FailureThreshold:    3,
-	}
-}
-
-// getReadinessProbe get the container readinessProbe.
-func (c *metrics) getReadinessProbe() *corev1.Probe {
-	return &corev1.Probe{
-		Handler: corev1.Handler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path: "/",
-				Port: intstr.FromInt(utils.MetricsPort),
+		ReadinessProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path: "/",
+					Port: intstr.FromInt(utils.MetricsPort),
+				},
 			},
+			InitialDelaySeconds: 5,
+			TimeoutSeconds:      1,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			FailureThreshold:    3,
 		},
-		InitialDelaySeconds: 5,
-		TimeoutSeconds:      1,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		FailureThreshold:    3,
+		StartupProbe: nil,
 	}
 }
 

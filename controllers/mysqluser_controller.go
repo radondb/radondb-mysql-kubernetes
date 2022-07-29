@@ -163,7 +163,7 @@ func (r *MysqlUserReconciler) reconcileUserInCluster(ctx context.Context, mysqlU
 // spec.Hosts, and then deletes users that do not exist in spec.Hosts.
 func (r *MysqlUserReconciler) reconcileUserInDB(ctx context.Context, mysqlUser *mysqluser.MysqlUser) error {
 	sqlRunner, closeConn, err := r.SQLRunnerFactory(internal.NewConfigFromClusterKey(
-		r.Client, mysqlUser.GetClusterKey(), utils.RootUser, utils.LeaderHost))
+		r.Client, mysqlUser.GetClusterKey(), utils.LeaderHost))
 	if err != nil {
 		return err
 	}
@@ -200,7 +200,7 @@ func (r *MysqlUserReconciler) reconcileUserInDB(ctx context.Context, mysqlUser *
 
 func (r *MysqlUserReconciler) dropUserFromDB(ctx context.Context, mysqlUser *mysqluser.MysqlUser) error {
 	sqlRunner, closeConn, err := r.SQLRunnerFactory(internal.NewConfigFromClusterKey(
-		r.Client, mysqlUser.GetClusterKey(), utils.RootUser, utils.LeaderHost))
+		r.Client, mysqlUser.GetClusterKey(), utils.LeaderHost))
 	if errors.IsNotFound(err) {
 		// If the mysql cluster does not exists then we can safely assume that
 		// the user is deleted so exist successfully.

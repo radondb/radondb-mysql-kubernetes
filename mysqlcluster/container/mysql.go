@@ -17,8 +17,6 @@ limitations under the License.
 package container
 
 import (
-	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
@@ -49,7 +47,7 @@ func (c *mysql) getCommand() []string {
 	return []string{
 		"sh",
 		"-c",
-		"while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; /docker-entrypoint.sh mysqld",
+		"while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; /docker-entrypoint.sh mysqld --safe-user-create --skip-symbolic-links",
 	}
 }
 
@@ -87,47 +85,62 @@ func (c *mysql) getPorts() []corev1.ContainerPort {
 	}
 }
 
-// getLivenessProbe get the container livenessProbe.
-func (c *mysql) getLivenessProbe() *corev1.Probe {
-	return &corev1.Probe{
-		Handler: corev1.Handler{
-			Exec: &corev1.ExecAction{
+// getProbeSet get the set of livenessProbe, ReadinessProbe and StartupProbe.
+func (c *mysql) getProbeSet() *ProbeSet {
+	return &ProbeSet{
+		LivenessProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				Exec: &corev1.ExecAction{
 
-				/* /var/lib/mysql/sleep-forever is used to prevent mysql's container from exiting.
-				kubectl exec -it sample-mysql-0 -c mysql -- sh -c 'touch /var/lib/mysql/sleep-forever'
-				*/
-				Command: []string{
-					"sh",
-					"-c",
-					"if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; pgrep mysqld",
+					/* /var/lib/mysql/sleep-forever is used to prevent mysql's container from exiting.
+					kubectl exec -it sample-mysql-0 -c mysql -- sh -c 'touch /var/lib/mysql/sleep-forever'
+					*/
+					Command: []string{
+						"sh",
+						"-c",
+						"if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; pgrep mysqld",
+					},
 				},
 			},
+			InitialDelaySeconds: 30,
+			TimeoutSeconds:      5,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			FailureThreshold:    3,
 		},
-		InitialDelaySeconds: 30,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		FailureThreshold:    3,
-	}
-}
-
-// getReadinessProbe get the container readinessProbe.
-func (c *mysql) getReadinessProbe() *corev1.Probe {
-	return &corev1.Probe{
-		Handler: corev1.Handler{
-			Exec: &corev1.ExecAction{
-				Command: []string{
-					"sh",
-					"-c",
-					fmt.Sprintf(`if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql --defaults-file=%s -NB -e "SELECT 1") -eq 1`, utils.ConfClientPath),
+		ReadinessProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"sh",
+						"-c",
+						`if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql -uroot -h127.0.0.1 -NB -e "SELECT 1") -eq 1`,
+					},
 				},
 			},
+			InitialDelaySeconds: 10,
+			TimeoutSeconds:      5,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			FailureThreshold:    3,
 		},
-		InitialDelaySeconds: 10,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
-		SuccessThreshold:    1,
-		FailureThreshold:    3,
+		// TODO: Can choose to open/close.
+		StartupProbe: &corev1.Probe{
+			Handler: corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"sh",
+						"-c",
+						`if test $(mysql -uroot -h127.0.0.1 -NB -e "SELECT 1") -eq 1; then cat /dev/null > /etc/mysql/conf.d/init.sql; fi`,
+					},
+				},
+			},
+			InitialDelaySeconds: 10,
+			TimeoutSeconds:      5,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			FailureThreshold:    5,
+		},
 	}
 }
 

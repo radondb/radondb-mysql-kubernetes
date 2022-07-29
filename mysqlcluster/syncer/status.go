@@ -252,7 +252,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		go func(sqlRunner *internal.SQLRunner, errCh chan error, closeCh chan func()) {
 			var err error
 			*sqlRunner, closeConn, err = s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
-				s.cli, s.MysqlCluster.GetClusterKey(), utils.OperatorUser, host))
+				s.cli, s.MysqlCluster.GetClusterKey(), host))
 			if err != nil {
 				s.log.V(1).Info("failed to get sql runner", "node", node.Name, "error", err)
 				errCh <- err

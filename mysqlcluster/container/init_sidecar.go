@@ -154,14 +154,13 @@ func (c *initSidecar) getPorts() []corev1.ContainerPort {
 	return nil
 }
 
-// getLivenessProbe get the container livenessProbe.
-func (c *initSidecar) getLivenessProbe() *corev1.Probe {
-	return nil
-}
-
-// getReadinessProbe get the container readinessProbe.
-func (c *initSidecar) getReadinessProbe() *corev1.Probe {
-	return nil
+// getProbeSet get the set of livenessProbe, ReadinessProbe and StartupProbe.
+func (c *initSidecar) getProbeSet() *ProbeSet {
+	return &ProbeSet{
+		LivenessProbe:  nil,
+		ReadinessProbe: nil,
+		StartupProbe:   nil,
+	}
 }
 
 // getVolumeMounts get the container volumeMounts.

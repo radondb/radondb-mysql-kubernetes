@@ -59,7 +59,7 @@ func TestGetMysqlImage(t *testing.T) {
 
 func TestGetMysqlCommand(t *testing.T) {
 	assert.Equal(t, mysqlCase.Command,
-		[]string{"sh", "-c", "while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; /docker-entrypoint.sh mysqld"})
+		[]string{"sh", "-c", "while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; /docker-entrypoint.sh mysqld --safe-user-create --skip-symbolic-links"})
 }
 
 func TestGetMysqlEnvVar(t *testing.T) {
@@ -126,7 +126,7 @@ func TestGetMysqlReadinessProbe(t *testing.T) {
 	readinessProbe := &corev1.Probe{
 		Handler: corev1.Handler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", `if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql --defaults-file=/etc/mysql/client.conf -NB -e "SELECT 1") -eq 1`},
+				Command: []string{"sh", "-c", `if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql -uroot -h127.0.0.1 -NB -e "SELECT 1") -eq 1`},
 			},
 		},
 		InitialDelaySeconds: 10,
