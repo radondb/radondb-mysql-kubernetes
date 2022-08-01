@@ -5,8 +5,8 @@
 FROM golang:1.16 as builder
 
 ARG XENON_BRANCH=master
-RUN if [ $(date +%z) = "+0800" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi 
-# RUN go env -w GOPROXY=https://goproxy.cn,direct
+# RUN if [ $(date +%z) = "+0800" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi 
+RUN go env -w GOPROXY=https://goproxy.cn,direct
 RUN go env -w GO111MODULE=off; 
 RUN set -ex; \
     mkdir -p /go/src/github.com/radondb; \

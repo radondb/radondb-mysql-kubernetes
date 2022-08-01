@@ -89,7 +89,7 @@ const (
 	// The MySQL user used for operator to connect to the mysql node for configuration.
 	OperatorUser = "radondb_operator"
 	// The name of the MySQL root user.
-	RootUser = "root"
+	RootUser = "super"
 
 	// xtrabackup http server user
 	BackupUser = "sys_backup"

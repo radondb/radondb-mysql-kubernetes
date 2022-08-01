@@ -345,7 +345,7 @@ func (cfg *Config) buildXenonConf() []byte {
 		},
 		"mysql": {
 			"admit-defeat-ping-count": 3,
-			"admin": "root",
+			"admin": "super",
 			"ping-timeout": %d,
 			"passwd": "%s",
 			"host": "127.0.0.1",
@@ -379,10 +379,12 @@ func (cfg *Config) buildXenonConf() []byte {
 func (cfg *Config) buildInitSql(hasInit bool) []byte {
 	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
 UNINSTALL PLUGIN  validate_password;
+DROP USER IF EXISTS 'root'@'127.0.0.1';
+DROP USER IF EXISTS 'root'@'localhost';
 CREATE DATABASE IF NOT EXISTS %s;
-DROP user IF EXISTS 'root'@'127.0.0.1';
-CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY '%s';
-GRANT ALL ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
+DROP user IF EXISTS 'super'@'127.0.0.1';
+CREATE USER 'super'@'127.0.0.1' IDENTIFIED BY '%s';
+GRANT ALL ON *.* TO 'super'@'127.0.0.1' WITH GRANT OPTION;
 
 DROP user IF EXISTS '%s'@'127.0.0.1';
 CREATE USER '%s'@'127.0.0.1' IDENTIFIED BY '%s';

@@ -38,7 +38,7 @@ type runRemoteCommandConfig struct {
 
 const (
 	leaderStopCommand  = "kill -9 $(pidof mysqld)"
-	mysqlUser          = "root"
+	mysqlUser          = "super"
 	mysqlHost          = "127.0.0.1"
 	mysqlPwd           = ""
 	raftDisableCommand = "xenoncli raft disable"
@@ -373,7 +373,7 @@ func CheckLongRunningWrites(db *sql.DB, thresh int) (int, string, error) {
 }
 
 func KillThreads(db *sql.DB) error {
-	query := "SELECT Id FROM information_schema.PROCESSLIST WHERE Command != 'Binlog Dump GTID' AND User not in ('root','radondb_repl') AND Id != CONNECTION_ID()"
+	query := "SELECT Id FROM information_schema.PROCESSLIST WHERE Command != 'Binlog Dump GTID' AND User not in ('super','radondb_repl') AND Id != CONNECTION_ID()"
 	logs := query
 	rows, err := db.Query(query)
 	if err != nil {

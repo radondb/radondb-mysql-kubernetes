@@ -53,7 +53,7 @@ var pluginConfigs = map[string]string{
 	"rpl_semi_sync_master_timeout":       "1000000000000000000",
 
 	"audit_log_file":             "/var/log/mysql/mysql-audit.log",
-	"audit_log_exclude_accounts": "\"root@localhost,root@127.0.0.1," + utils.ReplicationUser + "@%," + utils.MetricsUser + "@%\"",
+	"audit_log_exclude_accounts": "\"super@localhost,super@127.0.0.1," + utils.ReplicationUser + "@%," + utils.MetricsUser + "@%\"",
 	"audit_log_buffer_size":      "16M",
 	"audit_log_policy":           "NONE",
 	"audit_log_rotate_on_size":   "104857600",
