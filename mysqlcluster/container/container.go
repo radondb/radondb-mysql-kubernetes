@@ -39,6 +39,29 @@ type container interface {
 	getVolumeMounts() []corev1.VolumeMount
 }
 
+func getStartupProbe(name string) *corev1.Probe {
+	if name == utils.ContainerMysqlName {
+		return &corev1.Probe{
+			Handler: corev1.Handler{
+				Exec: &corev1.ExecAction{
+					Command: []string{
+						"sh",
+						"-c",
+						`if test $(mysql -uroot -h127.0.0.1 -NB -e "SELECT 1") -eq 1; then sed -i "/^RESET SLAVE ALL;/d" /etc/mysql/conf.d/init.sql; fi`,
+					},
+				},
+			},
+			InitialDelaySeconds: 10,
+			TimeoutSeconds:      5,
+			PeriodSeconds:       10,
+			SuccessThreshold:    1,
+			FailureThreshold:    5,
+		}
+	} else {
+		return nil
+	}
+}
+
 // EnsureContainer ensure a container by the giving name.
 func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container {
 	var ctr container
@@ -72,6 +95,7 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 		Ports:           ctr.getPorts(),
 		LivenessProbe:   ctr.getLivenessProbe(),
 		ReadinessProbe:  ctr.getReadinessProbe(),
+		StartupProbe:    getStartupProbe(name),
 		VolumeMounts:    ctr.getVolumeMounts(),
 	}
 }
