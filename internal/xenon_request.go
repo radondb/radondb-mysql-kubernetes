@@ -25,6 +25,11 @@ import (
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
+//
+var (
+	xenonHttpUser = utils.RootUser + ":"
+)
+
 // RequestConfig is the configuration required to get xenon http requests.
 type RequestConfig struct {
 	rootPassword string
@@ -64,8 +69,7 @@ func newHttpGetRequest(cfg RequestConfig) (*Request, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	encoded := base64.StdEncoding.EncodeToString(append([]byte("root:"), cfg.rootPassword...))
+	encoded := base64.StdEncoding.EncodeToString(append([]byte(xenonHttpUser), cfg.rootPassword...))
 	req.Header.Set("Authorization", "Basic "+encoded)
 	return &Request{Req: req}, nil
 }
@@ -82,7 +86,7 @@ func newHttpPostRequest(cfg RequestConfig) (*Request, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	encoded := base64.StdEncoding.EncodeToString(append([]byte("root:"), cfg.rootPassword...))
+	encoded := base64.StdEncoding.EncodeToString(append([]byte(xenonHttpUser), cfg.rootPassword...))
 	req.Header.Set("Authorization", "Basic "+encoded)
 	return &Request{Req: req}, nil
 }
