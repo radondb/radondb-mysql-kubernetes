@@ -23,12 +23,12 @@ import (
 	"time"
 
 	"github.com/presslabs/controller-util/syncer"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	// "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/workqueue"
-	"k8s.io/klog/v2"
+	// "k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -44,7 +44,7 @@ import (
 )
 
 // reconcileTimePeriod represents the time in which a cluster should be reconciled
-var reconcileTimePeriod = time.Second * 5
+var reconcileTimePeriod = time.Second * 10
 
 // StatusReconciler reconciles a Status object
 type StatusReconciler struct {
@@ -96,7 +96,7 @@ func (r *StatusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	r.XenonExecutor.SetRootPassword(instance.Spec.MysqlOpts.RootPassword)
 
-	statusSyncer := clustersyncer.NewStatusSyncer(instance, r.Client, r.SQLRunnerFactory, r.XenonExecutor)
+	statusSyncer := clustersyncer.NewStatusSyncer(instance, r.Client)
 	if err := syncer.Sync(ctx, statusSyncer, r.Recorder); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -111,26 +111,7 @@ func (r *StatusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	events := make(chan event.GenericEvent, 1024)
 	bld := ctrl.NewControllerManagedBy(mgr).
 		For(&apiv1alpha1.MysqlCluster{}).
-		Watches(&source.Kind{Type: &apiv1alpha1.MysqlCluster{}}, &handler.Funcs{
-			CreateFunc: func(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
-				if evt.Object == nil {
-					log.Error(nil, "CreateEvent received with no metadata", "CreateEvent", evt)
-					return
-				}
-
-				log.V(1).Info("register cluster in clusters list", "obj", evt.Object)
-				clusters.Store(getKey(evt.Object), event.GenericEvent(evt))
-			},
-			DeleteFunc: func(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
-				if evt.Object == nil {
-					log.Error(nil, "DeleteEvent received with no metadata", "DeleteEvent", evt)
-					return
-				}
-
-				log.V(1).Info("remove cluster from clusters list", "obj", evt.Object)
-				clusters.Delete(getKey(evt.Object))
-			},
-		}).
+		Owns(&appsv1.StatefulSet{}).
 		Watches(&source.Channel{Source: events}, &handler.EnqueueRequestForObject{})
 
 	// create a runnable function that dispatches events to events channel
@@ -155,10 +136,3 @@ func (r *StatusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return bld.Complete(r)
 }
 
-// getKey returns a string that represents the key under which cluster is registered
-func getKey(obj klog.KMetadata) string {
-	return types.NamespacedName{
-		Namespace: obj.GetNamespace(),
-		Name:      obj.GetName(),
-	}.String()
-}
