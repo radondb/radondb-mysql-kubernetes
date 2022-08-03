@@ -123,11 +123,7 @@ func (c *xenon) getProbeSet() *ProbeSet {
 		LivenessProbe: &corev1.Probe{
 			Handler: corev1.Handler{
 				Exec: &corev1.ExecAction{
-					Command: []string{
-						"sh",
-						"-c",
-						"pgrep xenon && xenoncli xenon ping",
-					},
+					Command: []string{"sh", "-c", "/xenonchecker liveness"},
 				},
 			},
 			InitialDelaySeconds: 30,
@@ -139,14 +135,14 @@ func (c *xenon) getProbeSet() *ProbeSet {
 		ReadinessProbe: &corev1.Probe{
 			Handler: corev1.Handler{
 				Exec: &corev1.ExecAction{
-					Command: []string{"sh", "-c", "xenoncli xenon ping"},
+					Command: []string{"sh", "-c", "/xenonchecker readiness"},
 				},
 			},
 			InitialDelaySeconds: 10,
 			TimeoutSeconds:      5,
 			PeriodSeconds:       10,
 			SuccessThreshold:    1,
-			FailureThreshold:    3,
+			FailureThreshold:    6,
 		},
 		StartupProbe: nil,
 	}

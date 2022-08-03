@@ -18,6 +18,9 @@ WORKDIR /workspace
 # Copy the go source
 COPY cmd/xenon/main.go cmd/xenon/main.go 
 COPY utils/ utils/ 
+COPY api/ api/
+COPY internal/ internal/
+COPY mysqlcluster/ mysqlcluster/
 COPY go.mod go.mod
 COPY go.sum go.sum
 RUN  go env -w GO111MODULE=on && go mod download

@@ -42,7 +42,7 @@ func NewRoleSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Inter
 	return syncer.NewObjectSyncer("Role", c.Unwrap(), role, cli, func() error {
 		role.Rules = []rbacv1.PolicyRule{
 			{
-				Verbs:     []string{"get", "patch"},
+				Verbs:     []string{"get", "patch", "update"},
 				APIGroups: []string{""},
 				Resources: []string{"pods"},
 			},

@@ -427,50 +427,6 @@ INSTALL PLUGIN validate_password SONAME 'validate_password.so';
 	return utils.StringToBytes(sql)
 }
 
-// // buildClientConfig used to build client.conf.
-// func (cfg *Config) buildClientConfig() (*ini.File, error) {
-// 	conf := ini.Empty()
-// 	sec := conf.Section("client")
-
-// 	if _, err := sec.NewKey("host", "127.0.0.1"); err != nil {
-// 		return nil, err
-// 	}
-
-// 	if _, err := sec.NewKey("port", fmt.Sprintf("%d", utils.MysqlPort)); err != nil {
-// 		return nil, err
-// 	}
-
-// 	if _, err := sec.NewKey("user", cfg.OperatorUser); err != nil {
-// 		return nil, err
-// 	}
-
-// 	if _, err := sec.NewKey("password", cfg.OperatorPassword); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return conf, nil
-// }
-
-// // buildLeaderStart build the leader-start.sh.
-// func (cfg *Config) buildLeaderStart() []byte {
-// 	str := fmt.Sprintf(`#!/usr/bin/env bash
-// curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
-// --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
-// -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "leader"}]'
-// `, cfg.NameSpace)
-// 	return utils.StringToBytes(str)
-// }
-
-// // buildLeaderStop build the leader-stop.sh.
-// func (cfg *Config) buildLeaderStop() []byte {
-// 	str := fmt.Sprintf(`#!/usr/bin/env bash
-// curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
-// --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/api/v1/namespaces/%s/pods/$HOSTNAME \
-// -d '[{"op": "replace", "path": "/metadata/labels/role", "value": "follower"}]'
-// `, cfg.NameSpace)
-// 	return utils.StringToBytes(str)
-// }
-
 /* The function is equivalent to the following shell script template:
 #!/bin/sh
 if [ ! -d {{.DataDir}} ] ; then

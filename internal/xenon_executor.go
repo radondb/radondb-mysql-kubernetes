@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net/http"
 
-	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
+	// apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
@@ -32,7 +32,7 @@ type xenonExecutor struct {
 type XenonExecutor interface {
 	GetRootPassword() string
 	SetRootPassword(rootPassword string)
-	RaftStatus(host string) (*apiv1alpha1.RaftStatus, error)
+	RaftStatus(host string) (*RaftStatus, error)
 	XenonPing(host string) error
 	RaftTryToLeader(host string) error
 	ClusterAdd(host string, toAdd string) error
@@ -52,7 +52,7 @@ func (executor *xenonExecutor) SetRootPassword(rootPassword string) {
 }
 
 // RaftStatus gets the raft status of incoming host through http.
-func (executor *xenonExecutor) RaftStatus(host string) (*apiv1alpha1.RaftStatus, error) {
+func (executor *xenonExecutor) RaftStatus(host string) (*RaftStatus, error) {
 	req, err := NewXenonHttpRequest(NewRequestConfig(host, executor.rootPassword, utils.RaftStatus, nil))
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (executor *xenonExecutor) RaftStatus(host string) (*apiv1alpha1.RaftStatus,
 	for _, node := range nodesJson {
 		nodes = append(nodes, node.(string))
 	}
-	return &apiv1alpha1.RaftStatus{Role: out["state"].(string), Leader: out["leader"].(string), Nodes: nodes}, nil
+	return &RaftStatus{State: out["state"].(string), Leader: out["leader"].(string), Nodes: nodes}, nil
 }
 
 // RaftTryToLeader try setting up incoming host to the leader node.

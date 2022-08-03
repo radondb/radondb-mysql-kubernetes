@@ -337,7 +337,7 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 		// Check if the pod is healthy.
 		err := wait.PollImmediate(time.Second*2, time.Second*30, func() (bool, error) {
 			s.cli.Get(ctx, client.ObjectKeyFromObject(&pod), &pod)
-			if pod.ObjectMeta.Labels["healthy"] == "yes" {
+			if PodHealthy(&pod) {
 				return true, nil
 			}
 			return false, nil
@@ -378,7 +378,7 @@ func (s *StatefulSetSyncer) mutate() error {
 	for k, v := range s.Spec.PodPolicy.Labels {
 		s.sfs.Spec.Template.ObjectMeta.Labels[k] = v
 	}
-	s.sfs.Spec.Template.ObjectMeta.Labels["role"] = string(utils.Candidate)
+	s.sfs.Spec.Template.ObjectMeta.Labels["role"] = string(utils.Follower)
 	s.sfs.Spec.Template.ObjectMeta.Labels["healthy"] = "no"
 
 	s.sfs.Spec.Template.Annotations = s.Spec.PodPolicy.Annotations
@@ -495,7 +495,7 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 		return fmt.Errorf("update revision is empty")
 	}
 	// Check version, if not latest, delete node.
-	if pod.ObjectMeta.Labels["controller-revision-hash"] == s.sfs.Status.UpdateRevision {
+	if s.podIsUpdated(pod) {
 		s.log.Info("pod is already updated", "pod name", pod.Name)
 	} else {
 		s.Status.State = apiv1alpha1.ClusterUpdateState
@@ -508,7 +508,7 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 			if pod.DeletionTimestamp != nil {
 				return false, nil
 			}
-			if pod.ObjectMeta.Labels["controller-revision-hash"] != s.sfs.Status.UpdateRevision {
+			if !s.podIsUpdated(pod) {
 				if err := s.cli.Delete(ctx, pod); err != nil {
 					return false, err
 				}
@@ -542,16 +542,14 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 			return false, fmt.Errorf("pod %s is in failed phase", pod.Name)
 		}
 
-		if pod.ObjectMeta.Labels["healthy"] == "yes" &&
-			pod.ObjectMeta.Labels["controller-revision-hash"] == s.sfs.Status.UpdateRevision {
+		if PodHealthy(pod) && s.podIsUpdated(pod) {
 			return true, nil
 		}
 
 		// fix issue#219. When 2->5 rolling update, Because of PDB, minAvaliable 50%, if Spec Replicas is 5, sfs Spec first be set to 3, then to be set 5
 		// pod healthy is yes,but controller-revision-hash will never correct, it must return,otherwise wait for 2 hours.
 		// https://kubernetes.io/zh/docs/tasks/run-application/configure-pdb/
-		if pod.ObjectMeta.Labels["healthy"] == "yes" &&
-			pod.ObjectMeta.Labels["controller-revision-hash"] != s.sfs.Status.UpdateRevision {
+		if PodHealthy(pod) && !s.podIsUpdated(pod) {
 			return false, fmt.Errorf("pod %s is ready, wait next schedule", pod.Name)
 		}
 		return false, nil
@@ -621,4 +619,12 @@ func (s *StatefulSetSyncer) podsAllUpdated(ctx context.Context) bool {
 		return false
 	}
 	return len(podlist.Items) == 0
+}
+
+func (s *StatefulSetSyncer) podIsUpdated(pod *corev1.Pod) bool {
+	return pod.ObjectMeta.Labels["controller-revision-hash"] == s.sfs.Status.UpdateRevision
+}
+
+func PodHealthy(pod *corev1.Pod) bool {
+	return pod.ObjectMeta.Labels["healthy"] == "yes"
 }

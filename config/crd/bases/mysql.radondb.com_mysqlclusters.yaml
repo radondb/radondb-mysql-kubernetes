@@ -1346,22 +1346,10 @@ spec:
             description: MysqlClusterStatus defines the observed state of MysqlCluster
             properties:
               conditions:
-                description: Conditions contains the list of the cluster conditions
-                  fulfilled.
+                description: Conditions contains the list of the mysqlcluster conditions.
                 items:
-                  description: ClusterCondition defines type for cluster conditions.
+                  description: MySQLClusterCondition defines type for cluster conditions.
                   properties:
-                    lastTransitionTime:
-                      description: The last time this Condition type changed.
-                      format: date-time
-                      type: string
-                    message:
-                      description: Full text reason for current status of the condition.
-                      type: string
-                    reason:
-                      description: One word, camel-case reason for current status
-                        of the condition.
-                      type: string
                     status:
                       description: Status of the condition, one of (\"True\", \"False\",
                         \"Unknown\").
@@ -1371,74 +1359,94 @@ spec:
                         \"Ready\", \"Error\").
                       type: string
                   required:
-                  - lastTransitionTime
                   - status
                   - type
                   type: object
                 type: array
-              nodes:
-                description: Nodes contains the list of the node status fulfilled.
-                items:
-                  description: NodeStatus defines type for status of a node into cluster.
-                  properties:
-                    conditions:
-                      description: Conditions contains the list of the node conditions
-                        fulfilled.
-                      items:
-                        description: NodeCondition defines type for representing node
-                          conditions.
-                        properties:
-                          lastTransitionTime:
-                            description: The last time this Condition type changed.
-                            format: date-time
-                            type: string
-                          status:
-                            description: Status of the node, one of (\"True\", \"False\",
-                              \"Unknown\").
-                            type: string
-                          type:
-                            description: Type of the node condition.
-                            type: string
-                        required:
-                        - lastTransitionTime
-                        - status
-                        - type
-                        type: object
-                      type: array
-                    message:
-                      description: Full text reason for current status of the node.
-                      type: string
-                    name:
-                      description: Name of the node.
-                      type: string
-                    raftStatus:
-                      description: RaftStatus is the raft status of the node.
-                      properties:
-                        leader:
-                          description: Leader is the name of the Leader of the current
-                            node.
-                          type: string
-                        nodes:
-                          description: Nodes is a list of nodes that can be identified
-                            by the current node.
-                          items:
-                            type: string
-                          type: array
-                        role:
-                          description: Role is one of (LEADER/CANDIDATE/FOLLOWER/IDLE/INVALID)
-                          type: string
-                      type: object
-                  required:
-                  - name
-                  type: object
-                type: array
-              readyNodes:
-                description: ReadyNodes represents number of the nodes that are in
-                  ready state.
-                type: integer
               state:
-                description: State
+                description: State is the state of the mysqlcluster.
                 type: string
+              statefulSetStatus:
+                description: StatefulSetStatus is the status of the StatefulSet reconciled
+                  by the mysqlcluster controller.
+                properties:
+                  collisionCount:
+                    description: collisionCount is the count of hash collisions for
+                      the StatefulSet. The StatefulSet controller uses this field
+                      as a collision avoidance mechanism when it needs to create the
+                      name for the newest ControllerRevision.
+                    format: int32
+                    type: integer
+                  conditions:
+                    description: Represents the latest available observations of a
+                      statefulset's current state.
+                    items:
+                      description: StatefulSetCondition describes the state of a statefulset
+                        at a certain point.
+                      properties:
+                        lastTransitionTime:
+                          description: Last time the condition transitioned from one
+                            status to another.
+                          format: date-time
+                          type: string
+                        message:
+                          description: A human readable message indicating details
+                            about the transition.
+                          type: string
+                        reason:
+                          description: The reason for the condition's last transition.
+                          type: string
+                        status:
+                          description: Status of the condition, one of True, False,
+                            Unknown.
+                          type: string
+                        type:
+                          description: Type of statefulset condition.
+                          type: string
+                      required:
+                      - status
+                      - type
+                      type: object
+                    type: array
+                  currentReplicas:
+                    description: currentReplicas is the number of Pods created by
+                      the StatefulSet controller from the StatefulSet version indicated
+                      by currentRevision.
+                    format: int32
+                    type: integer
+                  currentRevision:
+                    description: currentRevision, if not empty, indicates the version
+                      of the StatefulSet used to generate Pods in the sequence [0,currentReplicas).
+                    type: string
+                  observedGeneration:
+                    description: observedGeneration is the most recent generation
+                      observed for this StatefulSet. It corresponds to the StatefulSet's
+                      generation, which is updated on mutation by the API Server.
+                    format: int64
+                    type: integer
+                  readyReplicas:
+                    description: readyReplicas is the number of Pods created by the
+                      StatefulSet controller that have a Ready Condition.
+                    format: int32
+                    type: integer
+                  replicas:
+                    description: replicas is the number of Pods created by the StatefulSet
+                      controller.
+                    format: int32
+                    type: integer
+                  updateRevision:
+                    description: updateRevision, if not empty, indicates the version
+                      of the StatefulSet used to generate Pods in the sequence [replicas-updatedReplicas,replicas)
+                    type: string
+                  updatedReplicas:
+                    description: updatedReplicas is the number of Pods created by
+                      the StatefulSet controller from the StatefulSet version indicated
+                      by updateRevision.
+                    format: int32
+                    type: integer
+                required:
+                - replicas
+                type: object
             type: object
         type: object
     served: true
