@@ -53,16 +53,34 @@ func (c *mysql) getCommand() []string {
 
 // getEnvVars get the container env.
 func (c *mysql) getEnvVars() []corev1.EnvVar {
-	if c.Spec.MysqlOpts.InitTokuDB {
-		return []corev1.EnvVar{
-			{
-				Name:  "INIT_TOKUDB",
-				Value: "1",
+	envVar := []corev1.EnvVar{
+		{
+			Name: "NAMESPACE",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.namespace",
+				},
 			},
-		}
+		},
+		{
+			Name: "POD_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.name",
+				},
+			},
+		},
+	}
+	if c.Spec.MysqlOpts.InitTokuDB {
+		envVar = append(envVar, corev1.EnvVar{
+			Name:  "INIT_TOKUDB",
+			Value: "1",
+		})
 	}
 
-	return nil
+	return envVar
 }
 
 // getLifecycle get the container lifecycle.
@@ -98,7 +116,7 @@ func (c *mysql) getProbeSet() *ProbeSet {
 					Command: []string{
 						"sh",
 						"-c",
-						"if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; pgrep mysqld",
+						"/mysqlchecker liveness",
 					},
 				},
 			},
@@ -114,11 +132,11 @@ func (c *mysql) getProbeSet() *ProbeSet {
 					Command: []string{
 						"sh",
 						"-c",
-						`if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql -usuper -h127.0.0.1 -NB -e "SELECT 1") -eq 1`,
+						`/mysqlchecker readiness`,
 					},
 				},
 			},
-			InitialDelaySeconds: 10,
+			InitialDelaySeconds: 15,
 			TimeoutSeconds:      5,
 			PeriodSeconds:       10,
 			SuccessThreshold:    1,

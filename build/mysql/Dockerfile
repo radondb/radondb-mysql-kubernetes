@@ -12,15 +12,15 @@ RUN if [ $(date +%z) = "+0800" ] ; then go env -w GOPROXY=https://goproxy.cn,dir
 RUN  go mod download
 
 # Copy the go source
-COPY cmd/healthcheck/main.go cmd/healthcheck/main.go 
-COPY utils/ utils/ 
-COPY internal/ internal/ 
-# COPY api/ api/
-# COPY mysqlcluster/ mysqlcluster/
+COPY cmd/mysql/main.go main.go 
+COPY internal/ internal/
+COPY api/ api/
+COPY utils/ /utils/
+COPY mysqlcluster/ mysqlcluster/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/healthcheck cmd/healthcheck/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/mysqlchecker main.go
 
 FROM percona/percona-server:5.7.34
 
-COPY --from=builder /bin/healthcheck /healthcheck
+COPY --from=builder /bin/mysqlchecker /mysqlchecker

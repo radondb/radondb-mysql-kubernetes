@@ -1,3 +1,19 @@
+/*
+Copyright 2022 RadonDB.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package main
 
 import (
@@ -14,12 +30,12 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/radondb/radondb-mysql-kubernetes/internal"
+	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	. "github.com/radondb/radondb-mysql-kubernetes/utils"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -114,13 +130,21 @@ func main() {
 	}
 }
 
-// TODO
 func leaderStart() error {
+	log.Info("leader start")
+	cli := internal.NewInclusterClient(localClientOptions())
+	if err := updateRoleLabel(cli, string(utils.Leader)); err != nil {
+		return err
+	}
 	return nil
 }
 
 func leaderStop() error {
 	log.Infof("leader stop started")
+	cli := internal.NewInclusterClient(localClientOptions())
+	if err := updateRoleLabel(cli, string(utils.Follower)); err != nil {
+		return err
+	}
 	conn, err := getLocalMySQLConn()
 	if err != nil {
 		return fmt.Errorf("failed to get the connection of local MySQL: %s", err.Error())
@@ -208,13 +232,17 @@ func leaderStop() error {
 }
 
 func liveness() error {
-	return XenonPingMyself()
+	log.Info("liveness probe starts")
+	return internal.XenonPingMyself()
 }
 
+// TODO: readiness fail sometimes.
 func readiness() error {
-	role := GetRole()
+	log.Info("readiness probe starts")
+	role := internal.GetRole()
 	if role != string(Leader) {
-		return PatchRoleLabelTo(myself(role))
+		cli := internal.NewInclusterClient(localClientOptions())
+		return updateRoleLabel(cli, role)
 	}
 	return nil
 }
@@ -281,7 +309,8 @@ func postStart() error {
 	if !isSubset {
 		// Step 5: Rebuild me
 		log.Infof("mySet is not a subset of leaderSet, rebuild me, mySet: %s, leaderSet: %s", mySet, leaderSet)
-		if err := PatchRebuildLabelTo(myself("")); err != nil {
+		cli := internal.NewInclusterClient(localClientOptions())
+		if err := rebuildMe(cli); err != nil {
 			return err
 		}
 		return nil
@@ -298,12 +327,8 @@ func preStop() error {
 	return nil
 }
 
-func myself(role string) MySQLNode {
-	return MySQLNode{
-		PodName:   podName,
-		Namespace: ns,
-		Role:      role,
-	}
+func localClientOptions() *internal.ClientOptions {
+	return &internal.ClientOptions{NameSpace: ns, PodName: podName}
 }
 
 func enableAutoRebuild() bool {
@@ -477,7 +502,7 @@ func disableMyRaft() error {
 
 func WaitXenonAvailable(timeout time.Duration) error {
 	err := wait.PollImmediate(2*time.Second, timeout, func() (bool, error) {
-		if err := XenonPingMyself(); err != nil {
+		if err := internal.XenonPingMyself(); err != nil {
 			return false, nil
 		}
 		return true, nil
@@ -545,23 +570,18 @@ func getLeader() string {
 	return ""
 }
 
-func PatchRebuildLabelTo(n MySQLNode) error {
-	patch := `{"metadata":{"labels":{"rebuild":"true"}}}`
-	err := patchPodLabel(n, patch)
-	if err != nil {
-		return fmt.Errorf("failed to patch pod rebuild label: %s", err.Error())
+func updateRoleLabel(cli internal.Client, role string) error {
+	log.Infof("updating role label to %s", role)
+	if err := cli.PatchLabel("role", role); err != nil {
+		return fmt.Errorf("failed to update role label: %s", err.Error())
 	}
 	return nil
 }
 
-func patchPodLabel(n MySQLNode, patch string) error {
-	clientset, err := GetClientSet()
-	if err != nil {
-		return fmt.Errorf("failed to create clientset: %s", err.Error())
-	}
-	_, err = clientset.CoreV1().Pods(n.Namespace).Patch(context.TODO(), n.PodName, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
-	if err != nil {
-		return err
+func rebuildMe(cli internal.Client) error {
+	log.Info("rebuilding me")
+	if err := cli.PatchLabel("rebuild", "true"); err != nil {
+		return fmt.Errorf("failed to patch label rebuild: %s", err.Error())
 	}
 	return nil
 }
