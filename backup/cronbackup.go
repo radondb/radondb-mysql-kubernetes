@@ -23,6 +23,7 @@ type CronJob struct {
 
 	BackupScheduleJobsHistoryLimit *int
 	Image                          string
+	NFSServerAddress               string
 	Log                            logr.Logger
 }
 
@@ -117,6 +118,9 @@ func (j *CronJob) createBackup() (*apiv1alpha1.Backup, error) {
 			//RemoteDeletePolicy: j.BackupRemoteDeletePolicy,
 			HostName: fmt.Sprintf("%s-mysql-0", j.ClusterName),
 		},
+	}
+	if len(j.NFSServerAddress) > 0 {
+		backup.Spec.NFSServerAddress = j.NFSServerAddress
 	}
 	return backup, j.Client.Create(context.TODO(), backup)
 }

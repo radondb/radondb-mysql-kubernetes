@@ -137,7 +137,9 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 		Image:                          cluster.Spec.PodPolicy.SidecarImage,
 		BackupScheduleJobsHistoryLimit: cluster.Spec.BackupScheduleJobsHistoryLimit,
 		//BackupRemoteDeletePolicy:       cluster.Spec.BackupRemoteDeletePolicy,
-		Log: log,
+
+		NFSServerAddress: cluster.Spec.NFSServerAddress,
+		Log:              log,
 	}, cluster.Name)
 
 	return nil
