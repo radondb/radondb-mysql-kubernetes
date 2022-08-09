@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.16 as builder
+FROM golang:1.17.13 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -8,7 +8,7 @@ COPY go.sum go.sum
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN if [ $(cat /etc/timezone) = "Asia/Shanghai" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi
-RUN  go mod download
+RUN go mod download
 
 # Copy the go source
 COPY cmd/manager/main.go cmd/manager/main.go

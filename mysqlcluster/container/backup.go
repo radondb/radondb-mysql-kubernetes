@@ -99,7 +99,7 @@ func (c *backupSidecar) getPorts() []corev1.ContainerPort {
 
 func (c *backupSidecar) getLivenessProbe() *corev1.Probe {
 	return &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/health",
 				Port: intstr.FromInt(utils.XBackupPort),
@@ -115,7 +115,7 @@ func (c *backupSidecar) getLivenessProbe() *corev1.Probe {
 
 func (c *backupSidecar) getReadinessProbe() *corev1.Probe {
 	return &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/health",
 				Port: intstr.FromInt(utils.XBackupPort),

@@ -77,7 +77,7 @@ func (c *metrics) getPorts() []corev1.ContainerPort {
 // getLivenessProbe get the container livenessProbe.
 func (c *metrics) getLivenessProbe() *corev1.Probe {
 	return &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(utils.MetricsPort),
@@ -94,7 +94,7 @@ func (c *metrics) getLivenessProbe() *corev1.Probe {
 // getReadinessProbe get the container readinessProbe.
 func (c *metrics) getReadinessProbe() *corev1.Probe {
 	return &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(utils.MetricsPort),
