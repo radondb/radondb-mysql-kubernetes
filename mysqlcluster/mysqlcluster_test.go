@@ -43,7 +43,9 @@ var (
 			Name: "sample",
 		},
 		Spec: mysqlv1alpha1.MysqlClusterSpec{
-			MysqlVersion: "5.7",
+			MysqlOpts: mysqlv1alpha1.MysqlOpts{
+				Image: "percona/percona-server:5.7.35",
+			},
 		},
 	}
 	testCluster = MysqlCluster{
@@ -139,7 +141,7 @@ func TestGetMySQLVersion(t *testing.T) {
 	// Invalid, currently not support: 8.0 -> 0.0.0
 	{
 		testMysqlCluster := mysqlCluster
-		testMysqlCluster.Spec.MysqlVersion = "8.0"
+		testMysqlCluster.Spec.MysqlOpts.Image = "percona/percona-server:8.0.25"
 		testCase := MysqlCluster{
 			MysqlCluster: &testMysqlCluster,
 			log:          logf.Log.WithName("mysqlcluster"),
@@ -150,18 +152,18 @@ func TestGetMySQLVersion(t *testing.T) {
 	// MySQLTagsToSemVer 5.7 -> 5.7.34
 	{
 		testMysqlCluster := mysqlCluster
-		testMysqlCluster.Spec.MysqlVersion = "5.7"
+		testMysqlCluster.Spec.MysqlOpts.Image = "percona/percona-server:5.7.35"
 		testCase := MysqlCluster{
 			MysqlCluster: &testMysqlCluster,
 			log:          logf.Log.WithName("mysqlcluster"),
 		}
-		want := "5.7.34"
+		want := "5.7.35"
 		assert.Equal(t, want, testCase.GetMySQLVersion())
 	}
 	// Invalid, not support MysqlImageVersions 5.7.34 -> 5.7.34
 	{
 		testMysqlCluster := mysqlCluster
-		testMysqlCluster.Spec.MysqlVersion = "5.7.34"
+		testMysqlCluster.Spec.MysqlOpts.Image = "5.7.35"
 		testCase := MysqlCluster{
 			MysqlCluster: &testMysqlCluster,
 			log:          logf.Log.WithName("mysqlcluster"),
@@ -387,7 +389,6 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 				Labels:    nil,
 			},
 			Spec: mysqlv1alpha1.MysqlClusterSpec{
-				MysqlVersion: "5.7",
 				Persistence: mysqlv1alpha1.Persistence{
 					AccessModes:  nil,
 					StorageClass: &storageClass,

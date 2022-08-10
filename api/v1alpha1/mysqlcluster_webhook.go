@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -98,7 +99,7 @@ func (r *MysqlCluster) validateVolumeSize(oldCluster *MysqlCluster) error {
 func (r *MysqlCluster) validateLowTableCase(oldCluster *MysqlCluster) error {
 	oldmyconf := oldCluster.Spec.MysqlOpts.MysqlConf
 	newmyconf := r.Spec.MysqlOpts.MysqlConf
-	if r.Spec.MysqlVersion == "8.0" &&
+	if strings.Contains(r.Spec.MysqlOpts.Image, "8.0") &&
 		oldmyconf["lower_case_table_names"] != newmyconf["lower_case_table_names"] {
 		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("lower_case_table_names cannot be changed in MySQL8.0+"))
 	}

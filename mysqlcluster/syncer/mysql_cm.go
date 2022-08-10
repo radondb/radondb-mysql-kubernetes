@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/go-ini/ini"
 	"github.com/presslabs/controller-util/syncer"
@@ -73,8 +74,13 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	sec := cfg.Section("mysqld")
 
 	c.EnsureMysqlConf()
-
-	switch c.Spec.MysqlVersion {
+	mysqlVersion := ""
+	if strings.Contains(c.Spec.MysqlOpts.Image, "8.0") {
+		mysqlVersion = "8.0"
+	} else if strings.Contains(c.Spec.MysqlOpts.Image, "5.7") {
+		mysqlVersion = "5.7"
+	}
+	switch mysqlVersion {
 	case "8.0":
 		addKVConfigsToSection(sec, mysql80Configs)
 	case "5.7":

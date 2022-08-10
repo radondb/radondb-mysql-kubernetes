@@ -1,7 +1,9 @@
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
-SIDECAR_IMG ?= sidecar:latest
-XENON_IMG ?= xenon:latest
+IMGPREFIX ?=radondb/
+IMG ?= $(IMGPREFIX)mysql-operator:latest
+SIDECAR57_IMG ?= $(IMGPREFIX)mysql57-sidecar:latest
+SIDECAR80_IMG ?= $(IMGPREFIX)mysql80-sidecar:latest
+XENON_IMG ?= $(IMGPREFIX)xenon:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -58,7 +60,7 @@ ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test $(shell go list ./... | grep -v /test/) -coverprofile cover.out
 
 ##@ Build
 
@@ -71,10 +73,9 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 docker-build: test ## Build docker image with the manager.
 	docker build -t ${IMG} .
-	docker build -f Dockerfile.sidecar -t ${SIDECAR_IMG} .
-	docker build -f hack/xenon/Dockerfile -t ${XENON_IMG} hack/xenon
-mysql8-sidecar:
-	docker build --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  -f  Dockerfile.sidecar -t ${SIDECAR_IMG} .
+	docker build -f Dockerfile.sidecar -t ${SIDECAR57_IMG} .
+	docker build -f build/xenon/Dockerfile -t ${XENON_IMG} .
+	docker build --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 	docker push ${SIDECAR_IMG}

@@ -5,7 +5,6 @@ metadata:
 spec:
   replicas: 3
   mysqlVersion: "5.7"
-  
   # the backupSecretName specify the secret file name which store S3 information,
   # if you want S3 backup or restore, please create backup_secret.yaml, uncomment below and fill secret name:
   # backupSecretName: 
@@ -18,6 +17,7 @@ spec:
   # such as nfsServerAddress: "10.233.55.172"
   # nfsServerAddress: 
   mysqlOpts:
+    image: percona/percona-server:5.7.34
     user: radondb_usr
     password: RadonDB@123
     database: radondb

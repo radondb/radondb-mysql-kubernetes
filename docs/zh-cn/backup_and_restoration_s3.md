@@ -51,7 +51,6 @@ kubectl create -f config/samples/backup_secret.yaml
 ```yaml
 spec:
   replicas: 3
-  mysqlVersion: "5.7"
   backupSecretName: sample-backup-secret
   ...
 ```
@@ -94,7 +93,6 @@ backup-sample   sample_2022526155115   2022-05-26T15:51:15   S3
 ...
 spec:
   replicas: 3
-  mysqlVersion: "5.7"
   backupSecretName: sample-backup-secret
   restoreFrom: "sample_2022526155115"
 ...
