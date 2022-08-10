@@ -155,8 +155,8 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 			s.backup.Namespace, s.backup.GetNameForJob(), backupToDir, DateTime)
 		in.Containers[0].Args = []string{
 			fmt.Sprintf("mkdir -p /backup/%s;"+
-				"curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/%s;"+
-				strAnnonations+"exit ${PIPESTATUS[0]}",
+				"curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/%s; err1=${PIPESTATUS[0]};"+
+				strAnnonations+"retval_final=$?; exit $err1||$retval_final",
 				backupToDir,
 				s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName), backupToDir),
 		}
