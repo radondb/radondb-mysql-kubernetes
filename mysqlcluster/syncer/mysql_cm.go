@@ -22,8 +22,6 @@ import (
 	"sort"
 
 	"github.com/go-ini/ini"
-	"github.com/presslabs/controller-util/syncer"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,8 +31,7 @@ import (
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
-// NewMysqlCMSyncer returns mysql configmap syncer.
-func NewMysqlCMSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Interface {
+func NewMysqlCMSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) Syncer {
 	cm := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -46,8 +43,7 @@ func NewMysqlCMSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.In
 			Labels:    c.GetLabels(),
 		},
 	}
-
-	return syncer.NewObjectSyncer("ConfigMap", c.Unwrap(), cm, cli, func() error {
+	return NewObjectSyncer("ConfigMap", c.MysqlCluster, cm, cli, false, func() error {
 		data, err := buildMysqlConf(c)
 		if err != nil {
 			return fmt.Errorf("failed to create mysql configs: %s", err)
@@ -61,7 +57,6 @@ func NewMysqlCMSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.In
 			"my.cnf":            data,
 			utils.PluginConfigs: dataPlugin,
 		}
-
 		return nil
 	})
 }

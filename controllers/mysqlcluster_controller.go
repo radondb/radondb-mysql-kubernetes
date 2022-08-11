@@ -115,7 +115,7 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, r.deleteAllBackup(ctx, req, instance.Unwrap())
 	}
 	mysqlCMSyncer := clustersyncer.NewMysqlCMSyncer(r.Client, instance)
-	if err = syncer.Sync(ctx, mysqlCMSyncer, r.Recorder); err != nil {
+	if err = clustersyncer.Sync(ctx, mysqlCMSyncer, r.Recorder); err != nil {
 		return ctrl.Result{}, err
 	}
 

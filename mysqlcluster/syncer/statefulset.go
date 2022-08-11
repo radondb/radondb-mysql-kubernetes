@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/iancoleman/strcase"
 	"github.com/imdario/mergo"
 	"github.com/presslabs/controller-util/mergo/transformers"
 	"github.com/presslabs/controller-util/syncer"
@@ -556,14 +555,6 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 		}
 		return false, nil
 	})
-}
-
-func basicEventReason(objKindName string, err error) string {
-	if err != nil {
-		return fmt.Sprintf("%sSyncFailed", strcase.ToCamel(objKindName))
-	}
-
-	return fmt.Sprintf("%sSyncSuccessfull", strcase.ToCamel(objKindName))
 }
 
 // check the backup is exist and running
