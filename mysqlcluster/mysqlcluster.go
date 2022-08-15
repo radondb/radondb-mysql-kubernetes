@@ -329,7 +329,7 @@ func (c *MysqlCluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]cor
 // GetNameForResource returns the name of a resource from above
 func (c *MysqlCluster) GetNameForResource(name utils.ResourceName) string {
 	switch name {
-	case utils.StatefulSet, utils.ConfigMap, utils.HeadlessSVC, utils.PodDisruptionBudget:
+	case utils.StatefulSet, utils.HeadlessSVC, utils.PodDisruptionBudget:
 		return fmt.Sprintf("%s-mysql", c.Name)
 	case utils.LeaderService:
 		return fmt.Sprintf("%s-leader", c.Name)
@@ -341,6 +341,11 @@ func (c *MysqlCluster) GetNameForResource(name utils.ResourceName) string {
 		return fmt.Sprintf("%s-secret", c.Name)
 	case utils.XenonMetaData:
 		return fmt.Sprintf("%s-xenon", c.Name)
+	case utils.ConfigMap:
+		if template := c.Spec.MysqlOpts.MysqlConfTemplate; template != "" {
+			return template
+		}
+		return fmt.Sprintf("%s-mysql", c.Name)
 	default:
 		return c.Name
 	}

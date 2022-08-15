@@ -341,6 +341,13 @@ func (in *MysqlOpts) DeepCopyInto(out *MysqlOpts) {
 			(*out)[key] = val
 		}
 	}
+	if in.PluginConf != nil {
+		in, out := &in.PluginConf, &out.PluginConf
+		*out = make(MysqlConf, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	in.Resources.DeepCopyInto(&out.Resources)
 }
 
