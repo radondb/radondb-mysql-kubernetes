@@ -62,7 +62,7 @@ spec:
 
   podPolicy:
     imagePullPolicy: IfNotPresent
-    sidecarImage: radondb/mysql57-sidecar:v2.2.0
+    sidecarImage: radondb/mysql57-sidecar:v2.2.1
     busyboxImage: busybox:1.32
 
     slowLogTail: false
