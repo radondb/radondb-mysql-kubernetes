@@ -38,9 +38,9 @@ const (
 	// Specify the directory that Helm Install will be executed.
 	ChartPath = "../../charts/mysql-operator"
 	// Image path of mysql operator.
-	OperatorImagePath = "radondb/mysql-operator:v2.2.0-alpha.1"
+	OperatorImagePath = "radondb/mysql-operator:v2.2.1"
 	// Image path for mysql sidecar.
-	SidecarImagePath = "radondb/mysql57-sidecar:v2.2.0-alpha.1"
+	SidecarImagePath = "radondb/mysql57-sidecar:v2.2.1"
 
 	// The namespace where the resource created by E2E.
 	RadondbMysqlE2eNamespace = "radondb-mysql-e2e"

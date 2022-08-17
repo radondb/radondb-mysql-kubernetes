@@ -50,7 +50,7 @@ go test test/e2e/e2e_test.go -test.v --ginkgo.focus="list namespace"
 | kubernetes-context  | current-context                | config context to use for kuberentes.                       |
 | log-dir-prefix      | ""                             | Prefix of the log directory.                                |
 | chart-path          | ../../charts/mysql-operator    | The chart name or path for mysql operator.                  |
-| operator-image-path | radondb/mysql-operator:v2.2.0  | Image path of mysql operator.                               |
-| sidecar-image-path  | radondb/mysql57-sidecar:v2.2.0 | Image full path of mysql sidecar.                           |
+| operator-image-path | radondb/mysql-operator:v2.2.1  | Image path of mysql operator.                               |
+| sidecar-image-path  | radondb/mysql57-sidecar:v2.2.1 | Image full path of mysql sidecar.                           |
 | pod-wait-timeout    | 1200                           | Timeout to wait for a pod to be ready.                      |
 | dump-logs           | false                          | Dump logs when test case failed.                            |
