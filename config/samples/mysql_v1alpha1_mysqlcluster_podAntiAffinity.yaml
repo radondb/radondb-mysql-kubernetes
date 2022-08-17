@@ -34,7 +34,7 @@ spec:
         memory: 1Gi
 
   xenonOpts:
-    image: radondb/xenon:1.1.5-alpha
+    image: radondb/xenon:v2.2.1
     admitDefeatHearbeatCount: 5
     electionTimeout: 10000
 

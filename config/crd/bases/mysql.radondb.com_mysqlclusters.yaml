@@ -1276,7 +1276,7 @@ spec:
                 default:
                   admitDefeatHearbeatCount: 5
                   electionTimeout: 10000
-                  image: radondb/xenon:1.1.5-alpha
+                  image: radondb/xenon:v2.2.1
                   resources:
                     limits:
                       cpu: 100m
@@ -1303,7 +1303,7 @@ spec:
                       automatically rebuild the invalid node.
                     type: boolean
                   image:
-                    default: radondb/xenon:1.1.5-alpha
+                    default: radondb/xenon:v2.2.1
                     description: To specify the image that will be used for xenon
                       container.
                     type: string

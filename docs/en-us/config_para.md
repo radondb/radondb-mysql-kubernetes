@@ -22,7 +22,7 @@ Contents
 | MysqlOpts.InitTokuDB               | TokuDB enabled              | true                                                        |
 | MysqlOpts.MysqlConf                | MySQL configuration                  | -                                                           |
 | MysqlOpts.Resources                | MySQL container resources              | Reserve: CPU 100M, memory 256Mi; </br> limit: CPU 500M, memory 1Gi  |
-| XenonOpts.Image                    | Xenon (HA MySQL) image       | radondb/xenon:1.1.5-alpha                                   |
+| XenonOpts.Image                    | Xenon (HA MySQL) image       | radondb/xenon:v2.2.1                                   |
 | XenonOpts.AdmitDefeatHearbeatCount | Maximum heartbeat failures allowed  | 5                                                           |
 | XenonOpts.ElectionTimeout          | Election timeout period (milliseconds)    | 10000 ms                                                     |
 | XenonOpts.Resources                | Xenon container resources              | Reserve: CPU 50M, memory 128Mi; </br> limit: CPU 100M, memory 256Mi |

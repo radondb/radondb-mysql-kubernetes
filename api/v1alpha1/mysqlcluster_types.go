@@ -48,7 +48,7 @@ type MysqlClusterSpec struct {
 
 	// XenonOpts is the options of xenon container.
 	// +optional
-	// +kubebuilder:default:={image: "radondb/xenon:1.1.5-alpha", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
+	// +kubebuilder:default:={image: "radondb/xenon:v2.2.1", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
 	XenonOpts XenonOpts `json:"xenonOpts,omitempty"`
 
 	// MetricsOpts is the options of metrics container.
@@ -159,7 +159,7 @@ type MysqlOpts struct {
 type XenonOpts struct {
 	// To specify the image that will be used for xenon container.
 	// +optional
-	// +kubebuilder:default:="radondb/xenon:1.1.5-alpha"
+	// +kubebuilder:default:="radondb/xenon:v2.2.1"
 	Image string `json:"image,omitempty"`
 
 	// High available component admit defeat heartbeat count.
