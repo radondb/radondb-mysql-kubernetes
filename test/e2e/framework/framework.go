@@ -1,5 +1,5 @@
 /*
-Copyright 2015 The Kubernetes Authors.
+Copyright 2022 RadonDB.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,10 +17,14 @@ limitations under the License.
 package framework
 
 import (
-	"fmt"
+	"os"
+	"os/user"
+	"path/filepath"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/gruntwork-io/terratest/modules/k8s"
+	"github.com/gruntwork-io/terratest/modules/testing"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	core "k8s.io/api/core/v1"
@@ -33,6 +37,9 @@ import (
 )
 
 type Framework struct {
+	t              testing.TestingT
+	kubectlOptions *k8s.KubectlOptions
+
 	BaseName  string
 	Namespace *core.Namespace
 
@@ -45,11 +52,23 @@ type Framework struct {
 }
 
 func NewFramework(baseName string) *Framework {
-	By(fmt.Sprintf("Creating framework with timeout: %v", TestContext.TimeoutSeconds))
+	defer GinkgoRecover()
+
 	f := &Framework{
+		t: GinkgoT(),
+		kubectlOptions: &k8s.KubectlOptions{
+			Namespace:  TestContext.E2ETestNamespace,
+			ConfigPath: GetKubeconfig(),
+		},
 		BaseName: baseName,
-		Log:      Log,
+		Namespace: &core.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: TestContext.E2ETestNamespace,
+			},
+		},
+		Log: Log,
 	}
+
 	return f
 }
 
@@ -59,7 +78,7 @@ func (f *Framework) BeforeEach() {
 	// https://github.com/onsi/ginkgo/issues/222
 	f.Timeout = time.Duration(TestContext.TimeoutSeconds) * time.Second
 
-	By("Creating a kubernetes client")
+	By("creating a kubernetes client")
 	cfg, err := LoadConfig()
 	Expect(err).NotTo(HaveOccurred())
 
@@ -73,7 +92,7 @@ func (f *Framework) BeforeEach() {
 
 	f.Namespace = &core.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: RadondbMysqlE2eNamespace,
+			Name: TestContext.E2ETestNamespace,
 		},
 	}
 }
@@ -86,4 +105,19 @@ func (f *Framework) CreateNamespace(labels map[string]string) (*core.Namespace, 
 func (f *Framework) WaitForPodReady(podName string) error {
 	return waitTimeoutForPodReadyInNamespace(f.ClientSet, podName,
 		f.Namespace.Name, PodStartTimeout)
+}
+
+func GetKubeconfig() string {
+	kubeconfig := os.Getenv("KUBECONFIG")
+	if kubeconfig == "" {
+		u, err := user.Current()
+		if err != nil {
+			panic(err)
+		}
+		kubeconfig = filepath.Join(u.HomeDir, ".kube", "config")
+		if _, err := os.Stat(kubeconfig); err != nil && !os.IsNotExist(err) {
+			kubeconfig = ""
+		}
+	}
+	return kubeconfig
 }
