@@ -1,0 +1,29 @@
+package install
+
+import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"github.com/radondb/radondb-mysql-kubernetes/test/e2e/framework"
+	"k8s.io/apimachinery/pkg/types"
+)
+
+var _ = Describe("install cluster", Label("installCluster"), Ordered, func() {
+	f := framework.NewFramework("e2e-test")
+
+	BeforeAll(func() {
+		f.BeforeEach()
+		// Make sure operator is available
+		By("check webhook")
+		f.WaitUntilServiceAvailable(framework.WebhookServiceName)
+		By("check manager")
+		Expect(f.CheckServiceEndpoint(framework.HealthCheckServiceName, 8081, "healthz")).Should(Succeed())
+	})
+
+	AfterAll(func() {})
+
+	It("using template", Label("template"), func() {
+		Expect(f.InstallMySQLClusterUsingTemplate()).Should(Succeed())
+		By("Wait cluster ready")
+		f.WaitClusterReadiness(&types.NamespacedName{Name: framework.SampleClusterName, Namespace: f.Namespace.Name})
+	})
+})

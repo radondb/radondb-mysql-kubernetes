@@ -18,12 +18,15 @@ package framework
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	http_helper "github.com/gruntwork-io/terratest/modules/http-helper"
+	"github.com/gruntwork-io/terratest/modules/k8s"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -32,8 +35,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
-	"github.com/radondb/radondb-mysql-kubernetes/test/e2e/framework/ginkgowrapper"
+	// "github.com/radondb/radondb-mysql-kubernetes/test/e2e/framework/ginkgowrapper"
 )
 
 // CreateTestingNS should be used by every test, note that we append a common prefix to the provided test name.
@@ -130,7 +132,8 @@ func podRunningAndReadyByPhase(pod corev1.Pod) (bool, error) {
 // DeleteNS deletes the provided namespace, waits for it to be completely deleted, and then checks
 // whether there are any pods remaining in a non-terminating state.
 func DeleteNS(c clientset.Interface, namespace string, timeout time.Duration) error {
-	if err := c.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{}); err != nil {
+	var zero = int64(0)
+	if err := c.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{GracePeriodSeconds: &zero}); err != nil {
 		return err
 	}
 
@@ -153,15 +156,6 @@ func DeleteNS(c clientset.Interface, namespace string, timeout time.Duration) er
 func Logf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	Log.Info(msg)
-}
-
-func Failf(format string, args ...interface{}) {
-	msg := fmt.Sprintf(format, args...)
-	ginkgowrapper.Fail(nowStamp()+": "+msg, 2)
-}
-
-func nowStamp() string {
-	return time.Now().Format(time.StampMilli)
 }
 
 func GetPodLogs(c clientset.Interface, namespace, podName, containerName string) (string, error) {
@@ -219,4 +213,36 @@ func LogContainersInPodsWithLabels(c clientset.Interface, ns string, match map[s
 	for _, pod := range podList.Items {
 		kubectlLogPod(c, pod, containerSubstr, logFunc)
 	}
+}
+
+func (f *Framework) CreateNS() {
+	k8s.CreateNamespace(f.t, f.kubectlOptions, DefaultE2ETestNS)
+}
+
+func (f *Framework) CheckServiceEndpoint(name string, port int, path string) error {
+	k8s.WaitUntilServiceAvailable(f.t, f.kubectlOptions, name, 10, 2*time.Second)
+	svc := k8s.GetService(f.t, f.kubectlOptions, name)
+	endpoint := k8s.GetServiceEndpoint(f.t, f.kubectlOptions, svc, port)
+	// Setup a TLS configuration to submit with the helper, a blank struct is acceptable
+	tlsConfig := tls.Config{}
+	url := fmt.Sprintf("http://%s", endpoint)
+	if path != "" {
+		url = fmt.Sprintf("%s/%s", url, path)
+	}
+
+	http_helper.HttpGetWithRetryWithCustomValidation(
+		f.t,
+		url,
+		&tlsConfig,
+		30,
+		10*time.Second,
+		func(statusCode int, body string) bool {
+			return statusCode == 200
+		},
+	)
+	return nil
+}
+
+func (f *Framework) WaitUntilServiceAvailable(serviceName string) {
+	k8s.WaitUntilServiceAvailable(f.t, f.kubectlOptions, serviceName, 10, 2*time.Second)
 }

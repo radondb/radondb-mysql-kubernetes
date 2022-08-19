@@ -17,40 +17,38 @@ export KUBECONFIG=$HOME/.kube/config
 
 > The Ginkgo version of the following examples is V2.
 
-- Running all cases.
+- Run `simplecase`.
 
 ```
-go test test/e2e/e2e_test.go -test.v
+go test test/e2e/e2e_test.go -test.v --ginkgo.focus="simplecase"
 ```
 
-- Running all cases labeled `simplecase`.
+or
 
 ```
 go test test/e2e/e2e_test.go -test.v --ginkgo.label-filter=simplecase
 ```
 
-- Skip the cases of describing information contains `Namespace`.
+- Skip `simplecase`.
 
 ```
-go test test/e2e/e2e_test.go -test.v --ginkgo.skip="list namespace"
+go test test/e2e/e2e_test.go -test.v --ginkgo.skip="simplecase"
 ```
 
-- Just run the description information contains `Namespace`'s cases.
+- Clean up
 
 ```
-go test test/e2e/e2e_test.go -test.v --ginkgo.focus="list namespace"
+go test test/e2e/e2e_test.go -test.v --ginkgo.focus="clean" -clean-up=true
 ```
 
 ### Supported args
 
-| Args                | Default                        | Description                                                 |
-| ------------------- | ------------------------------ | ----------------------------------------------------------- |
-| kubernetes-host     | ""                             | The kubernetes host, or apiserver, to connect to.           |
-| kubernetes-config   | $KUBECONFIG                    | Path to config containing embedded authinfo for kubernetes. |
-| kubernetes-context  | current-context                | config context to use for kuberentes.                       |
-| log-dir-prefix      | ""                             | Prefix of the log directory.                                |
-| chart-path          | ../../charts/mysql-operator    | The chart name or path for mysql operator.                  |
-| operator-image-path | radondb/mysql-operator:v2.2.1  | Image path of mysql operator.                               |
-| sidecar-image-path  | radondb/mysql57-sidecar:v2.2.1 | Image full path of mysql sidecar.                           |
-| pod-wait-timeout    | 1200                           | Timeout to wait for a pod to be ready.                      |
-| dump-logs           | false                          | Dump logs when test case failed.                            |
+| Args               | Default                        | Description                                                 |
+| ------------------ | ------------------------------ | ----------------------------------------------------------- |
+| kubernetes-host    | ""                             | The kubernetes host, or apiserver, to connect to.           |
+| kubernetes-config  | $KUBECONFIG                    | Path to config containing embedded authinfo for kubernetes. |
+| kubernetes-context | current-context                | config context to use for kuberentes.                       |
+| log-dir-prefix     | ""                             | Prefix of the log directory.                                |
+| sidecar-image-path | radondb/mysql57-sidecar:v2.2.1 | Image full path of mysql sidecar.                           |
+| pod-wait-timeout   | 1200                           | Timeout to wait for a pod to be ready.                      |
+| dump-logs          | false                          | Dump logs when test case failed.                            |

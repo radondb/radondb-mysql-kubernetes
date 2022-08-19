@@ -19,12 +19,11 @@ package framework
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gruntwork-io/terratest/modules/k8s"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,6 +31,21 @@ import (
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
+)
+
+var (
+	RadonDBMySQL57ClusterTemplate = `
+apiVersion: mysql.radondb.com/v1alpha1
+kind: MysqlCluster
+metadata:
+  name: %s
+spec:
+  replicas: %d
+  xenonOpts:
+    image: radondb/xenon:v2.2.1
+`
+	SampleClusterName      = "sample"
+	MySQL57ReleaseAssetURL = "https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1alpha1_mysqlcluster.yaml"
 )
 
 func newCluster(name, ns string, replicas int32) *apiv1alpha1.MysqlCluster {
@@ -50,19 +64,10 @@ func newCluster(name, ns string, replicas int32) *apiv1alpha1.MysqlCluster {
 	}
 }
 
-func (f *Framework) InitAClusterForTesting(replicas int32) string {
-	// Be careful, mysql allowed hostname lenght is <63.
-	cluster := newCluster(fmt.Sprintf("cl-%d", rand.Int31()/1000), f.Namespace.Name, replicas)
-	if err := f.Client.Create(context.TODO(), cluster); err != nil {
-		return ""
-	}
-	return cluster.Name
-}
-
 func (f *Framework) getExistCluster() *apiv1alpha1.MysqlCluster {
 	existClusters := &apiv1alpha1.MysqlClusterList{}
 	Expect(f.Client.List(context.TODO(), existClusters, &client.ListOptions{
-		Namespace: RadondbMysqlE2eNamespace,
+		Namespace: DefaultE2ETestNS,
 	})).To(Succeed(), "failed to list clusters")
 
 	if len(existClusters.Items) > 0 {
@@ -71,30 +76,11 @@ func (f *Framework) getExistCluster() *apiv1alpha1.MysqlCluster {
 	return &apiv1alpha1.MysqlCluster{}
 }
 
-func (f *Framework) InitOrGetCluster(replicas int32) *types.NamespacedName {
-	clusterKey := &types.NamespacedName{Namespace: RadondbMysqlE2eNamespace}
-	if cluster := f.getExistCluster(); cluster.Name != "" {
-		clusterKey.Name = cluster.Name
-		cluster.Spec.Replicas = &replicas
-		Expect(f.Client.Update(context.TODO(), cluster)).To(Succeed(), "failed to update clusters")
-	} else {
-		clusterKey.Name = f.InitAClusterForTesting(replicas)
-	}
-	return clusterKey
-}
-
-func (f *Framework) UpdateClusterReplicas(cluster *apiv1alpha1.MysqlCluster, replicas int32) {
-	Expect(f.Client.Get(context.TODO(), client.ObjectKeyFromObject(cluster), cluster)).To(Succeed(), "failed to get cluster %s", cluster.Name)
-	cluster.Spec.Replicas = &replicas
-	Expect(f.Client.Update(context.TODO(), cluster)).To(Succeed())
-}
-
 // WaitClusterReadiness determine whether the cluster is ready.
 func (f *Framework) WaitClusterReadiness(clusterKey *types.NamespacedName) {
 	cluster := &apiv1alpha1.MysqlCluster{}
-	if err := f.Client.Get(context.TODO(), *clusterKey, cluster); err != nil {
-		Failf(fmt.Sprintf("Failed to get cluster %s", clusterKey.String()))
-	}
+	Expect(f.Client.Get(context.TODO(), *clusterKey, cluster)).To(Succeed(), "failed to get cluster %s", clusterKey.Name)
+
 	timeout := f.Timeout
 	if *cluster.Spec.Replicas > 0 {
 		timeout = time.Duration(*cluster.Spec.Replicas) * f.Timeout
@@ -153,26 +139,17 @@ func GetClusterLabels(cluster *apiv1alpha1.MysqlCluster) labels.Set {
 	return labels
 }
 
-func (f *Framework) GetClusterPVCsFn(cluster *apiv1alpha1.MysqlCluster) func() []corev1.PersistentVolumeClaim {
-	return func() []corev1.PersistentVolumeClaim {
-		pvcList := &corev1.PersistentVolumeClaimList{}
-		lo := &client.ListOptions{
-			Namespace:     cluster.Namespace,
-			LabelSelector: labels.SelectorFromSet(GetClusterLabels(cluster)),
-		}
-		f.Client.List(context.TODO(), pvcList, lo)
-		return pvcList.Items
+func (f *Framework) InstallMySQLClusterUsingTemplate() error {
+	cluster := fmt.Sprintf(RadonDBMySQL57ClusterTemplate, SampleClusterName, 2)
+	if err := k8s.KubectlApplyFromStringE(f.t, f.kubectlOptions, cluster); err != nil {
+		return err
 	}
+	return nil
 }
 
-func (f *Framework) GetClusterPods(cluster *apiv1alpha1.MysqlCluster) func() []corev1.Pod {
-	return func() []corev1.Pod {
-		podList := &corev1.PodList{}
-		lo := &client.ListOptions{
-			Namespace:     cluster.Namespace,
-			LabelSelector: labels.SelectorFromSet(GetClusterLabels(cluster)),
-		}
-		f.Client.List(context.TODO(), podList, lo)
-		return podList.Items
+func (f *Framework) InstallMySQLClusterUsingAsset() error {
+	if err := k8s.KubectlApplyE(f.t, f.kubectlOptions, MySQL57ReleaseAssetURL); err != nil {
+		return err
 	}
+	return nil
 }

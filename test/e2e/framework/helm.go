@@ -17,43 +17,77 @@ limitations under the License.
 package framework
 
 import (
-	"fmt"
-	"os"
-	"os/exec"
-	"strings"
-
-	. "github.com/onsi/gomega"
+	"github.com/gruntwork-io/terratest/modules/helm"
+	"github.com/gruntwork-io/terratest/modules/k8s"
 )
 
-func HelmInstallChart(release, ns string) {
-	strs := strings.Split(TestContext.OperatorImagePath, ":")
-	if len(strs) != 2 {
-		Failf(fmt.Sprintf("Invalid operator image path: %s", TestContext.OperatorImagePath))
-	}
-	args := []string{
-		"install", release, "./" + TestContext.ChartPath,
-		"--namespace", ns,
-		"--values", TestContext.ChartValues, "--wait",
-		"--kube-context", TestContext.KubeContext,
-		"--set", fmt.Sprintf("manager.image=%s", strs[0]),
-		"--set", fmt.Sprintf("manager.tag=%s", strs[1]),
-	}
+const (
+	RadonDBHelmRepoName           = "radondb"
+	RadonDBHelmRepoURL            = "https://radondb.github.io/radondb-mysql-kubernetes/"
+	RadonDBMySQLOperatorChartName = "radondb/mysql-operator"
+	HealthCheckServiceName        = "mysql-operator-e2e-test"
+	WebhookServiceName            = "radondb-mysql-webhook"
+)
 
-	cmd := exec.Command("helm", args...)
-	cmd.Stderr = os.Stderr
+var OperatorHealthService = `
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-operator-e2e-test
+spec:
+  selector:
+    app: mysql-operator
+  ports:
+    - name: http
+      port: 8081
+      protocol: TCP
+      targetPort: 8081
+  type: ClusterIP
+`
 
-	Expect(cmd.Run()).Should(Succeed())
+type OperatorOptions struct {
+	releaseName string
 }
 
-func HelmPurgeRelease(release, ns string) {
-	args := []string{
-		"delete", release,
-		"--namespace", ns,
-		"--kube-context", TestContext.KubeContext,
+func NewOperatorOptions() *OperatorOptions {
+	o := OperatorOptions{}
+	if o.releaseName == "" {
+		o.releaseName = "e2e-demo"
 	}
-	cmd := exec.Command("helm", args...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	return &o
+}
 
-	Expect(cmd.Run()).Should(Succeed())
+func (f *Framework) AddRadonDBHelmRepo() {
+	helm.AddRepo(f.t, &helm.Options{}, RadonDBHelmRepoName, RadonDBHelmRepoURL)
+}
+
+func (f *Framework) RemoveRadonDBHelmRepo() {
+	helm.RemoveRepo(f.t, &helm.Options{}, RadonDBHelmRepoName)
+}
+
+func (f *Framework) InstallOperator(o *OperatorOptions) {
+	helmOpts := helm.Options{}
+	if f.kubectlOptions != nil {
+		helmOpts.KubectlOptions = f.kubectlOptions
+	}
+	helm.Install(f.t, &helmOpts, RadonDBMySQLOperatorChartName, o.releaseName)
+}
+
+func (f *Framework) UninstallOperator(o *OperatorOptions) {
+	helm.Delete(f.t, &helm.Options{}, o.releaseName, true)
+}
+
+func (f *Framework) CheckVersion() string {
+	if TestContext.ExpectedVersion == "" {
+		return ""
+	}
+	res, _ := helm.RunHelmCommandAndGetOutputE(f.t, &helm.Options{}, "search", "repo", RadonDBHelmRepoName, "--version", TestContext.ExpectedVersion)
+	return res
+}
+
+func (f *Framework) CreateOperatorHealthCheckService() error {
+	if err := k8s.KubectlApplyFromStringE(f.t, f.kubectlOptions, OperatorHealthService); err != nil {
+		return err
+	}
+	return nil
 }

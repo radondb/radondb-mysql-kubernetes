@@ -30,20 +30,18 @@ var Log = logf.Log.WithName("framework.util")
 // Default values of the test config.
 const (
 	// Export POD logs and test overview.
-	DumpLogs = true
+	DumpLogs = false
 	// Optional directory to store junit and pod logs output in.
 	// If not specified, it will beset to the current date.
 	LogDirPrefix = ""
 
-	// Specify the directory that Helm Install will be executed.
-	ChartPath = "../../charts/mysql-operator"
-	// Image path of mysql operator.
-	OperatorImagePath = "radondb/mysql-operator:v2.2.1"
+	// // Image path of mysql operator.
+	// OperatorImagePath = "radondb/mysql-operator:v2.2.1"
 	// Image path for mysql sidecar.
 	SidecarImagePath = "radondb/mysql57-sidecar:v2.2.1"
 
 	// The namespace where the resource created by E2E.
-	RadondbMysqlE2eNamespace = "radondb-mysql-e2e"
+	DefaultE2ETestNS = "radondb-mysql-e2e"
 	// The name of the Operator to create.
 	OperatorReleaseName = "e2e-test"
 
@@ -66,11 +64,10 @@ type TestContextType struct {
 
 	LogDirPrefix string
 
-	ChartPath   string
-	ChartValues string
+	ExpectedVersion string
 
-	OperatorImagePath string
-	SidecarImagePath  string
+	// OperatorImagePath string
+	SidecarImagePath string
 
 	MysqlVersion string
 
@@ -88,8 +85,8 @@ func RegisterCommonFlags() {
 
 	flag.StringVar(&TestContext.LogDirPrefix, "log-dir-prefix", LogDirPrefix, "Prefix of the log directory.")
 
-	flag.StringVar(&TestContext.ChartPath, "chart-path", ChartPath, "The chart name or path for mysql operator")
-	flag.StringVar(&TestContext.OperatorImagePath, "operator-image-path", OperatorImagePath, "Image path of mysql operator.")
+	flag.StringVar(&TestContext.ExpectedVersion, "expected-version", "", "Expected Chart version, For ci.")
+	// flag.StringVar(&TestContext.OperatorImagePath, "operator-image-path", OperatorImagePath, "Image path of mysql operator.")
 	flag.StringVar(&TestContext.SidecarImagePath, "sidecar-image-path", SidecarImagePath, "Image path of mysql sidecar.")
 
 	flag.StringVar(&TestContext.MysqlVersion, "mysql-version", "5.7", "The version of mysql to be installed.")
