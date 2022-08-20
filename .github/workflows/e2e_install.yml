@@ -1,0 +1,62 @@
+name: E2E test install
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Desired release version'
+        required: false 
+        type: string
+
+jobs:
+  init:
+    runs-on: self-hosted
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+
+    - name: Check out source code
+      uses: actions/checkout@v1
+
+    - name: Clean up
+      run: |
+        go test test/e2e/e2e_test.go -test.v --ginkgo.focus="clean"
+
+    - name: Prepare
+      run: |
+        go test test/e2e/e2e_test.go -test.v --ginkgo.focus="prepare"      
+
+    - name: Test install operator
+      run: |
+        go test test/e2e/e2e_test.go -test.v --ginkgo.focus="install operator" -expected-version=${{ inputs.version }}
+
+    - name: Test install mysql cluster
+      run: |
+        go test test/e2e/e2e_test.go -test.v --ginkgo.focus="install cluster" --ginkgo.label-filter=asset -timeout 20m
+    
+    - name: Test login default users
+      run: |
+        go test test/e2e/e2e_test.go -test.v --ginkgo.focus="login"
+
+    - name: Test create user
+      run: |
+        go test test/e2e/e2e_test.go -test.v --ginkgo.focus="create user"
+
+  cleanup:
+    runs-on: self-hosted
+    needs: init
+    if: ${{ always() }}
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+
+    - name: Check out source code
+      uses: actions/checkout@v1   
+ 
+    - name: Clean up
+      run: |
+        go test test/e2e/e2e_test.go -test.v --ginkgo.focus="clean"
