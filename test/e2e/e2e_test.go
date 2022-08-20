@@ -33,6 +33,7 @@ import (
 	// Comment out the package that you don't want to run.
 	_ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/install"
 	_ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/simplecase"
+	_ "github.com/radondb/radondb-mysql-kubernetes/test/e2e/user"
 )
 
 func init() {
