@@ -36,7 +36,10 @@ func (j *CronJob) Run() {
 	if j.BackupScheduleJobsHistoryLimit != nil {
 		defer j.backupGC()
 	}
-
+	if !j.backupNeedRun() {
+		log.Info("the cron is deleting when cronjob is starting")
+		return
+	}
 	// check if a backup is running
 	if j.scheduledBackupsRunningCount() > 0 {
 		log.Info("at least a backup is running", "running_backups_count", j.scheduledBackupsRunningCount())
@@ -71,6 +74,18 @@ func (j *CronJob) backupSelector() *client.ListOptions {
 	client.MatchingLabels(j.recurrentBackupLabels()).ApplyToList(selector)
 
 	return selector
+}
+
+func (j *CronJob) backupNeedRun() bool {
+	// When remove the entries, it may has cron task is running.
+	cluster := &apiv1alpha1.MysqlCluster{}
+	if err := j.Client.Get(context.TODO(), client.ObjectKey{
+		Name:      j.ClusterName,
+		Namespace: j.Namespace,
+	}, cluster); err != nil {
+		return false
+	}
+	return *cluster.Spec.Replicas != 0
 }
 
 func (j *CronJob) recurrentBackupLabels() map[string]string {
