@@ -72,6 +72,7 @@ type BackupStatus struct {
 // +kubebuilder:printcolumn:name="BackupName",type="string",JSONPath=".status.backupName",description="The Backup name"
 // +kubebuilder:printcolumn:name="BackupDate",type="string",JSONPath=".status.backupDate",description="The Backup Date time"
 // +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".status.backupType",description="The Backup Type"
+// +kubebuilder:printcolumn:name="Success",type="string",JSONPath=".status.conditions[?(@.type==\"Complete\")].status",description="Whether the backup Success?"
 // Backup is the Schema for the backups API
 type Backup struct {
 	metav1.TypeMeta   `json:",inline"`

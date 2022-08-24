@@ -29,6 +29,10 @@ spec:
       jsonPath: .status.backupType
       name: Type
       type: string
+    - description: Whether the backup Success?
+      jsonPath: .status.conditions[?(@.type=="Complete")].status
+      name: Success
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
