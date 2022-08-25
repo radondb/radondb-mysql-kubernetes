@@ -120,3 +120,5 @@ RadonDB MySQL is based on Apache 2.0 protocol. See [License](https://github.com/
 🦉 Community WeChat group: Please add the group assistant **radondb** to invite you into the group.
 
 For any bugs, questions, or suggestions about RadonDB MySQL, please create an [issue](https://github.com/radondb/radondb-mysql-kubernetes/issues) on GitHub or feedback on the [forum](https://kubesphere.com.cn/forum/t/RadonDB).
+
+![Alt](https://repobeats.axiom.co/api/embed/19bb69a6ba32252bdcbdbfb393cfbebd070b3b9f.svg "Repobeats analytics image")
