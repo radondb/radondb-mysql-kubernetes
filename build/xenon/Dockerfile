@@ -2,7 +2,7 @@
 #  Build Xenon
 ###############################################################################
 
-FROM golang:1.16 as builder
+FROM golang:1.17.13 as builder
 
 ARG XENON_BRANCH=master
 RUN if [ $(cat /etc/timezone) = "Asia/Shanghai" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi && go env -w GO111MODULE=off; 

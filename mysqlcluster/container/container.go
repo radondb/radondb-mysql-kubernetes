@@ -42,7 +42,7 @@ type container interface {
 func getStartupProbe(name string) *corev1.Probe {
 	if name == utils.ContainerMysqlName {
 		return &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				Exec: &corev1.ExecAction{
 					Command: []string{
 						"sh",
