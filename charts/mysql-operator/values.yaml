@@ -5,6 +5,9 @@
 replicaCount: 1
 installCRDS: true
 
+mysqlcluster:
+  install: false
+  version: v2.2.1
 ## Specify an imagePullPolicy (Required)
 ## It's recommended to change this to 'Always' if the image tag is 'latest'
 ## ref: http://kubernetes.io/docs/user-guide/images/#updating-images
