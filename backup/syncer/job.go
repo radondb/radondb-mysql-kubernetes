@@ -154,8 +154,11 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 		--cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/batch/v1/namespaces/%s/jobs/%s \
 		 -d '[{"op": "add", "path": "/metadata/annotations/backupName", "value": "%s"}, {"op": "add", "path": "/metadata/annotations/backupDate", "value": "%s"}, {"op": "add", "path": "/metadata/annotations/backupType", "value": "NFS"}]';`,
 			s.backup.Namespace, s.backup.GetNameForJob(), backupToDir, DateTime)
+		// Add the check DiskUsage
+		// use expr because shell cannot compare float number
+		checkUsage := `[ $(expr $(df /backup|awk 'NR>1 {print $4}') \> $(du  /backup |awk 'END {if (NR > 1) {print $1 /(NR-1)} else print 0}')) -eq '1' ] || { echo disk available may be too small; exit 1;};`
 		in.Containers[0].Args = []string{
-			fmt.Sprintf("mkdir -p /backup/%s;"+
+			checkUsage + fmt.Sprintf("mkdir -p /backup/%s;"+
 				"curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/%s; err1=${PIPESTATUS[0]};"+
 				strAnnonations+"retval_final=$?; exit $err1||$retval_final",
 				backupToDir,
