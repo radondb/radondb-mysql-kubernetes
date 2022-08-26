@@ -108,7 +108,7 @@ func TestGetMetricsPorts(t *testing.T) {
 
 func TestGetMetricsLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.IntOrString{
@@ -128,7 +128,7 @@ func TestGetMetricsLivenessProbe(t *testing.T) {
 
 func TestGetMetricsReadinessProbe(t *testing.T) {
 	readinessProbe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.IntOrString{

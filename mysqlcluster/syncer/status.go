@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -73,14 +73,14 @@ func NewStatusSyncer(c *mysqlcluster.MysqlCluster, cli client.Client, sqlRunnerF
 func (s *StatusSyncer) Object() interface{} { return nil }
 
 // GetObject returns the object for which sync applies
-// Deprecated: use github.com/presslabs/controller-util/syncer.Object() instead.
+// Deprecated: use github.com/presslabs/controller-util/pkg/syncer.Object() instead.
 func (s *StatusSyncer) GetObject() interface{} { return nil }
 
 // Owner returns the object owner or nil if object does not have one.
 func (s *StatusSyncer) ObjectOwner() runtime.Object { return s.MysqlCluster }
 
 // GetOwner returns the object owner or nil if object does not have one.
-// Deprecated: use github.com/presslabs/controller-util/syncer.ObjectOwner() instead.
+// Deprecated: use github.com/presslabs/controller-util/pkg/syncer.ObjectOwner() instead.
 func (s *StatusSyncer) GetOwner() runtime.Object { return s.MysqlCluster }
 
 // Sync persists data into the external store.

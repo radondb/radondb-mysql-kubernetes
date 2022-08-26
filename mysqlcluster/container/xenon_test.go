@@ -96,7 +96,7 @@ func TestGetXenonEnvVar(t *testing.T) {
 
 func TestGetXenonLifecycle(t *testing.T) {
 	lifeCycle := &corev1.Lifecycle{
-		PreStop: &corev1.Handler{
+		PreStop: &corev1.LifecycleHandler{
 			Exec: &corev1.ExecAction{
 				Command: []string{
 					"/bin/bash",
@@ -105,7 +105,7 @@ func TestGetXenonLifecycle(t *testing.T) {
 				},
 			},
 		},
-		PostStart: &corev1.Handler{
+		PostStart: &corev1.LifecycleHandler{
 			Exec: &corev1.ExecAction{
 				Command: []string{
 					"/bin/bash",
@@ -138,7 +138,7 @@ func TestGetXenonPorts(t *testing.T) {
 
 func TestGetXenonLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
 				Command: []string{
 					"sh",
@@ -158,7 +158,7 @@ func TestGetXenonLivenessProbe(t *testing.T) {
 
 func TestGetXenonReadinessProbe(t *testing.T) {
 	readinessProbe := &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
 				Command: []string{"sh", "-c", "xenoncli xenon ping"},
 			},
