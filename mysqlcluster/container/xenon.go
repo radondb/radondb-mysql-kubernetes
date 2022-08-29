@@ -86,7 +86,7 @@ func (c *xenon) getLifecycle() *corev1.Lifecycle {
 				Command: []string{
 					"/bin/bash",
 					"-c",
-					"/xenonchecker preStop",
+					"/scripts/leader-stop.sh",
 				},
 			},
 		},
@@ -95,7 +95,7 @@ func (c *xenon) getLifecycle() *corev1.Lifecycle {
 				Command: []string{
 					"/bin/bash",
 					"-c",
-					"/xenonchecker postStart",
+					"/scripts/leader-stop.sh",
 				},
 			},
 		},

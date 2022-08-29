@@ -110,6 +110,16 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 	}
+	// Set the instance label of clusterip.
+	if _, ok := instance.Unwrap().ObjectMeta.Annotations["ClusterIP"]; !ok {
+		// not exist
+		if clusterip := r.getServerClusterIp(ctx, req, instance.Unwrap()); clusterip != "" {
+			instance.Unwrap().ObjectMeta.Annotations["ClusterIP"] = clusterip
+		}
+		if err = r.Update(ctx, instance.Unwrap()); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 	if !instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		// Delete all the backup cr
 		return ctrl.Result{}, r.deleteAllBackup(ctx, req, instance.Unwrap())
@@ -203,4 +213,15 @@ func (r *MysqlClusterReconciler) deleteAllBackup(ctx context.Context, req ctrl.R
 	}
 
 	return nil
+}
+
+func (r *MysqlClusterReconciler) getServerClusterIp(ctx context.Context, req ctrl.Request, instance *apiv1alpha1.MysqlCluster) string {
+	log := log.FromContext(ctx).WithName("controllers").WithName("MysqlCluster")
+	// Get leader service
+	leaderSvc := &corev1.Service{}
+	if err := r.Get(ctx, client.ObjectKey{Namespace: instance.Namespace, Name: instance.Name + "-leader"}, leaderSvc); err != nil {
+		log.Error(err, "failed to get leader service")
+		return ""
+	}
+	return leaderSvc.Spec.ClusterIP
 }

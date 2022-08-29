@@ -226,12 +226,12 @@ func runInitCommand(cfg *Config) error {
 	// 	return fmt.Errorf("failed to write leader-start.sh: %s", err)
 	// }
 
-	// // build leader-stop.sh.
-	// bashLeaderStop := cfg.buildLeaderStop()
-	// leaderStopPath := path.Join(scriptsPath, "leader-stop.sh")
-	// if err = ioutil.WriteFile(leaderStopPath, bashLeaderStop, os.FileMode(0755)); err != nil {
-	// 	return fmt.Errorf("failed to write leader-stop.sh: %s", err)
-	// }
+	// build leader-stop.sh.
+	bashLeaderStop := cfg.buildLeaderStop()
+	leaderStopPath := path.Join(scriptsPath, "leader-stop.sh")
+	if err = ioutil.WriteFile(leaderStopPath, bashLeaderStop, os.FileMode(0755)); err != nil {
+		return fmt.Errorf("failed to write leader-stop.sh: %s", err)
+	}
 
 	// for install tokudb.
 	if cfg.InitTokuDB {
