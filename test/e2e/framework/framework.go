@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"time"
 
+	chaosapis "github.com/chaos-mesh/chaos-mesh/api/v1alpha1"
 	"github.com/go-logr/logr"
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/testing"
@@ -83,6 +84,7 @@ func (f *Framework) BeforeEach() {
 	Expect(err).NotTo(HaveOccurred())
 
 	apis.AddToScheme(scheme.Scheme)
+	chaosapis.AddToScheme(scheme.Scheme)
 
 	f.Client, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
