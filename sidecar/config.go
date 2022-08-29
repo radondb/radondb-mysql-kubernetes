@@ -129,6 +129,9 @@ type Config struct {
 
 	// NFS server which Restore from
 	XRestoreFromNFS string
+
+	// User customized initsql.
+	InitSQL string
 }
 
 // NewInitConfig returns a pointer to Config.
@@ -377,6 +380,10 @@ func (cfg *Config) buildXenonConf() []byte {
 
 // buildInitSql used to build init.sql. The file run after the mysql init.
 func (cfg *Config) buildInitSql(hasInit bool) []byte {
+	initSQL, err := os.ReadFile(path.Join(mysqlCMPath, "init.sql"))
+	if err != nil {
+		log.Info("failed to read /mnt/mysql-cm/init.sql")
+	}
 	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
 CREATE DATABASE IF NOT EXISTS %s;
 DROP user IF EXISTS 'root'@'127.0.0.1';
@@ -399,6 +406,7 @@ CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
 GRANT ALL ON %s.* TO '%s'@'%%' ;
 FLUSH PRIVILEGES;
 
+%s
 `,
 		cfg.Database, //database
 		cfg.RootPassword,
@@ -417,7 +425,9 @@ FLUSH PRIVILEGES;
 
 		cfg.User,               //drop user
 		cfg.User, cfg.Password, //create user
-		cfg.Database, cfg.User) //grant
+		cfg.Database, cfg.User, //grant
+		initSQL,
+	)
 
 	if hasInit {
 		sql += "\nRESET SLAVE ALL;\n"
