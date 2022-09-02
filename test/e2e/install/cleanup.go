@@ -8,6 +8,10 @@ import (
 var _ = Describe("clean", Ordered, func() {
 	f := framework.NewFramework("e2e-test")
 
+	It("cleanup sysbench", func() {
+		f.CleanUpSysbench()
+	})
+
 	It("clean up crds", func() {
 		f.CleanUpCRDs()
 	})
