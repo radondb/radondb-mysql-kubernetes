@@ -9,6 +9,7 @@ import (
 
 var _ = Describe("install cluster", Label("installCluster"), Ordered, func() {
 	f := framework.NewFramework("e2e-test")
+	sysbencOptions := framework.NewDefaultSysbenchOptions()
 
 	BeforeAll(func() {
 		f.BeforeEach()
@@ -24,7 +25,10 @@ var _ = Describe("install cluster", Label("installCluster"), Ordered, func() {
 
 	It("using template", Label("template"), func() {
 		Expect(f.InstallMySQLClusterUsingTemplate()).Should(Succeed())
-		By("Wait cluster ready")
+		By("wait cluster ready")
 		f.WaitClusterReadiness(&types.NamespacedName{Name: framework.TestContext.ClusterReleaseName, Namespace: f.Namespace.Name})
+		By("prepare data")
+		f.PrepareData(sysbencOptions)
+		f.RunSysbench(sysbencOptions)
 	})
 })
