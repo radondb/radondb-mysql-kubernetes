@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"net"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -49,6 +50,9 @@ func (r *MysqlCluster) ValidateCreate() error {
 	mysqlclusterlog.Info("validate create", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object creation.
+	if err := r.validateNFSServerAddress(r); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -66,6 +70,9 @@ func (r *MysqlCluster) ValidateUpdate(old runtime.Object) error {
 	if err := r.validateLowTableCase(oldCluster); err != nil {
 		return err
 	}
+	if err := r.validateNFSServerAddress(oldCluster); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -74,6 +81,18 @@ func (r *MysqlCluster) ValidateDelete() error {
 	mysqlclusterlog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
+	return nil
+}
+
+// TODO: Add NFSServerAddress webhook & backup schedule.
+func (r *MysqlCluster) validateNFSServerAddress(oldCluster *MysqlCluster) error {
+	isIP := net.ParseIP(r.Spec.NFSServerAddress) != nil
+	if len(r.Spec.NFSServerAddress) != 0 && !isIP {
+		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("nfsServerAddress should be set as IP"))
+	}
+	if len(r.Spec.BackupSchedule) != 0 && len(r.Spec.BackupSecretName) == 0 && !isIP {
+		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("backupSchedule is set without any backupSecretName or nfsServerAddress"))
+	}
 	return nil
 }
 
