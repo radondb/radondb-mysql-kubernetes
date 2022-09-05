@@ -128,7 +128,7 @@ func (c *MysqlCluster) GetSelectorLabels() labels.Set {
 	}
 }
 
-// GetMySQLVersion returns the MySQL server version.
+// GetMySQLVersion returns the MySQL server version. If MySQLVersion is  set, then return the coreect verison.
 func (c *MysqlCluster) GetMySQLVersion() string {
 	if _, _, imageTag, err := utils.ParseImageName(c.Spec.MysqlOpts.Image); err == nil {
 		return imageTag

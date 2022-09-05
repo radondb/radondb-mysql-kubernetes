@@ -17,6 +17,7 @@ limitations under the License.
 package sidecar
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -30,6 +31,11 @@ import (
 	"github.com/go-ini/ini"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // NewInitCommand return a pointer to cobra.Command.
@@ -82,6 +88,13 @@ func CheckServiceExist(cfg *Config, service string) bool {
 func runCloneAndInit(cfg *Config) error {
 	//check follower is exists?
 	serviceURL := ""
+	// Check the rebuildFrom exist?
+	if service, err := getPod(cfg); err == nil {
+		serviceURL = service
+		log.Info("found the rebuild-from pod", "service", serviceURL)
+	} else {
+		log.Info("found the rebuild-from pod", "error", err.Error())
+	}
 	if len(serviceURL) == 0 && CheckServiceExist(cfg, "follower") {
 		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "follower", utils.XBackupPort)
 	}
@@ -338,4 +351,44 @@ func buildSSLdata() error {
 		return fmt.Errorf("failed to copy ssl: %s", err)
 	}
 	return nil
+}
+
+func getPod(cfg *Config) (string, error) {
+	log.Info("Now check the pod which has got rebuild-from")
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return "", err
+	}
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return "", err
+	}
+	match := map[string]string{
+		utils.LabelRebuildFrom: "true",
+	}
+	podList, err := clientset.CoreV1().Pods(cfg.NameSpace).
+		List(context.TODO(), v1.ListOptions{
+			LabelSelector: labels.SelectorFromSet(match).String()})
+	if err != nil {
+		return "", err
+	}
+	if len(podList.Items) == 1 {
+		pod := podList.Items[0]
+		// Patch remove rebuild-from
+		if err := removeRebuildFrom(clientset, cfg, pod.Name); err != nil {
+			log.Info("remove rebuild from", "error", err.Error())
+		}
+		return fmt.Sprintf("%s.%s-mysql.%s:%v", pod.Name, cfg.ClusterName, cfg.NameSpace, utils.XBackupPort), nil
+	} else {
+		return "", fmt.Errorf("not correct pod choose")
+	}
+
+}
+
+func removeRebuildFrom(clientset *kubernetes.Clientset, cfg *Config, podName string) error {
+	patch := fmt.Sprintf(`[{"op": "remove", "path": "/metadata/labels/%s"}]`, utils.LabelRebuildFrom)
+	_, err := clientset.CoreV1().Pods(cfg.NameSpace).Patch(context.TODO(), podName, types.JSONPatchType, []byte(patch), v1.PatchOptions{})
+
+	return err
 }

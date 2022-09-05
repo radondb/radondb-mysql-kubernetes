@@ -78,6 +78,9 @@ func (r *BackupCronReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
 			log.Info("instance not found, maybe removed")
+			if err := r.Cron.Remove(instance.Name); err == nil {
+				log.V(1).Info("remove cronjob from cluster", "name", instance.Name)
+			}
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
@@ -87,7 +90,11 @@ func (r *BackupCronReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 	// if spec.backupScheduler is not set then don't do anything
-	if len(instance.Spec.BackupSchedule) == 0 {
+	if len(instance.Spec.BackupSchedule) == 0 || *instance.Spec.Replicas == 0 {
+		if err := r.Cron.Remove(instance.Name); err == nil {
+			log.V(1).Info("remove cronjob from cluster", "name", instance.Name)
+		}
+
 		return reconcile.Result{}, nil
 	}
 
@@ -137,7 +144,9 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 		Image:                          cluster.Spec.PodPolicy.SidecarImage,
 		BackupScheduleJobsHistoryLimit: cluster.Spec.BackupScheduleJobsHistoryLimit,
 		//BackupRemoteDeletePolicy:       cluster.Spec.BackupRemoteDeletePolicy,
-		Log: log,
+
+		NFSServerAddress: cluster.Spec.NFSServerAddress,
+		Log:              log,
 	}, cluster.Name)
 
 	return nil

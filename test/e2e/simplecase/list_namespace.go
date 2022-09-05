@@ -28,7 +28,7 @@ import (
 )
 
 // Simple and quick test case, used to verify that the E2E framework is available.
-var _ = Describe("Namespace test", Label("simplecase"), Ordered, func() {
+var _ = Describe("simplecase", Label("simplecase"), Ordered, func() {
 	var f *framework.Framework
 	BeforeEach(func() {
 		f = framework.NewFramework("mysqlcluster-e2e")

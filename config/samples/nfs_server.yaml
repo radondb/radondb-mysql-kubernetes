@@ -14,7 +14,7 @@ spec:
       containers:
       - name: nfs-server
         ## TODO: radondb/volume-nfs:0.8
-        image: gcr.azk8s.cn/google_containers/volume-nfs:0.8
+        image: k8s.gcr.io/volume-nfs:0.8
         ports:
           - name: nfs
             containerPort: 2049

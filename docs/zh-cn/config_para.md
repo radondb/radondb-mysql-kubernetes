@@ -22,7 +22,7 @@
 | MysqlOpts.InitTokuDB               | 是否启用 TokuDB              | true                                                        |
 | MysqlOpts.MysqlConf                | MySQL 配置                  | -                                                           |
 | MysqlOpts.Resources                | MySQL 容器配额              | 预留：CPU 100M，内存 256Mi；</br> 限制：CPU 500M，内存 1Gi  |
-| XenonOpts.Image                    | Xenon （高可用组件）镜像       | radondb/xenon:1.1.5-alpha                                   |
+| XenonOpts.Image                    | Xenon （高可用组件）镜像       | radondb/xenon:v2.2.1                                   |
 | XenonOpts.AdmitDefeatHearbeatCount | 允许的最大心跳检测失败次数  | 5                                                           |
 | XenonOpts.ElectionTimeout          | 选举超时时间（单位为毫秒）    | 10000ms                                                     |
 | XenonOpts.Resources                | Xenon 容器配额              | 预留：CPU 50M，内存 128Mi；</br> 限制：CPU 100M，内存 256Mi |

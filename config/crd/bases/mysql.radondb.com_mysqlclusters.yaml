@@ -279,7 +279,7 @@ spec:
                       cpu: 10m
                       memory: 32Mi
                   imagePullPolicy: IfNotPresent
-                  sidecarImage: radondb/mysql57-sidecar:v2.2.0
+                  sidecarImage: radondb/mysql57-sidecar:v2.2.1
                 description: PodPolicy defines the policy to extra specification.
                 properties:
                   affinity:
@@ -585,7 +585,7 @@ spec:
                                         field. null selector and null or empty namespaces
                                         list means "this pod's namespace". An empty
                                         selector ({}) matches all namespaces. This
-                                        field is alpha-level and is only honored when
+                                        field is beta-level and is only honored when
                                         PodAffinityNamespaceSelector feature is enabled.
                                       properties:
                                         matchExpressions:
@@ -747,7 +747,7 @@ spec:
                                     field and the ones listed in the namespaces field.
                                     null selector and null or empty namespaces list
                                     means "this pod's namespace". An empty selector
-                                    ({}) matches all namespaces. This field is alpha-level
+                                    ({}) matches all namespaces. This field is beta-level
                                     and is only honored when PodAffinityNamespaceSelector
                                     feature is enabled.
                                   properties:
@@ -909,7 +909,7 @@ spec:
                                         field. null selector and null or empty namespaces
                                         list means "this pod's namespace". An empty
                                         selector ({}) matches all namespaces. This
-                                        field is alpha-level and is only honored when
+                                        field is beta-level and is only honored when
                                         PodAffinityNamespaceSelector feature is enabled.
                                       properties:
                                         matchExpressions:
@@ -1071,7 +1071,7 @@ spec:
                                     field and the ones listed in the namespaces field.
                                     null selector and null or empty namespaces list
                                     means "this pod's namespace". An empty selector
-                                    ({}) matches all namespaces. This field is alpha-level
+                                    ({}) matches all namespaces. This field is beta-level
                                     and is only honored when PodAffinityNamespaceSelector
                                     feature is enabled.
                                   properties:
@@ -1209,7 +1209,7 @@ spec:
                   schedulerName:
                     type: string
                   sidecarImage:
-                    default: radondb/mysql57-sidecar:v2.2.0
+                    default: radondb/mysql57-sidecar:v2.2.1
                     description: To specify the image that will be used for sidecar
                       container.
                     type: string
@@ -1280,7 +1280,7 @@ spec:
                 default:
                   admitDefeatHearbeatCount: 5
                   electionTimeout: 10000
-                  image: radondb/xenon:1.1.5-alpha
+                  image: radondb/xenon:v2.2.1
                   resources:
                     limits:
                       cpu: 100m
@@ -1307,7 +1307,7 @@ spec:
                       automatically rebuild the invalid node.
                     type: boolean
                   image:
-                    default: radondb/xenon:1.1.5-alpha
+                    default: radondb/xenon:v2.2.1
                     description: To specify the image that will be used for xenon
                       container.
                     type: string

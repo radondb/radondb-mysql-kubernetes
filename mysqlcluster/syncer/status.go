@@ -19,9 +19,10 @@ package syncer
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -72,14 +73,14 @@ func NewStatusSyncer(c *mysqlcluster.MysqlCluster, cli client.Client, sqlRunnerF
 func (s *StatusSyncer) Object() interface{} { return nil }
 
 // GetObject returns the object for which sync applies
-// Deprecated: use github.com/presslabs/controller-util/syncer.Object() instead.
+// Deprecated: use github.com/presslabs/controller-util/pkg/syncer.Object() instead.
 func (s *StatusSyncer) GetObject() interface{} { return nil }
 
 // Owner returns the object owner or nil if object does not have one.
 func (s *StatusSyncer) ObjectOwner() runtime.Object { return s.MysqlCluster }
 
 // GetOwner returns the object owner or nil if object does not have one.
-// Deprecated: use github.com/presslabs/controller-util/syncer.ObjectOwner() instead.
+// Deprecated: use github.com/presslabs/controller-util/pkg/syncer.ObjectOwner() instead.
 func (s *StatusSyncer) GetOwner() runtime.Object { return s.MysqlCluster }
 
 // Sync persists data into the external store.
@@ -102,8 +103,8 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	// get ready nodes.
 	var readyNodes []corev1.Pod
 	for _, pod := range list.Items {
-		if pod.ObjectMeta.Labels[utils.LableRebuild] == "true" {
-			if err := s.AutoRebuild(ctx, &pod); err != nil {
+		if len(pod.ObjectMeta.Labels[utils.LableRebuild]) > 0 {
+			if err := s.AutoRebuild(ctx, &pod, list.Items); err != nil {
 				s.log.Error(err, "failed to AutoRebuild", "pod", pod.Name, "namespace", pod.Namespace)
 			}
 			continue
@@ -199,11 +200,31 @@ func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
 // Rebuild Pod by deleting and creating it.
 // Notice: This function just delete Pod and PVC,
 // then after k8s recreate pod, it will clone and initial it.
-func (s *StatusSyncer) AutoRebuild(ctx context.Context, pod *corev1.Pod) error {
+func (s *StatusSyncer) AutoRebuild(ctx context.Context, pod *corev1.Pod, items []corev1.Pod) error {
 	ordinal, err := utils.GetOrdinal(pod.Name)
 	if err != nil {
 		return err
 
+	}
+	if pod.ObjectMeta.Labels[utils.LableRebuild] != "true" {
+		podNumber, err := strconv.Atoi(pod.ObjectMeta.Labels[utils.LableRebuild])
+		if err != nil {
+			return fmt.Errorf("rebuild label should be true, or number")
+		}
+		for _, other := range items {
+			ord, err2 := utils.GetOrdinal(other.Name)
+			if err2 != nil {
+				return err
+
+			}
+			if ord == podNumber {
+				other.Labels[utils.LabelRebuildFrom] = "true"
+				if err := s.cli.Update(ctx, &other); err != nil {
+					return err
+				}
+				break
+			}
+		}
 	}
 	// Set Pod UnHealthy.
 	pod.Labels["healthy"] = "no"

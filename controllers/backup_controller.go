@@ -23,7 +23,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/syncer"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -82,7 +82,9 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	// save the backup for later check for diff
 	savedBackup := backup.Unwrap().DeepCopy()
-	backup.ObjectMeta.Labels = labels.Set{"cluster": backup.Spec.ClusterName}
+	if len(backup.ObjectMeta.Labels["cluster"]) == 0 {
+		backup.ObjectMeta.Labels = labels.Set{"cluster": backup.Spec.ClusterName}
+	}
 	jobSyncer := backupSyncer.NewJobSyncer(r.Client, r.Scheme, backup)
 	if err := syncer.Sync(ctx, jobSyncer, r.Recorder); err != nil {
 		backup.UpdateStatusCondition(apiv1alpha1.BackupFailed, corev1.ConditionTrue, "CreateFailure", err.Error())

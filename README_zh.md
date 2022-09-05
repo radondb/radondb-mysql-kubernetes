@@ -36,7 +36,7 @@
 
 🎈 **集群日志管理**
 
-👨 [**账户管理**](docs/zh-cn/mgt_mysqluser.md)
+👨 [**账户管理**](docs/zh-cn/manage_mysql_user.md)
 
 
 ## 架构图
@@ -121,3 +121,4 @@ RadonDB MySQL 基于 Apache 2.0 协议，详见 [License](https://github.com/rad
 
 如有任何关于 RadonDB MySQL 的 Bug、问题或建议，请在 GitHub 提交 [issue](https://github.com/radondb/radondb-mysql-kubernetes/issues) 或[论坛](https://kubesphere.com.cn/forum/t/RadonDB)反馈。
 
+![Alt](https://repobeats.axiom.co/api/embed/19bb69a6ba32252bdcbdbfb393cfbebd070b3b9f.svg "Repobeats analytics image")

@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2022 RadonDB.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,22 +30,22 @@ var Log = logf.Log.WithName("framework.util")
 // Default values of the test config.
 const (
 	// Export POD logs and test overview.
-	DumpLogs = true
+	DumpLogs = false
 	// Optional directory to store junit and pod logs output in.
 	// If not specified, it will beset to the current date.
 	LogDirPrefix = ""
 
-	// Specify the directory that Helm Install will be executed.
-	ChartPath = "../../charts/mysql-operator"
-	// Image path of mysql operator.
-	OperatorImagePath = "radondb/mysql-operator:v2.2.0-alpha.1"
+	// // Image path of mysql operator.
+	// OperatorImagePath = "radondb/mysql-operator:v2.2.1"
 	// Image path for mysql sidecar.
-	SidecarImagePath = "radondb/mysql57-sidecar:v2.2.0-alpha.1"
+	SidecarImagePath = "radondb/mysql57-sidecar:v2.2.1"
 
 	// The namespace where the resource created by E2E.
-	RadondbMysqlE2eNamespace = "radondb-mysql-e2e"
+	E2ETestNamespace = "radondb-mysql-e2e"
 	// The name of the Operator to create.
 	OperatorReleaseName = "e2e-test"
+	// The name of the MySQL cluster to create.
+	ClusterReleaseName = "sample"
 
 	// How often to Poll pods, nodes and claims.
 	Poll = 2 * time.Second
@@ -60,22 +60,18 @@ const (
 )
 
 type TestContextType struct {
-	KubeHost    string
-	KubeConfig  string
-	KubeContext string
-
-	LogDirPrefix string
-
-	ChartPath   string
-	ChartValues string
-
-	OperatorImagePath string
-	SidecarImagePath  string
-
-	MysqlVersion string
-
-	TimeoutSeconds int
-	DumpLogs       bool
+	KubeHost         string
+	KubeConfig       string
+	KubeContext      string
+	ExpectedVersion  string
+	E2ETestNamespace string
+	// OperatorImagePath string
+	ClusterReleaseName string
+	SidecarImagePath   string
+	MysqlVersion       string
+	TimeoutSeconds     int
+	LogDirPrefix       string
+	DumpLogs           bool
 }
 
 var TestContext TestContextType
@@ -85,15 +81,13 @@ func RegisterCommonFlags() {
 	flag.StringVar(&TestContext.KubeHost, "kubernetes-host", "", "The kubernetes host, or apiserver, to connect to")
 	flag.StringVar(&TestContext.KubeConfig, "kubernetes-config", os.Getenv(clientcmd.RecommendedConfigPathEnvVar), "Path to config containing embedded authinfo for kubernetes. Default value is from environment variable "+clientcmd.RecommendedConfigPathEnvVar)
 	flag.StringVar(&TestContext.KubeContext, "kubernetes-context", "", "config context to use for kuberentes. If unset, will use value from 'current-context'")
-
-	flag.StringVar(&TestContext.LogDirPrefix, "log-dir-prefix", LogDirPrefix, "Prefix of the log directory.")
-
-	flag.StringVar(&TestContext.ChartPath, "chart-path", ChartPath, "The chart name or path for mysql operator")
-	flag.StringVar(&TestContext.OperatorImagePath, "operator-image-path", OperatorImagePath, "Image path of mysql operator.")
+	flag.StringVar(&TestContext.ExpectedVersion, "expected-version", "", "Expected Chart version, For ci.")
+	flag.StringVar(&TestContext.E2ETestNamespace, "namespace", E2ETestNamespace, "Test namespace.")
+	// flag.StringVar(&TestContext.OperatorImagePath, "operator-image-path", OperatorImagePath, "Image path of mysql operator.")
+	flag.StringVar(&TestContext.ClusterReleaseName, "cluster-release", ClusterReleaseName, "Release name of the mysql cluster.")
 	flag.StringVar(&TestContext.SidecarImagePath, "sidecar-image-path", SidecarImagePath, "Image path of mysql sidecar.")
-
 	flag.StringVar(&TestContext.MysqlVersion, "mysql-version", "5.7", "The version of mysql to be installed.")
-
+	flag.StringVar(&TestContext.LogDirPrefix, "log-dir-prefix", LogDirPrefix, "Prefix of the log directory.")
 	flag.IntVar(&TestContext.TimeoutSeconds, "pod-wait-timeout", 1200, "Timeout to wait for a pod to be ready.")
 	flag.BoolVar(&TestContext.DumpLogs, "dump-logs", false, "Dump logs when test case failed.")
 }

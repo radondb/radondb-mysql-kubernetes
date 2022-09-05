@@ -19,8 +19,8 @@ package syncer
 import (
 	"fmt"
 
-	"github.com/presslabs/controller-util/rand"
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/rand"
+	"github.com/presslabs/controller-util/pkg/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"

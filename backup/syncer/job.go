@@ -19,7 +19,7 @@ package syncer
 import (
 	"fmt"
 
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/syncer"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -104,6 +104,7 @@ func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 	// check for failed condition
 	if cond := jobCondition(batchv1.JobFailed, job); cond != nil {
 		s.backup.UpdateStatusCondition(v1alpha1.BackupFailed, cond.Status, cond.Reason, cond.Message)
+		s.backup.UpdateStatusCondition(v1alpha1.BackupComplete, corev1.ConditionFalse, cond.Reason, cond.Message)
 		if cond.Status == corev1.ConditionTrue {
 			s.backup.Status.Completed = true
 		}
@@ -155,8 +156,8 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 			s.backup.Namespace, s.backup.GetNameForJob(), backupToDir, DateTime)
 		in.Containers[0].Args = []string{
 			fmt.Sprintf("mkdir -p /backup/%s;"+
-				"curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/%s;"+
-				strAnnonations+"exit ${PIPESTATUS[0]}",
+				"curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/%s; err1=${PIPESTATUS[0]};"+
+				strAnnonations+"retval_final=$?; exit $err1||$retval_final",
 				backupToDir,
 				s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName), backupToDir),
 		}

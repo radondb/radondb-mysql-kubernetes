@@ -29,6 +29,10 @@ spec:
       jsonPath: .status.backupType
       name: Type
       type: string
+    - description: Whether the backup Success?
+      jsonPath: .status.conditions[?(@.type=="Complete")].status
+      name: Success
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -63,7 +67,7 @@ spec:
                   If is empty, is use leader HostName
                 type: string
               image:
-                default: radondb/mysql57-sidecar:v2.2.0
+                default: radondb/mysql57-sidecar:v2.2.1
                 description: To specify the image that will be used for sidecar container.
                 type: string
               nfsServerAddress:
