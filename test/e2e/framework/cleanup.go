@@ -76,6 +76,10 @@ func (f *Framework) CleanUpNS() {
 	IgnoreNotFound(k8s.DeleteNamespaceE(f.t, f.kubectlOptions, TestContext.E2ETestNamespace))
 }
 
+func (f *Framework) CleanUpChaos() {
+	k8s.RunKubectl(f.t, f.kubectlOptions, "delete", "podchaos", "--all", "-n", f.kubectlOptions.Namespace)
+}
+
 func IgnoreNotFound(err error) {
 	if err != nil && strings.Contains(err.Error(), "not found") {
 		// Do nothing
