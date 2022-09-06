@@ -23,8 +23,8 @@ import (
 	"time"
 
 	chaosapis "github.com/chaos-mesh/chaos-mesh/api/v1alpha1"
-	"github.com/go-logr/logr"
 	"github.com/gruntwork-io/terratest/modules/k8s"
+	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/gruntwork-io/terratest/modules/testing"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -49,7 +49,7 @@ type Framework struct {
 
 	Timeout time.Duration
 
-	Log logr.Logger
+	Log logger.Logger
 }
 
 func NewFramework(baseName string) *Framework {
@@ -67,7 +67,7 @@ func NewFramework(baseName string) *Framework {
 				Name: TestContext.E2ETestNamespace,
 			},
 		},
-		Log: Log,
+		Log: *logger.Default,
 	}
 
 	return f

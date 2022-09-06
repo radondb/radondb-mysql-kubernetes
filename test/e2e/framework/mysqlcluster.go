@@ -93,6 +93,7 @@ func (f *Framework) ClusterEventuallyReplicas(cluster *apiv1alpha1.MysqlCluster,
 	Eventually(func() int {
 		cl := &apiv1alpha1.MysqlCluster{}
 		f.Client.Get(context.TODO(), types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}, cl)
+		f.Log.Logf(f.t, "ready nodes: %d/%d", cl.Status.ReadyNodes, *cl.Spec.Replicas)
 		return cl.Status.ReadyNodes
 	}, timeout, POLLING).Should(Equal(int(*cluster.Spec.Replicas)), "Not ready replicas of cluster '%s'", cluster.Name)
 }
@@ -101,6 +102,7 @@ func (f *Framework) ClusterEventuallyRaftStatus(cluster *apiv1alpha1.MysqlCluste
 	Eventually(func() bool {
 		cl := &apiv1alpha1.MysqlCluster{}
 		f.Client.Get(context.TODO(), types.NamespacedName{Name: cluster.Name, Namespace: cluster.Namespace}, cl)
+		f.Log.Logf(f.t, "checking xenon")
 		return isXenonReadiness(cl)
 	}, TIMEOUT, POLLING).Should(BeTrue(), "Not ready xenon of cluster '%s'", cluster.Name)
 }
