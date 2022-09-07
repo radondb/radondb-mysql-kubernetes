@@ -19,6 +19,7 @@ package syncer
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -164,14 +165,51 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	if len(s.Status.Conditions) > maxStatusesQuantity {
 		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
 	}
+
 	//(RO) because the ReadOnly Pods create after the cluster ready, so the ReadOnly pods are always
 	// the last part of node status
 	if err := s.updateReadOnlyNodeStatus(ctx, s.cli, list.Items); err != nil {
 		//Notice!!! ReadOnly node fail, just show the error log, do not return here!
 		s.log.Error(err, "ReadOnly pod fail", "namespace", s.Namespace)
 	}
+
+	// update backup Status
+	s.updateLastBackup()
+
 	// Update all nodes' status.
 	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, list.Items)
+}
+
+func (s *StatusSyncer) updateLastBackup() error {
+	// 1. fetch all finished backup cr
+	backupsList := &apiv1alpha1.BackupList{}
+	labelSet := labels.Set{"cluster": s.Name}
+	if err := s.cli.List(context.TODO(), backupsList, &client.ListOptions{
+		Namespace: s.Namespace, LabelSelector: labelSet.AsSelector(),
+	}); err != nil {
+		return err
+	}
+	var finisheds []apiv1alpha1.Backup
+	for _, b := range backupsList.Items {
+		if b.Status.Completed {
+			finisheds = append(finisheds, b)
+		}
+	}
+	// 2. sort descent
+	sort.Slice(finisheds, func(i, j int) bool {
+		return finisheds[i].ObjectMeta.CreationTimestamp.Before(&finisheds[j].ObjectMeta.CreationTimestamp)
+	})
+	// 3. get first backup which has backup Name
+	for _, b := range finisheds {
+		if len(b.Status.BackupName) != 0 {
+			s.Status.LastBackup = b.Status.BackupName
+			s.Status.LastBackupGtid = b.Status.Gtid
+			break
+		}
+
+	}
+
+	return nil
 }
 
 // updateClusterStatus update the cluster status and returns condition.

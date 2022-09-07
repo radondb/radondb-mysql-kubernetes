@@ -1,0 +1,144 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: backups.mysql.radondb.com
+spec:
+  group: mysql.radondb.com
+  names:
+    kind: Backup
+    listKind: BackupList
+    plural: backups
+    singular: backup
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: The Backup name
+      jsonPath: .status.backupName
+      name: BackupName
+      type: string
+    - description: The Backup Date time
+      jsonPath: .status.backupDate
+      name: BackupDate
+      type: string
+    - description: The Backup Type
+      jsonPath: .status.backupType
+      name: Type
+      type: string
+    - description: Whether the backup Success?
+      jsonPath: .status.conditions[?(@.type=="Complete")].status
+      name: Success
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Backup is the Schema for the backups API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: This is the backup Job CRD. BackupSpec defines the desired
+              state of Backup
+            properties:
+              clusterName:
+                description: ClusterName represents the cluster name to backup
+                type: string
+              historyLimit:
+                default: 3
+                description: History Limit of job
+                format: int32
+                type: integer
+              hostName:
+                description: HostName represents the host for which to take backup
+                  If is empty, is use leader HostName
+                type: string
+              image:
+                default: radondb/mysql57-sidecar:v2.3.0
+                description: To specify the image that will be used for sidecar container.
+                type: string
+              nfsServerAddress:
+                description: Represents the ip address of the nfs server.
+                type: string
+            required:
+            - clusterName
+            type: object
+          status:
+            description: BackupStatus defines the observed state of Backup
+            properties:
+              backupDate:
+                description: Get the backup Date
+                type: string
+              backupName:
+                description: Get the backup path.
+                type: string
+              backupType:
+                description: Get the backup Type
+                type: string
+              completed:
+                default: false
+                description: Completed indicates whether the backup is in a final
+                  state, no matter whether its' corresponding job failed or succeeded
+                type: boolean
+              conditions:
+                description: Conditions represents the backup resource conditions
+                  list.
+                items:
+                  description: BackupCondition defines condition struct for backup
+                    resource
+                  properties:
+                    lastTransitionTime:
+                      description: LastTransitionTime
+                      format: date-time
+                      type: string
+                    message:
+                      description: Message
+                      type: string
+                    reason:
+                      description: Reason
+                      type: string
+                    status:
+                      description: Status of the condition, one of (\"True\", \"False\",
+                        \"Unknown\")
+                      type: string
+                    type:
+                      description: type of cluster condition, values in (\"Ready\")
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              gtid:
+                description: Get the Gtid
+                type: string
+            required:
+            - completed
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
