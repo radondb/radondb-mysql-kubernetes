@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/backup"
@@ -101,6 +102,9 @@ func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 		if backType := s.job.Annotations[utils.JobAnonationType]; backType != "" {
 			s.backup.Status.BackupType = backType
 		}
+		if gtid := s.job.Annotations[utils.JobAnonationGtid]; gtid != "" {
+			s.backup.Status.Gtid = gtid
+		}
 	}
 
 	// check for failed condition
@@ -154,10 +158,12 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 			"/bin/bash", "-c", "--",
 		}
 		backupToDir, DateTime := utils.BuildBackupName(s.backup.Spec.ClusterName)
+		// add the gtid script
 		strAnnonations := fmt.Sprintf(`curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
 		--cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/batch/v1/namespaces/%s/jobs/%s \
-		 -d '[{"op": "add", "path": "/metadata/annotations/backupName", "value": "%s"}, {"op": "add", "path": "/metadata/annotations/backupDate", "value": "%s"}, {"op": "add", "path": "/metadata/annotations/backupType", "value": "NFS"}]';`,
-			s.backup.Namespace, s.backup.GetNameForJob(), backupToDir, DateTime)
+		 -d "[{\"op\": \"add\", \"path\": \"/metadata/annotations/backupName\", \"value\": \"%s\"}, {\"op\": \"add\", \"path\": \"/metadata/annotations/backupDate\", \"value\": \"%s\"},{\"op\": \"add\", \"path\": \"/metadata/annotations/gtid\", \"value\": \"$( cat /backup/%s/xtrabackup_binlog_info|awk '{print $3}')\"}, {\"op\": \"add\", \"path\": \"/metadata/annotations/backupType\", \"value\": \"NFS\"}]";`,
+			s.backup.Namespace, s.backup.GetNameForJob(), backupToDir, DateTime, backupToDir)
+		log.Log.Info(strAnnonations)
 		// Add the check DiskUsage
 		// use expr because shell cannot compare float number
 		checkUsage := `[ $(echo "$(df /backup|awk 'NR>1 {print $4}') > $(du  /backup |awk 'END {if (NR > 1) {print $1 /(NR-1)} else print 0}')"|bc) -eq '1' ] || { echo disk available may be too small; exit 1;};`

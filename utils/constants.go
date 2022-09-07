@@ -178,6 +178,8 @@ const (
 	JobAnonationName = "backupName"
 	// Job Annonations date
 	JobAnonationDate = "backupDate"
+	// Job Anonations Gtid
+	JobAnonationGtid = "gtid"
 	// Job Annonations type
 	JobAnonationType = "backupType"
 	// Job Annonations size
@@ -215,6 +217,7 @@ const (
 type JsonResult struct {
 	Status     string `json:"status"`
 	BackupName string `json:"backupName"`
+	Gtid       string `json:"gtid"`
 	Date       string `json:"date"`
 	BackupSize int64  `json:"backupSize"`
 }
