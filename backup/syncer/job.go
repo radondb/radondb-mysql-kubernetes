@@ -85,6 +85,8 @@ func (s *jobSyncer) SyncFn() error {
 
 func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 	// check for completion condition
+	s.backup.Status.Completed = false
+	s.backup.UpdateStatusCondition(v1alpha1.BackupStart, corev1.ConditionTrue, "backup has started", "backup has started")
 	if cond := jobCondition(batchv1.JobComplete, job); cond != nil {
 		s.backup.UpdateStatusCondition(v1alpha1.BackupComplete, cond.Status, cond.Reason, cond.Message)
 		if cond.Status == corev1.ConditionTrue {

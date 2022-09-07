@@ -89,6 +89,7 @@ spec:
                 description: Get the backup Type
                 type: string
               completed:
+                default: false
                 description: Completed indicates whether the backup is in a final
                   state, no matter whether its' corresponding job failed or succeeded
                 type: boolean
@@ -124,6 +125,8 @@ spec:
                   - type
                   type: object
                 type: array
+            required:
+            - completed
             type: object
         type: object
     served: true
