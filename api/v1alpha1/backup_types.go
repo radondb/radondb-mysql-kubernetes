@@ -56,7 +56,8 @@ type BackupStatus struct {
 
 	// Completed indicates whether the backup is in a final state,
 	// no matter whether its' corresponding job failed or succeeded
-	Completed bool `json:"completed,omitempty"`
+	// +kubebuilder:default:=false
+	Completed bool `json:"completed"`
 	// Get the backup path.
 	BackupName string `json:"backupName,omitempty"`
 	// Get the backup Date
@@ -104,6 +105,7 @@ const (
 	BackupComplete BackupConditionType = "Complete"
 	// BackupFailed means backup has failed
 	BackupFailed BackupConditionType = "Failed"
+	BackupStart  BackupConditionType = "Started"
 )
 
 //+kubebuilder:object:root=true
