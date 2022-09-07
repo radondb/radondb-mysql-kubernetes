@@ -387,6 +387,9 @@ type MysqlClusterStatus struct {
 	ReadyNodes int `json:"readyNodes,omitempty"`
 	// State
 	State ClusterState `json:"state,omitempty"`
+	// LastBackup
+	LastBackup     string `json:"lastbackup,omitempty"`
+	LastBackupGtid string `json:"lastbackupGtid,omitempty"`
 	// Conditions contains the list of the cluster conditions fulfilled.
 	Conditions []ClusterCondition `json:"conditions,omitempty"`
 	// Nodes contains the list of the node status fulfilled.

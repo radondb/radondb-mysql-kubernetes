@@ -103,11 +103,11 @@ func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
 		return
 	}
-	backName, Datetime, err := RunTakeBackupCommand(s.cfg)
+	backName, Datetime, Gtid, err := RunTakeBackupCommand(s.cfg)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
-		msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime})
+		msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Gtid: Gtid, Date: Datetime})
 		w.Write(msg)
 	}
 }
@@ -211,7 +211,7 @@ func transportWithTimeout(connectTimeout time.Duration) http.RoundTripper {
 	}
 }
 
-func setAnnonations(cfg *Config, backname string, DateTime string, BackupType string) error {
+func setAnnonations(cfg *Config, backname string, DateTime string, Gtid, BackupType string) error {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return err
@@ -231,6 +231,7 @@ func setAnnonations(cfg *Config, backname string, DateTime string, BackupType st
 	}
 	job.Annotations[utils.JobAnonationName] = backname
 	job.Annotations[utils.JobAnonationDate] = DateTime
+	job.Annotations[utils.JobAnonationGtid] = Gtid
 	job.Annotations[utils.JobAnonationType] = BackupType
 	_, err = clientset.BatchV1().Jobs(cfg.NameSpace).Update(context.TODO(), job, metav1.UpdateOptions{})
 	if err != nil {
@@ -266,7 +267,7 @@ func requestABackup(cfg *Config, host string, endpoint string) (*http.Response, 
 	var result utils.JsonResult
 	json.NewDecoder(resp.Body).Decode(&result)
 
-	err = setAnnonations(cfg, result.BackupName, result.Date, "S3") // set annotation
+	err = setAnnonations(cfg, result.BackupName, result.Date, result.Gtid, "S3") // set annotation
 	if err != nil {
 		return nil, fmt.Errorf("fail to set annotation: %s", err)
 	}

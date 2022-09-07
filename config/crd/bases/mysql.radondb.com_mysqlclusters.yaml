@@ -1376,6 +1376,11 @@ spec:
                   - type
                   type: object
                 type: array
+              lastbackup:
+                description: LastBackup
+                type: string
+              lastbackupGtid:
+                type: string
               nodes:
                 description: Nodes contains the list of the node status fulfilled.
                 items:

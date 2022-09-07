@@ -84,7 +84,7 @@ func (r *MysqlCluster) ValidateDelete() error {
 	return nil
 }
 
-// TODO: Add NFSServerAddress webhook & backup schedule.
+// Add NFSServerAddress webhook & backup schedule.
 func (r *MysqlCluster) validateNFSServerAddress(oldCluster *MysqlCluster) error {
 	isIP := net.ParseIP(r.Spec.NFSServerAddress) != nil
 	if len(r.Spec.NFSServerAddress) != 0 && !isIP {

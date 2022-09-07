@@ -120,7 +120,7 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 			log.V(1).Info("cluster already added to cron.", "key", cluster)
 
 			// change scheduler for already added crons
-			if !reflect.DeepEqual(entry.Schedule, schedule) {
+			if !reflect.DeepEqual(entry.Schedule, schedule) || j.NFSServerAddress != cluster.Spec.NFSServerAddress {
 				log.Info("update cluster scheduler", "key", cluster,
 					"scheduler", cluster.Spec.BackupSchedule)
 

@@ -57,14 +57,22 @@ func (j *CronJob) scheduledBackupsRunningCount() int {
 	backupsList := &apiv1alpha1.BackupList{}
 	// select all backups with labels recurrent=true and and not completed of the cluster
 	selector := j.backupSelector()
-	client.MatchingFields{"status.completed": "false"}.ApplyToList(selector)
+	// Because k8s do not support fieldSelector with custom resources
+	// https://github.com/kubernetes/kubernetes/issues/51046
+	// So this cannot use fields selector.
+	// client.MatchingFields{"status.completed": "false"}.ApplyToList(selector)
 
-	if err := j.Client.List(context.TODO(), backupsList, selector); err != nil {
+	if err := j.Client.List(context.TODO(), backupsList); err != nil {
 		log.Error(err, "failed getting backups", "selector", selector)
 		return 0
 	}
-
-	return len(backupsList.Items)
+	var rest []apiv1alpha1.Backup
+	for _, b := range backupsList.Items {
+		if !b.Status.Completed {
+			rest = append(rest, b)
+		}
+	}
+	return len(rest)
 }
 
 func (j *CronJob) backupSelector() *client.ListOptions {
@@ -133,10 +141,12 @@ func (j *CronJob) createBackup() (*apiv1alpha1.Backup, error) {
 			//RemoteDeletePolicy: j.BackupRemoteDeletePolicy,
 			HostName: fmt.Sprintf("%s-mysql-0", j.ClusterName),
 		},
+		Status: apiv1alpha1.BackupStatus{Completed: false},
 	}
 	if len(j.NFSServerAddress) > 0 {
 		backup.Spec.NFSServerAddress = j.NFSServerAddress
 	}
+
 	return backup, j.Client.Create(context.TODO(), backup)
 }
 

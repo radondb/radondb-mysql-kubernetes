@@ -64,6 +64,8 @@ type BackupStatus struct {
 	BackupDate string `json:"backupDate,omitempty"`
 	// Get the backup Type
 	BackupType string `json:"backupType,omitempty"`
+	// Get the Gtid
+	Gtid string `json:"gtid,omitempty"`
 	// Conditions represents the backup resource conditions list.
 	Conditions []BackupCondition `json:"conditions,omitempty"`
 }
