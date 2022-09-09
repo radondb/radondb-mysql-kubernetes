@@ -71,6 +71,9 @@ func (r *MysqlCluster) ValidateUpdate(old runtime.Object) error {
 	if err := r.validateLowTableCase(oldCluster); err != nil {
 		return err
 	}
+	if err := r.validateMysqlVersionAndImage(); err != nil {
+		return err
+	}
 	if err := r.validateNFSServerAddress(oldCluster); err != nil {
 		return err
 	}
@@ -121,6 +124,16 @@ func (r *MysqlCluster) validateLowTableCase(oldCluster *MysqlCluster) error {
 	if strings.Contains(r.Spec.MysqlOpts.Image, "8.0") &&
 		oldmyconf["lower_case_table_names"] != newmyconf["lower_case_table_names"] {
 		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("lower_case_table_names cannot be changed in MySQL8.0+"))
+	}
+	return nil
+}
+
+// Validate MysqlVersion and spec.MysqlOpts.image are conflict.
+func (r *MysqlCluster) validateMysqlVersionAndImage() error {
+	if r.Spec.MysqlOpts.Image != "" && r.Spec.MysqlVersion != "" {
+		if !strings.Contains(r.Spec.MysqlOpts.Image, r.Spec.MysqlVersion) {
+			return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlOpts.Image and spec.MysqlVersion are conflict"))
+		}
 	}
 	return nil
 }

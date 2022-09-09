@@ -4,6 +4,7 @@ IMG ?= $(IMGPREFIX)mysql-operator:latest
 SIDECAR57_IMG ?= $(IMGPREFIX)mysql57-sidecar:latest
 SIDECAR80_IMG ?= $(IMGPREFIX)mysql80-sidecar:latest
 XENON_IMG ?= $(IMGPREFIX)xenon:latest
+GO_PORXY ?= off
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -72,10 +73,10 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/manager/main.go
 
 docker-build: test ## Build docker image with the manager.
-	docker build -t ${IMG} .
-	docker build -f Dockerfile.sidecar -t ${SIDECAR57_IMG} .
-	docker build -f build/xenon/Dockerfile -t ${XENON_IMG} .
-	docker build --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
+	docker build --build-arg GO_PROXY=${GO_PORXY} -t ${IMG} .
+	docker build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PORXY} -t ${SIDECAR57_IMG} .
+	docker build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PORXY} -t ${XENON_IMG} .
+	docker build --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  --build-arg GO_PROXY=${GO_PORXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 	docker push ${SIDECAR_IMG}

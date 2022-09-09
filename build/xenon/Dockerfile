@@ -18,6 +18,10 @@ COPY cmd/xenon/main.go cmd/xenon/main.go
 COPY utils/ utils/ 
 COPY go.mod go.mod
 COPY go.sum go.sum
+ARG GO_PROXY=off
+RUN if [ "$GO_PROXY" = "on" ]; then \
+    go env -w GOPROXY=https://goproxy.cn,direct; \
+    fi
 RUN  go env -w GO111MODULE=on && go mod download
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o xenonchecker cmd/xenon/main.go

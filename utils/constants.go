@@ -199,3 +199,9 @@ type JsonResult struct {
 	BackupName string `json:"backupName"`
 	Date       string `json:"date"`
 }
+
+// MySQLDefaultVersionMap is a map of supported mysql version and their image
+var MySQLDefaultVersionMap = map[string]string{
+	"5.7": "percona/percona-server:5.7.34",
+	"8.0": "percona/percona-server:8.0.25",
+}
