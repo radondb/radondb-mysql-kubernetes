@@ -65,6 +65,7 @@ test: manifests generate fmt vet ## Run tests.
 build: generate fmt vet ## Build manager binary.
 	go build -o bin/manager ./cmd/manager/main.go
 	go build -o bin/sidecar ./cmd/sidecar/main.go
+	go build -o bin/nfsbcp ./cmd/nfsbcp/main.go
 
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/manager/main.go
