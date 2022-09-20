@@ -149,9 +149,23 @@ type MysqlOpts struct {
 	// +kubebuilder:default:=false
 	InitTokuDB bool `json:"initTokuDB,omitempty"`
 
+	// MysqlConfTemplate is the configmap name of the template for mysql config.
+	// The configmap should contain the keys `mysql.cnf` and `plugin.cnf` at least, key `init.sql` is optional.
+	// If empty, operator will generate a default template named <spec.metadata.name>-mysql.
+	// +optional
+	MysqlConfTemplate string `json:"mysqlConfTemplate,omitempty"`
+
 	// A map[string]string that will be passed to my.cnf file.
+	// The key/value pairs is persisted in the configmap.
+	// Delete key is not valid, it is recommended to edit the configmap directly.
 	// +optional
 	MysqlConf MysqlConf `json:"mysqlConf,omitempty"`
+
+	// A map[string]string that will be passed to plugin.cnf file.
+	// The key/value pairs is persisted in the configmap.
+	// Delete key is not valid, it is recommended to edit the configmap directly.
+	// +optional
+	PluginConf MysqlConf `json:"pluginConf,omitempty"`
 
 	// The compute resource requirements.
 	// +optional

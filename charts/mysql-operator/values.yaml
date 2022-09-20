@@ -38,6 +38,9 @@ manager:
     #   cpu: 100m
     #   memory: 20Mi
 
+mysqlConfTemplate:
+  namespace: ""
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true

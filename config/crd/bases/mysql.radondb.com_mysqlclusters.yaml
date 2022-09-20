@@ -164,8 +164,15 @@ spec:
                     additionalProperties:
                       type: string
                     description: A map[string]string that will be passed to my.cnf
-                      file.
+                      file. The key/value pairs is persisted in the configmap. Delete
+                      key is not valid, it is recommended to edit the configmap directly.
                     type: object
+                  mysqlConfTemplate:
+                    description: MysqlConfTemplate is the configmap name of the template
+                      for mysql config. The configmap should contain the keys `mysql.cnf`
+                      and `plugin.cnf` at least, key `init.sql` is optional. If empty,
+                      operator will generate a default template named <spec.metadata.name>-mysql.
+                    type: string
                   password:
                     default: RadonDB@123
                     description: 'Password for the new user, must be 8~32 characters
@@ -174,6 +181,13 @@ spec:
                       supported: @#$%^&*_+-=.'
                     pattern: ^[A-Za-z0-9@#$%^&*_+\-=]{8,32}$
                     type: string
+                  pluginConf:
+                    additionalProperties:
+                      type: string
+                    description: A map[string]string that will be passed to plugin.cnf
+                      file. The key/value pairs is persisted in the configmap. Delete
+                      key is not valid, it is recommended to edit the configmap directly.
+                    type: object
                   resources:
                     default:
                       limits:
