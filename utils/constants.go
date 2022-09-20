@@ -107,6 +107,7 @@ const (
 	ScriptsVolumeMountPath   = "/scripts"
 	XenonConfVolumeMountPath = "/etc/xenon"
 	InitFileVolumeMountPath  = "/docker-entrypoint-initdb.d"
+	PodInfoVolumeMountPath   = "/etc/podinfo"
 
 	// Volume timezone name.
 	SysLocalTimeZone = "localtime"

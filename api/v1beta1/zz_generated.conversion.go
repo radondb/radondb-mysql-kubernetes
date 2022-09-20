@@ -289,6 +289,7 @@ func autoConvert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in *BackupStatus,
 	// WARNING: in.StartTime requires manual conversion: does not exist in peer-type
 	// WARNING: in.CompletionTime requires manual conversion: does not exist in peer-type
 	// WARNING: in.State requires manual conversion: does not exist in peer-type
+	out.Gtid = in.Gtid
 	// WARNING: in.ManualBackup requires manual conversion: does not exist in peer-type
 	// WARNING: in.ScheduledBackups requires manual conversion: does not exist in peer-type
 	return nil
@@ -299,6 +300,7 @@ func autoConvert_v1alpha1_BackupStatus_To_v1beta1_BackupStatus(in *v1alpha1.Back
 	out.BackupName = in.BackupName
 	// WARNING: in.BackupDate requires manual conversion: does not exist in peer-type
 	out.BackupType = in.BackupType
+	out.Gtid = in.Gtid
 	// WARNING: in.Conditions requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -446,6 +448,7 @@ func autoConvert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alp
 	// WARNING: in.Persistence requires manual conversion: does not exist in peer-type
 	// WARNING: in.BackupSecretName requires manual conversion: does not exist in peer-type
 	// WARNING: in.RestoreFrom requires manual conversion: does not exist in peer-type
+	// WARNING: in.RestorePoint requires manual conversion: does not exist in peer-type
 	// WARNING: in.NFSServerAddress requires manual conversion: does not exist in peer-type
 	// WARNING: in.BackupSchedule requires manual conversion: does not exist in peer-type
 	// WARNING: in.BothS3NFS requires manual conversion: does not exist in peer-type
@@ -457,6 +460,9 @@ func autoConvert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alp
 func autoConvert_v1beta1_MysqlClusterStatus_To_v1alpha1_MysqlClusterStatus(in *MysqlClusterStatus, out *v1alpha1.MysqlClusterStatus, s conversion.Scope) error {
 	out.ReadyNodes = in.ReadyNodes
 	out.State = v1alpha1.ClusterState(in.State)
+	out.LastBackup = in.LastBackup
+	out.LastBackupGtid = in.LastBackupGtid
+	out.LastBackupTime = in.LastBackupTime
 	out.Conditions = *(*[]v1alpha1.ClusterCondition)(unsafe.Pointer(&in.Conditions))
 	out.Nodes = *(*[]v1alpha1.NodeStatus)(unsafe.Pointer(&in.Nodes))
 	return nil
@@ -470,6 +476,9 @@ func Convert_v1beta1_MysqlClusterStatus_To_v1alpha1_MysqlClusterStatus(in *Mysql
 func autoConvert_v1alpha1_MysqlClusterStatus_To_v1beta1_MysqlClusterStatus(in *v1alpha1.MysqlClusterStatus, out *MysqlClusterStatus, s conversion.Scope) error {
 	out.ReadyNodes = in.ReadyNodes
 	out.State = ClusterState(in.State)
+	out.LastBackup = in.LastBackup
+	out.LastBackupTime = in.LastBackupTime
+	out.LastBackupGtid = in.LastBackupGtid
 	out.Conditions = *(*[]ClusterCondition)(unsafe.Pointer(&in.Conditions))
 	out.Nodes = *(*[]NodeStatus)(unsafe.Pointer(&in.Nodes))
 	return nil

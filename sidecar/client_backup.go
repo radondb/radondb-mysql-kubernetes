@@ -60,7 +60,7 @@ func requestS3Backup(cfg *BackupClientConfig, host string, endpoint string) (*ht
 	var result utils.JsonResult
 	json.NewDecoder(resp.Body).Decode(&result)
 	log.Info("recive json", "json", result)
-	err = setAnnonations(cfg, result.BackupName, result.Date, "S3", result.BackupSize) // set annotation
+	err = setAnnonations(cfg, result.BackupName, result.Date, "S3", result.BackupSize, result.Gtid) // set annotation
 	if err != nil {
 		return nil, fmt.Errorf("fail to set annotation: %s", err)
 	}
@@ -137,10 +137,15 @@ func requestNFSBackup(cfg *BackupClientConfig, host string, endpoint string) err
 	if err := <-cmdErr; err != nil {
 		return fmt.Errorf("xbstream command failed: %w", err)
 	}
+	// Get backup gtid
+	gtid, _ := GetXtrabackupGTIDPurged(backupPath)
 
-	if err := setAnnonations(cfg, backupName, DateTime, "nfs", n); err != nil {
+	log.Info("get restore gtid:", "gtid", gtid)
+	// add gtid for nfs backup
+	if err := setAnnonations(cfg, backupName, DateTime, "nfs", n, gtid); err != nil {
 		return fmt.Errorf("failed to set annotation: %w", err)
 	}
+	// TODO pitr
 	log.Info("backup completed", "backupName", backupName, "backupSize", n)
 
 	return nil

@@ -84,13 +84,15 @@ type BackupSchedule struct {
 }
 
 type BackupStatus struct {
-	Type             BackupInitiator         `json:"type,omitempty"`
-	BackupName       string                  `json:"backupName,omitempty"`
-	BackupSize       string                  `json:"backupSize,omitempty"`
-	BackupType       string                  `json:"backupType,omitempty"`
-	StartTime        *metav1.Time            `json:"startTime,omitempty"`
-	CompletionTime   *metav1.Time            `json:"completionTime,omitempty"`
-	State            BackupConditionType     `json:"state,omitempty"`
+	Type           BackupInitiator     `json:"type,omitempty"`
+	BackupName     string              `json:"backupName,omitempty"`
+	BackupSize     string              `json:"backupSize,omitempty"`
+	BackupType     string              `json:"backupType,omitempty"`
+	StartTime      *metav1.Time        `json:"startTime,omitempty"`
+	CompletionTime *metav1.Time        `json:"completionTime,omitempty"`
+	State          BackupConditionType `json:"state,omitempty"`
+	// Get the Gtid
+	Gtid             string                  `json:"gtid,omitempty"`
 	ManualBackup     *ManualBackupStatus     `json:"manual,omitempty"`
 	ScheduledBackups []ScheduledBackupStatus `json:"scheduled,omitempty"`
 }
@@ -136,6 +138,8 @@ type ManualBackupStatus struct {
 	BackupType string `json:"backupType,omitempty"`
 	// Get the backup Size
 	BackupSize string `json:"backupSize,omitempty"`
+	// Get the Gtid
+	Gtid string `json:"gtid,omitempty"`
 	// Get current backup status
 	State BackupConditionType `json:"state,omitempty"`
 }
@@ -164,6 +168,8 @@ type ScheduledBackupStatus struct {
 	Reason string `json:"reason"`
 	// Get the backup Size
 	BackupSize string `json:"backupSize,omitempty"`
+	// Get the Gtid
+	Gtid string `json:"gtid,omitempty"`
 	// Get current backup status
 	State BackupConditionType `json:"state,omitempty"`
 }

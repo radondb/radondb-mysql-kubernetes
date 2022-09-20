@@ -270,6 +270,9 @@ spec:
               completionTime:
                 format: date-time
                 type: string
+              gtid:
+                description: Get the Gtid
+                type: string
               manual:
                 properties:
                   active:
@@ -295,6 +298,9 @@ spec:
                     description: Specifies whether or not the Job is finished executing
                       (does not indicate success or failure).
                     type: boolean
+                  gtid:
+                    description: Get the Gtid
+                    type: string
                   reason:
                     type: string
                   startTime:
@@ -339,6 +345,9 @@ spec:
                       description: Specifies whether or not the Job is finished executing
                         (does not indicate success or failure).
                       type: boolean
+                    gtid:
+                      description: Get the Gtid
+                      type: string
                     reason:
                       type: string
                     startTime:

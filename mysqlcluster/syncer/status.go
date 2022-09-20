@@ -197,13 +197,15 @@ func (s *StatusSyncer) updateLastBackup() error {
 	}
 	// 2. sort descent
 	sort.Slice(finisheds, func(i, j int) bool {
-		return finisheds[i].ObjectMeta.CreationTimestamp.Before(&finisheds[j].ObjectMeta.CreationTimestamp)
+		return finisheds[j].ObjectMeta.CreationTimestamp.Before(&finisheds[i].ObjectMeta.CreationTimestamp)
 	})
 	// 3. get first backup which has backup Name
 	for _, b := range finisheds {
-		if len(b.Status.BackupName) != 0 {
+		if len(b.Status.BackupName) != 0 &&
+			s.CreationTimestamp.Before(&b.ObjectMeta.CreationTimestamp) {
 			s.Status.LastBackup = b.Status.BackupName
 			s.Status.LastBackupGtid = b.Status.Gtid
+			s.Status.LastBackupTime = b.ObjectMeta.CreationTimestamp
 			break
 		}
 

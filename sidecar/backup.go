@@ -17,6 +17,7 @@ limitations under the License.
 package sidecar
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -24,6 +25,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -122,7 +124,7 @@ func (cfg *BackupClientConfig) XBackupName() (string, string) {
 	return utils.BuildBackupName(cfg.ClusterName)
 }
 
-func setAnnonations(cfg *BackupClientConfig, backname string, DateTime string, BackupType string, BackupSize int64) error {
+func setAnnonations(cfg *BackupClientConfig, backname string, DateTime string, BackupType string, BackupSize int64, Gtid string) error {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return err
@@ -144,6 +146,7 @@ func setAnnonations(cfg *BackupClientConfig, backname string, DateTime string, B
 	job.Annotations[utils.JobAnonationDate] = DateTime
 	job.Annotations[utils.JobAnonationType] = BackupType
 	job.Annotations[utils.JobAnonationSize] = strconv.FormatInt(BackupSize, 10)
+	job.Annotations[utils.JobAnonationGtid] = Gtid
 	_, err = clientset.BatchV1().Jobs(cfg.NameSpace).Update(context.TODO(), job, metav1.UpdateOptions{})
 	if err != nil {
 		return err
@@ -151,7 +154,7 @@ func setAnnonations(cfg *BackupClientConfig, backname string, DateTime string, B
 	return nil
 }
 
-func RunTakeS3BackupCommand(cfg *BackupClientConfig) (string, string, int64, error) {
+func RunTakeS3BackupCommand(cfg *BackupClientConfig) (string, string, int64, string, error) {
 	// cfg->XtrabackupArgs()
 	xtrabackup := exec.Command(xtrabackupCommand, cfg.XtrabackupArgs()...)
 
@@ -169,21 +172,24 @@ func RunTakeS3BackupCommand(cfg *BackupClientConfig) (string, string, int64, err
 	xtrabackupReader, err := xtrabackup.StdoutPipe()
 	if err != nil {
 		log.Error(err, "failed to create stdout pipe for xtrabackup")
-		return "", "", 0, err
+		return "", "", 0, "", err
 	}
-
+	var wg sync.WaitGroup
 	// set xtrabackup and xcloud stderr to os.Stderr
-	xtrabackup.Stderr = os.Stderr
+	Gtid := ""
 	xcloud.Stderr = os.Stderr
-
+	Stderr, err := xtrabackup.StderrPipe()
+	if err != nil {
+		return "", "", 0, "", err
+	}
 	// Start xtrabackup and xcloud in separate goroutines
 	if err := xtrabackup.Start(); err != nil {
 		log.Error(err, "failed to start xtrabackup command")
-		return "", "", 0, err
+		return "", "", 0, "", err
 	}
 	if err := xcloud.Start(); err != nil {
 		log.Error(err, "fail start xcloud ")
-		return "", "", 0, err
+		return "", "", 0, "", err
 	}
 
 	// Use io.Copy to write xtrabackup output to the pipe while tracking the number of bytes written
@@ -195,7 +201,30 @@ func RunTakeS3BackupCommand(cfg *BackupClientConfig) (string, string, int64, err
 		}
 		w.Close()
 	}()
+	//xtrabackup.Stderr = os.Stderr
 
+	scanner := bufio.NewScanner(Stderr)
+	//scanner.Split(ScanLinesR)
+	wg.Add(1)
+	go func() {
+		for scanner.Scan() {
+			text := scanner.Text()
+			fmt.Println(text)
+			if index := strings.Index(text, "GTID"); index != -1 {
+				// Mysql5.7 examples: MySQL binlog position: filename 'mysql-bin.000002', position '588', GTID of the last change '319bd6eb-2ea2-11ed-bf40-7e1ef582b427:1-2'
+				// MySQL8.0 no gtid:  MySQL binlog position: filename 'mysql-bin.000025', position '156'
+				length := len("GTID of the last change")
+				Gtid = strings.Trim(text[index+length:], " '") // trim space and \'
+				if len(Gtid) != 0 {
+					log.Info("Catch gtid: " + Gtid)
+				}
+
+			}
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
 	// Wait for xtrabackup and xcloud to finish
 	// pipe command fail one, whole things fail
 	errorChannel := make(chan error, 2)
@@ -212,7 +241,7 @@ func RunTakeS3BackupCommand(cfg *BackupClientConfig) (string, string, int64, err
 			log.Error(err, "xtrabackup or xcloud failed closing the pipe...")
 			xtrabackup.Process.Kill()
 			xcloud.Process.Kill()
-			return "", "", 0, err
+			return "", "", 0, "", err
 		}
 	}
 
@@ -220,5 +249,5 @@ func RunTakeS3BackupCommand(cfg *BackupClientConfig) (string, string, int64, err
 	backupSizeMB := float64(n) / (1024 * 1024)
 	log.Info(fmt.Sprintf("Backup size: %.2f MB", backupSizeMB))
 
-	return backupName, DateTime, n, nil
+	return backupName, DateTime, n, Gtid, nil
 }

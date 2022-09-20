@@ -7,19 +7,23 @@
 * [BackupOpts](#backupopts)
 * [ClusterCondition](#clustercondition)
 * [DataSource](#datasource)
-* [DatabaseInitSQL](#databaseinitsql)
 * [ExporterSpec](#exporterspec)
 * [LogOpts](#logopts)
 * [MonitoringSpec](#monitoringspec)
+* [MySQLConfigs](#mysqlconfigs)
 * [MySQLStandbySpec](#mysqlstandbyspec)
 * [MysqlCluster](#mysqlcluster)
 * [MysqlClusterList](#mysqlclusterlist)
 * [MysqlClusterSpec](#mysqlclusterspec)
 * [MysqlClusterStatus](#mysqlclusterstatus)
+* [NFSBackupDataSource](#nfsbackupdatasource)
 * [NodeCondition](#nodecondition)
 * [NodeStatus](#nodestatus)
 * [RaftStatus](#raftstatus)
+* [ReadOnlyType](#readonlytype)
 * [RemoteDataSource](#remotedatasource)
+* [RoStatus](#rostatus)
+* [S3BackupDataSource](#s3backupdatasource)
 * [ServiceSpec](#servicespec)
 * [XenonOpts](#xenonopts)
 
@@ -54,18 +58,10 @@ ClusterCondition defines type for cluster conditions.
 
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
-| remote | Bootstraping from remote data source | *[RemoteDataSource](#remotedatasource) | false |
-
-[Back to Custom Resources](#custom-resources)
-
-#### DatabaseInitSQL
-
-DatabaseInitSQL defines a ConfigMap containing custom SQL that will be run after the cluster is initialized. This ConfigMap must be in the same namespace as the cluster.
-
-| Field | Description | Scheme | Required |
-| ----- | ----------- | ------ | -------- |
-| name | Name is the name of a ConfigMap | string | true |
-| key | Key is the ConfigMap data key that points to a SQL string | string | true |
+| remote | Bootstraping from remote data source | [RemoteDataSource](#remotedatasource) | false |
+| S3backup | Bootstraping from backup | [S3BackupDataSource](#s3backupdatasource) | false |
+| Nfsbackup | restore from nfs | *[NFSBackupDataSource](#nfsbackupdatasource) | false |
+| restorePoint | RestorePoint is the target date and time to restore data. The format is \"2006-01-02 15:04:05\" | string | true |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -91,6 +87,7 @@ DatabaseInitSQL defines a ConfigMap containing custom SQL that will be run after
 | image | To specify the image that will be used for log container. The busybox image. | string | false |
 | slowLogTail | SlowLogTail represents if tail the mysql slow log. | bool | false |
 | auditLogTail | AuditLogTail represents if tail the mysql audit log. | bool | false |
+| errorLogTail | ErrorLogTail represents if tail the mysql error log. | bool | false |
 | resources | Log container resources of a MySQL container. | corev1.ResourceRequirements | false |
 
 [Back to Custom Resources](#custom-resources)
@@ -102,6 +99,18 @@ DatabaseInitSQL defines a ConfigMap containing custom SQL that will be run after
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | exporter |  | [ExporterSpec](#exporterspec) | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### MySQLConfigs
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| configMapName | Name of the `ConfigMap` containing MySQL config. | string | false |
+| myCnf | A map[string]string that will be passed to my.cnf file. The key/value pairs is persisted in the configmap. | map[string]string | false |
+| pluginCnf |  | map[string]string | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -148,13 +157,14 @@ MysqlClusterSpec defines the desired state of MysqlCluster
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | replicas | Replicas is the number of pods. | *int32 | false |
+| readonlys | Readonlys Info. | *[ReadOnlyType](#readonlytype) | false |
+| lag | Lagged | *int32 | false |
 | user | Username of new user to create. Only be a combination of letters, numbers or underlines. The length can not exceed 26 characters. | string | false |
-| mysqlConfig | MySQLConfig `ConfigMap` name of MySQL config. | string | false |
+| mysqlConfig | MySQLConfig `ConfigMap` name of MySQL config. | [MySQLConfigs](#mysqlconfigs) | false |
 | resources | Compute resources of a MySQL container. | corev1.ResourceRequirements | false |
-| customTLSSecret | Containing CA (ca.crt) and server cert (tls.crt), server private key (tls.key) for SSL | corev1.SecretProjection | false |
+| customTLSSecret | Containing CA (ca.crt) and server cert (tls.crt), server private key (tls.key) for SSL | *corev1.SecretProjection | false |
 | storage | Defines a PersistentVolumeClaim for MySQL data. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes | [corev1.PersistentVolumeClaimSpec](https://pkg.go.dev/k8s.io/api/core/v1#PersistentVolumeClaimSpec) | true |
 | mysqlVersion | Represents the MySQL version that will be run. The available version can be found here: This field should be set even if the Image is set to let the operator know which mysql version is running. Based on this version the operator can take decisions which features can be used. | string | false |
-| databaseInitSQL | DatabaseInitSQL defines a ConfigMap containing custom SQL that will be run after the cluster is initialized. This ConfigMap must be in the same namespace as the cluster. | *[DatabaseInitSQL](#databaseinitsql) | false |
 | xenonOpts | XenonOpts is the options of xenon container. | [XenonOpts](#xenonopts) | false |
 | backupOpts | Backup is the options of backup container. | [BackupOpts](#backupopts) | false |
 | monitoringSpec | Monitoring is the options of metrics container. | [MonitoringSpec](#monitoringspec) | false |
@@ -165,7 +175,7 @@ MysqlClusterSpec defines the desired state of MysqlCluster
 | affinity | Scheduling constraints of MySQL pod. Changing this value causes MySQL to restart. More info: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node | *corev1.Affinity | false |
 | priorityClassName | Priority class name for the MySQL pods. Changing this value causes MySQL to restart. More info: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/ | string | false |
 | minAvailable | The number of pods from that set that must still be available after the eviction, even in the absence of the evicted pod | string | false |
-| dataSource | Specifies a data source for bootstrapping the MySQL cluster. | *[DataSource](#datasource) | false |
+| dataSource | Specifies a data source for bootstrapping the MySQL cluster. | [DataSource](#datasource) | false |
 | standby | Run this cluster as a read-only copy of an existing cluster or archive. | *[MySQLStandbySpec](#mysqlstandbyspec) | false |
 | enableAutoRebuild | If true, when the data is inconsistent, Xenon will automatically rebuild the invalid node. | bool | false |
 | logOpts | LogOpts is the options of log settings. | [LogOpts](#logopts) | false |
@@ -181,8 +191,22 @@ MysqlClusterStatus defines the observed state of MysqlCluster
 | ----- | ----------- | ------ | -------- |
 | readyNodes | ReadyNodes represents number of the nodes that are in ready state. | int | false |
 | state | State | ClusterState | false |
+| lastbackup | LastBackup | string | false |
+| lastbackupGtid |  | string | false |
+| lastBackupTime | LastBackup Create time, just for filter | [metav1.Time](https://pkg.go.dev/k8s.io/apimachinery/pkg/apis/meta/v1#Time) | false |
 | conditions | Conditions contains the list of the cluster conditions fulfilled. | [][ClusterCondition](#clustercondition) | false |
 | nodes | Nodes contains the list of the node status fulfilled. | [][NodeStatus](#nodestatus) | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### NFSBackupDataSource
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| name | Backup name | string | true |
+| volume | Secret name | corev1.NFSVolumeSource | false |
 
 [Back to Custom Resources](#custom-resources)
 
@@ -207,6 +231,7 @@ NodeStatus defines type for status of a node into cluster.
 | name | Name of the node. | string | true |
 | message | Full text reason for current status of the node. | string | false |
 | raftStatus | RaftStatus is the raft status of the node. | [RaftStatus](#raftstatus) | false |
+| roStatus | (RO) ReadOnly Status | *[RoStatus](#rostatus) | false |
 | conditions | Conditions contains the list of the node conditions fulfilled. | [][NodeCondition](#nodecondition) | false |
 
 [Back to Custom Resources](#custom-resources)
@@ -223,6 +248,20 @@ NodeStatus defines type for status of a node into cluster.
 
 [Back to Custom Resources](#custom-resources)
 
+#### ReadOnlyType
+
+ReadOnly define the ReadOnly pods
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| num | ReadOnlys is the number of readonly pods. | int32 | true |
+| hostname | When the host name is empty, use the leader to change master | string | true |
+| resources | The compute resource requirements. | *corev1.ResourceRequirements | false |
+| affinity |  | *corev1.Affinity | false |
+| tolerations |  | []corev1.Toleration | false |
+
+[Back to Custom Resources](#custom-resources)
+
 #### RemoteDataSource
 
 
@@ -230,6 +269,29 @@ NodeStatus defines type for status of a node into cluster.
 | Field | Description | Scheme | Required |
 | ----- | ----------- | ------ | -------- |
 | sourceConfig |  | *corev1.SecretProjection | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### RoStatus
+
+(RO) node status
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| readOnlyReady |  | bool | false |
+| Replication |  | bool | false |
+| master |  | string | false |
+
+[Back to Custom Resources](#custom-resources)
+
+#### S3BackupDataSource
+
+
+
+| Field | Description | Scheme | Required |
+| ----- | ----------- | ------ | -------- |
+| name | Backup name | string | true |
+| secretName | Secret name | string | true |
 
 [Back to Custom Resources](#custom-resources)
 

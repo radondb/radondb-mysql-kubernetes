@@ -24,6 +24,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/blang/semver"
 	"github.com/go-ini/ini"
@@ -109,6 +110,8 @@ type Config struct {
 	// XtrabackupTargetDir is a backup destination directory for xtrabackup.
 	XtrabackupTargetDir string
 
+	// Time Point for Restore
+	RestorePoint string
 	// Clone flag
 	CloneFlag bool
 
@@ -203,6 +206,7 @@ func NewInitConfig() *Config {
 
 		existMySQLData:    existMySQLData,
 		XRestoreFrom:      getEnvValue("RESTORE_FROM"),
+		RestorePoint:      getEnvValue("RESTORE_POINT"),
 		XRestoreFromNFS:   getEnvValue("RESTORE_FROM_NFS"),
 		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
 		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
@@ -530,7 +534,7 @@ xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-bac
 chown -R mysql.mysql {{.DataDir}}
 rm -rf /root/backup
 */
-func (cfg *Config) executeS3Restore(path string) error {
+func (cfg *Config) executeS3Restore(pathArg string) error {
 	if len(cfg.XRestoreFrom) == 0 {
 		return fmt.Errorf("do not have restore from")
 	}
@@ -587,6 +591,10 @@ func (cfg *Config) executeS3Restore(path string) error {
 			return err
 		}
 	}
+	// Get backup gtid
+	gtid, _ := GetXtrabackupGTIDPurged("/root/backup/")
+
+	log.Info("get restore gtid:", "gtid", gtid)
 	// Xtrabackup prepare and apply-log-only.
 	log.Info("Xtrabackup prepare and apply-log-only")
 	cmd := exec.Command(xtrabackupCommand, "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--prepare", "--apply-log-only", "--target-dir="+utils.DataVolumeMountPath)
@@ -607,6 +615,63 @@ func (cfg *Config) executeS3Restore(path string) error {
 	if err := exec.Command("chown", "-R", "mysql.mysql", utils.DataVolumeMountPath).Run(); err != nil {
 		return fmt.Errorf("failed to chown mysql.mysql %s  : %s", utils.DataVolumeMountPath, err)
 	}
+	// Do not need Xtrabackup copy-back.
+	// S3 download
+
+	log.Info("downloading S3 binlog")
+	if s3, err := NewS3(strings.TrimPrefix(strings.TrimPrefix(cfg.XCloudS3EndPoint, "https://"), "http://"),
+		cfg.XCloudS3AccessKey, cfg.XCloudS3SecretKey, cfg.XCloudS3Bucket,
+		strings.HasPrefix(cfg.XCloudS3EndPoint, "https")); err != nil {
+		return fmt.Errorf("failed to new s3 : %s", err)
+	} else {
+		if err = os.Mkdir(path.Join(utils.InitFileVolumeMountPath, buildBinlogDir(cfg.XRestoreFrom)), os.FileMode(0755)); err != nil {
+			if !os.IsExist(err) {
+				return fmt.Errorf("error mkdir %s: %s", buildBinlogDir(cfg.XRestoreFrom), err)
+			}
+		}
+		restorePoint, err := time.Parse("2006-01-02 15:04:05", cfg.RestorePoint)
+		if err != nil {
+			return fmt.Errorf("restore point parse error : %s", err)
+		}
+
+		s3.S3Download(cfg, buildBinlogDir(cfg.XRestoreFrom))
+		cfg.BuildScript(gtid, restorePoint)
+	}
+	return nil
+}
+
+// Build Script in InitFileVolumeMountPath
+func (cfg *Config) BuildScript(skipGtid string, restorePoint time.Time) error {
+	//restorePoint, err := time.Parse("20060102-150405", string)
+	binlogPathDir := path.Join(utils.InitFileVolumeMountPath, buildBinlogDir(cfg.XRestoreFrom))
+	script := fmt.Sprintf(`#!/bin/bash
+mysqld&
+pid="$!"
+echo "now to restore binlog"
+mysql=( mysql -uroot )
+for i in {120..0}; do
+			if echo 'SELECT 1' | "${mysql[@]}" &> /dev/null; then
+				break
+			fi
+			echo 'MySQL init process in progress...'
+			sleep 1
+done
+echo "now mysqlstart!"
+if [ "$i" = 0 ]; then
+			echo >&2 'MySQL init process failed.'
+			exit 1
+fi
+ls %s/mysql-bin*|awk '{print "cat   "$1  "|mysqlbinlog --exclude-gtids=\"%s\" --stop-datetime=\"%s\" -|mysql -uroot"}'|bash
+if ! kill -s TERM "$pid" || ! wait "$pid"; then
+	echo >&2 'MySQL init process failed.'
+	exit 1
+fi
+`, binlogPathDir, skipGtid, restorePoint.Format(RestoreTimeSample))
+	fmt.Println(script)
+	if err := ioutil.WriteFile(utils.InitFileVolumeMountPath+"/restore.sh", []byte(script), 0755); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -755,5 +820,25 @@ func (cfg *Config) ExecuteNFSRestore() error {
 		return fmt.Errorf("failed to chown -R mysql.mysql : %s", err)
 	}
 
+	gtid, _ := GetXtrabackupGTIDPurged(path.Join("/backup/", cfg.XRestoreFrom))
+
+	log.Info("get restore gtid:", "gtid", gtid)
+
+	binDir := "/backup/" + cfg.XRestoreFrom + "bin"
+	cmd = exec.Command("cp", "-rf", binDir, utils.InitFileVolumeMountPath)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to copy binlog to docker-entrypoint-initdb.d : %s", err)
+	}
+	cmd = exec.Command("chown", "-R", "mysql.mysql", utils.InitFileVolumeMountPath)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chown -R mysql.mysql : %s", err)
+	}
+	restorePoint, err := time.Parse("2006-01-02 15:04:05", cfg.RestorePoint)
+	if err != nil {
+		return fmt.Errorf("restore point parse error : %s", err)
+	}
+	cfg.BuildScript(gtid, restorePoint)
 	return nil
 }

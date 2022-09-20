@@ -108,6 +108,10 @@ var (
 			Value: "",
 		},
 		{
+			Name:  "RESTORE_POINT",
+			Value: "",
+		},
+		{
 			Name:  "CLUSTER_NAME",
 			Value: "sample",
 		},

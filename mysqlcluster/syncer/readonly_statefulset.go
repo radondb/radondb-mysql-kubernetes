@@ -169,7 +169,7 @@ func GetReadonlyStatefulSet(cr *StatefulSetSyncer) (*appsv1.StatefulSet, error) 
 	mysql := container.EnsureContainer(utils.ContainerMysqlName, cr.MysqlCluster)
 	if cr.Spec.ReadOnlys.Resources != nil {
 		mysql.Resources = *cr.Spec.ReadOnlys.Resources
-		// TODO (RO) calc innodb buffer and add it to env
+		// (RO) calc innodb buffer and add it to env
 		ib_pool, ib_inst, ib_logsize := cr.calcInnodbParam(cr.Spec.ReadOnlys.Resources)
 		initSidecar.Env = append(initSidecar.Env,
 			corev1.EnvVar{
