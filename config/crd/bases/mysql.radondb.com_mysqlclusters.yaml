@@ -152,6 +152,10 @@ spec:
                     default: radondb
                     description: Name for new database to create.
                     type: string
+                  image:
+                    default: percona/percona-server:5.7.34
+                    description: Specifies mysql image to use.
+                    type: string
                   initTokuDB:
                     default: false
                     description: InitTokuDB represents if install tokudb engine.

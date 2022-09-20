@@ -40,7 +40,7 @@ func (c *mysql) getName() string {
 
 // getImage get the container image.
 func (c *mysql) getImage() string {
-	img := utils.MysqlImageVersions[c.GetMySQLVersion()]
+	img := c.Spec.MysqlOpts.Image
 	return img
 }
 

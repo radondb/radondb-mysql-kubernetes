@@ -104,6 +104,10 @@ type MysqlClusterSpec struct {
 
 // MysqlOpts defines the options of MySQL container.
 type MysqlOpts struct {
+	// Specifies mysql image to use.
+	// +optional
+	// +kubebuilder:default:="percona/percona-server:5.7.34"
+	Image string `json:"image,omitempty"`
 	// Unchangeable: Use super users instead
 	// Password for the root user, can be empty or 8~32 characters long.
 	// Only be a combination of uppercase letters, lowercase letters, numbers or special characters.

@@ -13,7 +13,6 @@ The scheduled backup is currently supported for both S3 and NFS backups. You can
 ... 
 spec:
   replicas: 3
-  mysqlVersion: "5.7"
   backupSchedule: "0 0 0 * * *"  # daily
   ...
 ```

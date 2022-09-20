@@ -51,7 +51,6 @@ Configure the `backupSecretName` property in `mysql_v1alpha1_mysqlcluster.yaml`,
 ```yaml
 spec:
   replicas: 3
-  mysqlVersion: "5.7"
   backupSecretName: sample-backup-secret
   ...
 ```

@@ -37,9 +37,9 @@ var (
 					Requests: nil,
 				},
 			},
-			MysqlVersion: "5.7",
 			MysqlOpts: mysqlv1alpha1.MysqlOpts{
 				InitTokuDB: false,
+				Image:      "percona/percona-server:5.7.34",
 			},
 		},
 	}

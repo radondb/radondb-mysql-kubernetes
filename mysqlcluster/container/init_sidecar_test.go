@@ -54,9 +54,9 @@ var (
 			MetricsOpts: mysqlv1alpha1.MetricsOpts{
 				Enabled: false,
 			},
-			MysqlVersion: "5.7",
 			MysqlOpts: mysqlv1alpha1.MysqlOpts{
 				InitTokuDB: false,
+				Image:      "percona/percona-server:5.7.34",
 			},
 			Persistence: mysqlv1alpha1.Persistence{
 				Enabled: false,

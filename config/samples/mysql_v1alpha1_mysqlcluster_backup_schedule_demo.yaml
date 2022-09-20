@@ -5,7 +5,6 @@ metadata:
 spec:
   replicas: 3
   mysqlVersion: "5.7"
-  
   # the backupSecretName specify the secret file name which store S3 information,
   # if you want S3 backup or restore, please create backup_secret.yaml, uncomment below and fill secret name:
   backupSecretName: sample-backup-secret
@@ -14,6 +13,7 @@ spec:
   # restoreFrom: 
   BackupSchedule: "0 50 * * * *" 
   mysqlOpts:
+    image: percona/percona-server:5.7.34
     rootPassword: "RadonDB@123"
     rootHost: localhost
     user: radondb_usr

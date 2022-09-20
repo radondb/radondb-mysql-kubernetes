@@ -54,8 +54,7 @@ func newCluster(name, ns string, replicas int32) *apiv1alpha1.MysqlCluster {
 			Namespace: ns,
 		},
 		Spec: apiv1alpha1.MysqlClusterSpec{
-			Replicas:     &replicas,
-			MysqlVersion: TestContext.MysqlVersion,
+			Replicas: &replicas,
 			PodPolicy: apiv1alpha1.PodPolicy{
 				SidecarImage: TestContext.SidecarImagePath,
 			},
