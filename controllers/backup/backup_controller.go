@@ -22,11 +22,14 @@ import (
 	"reflect"
 
 	"github.com/pkg/errors"
+	"github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	v1beta1 "github.com/radondb/radondb-mysql-kubernetes/api/v1beta1"
+	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -236,6 +239,7 @@ func (r *BackupReconciler) reconcileManualBackup(ctx context.Context,
 				manualStatus.BackupName = currentBackupJob.GetAnnotations()["backupName"]
 				manualStatus.BackupSize = currentBackupJob.GetAnnotations()["backupSize"]
 				manualStatus.BackupType = currentBackupJob.GetAnnotations()["backupType"]
+				manualStatus.Gtid = currentBackupJob.GetAnnotations()["gtid"]
 
 			}
 			if completed || failed {
@@ -256,6 +260,7 @@ func (r *BackupReconciler) reconcileManualBackup(ctx context.Context,
 			backup.Status.BackupName = manualStatus.BackupName
 			backup.Status.BackupSize = manualStatus.BackupSize
 			backup.Status.BackupType = manualStatus.BackupType
+			backup.Status.Gtid = manualStatus.Gtid
 			backup.Status.State = manualStatus.State
 			backup.Status.CompletionTime = manualStatus.CompletionTime
 			backup.Status.StartTime = manualStatus.StartTime
@@ -304,7 +309,9 @@ func (r *BackupReconciler) reconcileManualBackup(ctx context.Context,
 	if err := r.apply(ctx, backupJob); err != nil {
 		return errors.WithStack(err)
 	}
-
+	if err := r.createBinlogJob(ctx, backup, cluster); err != nil {
+		return errors.WithStack(err)
+	}
 	return nil
 }
 
@@ -356,6 +363,7 @@ func (r *BackupReconciler) reconcileCronBackup(ctx context.Context, backup *v1be
 			sbs.BackupName = job.GetAnnotations()["backupName"]
 			sbs.BackupSize = job.GetAnnotations()["backupSize"]
 			sbs.BackupType = job.GetAnnotations()["backupType"]
+			sbs.Gtid = job.GetAnnotations()["gtid"]
 			sbs.CompletionTime = job.Status.CompletionTime
 			sbs.Failed = job.Status.Failed
 			sbs.Succeeded = job.Status.Succeeded
@@ -385,6 +393,7 @@ func (r *BackupReconciler) reconcileCronBackup(ctx context.Context, backup *v1be
 		backup.Status.BackupSize = latestScheduledStatus.BackupSize
 		backup.Status.Type = v1beta1.CronJobBackupInitiator
 		backup.Status.State = latestScheduledStatus.State
+		backup.Status.Gtid = latestScheduledStatus.Gtid
 		backup.Status.BackupType = latestScheduledStatus.BackupType
 	}
 	// file the scheduled backup status
@@ -548,4 +557,135 @@ func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster
 	jobSpec.Template.Spec.Affinity = cluster.Spec.Affinity
 	jobSpec.BackoffLimit = &backoffLimit
 	return jobSpec, nil
+}
+
+func (r *BackupReconciler) createJobPodTemplate(ctx context.Context, backup *v1beta1.Backup, backupDir string) corev1.PodTemplateSpec {
+	log := log.FromContext(ctx).WithValues("backup", "create job pod template")
+	labels := map[string]string{
+		"app": "binlogbackup",
+	}
+	cluster := &v1alpha1.MysqlCluster{}
+	cluster.Name = backup.Spec.ClusterName
+	secret := &corev1.Secret{}
+	secretKey := client.ObjectKey{Name: mysqlcluster.New(cluster).GetNameForResource(utils.Secret), Namespace: backup.Namespace}
+
+	if err := r.Get(context.TODO(), secretKey, secret); err != nil {
+		log.V(4).Info("binlogjob", "is is creating", "err", err)
+	}
+	internalRootPass := string(secret.Data["internal-root-password"])
+	// Add shell commond
+	log.V(4).Info("internal password", internalRootPass)
+	hostname := func() string {
+		if backup.Spec.BackupOpts.BackupHost != "" {
+			return fmt.Sprintf("%s.%s-mysql.%s", backup.Spec.BackupOpts.BackupHost, backup.Spec.ClusterName, backup.Namespace)
+		} else {
+			return backup.Spec.ClusterName + "-follower"
+		}
+	}()
+
+	return corev1.PodTemplateSpec{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: labels,
+		},
+		Spec: corev1.PodSpec{
+			RestartPolicy: corev1.RestartPolicyNever,
+			InitContainers: []corev1.Container{
+				{
+					Name:  "initial",
+					Image: "busybox:1.32",
+					Command: []string{
+						"sh", "-c", fmt.Sprintf("mkdir /backup/%s && chown 1001:1001 /backup/%s", backupDir, backupDir),
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "nfs-backup",
+							MountPath: "/backup",
+						},
+					},
+				},
+			},
+			Containers: []corev1.Container{
+				{
+					Name:  utils.ContainerBackupName,
+					Image: "percona:8.0",
+					Command: []string{
+						"/bin/bash", "-c", "--",
+						fmt.Sprintf(`cd /backup/%s;mysql -uroot -p%s -h%s -N -e "SHOW BINARY LOGS" | awk '{print "mysqlbinlog --read-from-remote-server --raw --host=%s --port=3306 --user=root --password=%s --raw", $1}'|bash`,
+							backupDir, internalRootPass, hostname, hostname, internalRootPass),
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      "nfs-backup",
+							MountPath: "/backup",
+						},
+					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name:         "nfs-backup",
+					VolumeSource: corev1.VolumeSource{NFS: &backup.Spec.BackupOpts.NFS.Volume},
+				},
+			},
+		},
+	}
+}
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+func (r *BackupReconciler) createBinlogJob(ctx context.Context, backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster) error {
+	log := log.FromContext(ctx).WithValues("backup", "BinLog")
+	if len(cluster.Status.LastBackupGtid) == 0 || len(cluster.Status.LastBackup) == 0 ||
+		backup.Spec.BackupOpts.NFS == nil {
+		log.V(1).Info("do not have last backup gtid or nfs, needn't backup binlog for nfs")
+		return nil
+	}
+	backupDir := fmt.Sprintf("%sbin", cluster.Status.LastBackup)
+	// get job
+	hostname := func() string {
+		if backup.Spec.BackupOpts.BackupHost != "" {
+			return fmt.Sprintf("%s.%s-mysql.%s", backup.Spec.BackupOpts.BackupHost, backup.Spec.ClusterName, backup.Namespace)
+		} else {
+			return backup.Spec.ClusterName + "-follower"
+		}
+	}()
+	obj := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-binlogbak", backup.Name),
+			Namespace: backup.Namespace,
+			Labels: map[string]string{
+				"Host": hostname,
+				"Type": utils.BackupJobTypeName,
+
+				// Cluster used as selector.
+				"Cluster": backup.Spec.ClusterName,
+			},
+		},
+
+		Spec: batchv1.JobSpec{
+			Completions:  int32Ptr(1), // Number of completions to achieve before considering the Job as successful
+			BackoffLimit: int32Ptr(0), // Number of retries before considering a Job as failed
+
+			Template: r.createJobPodTemplate(ctx, backup, backupDir),
+		},
+	}
+	obj.SetGroupVersionKind(batchv1.SchemeGroupVersion.WithKind("Job"))
+	if err := controllerutil.SetControllerReference(backup, obj,
+		r.Client.Scheme()); err != nil {
+		return errors.WithStack(err)
+	}
+	var orig batchv1.Job
+	err := r.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: obj.Name}, &orig)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to get Job %s/%s: %w", cluster.Namespace, obj.Name, err)
+	}
+	if equality.Semantic.DeepEqual(obj, orig) {
+		return nil
+	}
+	//s.backup.Log.V(4).Info("binlogjob", "is is creating", "obj", obj)
+	if err := r.apply(ctx, obj); err != nil {
+		log.Error(err, "error when attempting to create Backup binlog")
+	}
+
+	return nil
 }

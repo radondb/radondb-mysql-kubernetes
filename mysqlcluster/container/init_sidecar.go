@@ -95,6 +95,10 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Value: c.Spec.RestoreFrom,
 		},
 		{
+			Name:  "RESTORE_POINT",
+			Value: c.Spec.RestorePoint,
+		},
+		{
 			Name:  "CLUSTER_NAME",
 			Value: c.Name,
 		},

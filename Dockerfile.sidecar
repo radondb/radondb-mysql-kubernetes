@@ -51,7 +51,7 @@ RUN set -ex; \
     wget -P /tmp --no-check-certificate https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb; \
     dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb; \
     apt-get update; \
-    apt-get install -y --no-install-recommends ${XTRABACKUP_PKG}; \
+    apt-get install -y --no-install-recommends ${XTRABACKUP_PKG} mysql-client jq; \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /

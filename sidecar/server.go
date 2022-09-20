@@ -111,18 +111,21 @@ func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
 		return
 	}
+
 	// /backup only handle S3 backup
 	if requestBody.BackupType == S3 {
-
-		backName, Datetime, backupSize, err := RunTakeS3BackupCommand(&requestBody)
-		log.Info("get backup result", "backName", backName)
+		// run pitr backup first? or later?
+		s.cfg.RunPitrBackupS3(&requestBody)
+		backName, Datetime, backupSize, gtid, err := RunTakeS3BackupCommand(&requestBody)
+		log.Info("get backup result", "backName", backName, "gtid", gtid)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		} else {
-			msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime, BackupSize: backupSize})
+			msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Gtid: gtid, Date: Datetime, BackupSize: backupSize})
 			w.Write(msg)
 		}
 	}
+
 }
 
 func (s *server) backupDownloadHandler(w http.ResponseWriter, r *http.Request) {

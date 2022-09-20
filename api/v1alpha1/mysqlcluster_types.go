@@ -86,6 +86,11 @@ type MysqlClusterSpec struct {
 	// +optional
 	RestoreFrom string `json:"restoreFrom,omitempty"`
 
+	// RestorePoint is the target date and time to restore data.
+	// The format is "2006-01-02 15:04:05"
+	// +optional
+	RestorePoint string `json:"restorePoint"`
+
 	// Represents NFS ip address where cluster restore from.
 	// +optional
 	NFSServerAddress string `json:"nfsServerAddress,omitempty"`
@@ -470,8 +475,10 @@ type MysqlClusterStatus struct {
 	// State
 	State ClusterState `json:"state,omitempty"`
 	// LastBackup
-	LastBackup     string `json:"lastbackup,omitempty"`
-	LastBackupGtid string `json:"lastbackupGtid,omitempty"`
+	LastBackup string `json:"lastbackup,omitempty"`
+	// LastBackup Create time, just for filter
+	LastBackupTime metav1.Time `json:"lastBackupTime,omitempty"`
+	LastBackupGtid string      `json:"lastbackupGtid,omitempty"`
 	// Conditions contains the list of the cluster conditions fulfilled.
 	Conditions []ClusterCondition `json:"conditions,omitempty"`
 	// Nodes contains the list of the node status fulfilled.

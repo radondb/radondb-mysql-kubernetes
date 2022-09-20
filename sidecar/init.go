@@ -1,7 +1,7 @@
 /*
 Copyright 2021 RadonDB.
 
-Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
@@ -17,7 +17,13 @@ limitations under the License.
 package sidecar
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"path/filepath"
+
+	"errors"
+
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -26,6 +32,7 @@ import (
 	"os/user"
 	"path"
 	"strconv"
+
 	"strings"
 
 	"github.com/go-ini/ini"
@@ -324,8 +331,124 @@ func runInitCommand(cfg *Config, hasInitialized bool) error {
 	return nil
 }
 
+// PITR backup
+func (myConf *Config) RunPitrBackupS3(cfg *BackupClientConfig) {
+	if len(cfg.XCloudS3AccessKey) == 0 || len(cfg.XCloudS3SecretKey) == 0 ||
+		len(cfg.XCloudS3Bucket) == 0 || len(cfg.XCloudS3EndPoint) == 0 {
+		log.Error(errors.New("s3: S3 not set"), "Do not set the S3 enviroment!")
+		return
+	} else {
+		// Get Last Backup dir and Gitd
+		lastbackup, lastgtid := getLastBackupInfo(myConf)
+		// If do not have last backup, do nothing
+		if len(lastbackup) != 0 && lastbackup != "null" {
+			// Upload the binlog to S3
+			log.Info("now begin to upload to S3")
+			backupBinLogs(cfg, lastbackup, lastgtid)
+
+		}
+		//TODO : truncate by lastGtid
+		log.Info("get last gtid", "lastgtid", lastgtid)
+
+	}
+}
+
+// List all binlog and upload to S3
+func backupBinLogs(cfg *BackupClientConfig, lastBackup, lastgtid string) error {
+	// 1. flush all binlog
+	arg := "mysql -uroot -h127.0.0.1 -e 'flush logs'"
+	cmd := exec.Command("sh", "-c", arg)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to flush logs: %s", err.Error())
+	}
+	// 2. list all binlog
+	root := utils.DataVolumeMountPath
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+
+		if err != nil {
+
+			return fmt.Errorf("failed to walk dir: %s", err.Error())
+		}
+
+		if !info.IsDir() && //not dir
+			strings.HasPrefix(filepath.Base(path), "mysql-bin.") && // mysql-bin.000xxx
+			filepath.Base(path) != "mysql-bin.index" { // Don't upload the mysql-bin.index
+			// files = append(files, path)
+			log.Info("now upload file:", "file", path)
+			// 3. upload to lastbackupDir
+			if s3, err := NewS3(strings.TrimPrefix(strings.TrimPrefix(cfg.XCloudS3EndPoint, "https://"), "http://"),
+				cfg.XCloudS3AccessKey, cfg.XCloudS3SecretKey, cfg.XCloudS3Bucket,
+				strings.HasPrefix(cfg.XCloudS3EndPoint, "https")); err != nil {
+				return fmt.Errorf("failed to new s3 : %s", err)
+			} else {
+				s3.S3Upload(cfg, buildBinlogDir(lastBackup), path)
+			}
+
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Error(err, "cannot find the files")
+	}
+
+	return nil
+}
+
+// Get Last Backup and Gtid
+func getLastBackupInfo(cfg *Config) (string, string) {
+	str := `curl -sX GET -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json"  --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/mysql.radondb.com/v1alpha1/namespaces/%s/mysqlclusters/%s |jq '.status.%s'`
+	arg := fmt.Sprintf(str, cfg.NameSpace, cfg.ClusterName, "lastbackup")
+	cmd := exec.Command("sh", "-c", arg)
+	cmd.Stderr = os.Stderr
+	stdout, err := cmd.StdoutPipe()
+	log.Info("getLastBackupInfo", "args", arg)
+	if err != nil {
+		log.Error(err, "failed to create stdout pipe")
+
+		return "", ""
+	}
+	if err := cmd.Start(); err != nil {
+		return "", ""
+	}
+	defer func() {
+		// don't care
+		_ = stdout.Close()
+	}()
+
+	var buf bytes.Buffer
+	io.Copy(&buf, stdout)
+	lastbackup := strings.Trim(buf.String(), "\"\n")
+	log.Info("getLastBackupInfo", "lastbackup", lastbackup)
+	arg = fmt.Sprintf(str, cfg.NameSpace, cfg.ClusterName, "lastbackupGtid")
+
+	cmd = exec.Command("sh", "-c", arg)
+	cmd.Stderr = os.Stderr
+	if stdout, err = cmd.StdoutPipe(); err != nil {
+		log.Info("getLastBackupInfo", "StdoutPipe Error", err.Error())
+		return lastbackup, ""
+	}
+	if err := cmd.Start(); err != nil {
+		return lastbackup, ""
+	}
+	defer func() {
+		// don't care
+		_ = stdout.Close()
+	}()
+
+	var buf2 bytes.Buffer
+	io.Copy(&buf2, stdout)
+	lastbackupGtid := strings.Trim(buf2.String(), "\"\n")
+	log.Info("getLastBackupInfo", "lastgtid", lastbackupGtid)
+	return lastbackup, lastbackupGtid
+}
+
 // start the backup http server.
 func RunHttpServer(cfg *Config, stop <-chan struct{}) error {
+	//go RunPitr(cfg)
 	srv := newServer(cfg, stop)
 	return srv.ListenAndServe()
 }

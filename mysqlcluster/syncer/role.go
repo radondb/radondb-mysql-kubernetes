@@ -56,6 +56,11 @@ func NewRoleSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Inter
 				APIGroups: []string{""},
 				Resources: []string{"pods/exec"},
 			},
+			{
+				Verbs:     []string{"get"},
+				APIGroups: []string{"mysql.radondb.com"},
+				Resources: []string{"mysqlclusters"},
+			},
 		}
 		return nil
 	})

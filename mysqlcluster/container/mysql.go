@@ -177,6 +177,10 @@ func (c *mysql) getVolumeMounts() []corev1.VolumeMount {
 			Name:      utils.MySQLcheckerVolumeName,
 			MountPath: utils.RadonDBBinDir,
 		},
+		// {
+		// 	Name:      utils.InitFileVolumeName,
+		// 	MountPath: "/test",
+		// },
 	}
 	if c.Spec.TlsSecretName != "" {
 		volumeMounts = append(volumeMounts,

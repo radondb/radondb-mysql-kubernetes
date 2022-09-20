@@ -72,6 +72,9 @@ var (
 
 	// xcloudCommand is the upload tool file name.
 	xcloudCommand = "xbcloud"
+
+	// Restore Time Sample
+	RestoreTimeSample = "2006-01-02 15:04:05"
 )
 
 // copyFile the src file to dst.
@@ -126,4 +129,9 @@ func checkIfPathExists(path string) (bool, error) {
 
 	err = f.Close()
 	return true, err
+}
+
+// Build the restore binlog directory
+func buildBinlogDir(path string) string {
+	return path + "bin/"
 }
