@@ -1277,6 +1277,7 @@ spec:
                 description: Replicas is the number of pods.
                 enum:
                 - 0
+                - 1
                 - 2
                 - 3
                 - 5
