@@ -70,6 +70,8 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
+        - {{ printf "--lease-duration=%s" .Values.leaderElection.leaseDuration }} 
+        - {{ printf "--renew-deadline=%s" .Values.leaderElection.renewDeadline }}
       {{- if not .Values.imagePrefix }}
         image: "{{ .Values.manager.image }}:{{ .Values.manager.tag }}"
       {{- else }}
