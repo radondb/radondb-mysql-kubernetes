@@ -213,12 +213,15 @@ func (s *mysqlCMSyncer) createOrReplaceIniKey(key string, patch map[string]strin
 			for k := range patch {
 				keys = append(keys, k)
 			}
-			sort.Strings(keys)
+			sort.Sort(StringsConnectedByBar(keys))
 
 			for _, k := range keys {
 				// TODO: repeatable key, like plugin-load-add
-				if sec.HasKey(k) {
-					sec.Key(k).SetValue(patch[k])
+				// replace
+				if sec.HasKey(barskey(k)) {
+					sec.Key(barskey(k)).SetValue(patch[k])
+				} else if sec.HasKey(underscorekey(k)) {
+					sec.Key(underscorekey(k)).SetValue(patch[k])
 				} else { // Not in sec.
 					// Add it to sec
 					if _, err := sec.NewKey(k, patch[k]); err != nil {
@@ -305,13 +308,22 @@ func addKVConfigsToSection(s *ini.Section, extraMysqld ...map[string]string) {
 		}
 
 		// sort keys
-		sort.Strings(keys)
+		sort.Sort(StringsConnectedByBar(keys))
 
 		for _, k := range keys {
-			value := extra[k]
-			if _, err := s.NewKey(k, value); err != nil {
-				log.Error(err, "failed to add key to config section", "key", k, "value", extra[k], "section", s)
+			//exist, just replace
+			if s.HasKey(barskey(k)) {
+				s.Key(barskey(k)).SetValue(extra[k])
+			} else if s.HasKey(underscorekey(k)) {
+				s.Key(underscorekey(k)).SetValue(extra[k])
+			} else {
+				//else add it
+				value := extra[k]
+				if _, err := s.NewKey(k, value); err != nil {
+					log.Error(err, "failed to add key to config section", "key", k, "value", extra[k], "section", s)
+				}
 			}
+
 		}
 	}
 }
@@ -325,3 +337,17 @@ func writeConfigs(cfg *ini.File) (string, error) {
 	}
 	return buf.String(), nil
 }
+
+func barskey(k string) string {
+	return strings.ReplaceAll(k, "_", "-")
+}
+
+func underscorekey(k string) string {
+	return strings.ReplaceAll(k, "-", "_")
+}
+
+type StringsConnectedByBar []string
+
+func (x StringsConnectedByBar) Len() int           { return len(x) }
+func (x StringsConnectedByBar) Less(i, j int) bool { return barskey(x[i]) < barskey(x[j]) }
+func (x StringsConnectedByBar) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
