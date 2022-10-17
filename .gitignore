@@ -31,3 +31,6 @@ test/e2e/logs_*
 
 # vs debug files
 __debug_*
+
+# local dev
+.dev/
