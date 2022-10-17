@@ -43,7 +43,9 @@ func (c *slowLog) getImage() string {
 
 // getCommand get the container command.
 func (c *slowLog) getCommand() []string {
-	return []string{"tail", "-f", utils.LogsVolumeMountPath + "/mysql-slow.log"}
+	logsName := "/mysql-slow.log"
+	return []string{"sh", "-c", "for i in {120..0}; do if [ -f " + utils.LogsVolumeMountPath + logsName + " ] ; then break; fi;sleep 1; done; " +
+		"tail -f " + utils.LogsVolumeMountPath + logsName}
 }
 
 // getEnvVars get the container env.
