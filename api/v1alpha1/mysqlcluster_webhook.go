@@ -54,6 +54,9 @@ func (r *MysqlCluster) ValidateCreate() error {
 	if err := r.validateNFSServerAddress(r); err != nil {
 		return err
 	}
+	if err := r.validateMysqlVersionAndImage(); err != nil {
+		return err
+	}
 	return nil
 }
 
