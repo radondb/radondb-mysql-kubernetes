@@ -23,10 +23,9 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/iancoleman/strcase"
 	"github.com/imdario/mergo"
-	"github.com/presslabs/controller-util/mergo/transformers"
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/mergo/transformers"
+	"github.com/presslabs/controller-util/pkg/syncer"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -505,6 +504,9 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 			if err := s.cli.Get(ctx, types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, pod); err != nil {
 				return false, nil
 			}
+			if *s.Spec.Replicas == 0 { // If replicas is 0, don't retry.
+				return true, nil
+			}
 			if pod.DeletionTimestamp != nil {
 				return false, nil
 			}
@@ -556,14 +558,6 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 		}
 		return false, nil
 	})
-}
-
-func basicEventReason(objKindName string, err error) string {
-	if err != nil {
-		return fmt.Sprintf("%sSyncFailed", strcase.ToCamel(objKindName))
-	}
-
-	return fmt.Sprintf("%sSyncSuccessfull", strcase.ToCamel(objKindName))
 }
 
 // check the backup is exist and running

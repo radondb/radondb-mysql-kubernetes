@@ -19,7 +19,7 @@ package syncer
 import (
 	"fmt"
 
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/syncer"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,6 +85,8 @@ func (s *jobSyncer) SyncFn() error {
 
 func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 	// check for completion condition
+	s.backup.Status.Completed = false
+	s.backup.UpdateStatusCondition(v1alpha1.BackupStart, corev1.ConditionTrue, "backup has started", "backup has started")
 	if cond := jobCondition(batchv1.JobComplete, job); cond != nil {
 		s.backup.UpdateStatusCondition(v1alpha1.BackupComplete, cond.Status, cond.Reason, cond.Message)
 		if cond.Status == corev1.ConditionTrue {
@@ -104,6 +106,7 @@ func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 	// check for failed condition
 	if cond := jobCondition(batchv1.JobFailed, job); cond != nil {
 		s.backup.UpdateStatusCondition(v1alpha1.BackupFailed, cond.Status, cond.Reason, cond.Message)
+		s.backup.UpdateStatusCondition(v1alpha1.BackupComplete, corev1.ConditionFalse, cond.Reason, cond.Message)
 		if cond.Status == corev1.ConditionTrue {
 			s.backup.Status.Completed = true
 		}
@@ -153,8 +156,11 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 		--cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/batch/v1/namespaces/%s/jobs/%s \
 		 -d '[{"op": "add", "path": "/metadata/annotations/backupName", "value": "%s"}, {"op": "add", "path": "/metadata/annotations/backupDate", "value": "%s"}, {"op": "add", "path": "/metadata/annotations/backupType", "value": "NFS"}]';`,
 			s.backup.Namespace, s.backup.GetNameForJob(), backupToDir, DateTime)
+		// Add the check DiskUsage
+		// use expr because shell cannot compare float number
+		checkUsage := `[ $(expr $(df /backup|awk 'NR>1 {print $4}') \> $(du  /backup |awk 'END {if (NR > 1) {print $1 /(NR-1)} else print 0}')) -eq '1' ] || { echo disk available may be too small; exit 1;};`
 		in.Containers[0].Args = []string{
-			fmt.Sprintf("mkdir -p /backup/%s;"+
+			checkUsage + fmt.Sprintf("mkdir -p /backup/%s;"+
 				"curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/%s; err1=${PIPESTATUS[0]};"+
 				strAnnonations+"retval_final=$?; exit $err1||$retval_final",
 				backupToDir,

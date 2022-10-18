@@ -27,6 +27,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	//+kubebuilder:scaffold:imports
@@ -126,3 +127,31 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
+
+// test validateMysqlVersionAndImage for webhook
+func TestValidateUpdate(t *testing.T) {
+	{
+		mysqlcluster := &MysqlCluster{
+			Spec: MysqlClusterSpec{
+				MysqlVersion: "8.0",
+				MysqlOpts: MysqlOpts{
+					Image: "percona/percona-server:5.7.34",
+				},
+			},
+		}
+		err := mysqlcluster.validateMysqlVersionAndImage()
+		assert.Error(t, err)
+	}
+	{
+		mysqlcluster := &MysqlCluster{
+			Spec: MysqlClusterSpec{
+				MysqlVersion: "8.0",
+				MysqlOpts: MysqlOpts{
+					Image: "percona/percona-server:8.0.25",
+				},
+			},
+		}
+		err := mysqlcluster.validateMysqlVersionAndImage()
+		assert.NoError(t, err)
+	}
+}

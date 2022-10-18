@@ -22,6 +22,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -135,4 +136,17 @@ func UnmarshalJSON(in io.Reader, obj interface{}) error {
 		return fmt.Errorf("error unmarshal data, error: %s, body: %s", err, string(body))
 	}
 	return nil
+}
+
+// Parase image prefix,image name,image tag. eg: percona/percona-server:5.7.35 -> percona,percona-server,5.7.35
+func ParseImageName(image string) (string, string, string, error) {
+	imagePrefix, imageString := filepath.Split(image)
+	imagePrefix = strings.TrimSuffix(imagePrefix, "/")
+	imageNameArry := strings.Split(imageString, ":")
+	if len(imageNameArry) <= 1 {
+		return "", "", "", fmt.Errorf("image name or tag is empty")
+	}
+	imageName := imageNameArry[0]
+	imageTag := imageNameArry[1]
+	return imagePrefix, imageName, imageTag, nil
 }

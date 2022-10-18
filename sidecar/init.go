@@ -17,6 +17,7 @@ limitations under the License.
 package sidecar
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -30,6 +31,11 @@ import (
 	"github.com/go-ini/ini"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // NewInitCommand return a pointer to cobra.Command.
@@ -38,10 +44,12 @@ func NewInitCommand(cfg *Config) *cobra.Command {
 		Use:   "init",
 		Short: "do some initialization operations.",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := runCloneAndInit(cfg); err != nil {
+			var init bool
+			var err error
+			if init, err = runCloneAndInit(cfg); err != nil {
 				log.Error(err, "clone error")
 			}
-			if err := runInitCommand(cfg); err != nil {
+			if err = runInitCommand(cfg, init); err != nil {
 				log.Error(err, "init command failed")
 				os.Exit(1)
 			}
@@ -79,9 +87,17 @@ func CheckServiceExist(cfg *Config, service string) bool {
 }
 
 // Clone from leader or follower.
-func runCloneAndInit(cfg *Config) error {
+func runCloneAndInit(cfg *Config) (bool, error) {
 	//check follower is exists?
 	serviceURL := ""
+	var hasInitialized = false
+	// Check the rebuildFrom exist?
+	if service, err := getPod(cfg); err == nil {
+		serviceURL = service
+		log.Info("found the rebuild-from pod", "service", serviceURL)
+	} else {
+		log.Info("found the rebuild-from pod", "error", err.Error())
+	}
 	if len(serviceURL) == 0 && CheckServiceExist(cfg, "follower") {
 		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "follower", utils.XBackupPort)
 	}
@@ -92,30 +108,30 @@ func runCloneAndInit(cfg *Config) error {
 
 	if len(serviceURL) != 0 {
 		// Check has initialized. If so just return.
-		hasInitialized, _ := checkIfPathExists(path.Join(dataPath, "mysql"))
+		hasInitialized, _ = checkIfPathExists(path.Join(dataPath, "mysql"))
 		if hasInitialized {
 			log.Info("MySQL data directory existing!")
-			return nil
+			return hasInitialized, nil
 		}
 		// backup at first
-		Args := fmt.Sprintf("rm -rf /backup/initbackup;mkdir -p /backup/initbackup;curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/initbackup; exit ${PIPESTATUS[0]}",
-			serviceURL)
+		Args := fmt.Sprintf("curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C %s; exit ${PIPESTATUS[0]}",
+			serviceURL, utils.DataVolumeMountPath)
 		cmd := exec.Command("/bin/bash", "-c", "--", Args)
 		log.Info("runCloneAndInit", "cmd", Args)
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("failed to disable the run restore: %s", err)
+			return hasInitialized, fmt.Errorf("failed to disable the run restore: %s", err)
 		}
-		cfg.XRestoreFrom = backupInitDirectory
+		cfg.XRestoreFrom = utils.DataVolumeMountPath // just for init clone
 		cfg.CloneFlag = true
-		return nil
+		return hasInitialized, nil
 	}
 	log.Info("no leader or follower found")
-	return nil
+	return hasInitialized, nil
 }
 
 // runInitCommand do some initialization operations.
-func runInitCommand(cfg *Config) error {
+func runInitCommand(cfg *Config, hasInitialized bool) error {
 	var err error
 	// Get the mysql user.
 	user, err := user.Lookup("mysql")
@@ -177,7 +193,7 @@ func runInitCommand(cfg *Config) error {
 	if err = ioutil.WriteFile(initFilePath+"/reset.sql", []byte("reset master;"), 0644); err != nil {
 		return fmt.Errorf("failed to write reset.sql: %s", err)
 	}
-	hasInitialized, _ := checkIfPathExists(path.Join(dataPath, "mysql"))
+
 	// build init.sql.
 	initSqlPath := path.Join(extraConfPath, "init.sql")
 
@@ -205,20 +221,6 @@ func runInitCommand(cfg *Config) error {
 			return fmt.Errorf("failed to write plugin.sh: %s", err)
 		}
 	}
-
-	// // build leader-start.sh.
-	// bashLeaderStart := cfg.buildLeaderStart()
-	// leaderStartPath := path.Join(scriptsPath, "leader-start.sh")
-	// if err = ioutil.WriteFile(leaderStartPath, bashLeaderStart, os.FileMode(0755)); err != nil {
-	// 	return fmt.Errorf("failed to write leader-start.sh: %s", err)
-	// }
-
-	// // build leader-stop.sh.
-	// bashLeaderStop := cfg.buildLeaderStop()
-	// leaderStopPath := path.Join(scriptsPath, "leader-stop.sh")
-	// if err = ioutil.WriteFile(leaderStopPath, bashLeaderStop, os.FileMode(0755)); err != nil {
-	// 	return fmt.Errorf("failed to write leader-stop.sh: %s", err)
-	// }
 
 	// for install tokudb.
 	if cfg.InitTokuDB {
@@ -338,4 +340,44 @@ func buildSSLdata() error {
 		return fmt.Errorf("failed to copy ssl: %s", err)
 	}
 	return nil
+}
+
+func getPod(cfg *Config) (string, error) {
+	log.Info("Now check the pod which has got rebuild-from")
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return "", err
+	}
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return "", err
+	}
+	match := map[string]string{
+		utils.LabelRebuildFrom: "true",
+	}
+	podList, err := clientset.CoreV1().Pods(cfg.NameSpace).
+		List(context.TODO(), v1.ListOptions{
+			LabelSelector: labels.SelectorFromSet(match).String()})
+	if err != nil {
+		return "", err
+	}
+	if len(podList.Items) == 1 {
+		pod := podList.Items[0]
+		// Patch remove rebuild-from
+		if err := removeRebuildFrom(clientset, cfg, pod.Name); err != nil {
+			log.Info("remove rebuild from", "error", err.Error())
+		}
+		return fmt.Sprintf("%s.%s-mysql.%s:%v", pod.Name, cfg.ClusterName, cfg.NameSpace, utils.XBackupPort), nil
+	} else {
+		return "", fmt.Errorf("not correct pod choose")
+	}
+
+}
+
+func removeRebuildFrom(clientset *kubernetes.Clientset, cfg *Config, podName string) error {
+	patch := fmt.Sprintf(`[{"op": "remove", "path": "/metadata/labels/%s"}]`, utils.LabelRebuildFrom)
+	_, err := clientset.CoreV1().Pods(cfg.NameSpace).Patch(context.TODO(), podName, types.JSONPatchType, []byte(patch), v1.PatchOptions{})
+
+	return err
 }

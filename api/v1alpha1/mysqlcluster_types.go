@@ -31,7 +31,7 @@ type MysqlClusterSpec struct {
 
 	// Replicas is the number of pods.
 	// +optional
-	// +kubebuilder:validation:Enum=0;2;3;5
+	// +kubebuilder:validation:Enum=0;1;2;3;5
 	// +kubebuilder:default:=3
 	Replicas *int32 `json:"replicas,omitempty"`
 
@@ -104,6 +104,10 @@ type MysqlClusterSpec struct {
 
 // MysqlOpts defines the options of MySQL container.
 type MysqlOpts struct {
+	// Specifies mysql image to use.
+	// +optional
+	// +kubebuilder:default:="percona/percona-server:5.7.34"
+	Image string `json:"image,omitempty"`
 	// Unchangeable: Use super users instead
 	// Password for the root user, can be empty or 8~32 characters long.
 	// Only be a combination of uppercase letters, lowercase letters, numbers or special characters.
@@ -145,9 +149,23 @@ type MysqlOpts struct {
 	// +kubebuilder:default:=false
 	InitTokuDB bool `json:"initTokuDB,omitempty"`
 
+	// MysqlConfTemplate is the configmap name of the template for mysql config.
+	// The configmap should contain the keys `mysql.cnf` and `plugin.cnf` at least, key `init.sql` is optional.
+	// If empty, operator will generate a default template named <spec.metadata.name>-mysql.
+	// +optional
+	MysqlConfTemplate string `json:"mysqlConfTemplate,omitempty"`
+
 	// A map[string]string that will be passed to my.cnf file.
+	// The key/value pairs is persisted in the configmap.
+	// Delete key is not valid, it is recommended to edit the configmap directly.
 	// +optional
 	MysqlConf MysqlConf `json:"mysqlConf,omitempty"`
+
+	// A map[string]string that will be passed to plugin.cnf file.
+	// The key/value pairs is persisted in the configmap.
+	// Delete key is not valid, it is recommended to edit the configmap directly.
+	// +optional
+	PluginConf MysqlConf `json:"pluginConf,omitempty"`
 
 	// The compute resource requirements.
 	// +optional

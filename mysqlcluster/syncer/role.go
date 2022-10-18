@@ -17,7 +17,7 @@ limitations under the License.
 package syncer
 
 import (
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/syncer"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,7 +42,7 @@ func NewRoleSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Inter
 	return syncer.NewObjectSyncer("Role", c.Unwrap(), role, cli, func() error {
 		role.Rules = []rbacv1.PolicyRule{
 			{
-				Verbs:     []string{"get", "patch"},
+				Verbs:     []string{"get", "patch", "list"},
 				APIGroups: []string{""},
 				Resources: []string{"pods"},
 			},

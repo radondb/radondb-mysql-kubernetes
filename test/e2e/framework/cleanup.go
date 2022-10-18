@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2022 RadonDB.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,46 +16,74 @@ limitations under the License.
 
 package framework
 
-import "sync"
+import (
+	"os"
+	"os/exec"
+	"strings"
 
-type CleanupActionHandle *int
+	. "github.com/onsi/gomega"
 
-var cleanupActionsLock sync.Mutex
-var cleanupActions = map[CleanupActionHandle]func(){}
+	"github.com/gruntwork-io/terratest/modules/k8s"
+)
 
-// AddCleanupAction installs a function that will be called in the event of the
-// whole test being terminated.  This allows arbitrary pieces of the overall
-// test to hook into SynchronizedAfterSuite().
-func AddCleanupAction(fn func()) CleanupActionHandle {
-	p := CleanupActionHandle(new(int))
-	cleanupActionsLock.Lock()
-	defer cleanupActionsLock.Unlock()
-	cleanupActions[p] = fn
-	return p
+var (
+	MySQLClusterCRD = `
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: mysqlclusters.mysql.radondb.com
+`
+	MySQLUserCRD = `
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: mysqlusers.mysql.radondb.com	
+`
+	MySQLBackUpCRD = `
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: backups.mysql.radondb.com
+`
+)
+
+func (f *Framework) CleanUpCRDs() {
+	optional := f.kubectlOptions
+	// CRD is cluster-scoped resources.
+	optional.Namespace = ""
+	IgnoreNotFound(k8s.KubectlDeleteFromStringE(f.t, optional, MySQLClusterCRD))
+	IgnoreNotFound(k8s.KubectlDeleteFromStringE(f.t, optional, MySQLUserCRD))
+	IgnoreNotFound(k8s.KubectlDeleteFromStringE(f.t, optional, MySQLBackUpCRD))
 }
 
-// RemoveCleanupAction removes a function that was installed by
-// AddCleanupAction.
-func RemoveCleanupAction(p CleanupActionHandle) {
-	cleanupActionsLock.Lock()
-	defer cleanupActionsLock.Unlock()
-	delete(cleanupActions, p)
+func CleanUpOperatorAtNS(ns string) {
+	cmd1 := exec.Command("helm", "list", "--namespace", ns, "--short")
+	cmd2 := exec.Command("xargs", "helm", "--namespace", ns, "delete")
+	cmd2.Stdout = os.Stdout
+	in, _ := cmd2.StdinPipe()
+	if cmd1.Stdout == nil {
+		return
+	}
+	cmd1.Stdout = in
+	cmd2.Start()
+	cmd1.Run()
+	in.Close()
+
+	Expect(cmd2.Wait()).Should(Succeed())
 }
 
-// RunCleanupActions runs all functions installed by AddCleanupAction.  It does
-// not remove them (see RemoveCleanupAction) but it does run unlocked, so they
-// may remove themselves.
-func RunCleanupActions() {
-	list := []func(){}
-	func() {
-		cleanupActionsLock.Lock()
-		defer cleanupActionsLock.Unlock()
-		for _, fn := range cleanupActions {
-			list = append(list, fn)
-		}
-	}()
-	// Run unlocked.
-	for _, fn := range list {
-		fn()
+func (f *Framework) CleanUpNS() {
+	IgnoreNotFound(k8s.DeleteNamespaceE(f.t, f.kubectlOptions, TestContext.E2ETestNamespace))
+}
+
+func (f *Framework) CleanUpChaos() {
+	k8s.RunKubectl(f.t, f.kubectlOptions, "delete", "podchaos", "--all", "-n", f.kubectlOptions.Namespace)
+}
+
+func IgnoreNotFound(err error) {
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		// Do nothing
+	} else {
+		Expect(err).ToNot(HaveOccurred())
 	}
 }

@@ -17,7 +17,6 @@ limitations under the License.
 package mysqlcluster
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -74,7 +73,7 @@ func (c *MysqlCluster) Validate() error {
 	}
 	// MySQL8 nerver support TokuDB
 	// https://www.percona.com/blog/2021/05/21/tokudb-support-changes-and-future-removal-from-percona-server-for-mysql-8-0/
-	if c.Spec.MysqlVersion == "8.0" && c.Spec.MysqlOpts.InitTokuDB {
+	if strings.Contains(c.Spec.MysqlOpts.Image, "8.0") && c.Spec.MysqlOpts.InitTokuDB {
 		c.log.Info("TokuDB is not supported in MySQL 8.0 any more, the value in Cluster.spec.mysqlOpts.initTokuDB should be set false")
 		return nil
 	}
@@ -129,24 +128,13 @@ func (c *MysqlCluster) GetSelectorLabels() labels.Set {
 	}
 }
 
-// GetMySQLVersion returns the MySQL server version.
+// GetMySQLVersion returns the MySQL server version. If MySQLVersion is  set, then validate the coreect verison.
 func (c *MysqlCluster) GetMySQLVersion() string {
-	var version string
-	// Lookup for an alias, this will solve MySQL tags: 5.7 --> 5.7.x
-	if v, ok := utils.MySQLTagsToSemVer[c.Spec.MysqlVersion]; ok {
-		version = v
+	if _, _, imageTag, err := utils.ParseImageName(c.Spec.MysqlOpts.Image); err == nil {
+		return imageTag
 	} else {
-		errmsg := "Invalid mysql version option:" + c.Spec.MysqlVersion
-		c.log.Error(errors.New(errmsg), "currently we do not support mysql 5.6 or earlier version, default mysql version option should be 5.7 or 8.0")
 		return utils.InvalidMySQLVersion
 	}
-
-	// Check if has specified image.
-	if _, ok := utils.MysqlImageVersions[version]; !ok {
-		version = utils.MySQLDefaultVersion
-	}
-
-	return version
 }
 
 // CreatePeers create peers for xenon.
@@ -329,7 +317,7 @@ func (c *MysqlCluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]cor
 // GetNameForResource returns the name of a resource from above
 func (c *MysqlCluster) GetNameForResource(name utils.ResourceName) string {
 	switch name {
-	case utils.StatefulSet, utils.ConfigMap, utils.HeadlessSVC, utils.PodDisruptionBudget:
+	case utils.StatefulSet, utils.HeadlessSVC, utils.PodDisruptionBudget:
 		return fmt.Sprintf("%s-mysql", c.Name)
 	case utils.LeaderService:
 		return fmt.Sprintf("%s-leader", c.Name)
@@ -341,6 +329,11 @@ func (c *MysqlCluster) GetNameForResource(name utils.ResourceName) string {
 		return fmt.Sprintf("%s-secret", c.Name)
 	case utils.XenonMetaData:
 		return fmt.Sprintf("%s-xenon", c.Name)
+	case utils.ConfigMap:
+		if template := c.Spec.MysqlOpts.MysqlConfTemplate; template != "" {
+			return template
+		}
+		return fmt.Sprintf("%s-mysql", c.Name)
 	default:
 		return c.Name
 	}

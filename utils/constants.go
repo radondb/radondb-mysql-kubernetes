@@ -25,20 +25,6 @@ var (
 	// InvalidMySQLVersion is used for set invalid version that we do not support.
 	InvalidMySQLVersion = "0.0.0"
 
-	// MySQLTagsToSemVer maps simple version to semver versions
-	MySQLTagsToSemVer = map[string]string{
-		"5.7": "5.7.34",
-		"8.0": "8.0.25",
-	}
-
-	// MysqlImageVersions is a map of supported mysql version and their image
-	MysqlImageVersions = map[string]string{
-		"5.7.33": "percona/percona-server:5.7.33",
-		"5.7.34": "percona/percona-server:5.7.34",
-		"8.0.25": "percona/percona-server:8.0.25",
-		"0.0.0":  "errimage",
-	}
-
 	// XenonHttpUrls saves the xenon http url and its corresponding request type.
 	XenonHttpUrls = map[XenonHttpUrl]string{
 		RaftStatus:      http.MethodGet,
@@ -195,6 +181,7 @@ const (
 )
 
 const LableRebuild = "rebuild"
+const LabelRebuildFrom = "rebuild-from"
 
 // XenonHttpUrl is a http url corresponding to the xenon instruction.
 type XenonHttpUrl string
@@ -211,4 +198,10 @@ type JsonResult struct {
 	Status     string `json:"status"`
 	BackupName string `json:"backupName"`
 	Date       string `json:"date"`
+}
+
+// MySQLDefaultVersionMap is a map of supported mysql version and their image
+var MySQLDefaultVersionMap = map[string]string{
+	"5.7": "percona/percona-server:5.7.34",
+	"8.0": "percona/percona-server:8.0.25",
 }

@@ -17,7 +17,7 @@ limitations under the License.
 package syncer
 
 import (
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"

@@ -23,7 +23,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/presslabs/controller-util/syncer"
+	"github.com/presslabs/controller-util/pkg/syncer"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -169,11 +169,8 @@ func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // Update backup Object and Status.
 func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup *backup.Backup) error {
 	log := log.Log.WithName("controllers").WithName("Backup")
-	if !reflect.DeepEqual(savedBackup, backup.Unwrap()) {
-		if err := r.Update(context.TODO(), backup.Unwrap()); err != nil {
-			return err
-		}
-	}
+	// When update the backup, backup.Status will lost, and I don't know why,
+	// Since it updated to go 1.17, it has got this problem. So I put the update status first.
 	if !reflect.DeepEqual(savedBackup.Status, backup.Unwrap().Status) {
 		log.Info("update backup object status")
 		if err := r.Status().Update(context.TODO(), backup.Unwrap()); err != nil {
@@ -182,6 +179,12 @@ func (r *BackupReconciler) updateBackup(savedBackup *apiv1alpha1.Backup, backup 
 			return err
 		}
 	}
+	if !reflect.DeepEqual(savedBackup, backup.Unwrap()) {
+		if err := r.Update(context.TODO(), backup.Unwrap()); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

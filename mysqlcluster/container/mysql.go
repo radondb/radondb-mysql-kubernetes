@@ -40,7 +40,7 @@ func (c *mysql) getName() string {
 
 // getImage get the container image.
 func (c *mysql) getImage() string {
-	img := utils.MysqlImageVersions[c.GetMySQLVersion()]
+	img := c.Spec.MysqlOpts.Image
 	return img
 }
 
@@ -90,7 +90,7 @@ func (c *mysql) getPorts() []corev1.ContainerPort {
 // getLivenessProbe get the container livenessProbe.
 func (c *mysql) getLivenessProbe() *corev1.Probe {
 	return &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
 
 				/* /var/lib/mysql/sleep-forever is used to prevent mysql's container from exiting.
@@ -114,7 +114,7 @@ func (c *mysql) getLivenessProbe() *corev1.Probe {
 // getReadinessProbe get the container readinessProbe.
 func (c *mysql) getReadinessProbe() *corev1.Probe {
 	return &corev1.Probe{
-		Handler: corev1.Handler{
+		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
 				Command: []string{
 					"sh",
