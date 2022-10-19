@@ -249,12 +249,13 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 	)
 	// add the nfs volumn mount
 	if len(c.Spec.NFSServerAddress) != 0 {
+		ip, path := utils.ParseIPAndPath(c.Spec.NFSServerAddress)
 		volumes = append(volumes, corev1.Volume{
 			Name: utils.XtrabackupPV,
 			VolumeSource: corev1.VolumeSource{
 				NFS: &corev1.NFSVolumeSource{
-					Server: c.Spec.NFSServerAddress,
-					Path:   "/",
+					Server: ip,
+					Path:   path,
 				},
 			},
 		})

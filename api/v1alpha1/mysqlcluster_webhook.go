@@ -91,11 +91,16 @@ func (r *MysqlCluster) ValidateDelete() error {
 	return nil
 }
 
-// TODO: Add NFSServerAddress webhook & backup schedule.
+// Add NFSServerAddress webhook & backup schedule.
 func (r *MysqlCluster) validateNFSServerAddress(oldCluster *MysqlCluster) error {
-	isIP := net.ParseIP(r.Spec.NFSServerAddress) != nil
+	//nfsaddress format is x.x.x.x:/yyy such as 10.233.55.172:/backup
+	ipStr := strings.Split(r.Spec.NFSServerAddress, ":")
+	if len(r.Spec.NFSServerAddress) != 0 && len(ipStr) == 0 {
+		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("nfsServerAddress should be set as IP:/PATH or IP"))
+	}
+	isIP := net.ParseIP(ipStr[0]) != nil
 	if len(r.Spec.NFSServerAddress) != 0 && !isIP {
-		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("nfsServerAddress should be set as IP"))
+		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("nfsServerAddress should be set as  IP:/PATH or IP"))
 	}
 	if len(r.Spec.BackupSchedule) != 0 && len(r.Spec.BackupSecretName) == 0 && !isIP {
 		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("backupSchedule is set without any backupSecretName or nfsServerAddress"))

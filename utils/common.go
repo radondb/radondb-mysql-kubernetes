@@ -150,3 +150,12 @@ func ParseImageName(image string) (string, string, string, error) {
 	imageTag := imageNameArry[1]
 	return imagePrefix, imageName, imageTag, nil
 }
+
+func ParseIPAndPath(nfsaddr string) (string, string) {
+	res := strings.Split(nfsaddr, ":")
+	if len(res) == 2 {
+		return res[0], res[1]
+	} else {
+		return res[0], "/"
+	}
+}
