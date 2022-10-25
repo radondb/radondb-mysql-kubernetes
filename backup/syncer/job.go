@@ -41,7 +41,7 @@ type jobSyncer struct {
 func (s *jobSyncer) ObjectOwner() runtime.Object { return s.backup.Unwrap() }
 
 // NewJobSyncer returns a syncer for backup jobs
-func NewJobSyncer(c client.Client, s *runtime.Scheme, backup *backup.Backup) syncer.Interface {
+func NewJobSyncer(c client.Client, backup *backup.Backup) syncer.Interface {
 	obj := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      backup.GetNameForJob(),
@@ -132,7 +132,7 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 	in.RestartPolicy = corev1.RestartPolicyNever
 	sctName := fmt.Sprintf("%s-secret", s.backup.Spec.ClusterName)
 	in.Containers[0].Name = utils.ContainerBackupName
-	in.Containers[0].Image = fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), s.backup.Spec.Image)
+	in.Containers[0].Image = mysqlcluster.GetImage(s.backup.Spec.Image)
 	in.ServiceAccountName = s.backup.Spec.ClusterName
 	if len(s.backup.Spec.NFSServerAddress) != 0 {
 		// add volumn about pvc

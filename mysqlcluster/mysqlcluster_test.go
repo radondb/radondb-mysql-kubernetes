@@ -709,3 +709,47 @@ func TestGetPrefixFromEnv(t *testing.T) {
 		assert.Equal(t, want, result)
 	}
 }
+
+func TestGetImage(t *testing.T) {
+	{
+		t.Setenv("IMAGE_PREFIX", "docker.io")
+		t.Setenv("IMAGE_NAMESPACE_OVERRIDE", "mockrepo")
+		testCase := "radondb/mysql-operator:latest"
+		want := "docker.io/mockrepo/mysql-operator:latest"
+		result := GetImage(testCase)
+		assert.Equal(t, want, result)
+	}
+	{
+		t.Setenv("IMAGE_PREFIX", "")
+		t.Setenv("IMAGE_NAMESPACE_OVERRIDE", "mockrepo")
+		testCase := "radondb/mysql-operator:latest"
+		want := "mockrepo/mysql-operator:latest"
+		result := GetImage(testCase)
+		assert.Equal(t, want, result)
+	}
+	{
+		t.Setenv("IMAGE_PREFIX", "docker.io")
+		t.Setenv("IMAGE_NAMESPACE_OVERRIDE", "")
+		testCase := "radondb/mysql-operator:latest"
+		want := "docker.io/radondb/mysql-operator:latest"
+		result := GetImage(testCase)
+		assert.Equal(t, want, result)
+	}
+	{
+		t.Setenv("IMAGE_PREFIX", "")
+		t.Setenv("IMAGE_NAMESPACE_OVERRIDE", "")
+		testCase := "radondb/mysql-operator:latest"
+		want := "radondb/mysql-operator:latest"
+		result := GetImage(testCase)
+		assert.Equal(t, want, result)
+	}
+	{
+		// No image namespace
+		t.Setenv("IMAGE_PREFIX", "")
+		t.Setenv("IMAGE_NAMESPACE_OVERRIDE", "mockrepo")
+		testCase := "mysql-operator:latest"
+		want := "mockrepo/mysql-operator:latest"
+		result := GetImage(testCase)
+		assert.Equal(t, want, result)
+	}
+}

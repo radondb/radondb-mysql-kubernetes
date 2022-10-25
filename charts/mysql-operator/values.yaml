@@ -16,6 +16,7 @@ imagePullPolicy: IfNotPresent
 nameOverride: ""
 fullnameOverride: ""
 imagePrefix: ""
+imageNamespaceOverride: ""
 
 ## node.kubernetes.io/not-ready:NoExecute
 ## node.kubernetes.io/unreachable:NoExecute

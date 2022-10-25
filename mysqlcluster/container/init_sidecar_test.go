@@ -17,7 +17,6 @@ limitations under the License.
 package container
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -312,7 +311,8 @@ func TestGetInitSidecarName(t *testing.T) {
 }
 
 func TestGetInitSidecarImage(t *testing.T) {
-	assert.Equal(t, fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), "sidecar image"), initSidecarCase.Image)
+	// assert.Equal(t, fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), "sidecar image"), initSidecarCase.Image)
+	assert.Equal(t, mysqlcluster.GetImage("sidecar image"), initSidecarCase.Image)
 }
 
 func TestGetInitSidecarCommand(t *testing.T) {

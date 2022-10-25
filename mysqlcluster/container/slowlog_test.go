@@ -17,7 +17,6 @@ limitations under the License.
 package container
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -50,7 +49,7 @@ func TestGetSlowlogName(t *testing.T) {
 }
 
 func TestGetSlowlogImage(t *testing.T) {
-	assert.Equal(t, fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), "sidecar image"), slowlogCase.Image)
+	assert.Equal(t, mysqlcluster.GetImage("sidecar image"), slowlogCase.Image)
 }
 
 func TestGetSlowlogCommand(t *testing.T) {
