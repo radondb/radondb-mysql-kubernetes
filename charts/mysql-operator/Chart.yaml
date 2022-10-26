@@ -25,3 +25,4 @@ appVersion: "v2.2.1"
 dependencies:
   - name: "mysqlcluster"
     version: "v2.2.1"
+    
