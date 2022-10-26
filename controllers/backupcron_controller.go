@@ -90,39 +90,64 @@ func (r *BackupCronReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 	// if spec.backupScheduler is not set then don't do anything
-	if len(instance.Spec.BackupSchedule) == 0 || *instance.Spec.Replicas == 0 {
+	if instance.Spec.BothS3NFS == nil &&
+		(len(instance.Spec.BackupSchedule) == 0 || *instance.Spec.Replicas == 0) {
 		if err := r.Cron.Remove(instance.Name); err == nil {
 			log.V(1).Info("remove cronjob from cluster", "name", instance.Name)
 		}
 
 		return reconcile.Result{}, nil
 	}
+	// do the bothS3NFS
+	if instance.Spec.BothS3NFS != nil {
+		froms := []struct {
+			Sche string
+			T    string
+		}{
+			{instance.Spec.BothS3NFS.NFSSchedule, "nfs"},
+			{instance.Spec.BothS3NFS.S3Schedule, "s3"},
+		}
 
-	schedule, err := cron.Parse(instance.Spec.BackupSchedule)
-	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("failed to parse schedule: %s", err)
+		for _, f := range froms {
+			schestr, t := f.Sche, f.T
+			schedule, err := cron.Parse(schestr)
+			if err != nil {
+				return reconcile.Result{}, fmt.Errorf("failed to parse schedule: %s", err)
+			}
+			if err := r.updateClusterSchedule(ctx, instance.Unwrap(), schedule, t, log); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	} else {
+		schedule, err := cron.Parse(instance.Spec.BackupSchedule)
+		if err != nil {
+			return reconcile.Result{}, fmt.Errorf("failed to parse schedule: %s", err)
+		}
+
+		log.V(1).Info("register cluster in cronjob", "key", instance, "schedule", schedule)
+
+		return ctrl.Result{}, r.updateClusterSchedule(ctx, instance.Unwrap(), schedule, "", log)
 	}
 
-	log.V(1).Info("register cluster in cronjob", "key", instance, "schedule", schedule)
-
-	return ctrl.Result{}, r.updateClusterSchedule(ctx, instance.Unwrap(), schedule, log)
 }
 
 // updateClusterSchedule creates/updates a cron job for specified cluster.
-func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluster *apiv1alpha1.MysqlCluster, schedule cron.Schedule, log logr.Logger) error {
+func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluster *apiv1alpha1.MysqlCluster, schedule cron.Schedule, BackupType string, log logr.Logger) error {
 
 	r.LockJobRegister.Lock()
 	defer r.LockJobRegister.Unlock()
 
 	for _, entry := range r.Cron.Entries() {
 		j, ok := entry.Job.(*backup.CronJob)
-		if ok && j.ClusterName == cluster.Name && j.Namespace == cluster.Namespace {
+		if ok && j.ClusterName == cluster.Name &&
+			j.Namespace == cluster.Namespace && j.BackupType == BackupType {
 			log.V(1).Info("cluster already added to cron.", "key", cluster)
 
 			// change scheduler for already added crons
 			if !reflect.DeepEqual(entry.Schedule, schedule) {
 				log.Info("update cluster scheduler", "key", cluster,
-					"scheduler", cluster.Spec.BackupSchedule)
+					"scheduler", schedule)
 
 				if err := r.Cron.Remove(cluster.Name); err != nil {
 					return err
@@ -136,6 +161,10 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 			return nil
 		}
 	}
+	nfsServerAddress := ""
+	if BackupType == "nfs" {
+		nfsServerAddress = cluster.Spec.NFSServerAddress
+	}
 
 	r.Cron.Schedule(schedule, &backup.CronJob{
 		ClusterName:                    cluster.Name,
@@ -143,10 +172,9 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 		Client:                         r.Client,
 		Image:                          cluster.Spec.PodPolicy.SidecarImage,
 		BackupScheduleJobsHistoryLimit: cluster.Spec.BackupScheduleJobsHistoryLimit,
-		//BackupRemoteDeletePolicy:       cluster.Spec.BackupRemoteDeletePolicy,
-
-		NFSServerAddress: cluster.Spec.NFSServerAddress,
-		Log:              log,
+		NFSServerAddress:               nfsServerAddress,
+		BackupType:                     BackupType,
+		Log:                            log,
 	}, cluster.Name)
 
 	return nil

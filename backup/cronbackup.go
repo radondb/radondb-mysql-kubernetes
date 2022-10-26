@@ -24,7 +24,9 @@ type CronJob struct {
 	BackupScheduleJobsHistoryLimit *int
 	Image                          string
 	NFSServerAddress               string
-	Log                            logr.Logger
+	BackupType                     string
+
+	Log logr.Logger
 }
 
 func (j *CronJob) Run() {
@@ -45,7 +47,7 @@ func (j *CronJob) Run() {
 		log.Info("at least a backup is running", "running_backups_count", j.scheduledBackupsRunningCount())
 		return
 	}
-
+	//TODO: if BothS3NFS, it need create backup without nfs address.
 	// create the backup
 	if _, err := j.createBackup(); err != nil {
 		log.Error(err, "failed to create backup")
@@ -118,7 +120,7 @@ func (j *CronJob) backupGC() {
 }
 
 func (j *CronJob) createBackup() (*apiv1alpha1.Backup, error) {
-	backupName := fmt.Sprintf("%s-auto-%s", j.ClusterName, time.Now().Format("2006-01-02t15-04-05"))
+	backupName := fmt.Sprintf("%s-%s-%s", j.ClusterName, j.BackupType, time.Now().Format("2006-01-02t15-04-05"))
 
 	backup := &apiv1alpha1.Backup{
 		ObjectMeta: metav1.ObjectMeta{
