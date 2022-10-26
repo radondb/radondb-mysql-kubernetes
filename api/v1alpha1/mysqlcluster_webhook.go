@@ -58,6 +58,11 @@ func (r *MysqlCluster) ValidateCreate() error {
 	if err := r.validateNFSServerAddress(r); err != nil {
 		return err
 	}
+
+	if err := r.validBothS3NFS(); err != nil {
+		return err
+	}
+
 	if err := r.validateMysqlVersionAndImage(); err != nil {
 		return err
 	}
@@ -85,6 +90,11 @@ func (r *MysqlCluster) ValidateUpdate(old runtime.Object) error {
 	if err := r.validateLowTableCase(oldCluster); err != nil {
 		return err
 	}
+
+	if err := r.validBothS3NFS(); err != nil {
+		return err
+	}
+
 	if err := r.validateMysqlVersionAndImage(); err != nil {
 		return err
 	}
@@ -207,6 +217,16 @@ func (r *MysqlCluster) validateMysqlVersion() error {
 	default:
 		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlVersion is not provided"))
 
+	}
+	return nil
+}
+
+// Validate BothS3NFS
+func (r *MysqlCluster) validBothS3NFS() error {
+	if r.Spec.BothS3NFS != nil &&
+		(len(r.Spec.NFSServerAddress) == 0 ||
+			len(r.Spec.BackupSecretName) == 0) {
+		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("if BothS3NFS is set, backupSchedule/backupSecret/nfsAddress should not empty"))
 	}
 	return nil
 }

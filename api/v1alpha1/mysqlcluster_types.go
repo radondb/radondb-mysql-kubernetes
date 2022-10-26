@@ -92,6 +92,10 @@ type MysqlClusterSpec struct {
 	// +optional
 	BackupSchedule string `json:"backupSchedule,omitempty"`
 
+	// Specify that crontab job backup both on NFS and S3 storage.
+	// +optional
+	BothS3NFS *BothS3NFSOpt `json:"bothS3NFS,omitempty"`
+
 	// If set keeps last BackupScheduleJobsHistoryLimit Backups
 	// +optional
 	// +kubebuilder:default:=6
@@ -286,6 +290,13 @@ type Persistence struct {
 	// +optional
 	// +kubebuilder:default:="10Gi"
 	Size string `json:"size,omitempty"`
+}
+
+// bothS3NFS opt
+type BothS3NFSOpt struct {
+	// NFS schedule.
+	NFSSchedule string `json:"nfsSchedule,omitempty"`
+	S3Schedule  string `json:"s3Schedule,omitempty"`
 }
 
 // ClusterState defines cluster state.
