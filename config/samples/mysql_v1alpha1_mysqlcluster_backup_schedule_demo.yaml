@@ -11,11 +11,9 @@ spec:
   
   # if you want create mysqlcluster from S3, uncomment and fill the directory in S3 bucket below:
   # restoreFrom: 
-  BackupSchedule: "0 50 * * * *" 
+  backupSchedule: "0 50 * * * *" 
   mysqlOpts:
     image: percona/percona-server:5.7.34
-    rootPassword: "RadonDB@123"
-    rootHost: localhost
     user: radondb_usr
     password: RadonDB@123
     database: radondb

@@ -17,14 +17,18 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -57,6 +61,10 @@ func (r *MysqlCluster) ValidateCreate() error {
 	if err := r.validateMysqlVersionAndImage(); err != nil {
 		return err
 	}
+
+	if err := r.ValidMySQLTemplate(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -77,10 +85,40 @@ func (r *MysqlCluster) ValidateUpdate(old runtime.Object) error {
 	if err := r.validateMysqlVersionAndImage(); err != nil {
 		return err
 	}
-	if err := r.validateNFSServerAddress(oldCluster); err != nil {
+
+	if err := r.ValidMySQLTemplate(); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (r *MysqlCluster) ValidMySQLTemplate() error {
+
+	tmplName := r.Spec.MysqlOpts.MysqlConfTemplate
+	if len(tmplName) != 0 {
+		// check whether the template is exist.
+		if ok, err := getCofigMap(tmplName, r.Namespace); !ok {
+			return apierrors.NewForbidden(schema.GroupResource{}, "",
+				fmt.Errorf("configmap is not exist! %s", err.Error()))
+		}
+	}
+	return nil
+}
+
+func getCofigMap(name string, namespace string) (bool, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return false, err
+	}
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return false, err
+	}
+	if _, err := clientset.CoreV1().ConfigMaps(namespace).Get(context.TODO(), name, v1.GetOptions{}); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
