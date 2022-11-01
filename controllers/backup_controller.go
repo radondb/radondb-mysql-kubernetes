@@ -85,7 +85,7 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if len(backup.ObjectMeta.Labels["cluster"]) == 0 {
 		backup.ObjectMeta.Labels = labels.Set{"cluster": backup.Spec.ClusterName}
 	}
-	jobSyncer := backupSyncer.NewJobSyncer(r.Client, r.Scheme, backup)
+	jobSyncer := backupSyncer.NewJobSyncer(r.Client, backup)
 	if err := syncer.Sync(ctx, jobSyncer, r.Recorder); err != nil {
 		backup.UpdateStatusCondition(apiv1alpha1.BackupFailed, corev1.ConditionTrue, "CreateFailure", err.Error())
 		backup.Status.Completed = true

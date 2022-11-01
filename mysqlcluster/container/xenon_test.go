@@ -17,7 +17,6 @@ limitations under the License.
 package container
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -60,7 +59,8 @@ func TestGetXenonName(t *testing.T) {
 }
 
 func TestGetXenonImage(t *testing.T) {
-	assert.Equal(t, fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), "xenon image"), xenonCase.Image)
+	// assert.Equal(t, fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), "xenon image"), xenonCase.Image)
+	assert.Equal(t, mysqlcluster.GetImage("xenon image"), xenonCase.Image)
 }
 
 func TestGetXenonCommand(t *testing.T) {

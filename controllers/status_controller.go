@@ -112,7 +112,7 @@ func (r *StatusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	bld := ctrl.NewControllerManagedBy(mgr).
 		For(&apiv1alpha1.MysqlCluster{}).
 		Watches(&source.Kind{Type: &apiv1alpha1.MysqlCluster{}}, &handler.Funcs{
-			CreateFunc: func(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+			CreateFunc: func(evt event.CreateEvent, _ workqueue.RateLimitingInterface) {
 				if evt.Object == nil {
 					log.Error(nil, "CreateEvent received with no metadata", "CreateEvent", evt)
 					return
@@ -121,7 +121,7 @@ func (r *StatusReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				log.V(1).Info("register cluster in clusters list", "obj", evt.Object)
 				clusters.Store(getKey(evt.Object), event.GenericEvent(evt))
 			},
-			DeleteFunc: func(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+			DeleteFunc: func(evt event.DeleteEvent, _ workqueue.RateLimitingInterface) {
 				if evt.Object == nil {
 					log.Error(nil, "DeleteEvent received with no metadata", "DeleteEvent", evt)
 					return

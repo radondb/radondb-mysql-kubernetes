@@ -1,4 +1,5 @@
 # Image URL to use all building/pushing image targets
+REGISTRY ?= quay.io
 IMGPREFIX ?=radondb/
 IMG ?= $(IMGPREFIX)mysql-operator:latest
 SIDECAR57_IMG ?= $(IMGPREFIX)mysql57-sidecar:latest

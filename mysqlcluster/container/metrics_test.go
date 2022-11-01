@@ -17,7 +17,6 @@ limitations under the License.
 package container
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,7 +56,7 @@ func TestGetMetricsName(t *testing.T) {
 }
 
 func TestGetMetricsImage(t *testing.T) {
-	assert.Equal(t, fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), "metrics-image"), metricsCase.Image)
+	assert.Equal(t, mysqlcluster.GetImage("metrics-image"), metricsCase.Image)
 }
 
 func TestGetMetricsCommand(t *testing.T) {
