@@ -57,6 +57,9 @@ func (r *MysqlCluster) ValidateCreate() error {
 	if err := r.validateMysqlVersionAndImage(); err != nil {
 		return err
 	}
+	if err := r.validateMysqlVersion(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -78,6 +81,9 @@ func (r *MysqlCluster) ValidateUpdate(old runtime.Object) error {
 		return err
 	}
 	if err := r.validateNFSServerAddress(oldCluster); err != nil {
+		return err
+	}
+	if err := r.validateMysqlVersion(); err != nil {
 		return err
 	}
 	return nil
@@ -142,6 +148,24 @@ func (r *MysqlCluster) validateMysqlVersionAndImage() error {
 		if !strings.Contains(r.Spec.MysqlOpts.Image, r.Spec.MysqlVersion) {
 			return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlOpts.Image and spec.MysqlVersion are conflict"))
 		}
+	}
+	return nil
+}
+
+// Validate MySQL version and related image.
+func (r *MysqlCluster) validateMysqlVersion() error {
+	switch r.Spec.MysqlVersion {
+	case "5.7":
+		if !strings.Contains(r.Spec.PodPolicy.SidecarImage, "57") {
+			return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlVersion is 5.7, but spec.PodPolicy.SidecarImage is not 5.7"))
+		}
+	case "8.0":
+		if !strings.Contains(r.Spec.PodPolicy.SidecarImage, "80") {
+			return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlVersion is 8.0, but spec.PodPolicy.SidecarImage is not 8.0"))
+		}
+	default:
+		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlVersion is not provided"))
+
 	}
 	return nil
 }
