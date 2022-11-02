@@ -44,7 +44,7 @@ func (c *auditLog) getImage() string {
 // getCommand get the container command.
 func (c *auditLog) getCommand() []string {
 	logsName := "/mysql-audit.log"
-	return []string{"sh", "-c", "for i in {120..0}; do if [ -f " + utils.LogsVolumeMountPath + logsName + " ] ; then break; fi;sleep 1; done; " +
+	return []string{"sh", "-c", "while true; do if [ -f " + utils.LogsVolumeMountPath + logsName + " ] ; then break; fi;sleep 1; done; " +
 		"tail -f " + utils.LogsVolumeMountPath + logsName}
 }
 

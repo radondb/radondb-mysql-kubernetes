@@ -53,7 +53,7 @@ func TestGetSlowlogImage(t *testing.T) {
 }
 
 func TestGetSlowlogCommand(t *testing.T) {
-	command := []string{"sh", "-c", "for i in {120..0}; do if [ -f /var/log/mysql/mysql-slow.log ] ; then break; fi;sleep 1; done; tail -f /var/log/mysql/mysql-slow.log"}
+	command := []string{"sh", "-c", "while true; do if [ -f /var/log/mysql/mysql-slow.log ] ; then break; fi;sleep 1; done; tail -f /var/log/mysql/mysql-slow.log"}
 	assert.Equal(t, command, slowlogCase.Command)
 }
 

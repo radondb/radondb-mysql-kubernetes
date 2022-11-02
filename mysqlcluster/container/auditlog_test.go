@@ -42,7 +42,7 @@ var (
 		MysqlCluster: &auditlogMysqlCluster,
 	}
 	auditLogCase         = EnsureContainer("auditlog", &testAuditlogCluster)
-	auditlogCommand      = []string{"sh", "-c", "for i in {120..0}; do if [ -f /var/log/mysql/mysql-audit.log ] ; then break; fi;sleep 1; done; tail -f /var/log/mysql/mysql-audit.log"}
+	auditlogCommand      = []string{"sh", "-c", "while true; do if [ -f /var/log/mysql/mysql-audit.log ] ; then break; fi;sleep 1; done; tail -f /var/log/mysql/mysql-audit.log"}
 	auditlogVolumeMounts = []corev1.VolumeMount{
 		{
 			Name:      "logs",
