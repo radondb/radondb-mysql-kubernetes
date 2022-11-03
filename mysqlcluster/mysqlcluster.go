@@ -482,12 +482,18 @@ func GetPrefixFromEnv() string {
 
 // GetImage returns the image name with the prefix and override.
 func GetImage(name string) string {
+	var image_namespace string
 	prefix := GetPrefixFromEnv()
 	override := os.Getenv("IMAGE_NAMESPACE_OVERRIDE")
-	imagearray := strings.Split(name, "/")
-	image_namespace := strings.Join(imagearray[0:len(imagearray)-1], "/")
-	if len(override) > 0 {
-		image_namespace = override
+	imageArray := strings.Split(name, "/")
+	if len(imageArray) == 1 {
+		image_namespace = ""
+	} else {
+		image_namespace = strings.Join(imageArray[0:len(imageArray)-1], "/") + "/"
 	}
-	return prefix + image_namespace + "/" + imagearray[len(imagearray)-1]
+	if len(override) > 0 {
+		image_namespace = override + "/"
+	}
+
+	return prefix + image_namespace + imageArray[len(imageArray)-1]
 }
