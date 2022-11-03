@@ -752,4 +752,13 @@ func TestGetImage(t *testing.T) {
 		result := GetImage(testCase)
 		assert.Equal(t, want, result)
 	}
+	{
+		// No image namespace
+		t.Setenv("IMAGE_PREFIX", "")
+		t.Setenv("IMAGE_NAMESPACE_OVERRIDE", "")
+		testCase := "busybox:1.32"
+		want := "busybox:1.32"
+		result := GetImage(testCase)
+		assert.Equal(t, want, result)
+	}
 }
