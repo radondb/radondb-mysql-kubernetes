@@ -5,7 +5,7 @@ Contents
   - [Cron expression format](#cron-expression-format)
     - [Special characters](#special-characters)
     - [Predefined schedules](#predefined-schedules)
-
+ - [both cron backup for s3 and nfs](#both-s3-nfs)
 # Overview
 The scheduled backup is currently supported for both S3 and NFS backups. You can use the cron expression to specify the backup schedule. Set the `backupSchedule` parameter under the `spec` field in the YAML file of the cluster, for example:
 
@@ -65,3 +65,20 @@ You may use one of several pre-defined schedules in place of a cron expression.
 | @weekly                | Run once a week, midnight on Sunday        | 0 0 0 * * 0   |
 | @daily (or @midnight)  | Run once a day, midnight                   | 0 0 0 * * *   |
 | @hourly                | Run once an hour, beginning of hour        | 0 0 * * * *   |
+
+# both cron backup for s3 and nfs
+if you have specified the `backupSecretName` , `nfsServerAddress` and `backupSchedule` , the operator will run nfs backup instead of s3 backup, but if you want backup them both, you should specify `bothS3NFS`
+field. it has two sub fields.
+* nfsSchedule: nfs' Cron expression, reference from [Predefined schedules](#Predefined-schedules)
+* s3Schedule:  s3's Cron expression,  reference from [Predefined schedules](#Predefined-schedules)
+for examples:
+```yaml
+... 
+spec:
+  replicas: 3
+  mysqlVersion: "5.7"
+  bothS3NFS: 
+    nfsSchedule: "0 0 0 * * *"
+    s3Schedule:  "0 0 2 * * *"
+  ...
+```

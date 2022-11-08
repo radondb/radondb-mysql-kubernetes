@@ -5,7 +5,7 @@
   - [Cron 表达式格式](#cron-表达式格式)
     - [特殊字符](#特殊字符)
     - [预定义时间表](#预定义时间表)
-
+- [S3与NFS联合定时备份](#S3与NFS联合定时备份)
 # 简介
 目前，无论 S3 还是 NFS 备份，均支持定时备份，并支持使用 Cron 表达式来指定备份的时间策略。您只需直接在集群的 YAML 文件的 `spec` 下设置 `backupSchedule` 字段。例如：
 
@@ -67,3 +67,19 @@ spec:
 | @weekly                 | 每周执行一次，在周六和周日之间的夜晚 12 点执行 | 0 0 0 * * 0 |
 | @daily（或 @midnight）  | 每日执行一次，在夜晚 12 点执行                 | 0 0 0 * * * |
 | @hourly                 | 每小时执行一次，在第 1 分钟执行                | 0 0 * * * * |
+
+# S3与NFS联合定时备份
+同时配置了 `backupSecretName` 和 `nfsServerAddress` 以及 `backupSchedule` 情况下, 定时备份会优先使用 `nfs` 进行备份,而不会进行 S3 备份 如果您需要同时进行 `S3` 和 `nfs` 的定时备份, 需要新增 `bothS3NFS` 选项. 有如下两个子项:
+* nfsSchedule: nfs 备份Cron 表达式, 格式参见 [预定义时间表](#预定义时间表)
+* s3Schedule:  s3 备份Cron 表达式, 格式参见 [预定义时间表](#预定义时间表)
+示例:
+```yaml
+... 
+spec:
+  replicas: 3
+  mysqlVersion: "5.7"
+  bothS3NFS: 
+    nfsSchedule: "0 0 0 * * *"
+    s3Schedule:  "0 0 2 * * *"
+  ...
+```
