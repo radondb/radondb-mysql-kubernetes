@@ -89,10 +89,20 @@ func (r *BackupCronReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if err = instance.Validate(); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	if *instance.Spec.Replicas == 0 {
+		if err := r.Cron.Remove(instance.Name + "auto"); err == nil {
+			log.V(1).Info("remove cronjob from cluster", "name", instance.Name)
+		}
+		// without bothS3NFs, clear  all
+		if err := r.ClearBothS3NFS(ctx, instance.Unwrap(), log); err != nil {
+			return reconcile.Result{}, fmt.Errorf("failed to clear cronjob: %s", err)
+		}
+
+	}
 	// if spec.backupScheduler is not set then don't do anything
-	if instance.Spec.BothS3NFS == nil &&
-		(len(instance.Spec.BackupSchedule) == 0 || *instance.Spec.Replicas == 0) {
-		if err := r.Cron.Remove(instance.Name); err == nil {
+	if len(instance.Spec.BackupSchedule) == 0 && instance.Spec.BothS3NFS == nil {
+		if err := r.Cron.Remove(instance.Name + "auto"); err == nil {
 			log.V(1).Info("remove cronjob from cluster", "name", instance.Name)
 		}
 
@@ -120,14 +130,16 @@ func (r *BackupCronReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		return ctrl.Result{}, nil
 	} else {
+		// without bothS3NFs, clear  all
+		if err := r.ClearBothS3NFS(ctx, instance.Unwrap(), log); err != nil {
+			return reconcile.Result{}, fmt.Errorf("failed to clear cronjob: %s", err)
+		}
 		schedule, err := cron.Parse(instance.Spec.BackupSchedule)
 		if err != nil {
 			return reconcile.Result{}, fmt.Errorf("failed to parse schedule: %s", err)
 		}
 
-		log.V(1).Info("register cluster in cronjob", "key", instance, "schedule", schedule)
-
-		return ctrl.Result{}, r.updateClusterSchedule(ctx, instance.Unwrap(), schedule, "", log)
+		return ctrl.Result{}, r.updateClusterSchedule(ctx, instance.Unwrap(), schedule, "auto", log)
 	}
 
 }
@@ -149,7 +161,7 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 				log.Info("update cluster scheduler", "key", cluster,
 					"scheduler", schedule)
 
-				if err := r.Cron.Remove(cluster.Name); err != nil {
+				if err := r.Cron.Remove(cluster.Name + BackupType); err != nil {
 					return err
 				}
 				break
@@ -165,7 +177,7 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 	if BackupType == "nfs" {
 		nfsServerAddress = cluster.Spec.NFSServerAddress
 	}
-
+	log.V(1).Info("register cluster in cronjob", "key", cluster.Name+BackupType, "schedule", schedule)
 	r.Cron.Schedule(schedule, &backup.CronJob{
 		ClusterName:                    cluster.Name,
 		Namespace:                      cluster.Namespace,
@@ -175,7 +187,29 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 		NFSServerAddress:               nfsServerAddress,
 		BackupType:                     BackupType,
 		Log:                            log,
-	}, cluster.Name)
+	}, cluster.Name+BackupType)
+
+	return nil
+}
+
+// Clear all nfs and s3 cronjob
+func (r *BackupCronReconciler) ClearBothS3NFS(ctx context.Context, cluster *apiv1alpha1.MysqlCluster, log logr.Logger) error {
+	r.LockJobRegister.Lock()
+	defer r.LockJobRegister.Unlock()
+
+	for _, entry := range r.Cron.Entries() {
+		j, ok := entry.Job.(*backup.CronJob)
+		if ok && j.ClusterName == cluster.Name &&
+			j.Namespace == cluster.Namespace &&
+			(j.BackupType == "nfs" || j.BackupType == "s3") {
+			log.V(1).Info("find s3 or nfs cron.", "key", cluster)
+
+			if err := r.Cron.Remove(cluster.Name + j.BackupType); err != nil {
+				return err
+			}
+			break
+		}
+	}
 
 	return nil
 }
