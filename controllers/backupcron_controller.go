@@ -174,7 +174,9 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 		}
 	}
 	nfsServerAddress := ""
-	if BackupType == "nfs" {
+	// if has backupsecret and nfsServerAdrr, auto use nfs backup
+	// if you want s3 backup, set backupSecret only.
+	if BackupType != "s3" {
 		nfsServerAddress = cluster.Spec.NFSServerAddress
 	}
 	log.V(1).Info("register cluster in cronjob", "key", cluster.Name+BackupType, "schedule", schedule)
