@@ -302,7 +302,7 @@ spec:
                       cpu: 10m
                       memory: 32Mi
                   imagePullPolicy: IfNotPresent
-                  sidecarImage: radondb/mysql57-sidecar:v2.2.1
+                  sidecarImage: radondb/mysql57-sidecar:v2.3.0
                 description: PodPolicy defines the policy to extra specification.
                 properties:
                   affinity:
@@ -1232,7 +1232,7 @@ spec:
                   schedulerName:
                     type: string
                   sidecarImage:
-                    default: radondb/mysql57-sidecar:v2.2.1
+                    default: radondb/mysql57-sidecar:v2.3.0
                     description: To specify the image that will be used for sidecar
                       container.
                     type: string
@@ -1304,7 +1304,7 @@ spec:
                 default:
                   admitDefeatHearbeatCount: 5
                   electionTimeout: 10000
-                  image: radondb/xenon:v2.2.1
+                  image: radondb/xenon:v2.3.0
                   resources:
                     limits:
                       cpu: 100m
@@ -1331,7 +1331,7 @@ spec:
                       automatically rebuild the invalid node.
                     type: boolean
                   image:
-                    default: radondb/xenon:v2.2.1
+                    default: radondb/xenon:v2.3.0
                     description: To specify the image that will be used for xenon
                       container.
                     type: string
