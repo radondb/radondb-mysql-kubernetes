@@ -48,7 +48,7 @@ type MysqlClusterSpec struct {
 
 	// XenonOpts is the options of xenon container.
 	// +optional
-	// +kubebuilder:default:={image: "radondb/xenon:v2.2.1", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
+	// +kubebuilder:default:={image: "radondb/xenon:v2.3.0", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
 	XenonOpts XenonOpts `json:"xenonOpts,omitempty"`
 
 	// MetricsOpts is the options of metrics container.
@@ -65,7 +65,7 @@ type MysqlClusterSpec struct {
 
 	// PodPolicy defines the policy to extra specification.
 	// +optional
-	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", extraResources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "radondb/mysql57-sidecar:v2.2.1", busyboxImage: "busybox:1.32"}
+	// +kubebuilder:default:={imagePullPolicy: "IfNotPresent", extraResources: {requests: {cpu: "10m", memory: "32Mi"}}, sidecarImage: "radondb/mysql57-sidecar:v2.3.0", busyboxImage: "busybox:1.32"}
 	PodPolicy PodPolicy `json:"podPolicy,omitempty"`
 
 	// PVC extra specifiaction.
@@ -181,7 +181,7 @@ type MysqlOpts struct {
 type XenonOpts struct {
 	// To specify the image that will be used for xenon container.
 	// +optional
-	// +kubebuilder:default:="radondb/xenon:v2.2.1"
+	// +kubebuilder:default:="radondb/xenon:v2.3.0"
 	Image string `json:"image,omitempty"`
 
 	// High available component admit defeat heartbeat count.
@@ -248,7 +248,7 @@ type PodPolicy struct {
 
 	// To specify the image that will be used for sidecar container.
 	// +optional
-	// +kubebuilder:default:="radondb/mysql57-sidecar:v2.2.1"
+	// +kubebuilder:default:="radondb/mysql57-sidecar:v2.3.0"
 	SidecarImage string `json:"sidecarImage,omitempty"`
 
 	// The busybox image.

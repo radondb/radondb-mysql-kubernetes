@@ -1,5 +1,9 @@
 # Image URL to use all building/pushing image targets
 REGISTRY ?= quay.io
+FROM_VERSION ?=v2.2.1
+CHART_VERSION ?=2.2.1
+CHART_TOVERSION ?=2.3.0
+TO_VERSION ?=v2.3.0
 IMGPREFIX ?=radondb/
 IMG ?= $(IMGPREFIX)mysql-operator:latest
 SIDECAR57_IMG ?= $(IMGPREFIX)mysql57-sidecar:latest
@@ -128,3 +132,15 @@ e2e-local:
 	go test -v ./test/e2e  $(G_ARGS) -timeout 20m
 todo:
 	@grep -Irnw './' -e 'TODO:'|grep -v grep
+
+updateVersion:
+	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i "s/mysql57-sidecar:$(FROM_VERSION)/mysql57-sidecar:$(TO_VERSION)/g" {} \;
+	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i "s/xenon:$(FROM_VERSION)/xenon:$(TO_VERSION)/g" {} \;
+	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "s/mysql-operator:$(FROM_VERSION)/mysql-operator:$(TO_VERSION)/g" {} \;
+	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "s/mysql80-sidecar:$(FROM_VERSION)/mysql80-sidecar:$(TO_VERSION)/g" {} \;
+	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "s/mysql-operator-$(FROM_VERSION)/mysql-operator-$(TO_VERSION)/g" {} \;
+	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "s/\"$(FROM_VERSION)\"/\"$(TO_VERSION)\"/g" {} \;
+	# sed -i "18s/$(CHART_VERSION)/$(CHART_TOVERSION)/"  charts/mysql-operator/charts/Chart.yaml
+	find ./charts  -type f -name "*.yaml" -exec sed -i  "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
+	find ./config  -type f -name "*.yaml" -exec sed -i  "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
+	

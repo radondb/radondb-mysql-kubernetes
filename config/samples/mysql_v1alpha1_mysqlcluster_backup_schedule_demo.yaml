@@ -34,7 +34,7 @@ spec:
         memory: 1Gi
 
   xenonOpts:
-    image: radondb/xenon:v2.2.1
+    image: radondb/xenon:v2.3.0
     admitDefeatHearbeatCount: 5
     electionTimeout: 10000
 
@@ -60,7 +60,7 @@ spec:
 
   podPolicy:
     imagePullPolicy: IfNotPresent
-    sidecarImage: radondb/mysql57-sidecar:v2.2.1
+    sidecarImage: radondb/mysql57-sidecar:v2.3.0
     busyboxImage: busybox:1.32
 
     slowLogTail: false
