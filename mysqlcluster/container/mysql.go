@@ -55,16 +55,39 @@ func (c *mysql) getCommand() []string {
 
 // getEnvVars get the container env.
 func (c *mysql) getEnvVars() []corev1.EnvVar {
-	if c.Spec.MysqlOpts.InitTokuDB {
-		return []corev1.EnvVar{
-			{
-				Name:  "INIT_TOKUDB",
-				Value: "1",
+	envVars := []corev1.EnvVar{
+		{
+			Name: "NAMESPACE",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.namespace",
+				},
 			},
-		}
+		},
+		{
+			Name: "POD_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.name",
+				},
+			},
+		},
+		{
+			Name:  "MAX_DELAY",
+			Value: fmt.Sprint(c.Spec.MysqlOpts.MaxLagSeconds),
+		},
 	}
 
-	return nil
+	if c.Spec.MysqlOpts.InitTokuDB {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "INIT_TOKUDB",
+			Value: "1",
+		})
+	}
+
+	return envVars
 }
 
 // getLifecycle get the container lifecycle.
@@ -97,9 +120,9 @@ func (c *mysql) getLivenessProbe() *corev1.Probe {
 				kubectl exec -it sample-mysql-0 -c mysql -- sh -c 'touch /var/lib/mysql/sleep-forever'
 				*/
 				Command: []string{
-					"sh",
+					"/usr/bin/bash",
 					"-c",
-					"if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; pgrep mysqld",
+					"mysqlchecker liveness",
 				},
 			},
 		},
@@ -117,9 +140,9 @@ func (c *mysql) getReadinessProbe() *corev1.Probe {
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
 				Command: []string{
-					"sh",
+					"/usr/bin/bash",
 					"-c",
-					fmt.Sprintf(`if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql --defaults-file=%s -NB -e "SELECT 1") -eq 1`, utils.ConfClientPath),
+					"mysqlchecker readiness",
 				},
 			},
 		},

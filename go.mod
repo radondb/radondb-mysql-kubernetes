@@ -12,6 +12,7 @@ require (
 	github.com/gruntwork-io/terratest v0.40.20
 	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
 	github.com/imdario/mergo v0.3.12
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/onsi/gomega v1.19.0
 	github.com/presslabs/controller-util v0.4.3

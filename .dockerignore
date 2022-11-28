@@ -3,3 +3,7 @@
 !**/*.go
 !**/*.mod
 !**/*.sum
+.git
+bin
+testbin
+vendor

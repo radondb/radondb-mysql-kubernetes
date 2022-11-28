@@ -1,10 +1,13 @@
 # Image URL to use all building/pushing image targets
-REGISTRY ?= quay.io
 FROM_VERSION ?=v2.2.1
 CHART_VERSION ?=2.2.1
 CHART_TOVERSION ?=2.3.0
 TO_VERSION ?=v2.3.0
 IMGPREFIX ?=radondb/
+MYSQL_IMAGE_57 ?=5.7.39
+MYSQL_IMAGE_80 ?=8.0.26
+MYSQL_IMAGE_57_TAG ?=$(IMGPREFIX)percona-server:$(MYSQL_IMAGE_57)
+MYSQL_IMAGE_80_TAG ?=$(IMGPREFIX)percona-server:$(MYSQL_IMAGE_80)
 IMG ?= $(IMGPREFIX)mysql-operator:latest
 SIDECAR57_IMG ?= $(IMGPREFIX)mysql57-sidecar:latest
 SIDECAR80_IMG ?= $(IMGPREFIX)mysql80-sidecar:latest
@@ -79,10 +82,14 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/manager/main.go
 
 docker-build: test ## Build docker image with the manager.
-	docker build --build-arg GO_PROXY=${GO_PORXY} -t ${IMG} .
-	docker build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PORXY} -t ${SIDECAR57_IMG} .
-	docker build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PORXY} -t ${XENON_IMG} .
-	docker build --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  --build-arg GO_PROXY=${GO_PORXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
+	docker buildx build --build-arg GO_PROXY=${GO_PORXY} -t ${IMG} .
+	docker buildx build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PORXY} -t ${SIDECAR57_IMG} .
+	docker buildx build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PORXY} -t ${XENON_IMG} .
+	docker buildx build  --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  --build-arg GO_PROXY=${GO_PORXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
+	docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_57}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_57_TAG}   .
+	docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_80}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_80_TAG}   .
+docker-build-mysql57: test ## Build docker image with the manager.
+	docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_57}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_57_TAG}   .
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 	docker push ${SIDECAR_IMG}
