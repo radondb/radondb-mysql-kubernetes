@@ -69,6 +69,9 @@ var (
 
 	// xcloudCommand is the upload tool file name.
 	xcloudCommand = "xbcloud"
+
+	// restore file check
+	xrestorefile = "restore-file"
 )
 
 // copyFile the src file to dst.

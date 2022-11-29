@@ -38,7 +38,7 @@ func (c *backupSidecar) getImage() string {
 }
 
 func (c *backupSidecar) getCommand() []string {
-	return []string{"sidecar", "http"}
+	return []string{"sh", "-c", "/sshd.sh ; sidecar http"}
 }
 
 func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
@@ -146,6 +146,14 @@ func (c *backupSidecar) getVolumeMounts() []corev1.VolumeMount {
 		{
 			Name:      utils.SysLocalTimeZone,
 			MountPath: utils.SysLocalTimeZoneMountPath,
+		},
+		{
+			Name:      utils.SysFuseVolume,
+			MountPath: utils.SysFuseVolumnMountPath,
+		},
+		{
+			Name:      utils.SShVolumnName,
+			MountPath: utils.SshVolumnPath,
 		},
 	}
 }

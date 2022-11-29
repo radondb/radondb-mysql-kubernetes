@@ -21,6 +21,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type JuiceOpt struct {
+	// sqlite or redis
+	JuiceMeta string `json:"juiceMeta"`
+	// backupSecrete name for S3
+	BackupSecretName string `json:"backupSecretName"`
+	JuiceName        string `json:"juiceName"`
+}
+
 // This is the backup Job CRD.
 // BackupSpec defines the desired state of Backup
 type BackupSpec struct {
@@ -40,6 +48,9 @@ type BackupSpec struct {
 	// +optional
 	NFSServerAddress string `json:"nfsServerAddress,omitempty"`
 
+	// Represents the juicefs parameters which need.
+	// +optional
+	JuiceOpt *JuiceOpt `json:"juiceOpt,omitempty"`
 	// ClusterName represents the cluster name to backup
 	ClusterName string `json:"clusterName"`
 

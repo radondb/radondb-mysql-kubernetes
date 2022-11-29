@@ -70,6 +70,22 @@ spec:
                 default: radondb/mysql57-sidecar:v2.3.0
                 description: To specify the image that will be used for sidecar container.
                 type: string
+              juiceOpt:
+                description: Represents the juicefs parameters which need.
+                properties:
+                  backupSecretName:
+                    description: backupSecrete name for S3
+                    type: string
+                  juiceMeta:
+                    description: sqlite or redis
+                    type: string
+                  juiceName:
+                    type: string
+                required:
+                - backupSecretName
+                - juiceMeta
+                - juiceName
+                type: object
               nfsServerAddress:
                 description: Represents the ip address of the nfs server.
                 type: string

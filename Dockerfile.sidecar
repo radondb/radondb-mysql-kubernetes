@@ -43,13 +43,20 @@ RUN set -ex; \
 ARG XTRABACKUP_PKG=percona-xtrabackup-24
 RUN set -ex; \
     apt-get update; \
-    apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl bc; \
+    apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl bc fuse jq openssh-server sqlite3; \
     wget -P /tmp --no-check-certificate https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb; \
     dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb; \
     apt-get update; \
     apt-get install -y --no-install-recommends ${XTRABACKUP_PKG}; \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
+#ADD http://mirrors.woqutech.com/download/qfusion/files/bin/juicefs-1.0.0-rc1-linux-amd64 /usr/local/bin/juicefs
+# COPY juicefs/juicefs /usr/local/bin/juicefs
+RUN wget --no-check-certificate "https://d.juicefs.com/juicefs/releases/download/v1.0.2/juicefs-1.0.2-linux-amd64.tar.gz" && tar -zxf "juicefs-1.0.2-linux-amd64.tar.gz" ;\
+    mv juicefs /usr/local/bin/juicefs; \
+    chmod +x /usr/local/bin/juicefs ; mkdir -p /run/sshd; \
+    mkdir -p /root/.ssh; \
+    chmod 700 /root/.ssh 
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
-ENTRYPOINT ["sidecar"]
+COPY script/*.sh /
+CMD [ "sidecar" ]

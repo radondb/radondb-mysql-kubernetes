@@ -253,6 +253,7 @@ func TestGetPodHostName(t *testing.T) {
 }
 
 func TestEnsureVolumes(t *testing.T) {
+	var defMode int32 = 0600
 	volume := []corev1.Volume{
 		{
 			Name: utils.MysqlConfVolumeName,
@@ -315,6 +316,25 @@ func TestEnsureVolumes(t *testing.T) {
 			VolumeSource: corev1.VolumeSource{
 				HostPath: &corev1.HostPathVolumeSource{
 					Path: utils.SysLocalTimeZoneHostPath,
+				},
+			},
+		},
+		//host fuse
+		{
+			Name: utils.SysFuseVolume,
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Path: utils.SysFuseVolumnMountPath,
+				},
+			},
+		},
+		//ssh key
+		{
+			Name: utils.SShVolumnName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName:  "sample-ssh-key",
+					DefaultMode: &defMode,
 				},
 			},
 		},

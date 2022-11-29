@@ -63,6 +63,7 @@ func getStartupProbe(name string) *corev1.Probe {
 // EnsureContainer ensure a container by the giving name.
 func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container {
 	var ctr container
+	var security *corev1.SecurityContext = nil
 	switch name {
 	case utils.ContainerInitSidecarName:
 		ctr = &initSidecar{c, name}
@@ -80,6 +81,14 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 		ctr = &auditLog{c, name}
 	case utils.ContainerBackupName:
 		ctr = &backupSidecar{c, name}
+		needAdmin := true
+		security = &corev1.SecurityContext{
+			Privileged: &needAdmin,
+			Capabilities: &corev1.Capabilities{
+				Add: []corev1.Capability{"CAP_SYS_ADMIN",
+					"DAC_READ_SEARCH",
+				},
+			}}
 	}
 
 	return corev1.Container{
@@ -95,5 +104,6 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 		ReadinessProbe:  ctr.getReadinessProbe(),
 		StartupProbe:    getStartupProbe(name),
 		VolumeMounts:    ctr.getVolumeMounts(),
+		SecurityContext: security,
 	}
 }

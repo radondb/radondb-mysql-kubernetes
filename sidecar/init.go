@@ -127,6 +127,8 @@ func runCloneAndInit(cfg *Config) (bool, error) {
 		return hasInitialized, nil
 	}
 	log.Info("no leader or follower found")
+	// for restore job create, it must set hasInitialized to true
+	hasInitialized, _ = checkIfPathExists(path.Join(dataPath, xrestorefile))
 	return hasInitialized, nil
 }
 
@@ -260,6 +262,16 @@ func runInitCommand(cfg *Config, hasInitialized bool) error {
 	if err = ioutil.WriteFile(initSqlPath, cfg.buildInitSql(hasInitialized), 0644); err != nil {
 		return fmt.Errorf("failed to write init.sql: %s", err)
 	}
+	// check restore-file exist, remove it
+	if exist, _ := checkIfPathExists(path.Join(dataPath, xrestorefile)); exist {
+		//remove the xrestorefile
+		cmd := exec.Command("rm", "-rf", path.Join(dataPath, xrestorefile))
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to remove restore-file : %s", err)
+		}
+	}
+
 	// build xenon.json.
 	xenonFilePath := path.Join(xenonPath, "xenon.json")
 	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {
