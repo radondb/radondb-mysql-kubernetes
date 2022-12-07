@@ -202,6 +202,9 @@ spec:
                   - type
                   type: object
                 type: array
+              revision:
+                description: Identifies the users changed or not.
+                type: string
             type: object
         type: object
     served: true
