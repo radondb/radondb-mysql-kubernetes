@@ -169,6 +169,13 @@ spec:
                     default: false
                     description: InitTokuDB represents if install tokudb engine.
                     type: boolean
+                  maxLagTime:
+                    default: 30
+                    description: MaxLagSeconds configures the readiness probe of mysqld
+                      container if the replication lag is greater than MaxLagSeconds,
+                      the mysqld container will not be not healthy.
+                    minimum: 0
+                    type: integer
                   mysqlConf:
                     additionalProperties:
                       type: string

@@ -65,11 +65,33 @@ func TestGetMysqlCommand(t *testing.T) {
 func TestGetMysqlEnvVar(t *testing.T) {
 	// base env
 	{
-		assert.Nil(t, mysqlCase.Env)
+		assert.NotNil(t, mysqlCase.Env)
 	}
 	// initTokuDB
 	{
 		volumeMounts := []corev1.EnvVar{
+			{
+				Name: "NAMESPACE",
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						APIVersion: "v1",
+						FieldPath:  "metadata.namespace",
+					},
+				},
+			},
+			{
+				Name: "POD_NAME",
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						APIVersion: "v1",
+						FieldPath:  "metadata.name",
+					},
+				},
+			},
+			{
+				Name:  "MAX_DELAY",
+				Value: "0",
+			},
 			{
 				Name:  "INIT_TOKUDB",
 				Value: "1",
@@ -110,7 +132,7 @@ func TestGetMysqlLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; pgrep mysqld"},
+				Command: []string{"/usr/bin/bash", "-c", "mysqlchecker liveness"},
 			},
 		},
 		InitialDelaySeconds: 30,
@@ -126,7 +148,7 @@ func TestGetMysqlReadinessProbe(t *testing.T) {
 	readinessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", `if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql --defaults-file=/etc/mysql/client.conf -NB -e "SELECT 1") -eq 1`},
+				Command: []string{"/usr/bin/bash", "-c", "mysqlchecker readiness"},
 			},
 		},
 		InitialDelaySeconds: 10,

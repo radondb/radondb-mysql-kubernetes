@@ -175,6 +175,13 @@ type MysqlOpts struct {
 	// +optional
 	// +kubebuilder:default:={limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// MaxLagSeconds configures the readiness probe of mysqld container
+	// if the replication lag is greater than MaxLagSeconds, the mysqld container will not be not healthy.
+	// +kubebuilder:default:=30
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	MaxLagSeconds int `json:"maxLagTime,omitempty"`
 }
 
 // XenonOpts defines the options of xenon container.

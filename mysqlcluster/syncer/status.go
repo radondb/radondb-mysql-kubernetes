@@ -305,14 +305,14 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 				s.log.V(1).Info("failed to check read only", "node", node.Name, "error", err)
 				node.Message = err.Error()
 			}
-
-			if !utils.ExistUpdateFile() &&
-				node.RaftStatus.Role == string(utils.Leader) &&
-				isReadOnly != corev1.ConditionFalse {
-				s.log.V(1).Info("try to correct the leader writeable", "node", node.Name)
-				sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL read_only=off"))
-				sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL super_read_only=off"))
-			}
+			// move it to mysql readiness
+			// if !utils.ExistUpdateFile() &&
+			// 	node.RaftStatus.Role == string(utils.Leader) &&
+			// 	isReadOnly != corev1.ConditionFalse {
+			// 	s.log.V(1).Info("try to correct the leader writeable", "node", node.Name)
+			// 	sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL read_only=off"))
+			// 	sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL super_read_only=off"))
+			// }
 		}
 
 		// update apiv1alpha1.NodeConditionLagged.
@@ -472,6 +472,14 @@ func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node
 	if pod.DeletionTimestamp != nil || pod.Status.Phase != corev1.PodRunning {
 		healthy = "no"
 		node.RaftStatus.Role = string(utils.Unknown)
+	}
+	// update healthy no if container is not ready.
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		if containerStatus.Name == utils.ContainerMysqlName && !containerStatus.Ready {
+			healthy = "no"
+			isPodLabelsUpdated = true
+			break
+		}
 	}
 
 	if pod.Labels["healthy"] != healthy {
