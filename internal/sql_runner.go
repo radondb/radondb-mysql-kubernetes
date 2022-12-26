@@ -333,15 +333,15 @@ func columnValue(scanArgs []interface{}, slaveCols []string, colName string) str
 	return string(*scanArgs[columnIndex].(*sql.RawBytes))
 }
 
-// CreateUserIfNotExists creates a user if it doesn't already exist and it gives it the specified permissions.
-func CreateUserIfNotExists(sqlRunner SQLRunner, user *apiv1alpha1.MysqlUser, pass string) error {
+// BuildUserManagementSQL returns a Query that creates a user and grants it permissions.
+func BuildUserManagementSQL(user *apiv1alpha1.MysqlUser, pass string) (q Query, err error) {
 	userName := user.Spec.User
 	hosts := user.Spec.Hosts
 	permissions := user.Spec.Permissions
-
+	query := Query{}
 	// Throw error if there are no allowed hosts.
 	if len(hosts) == 0 {
-		return errors.New("no allowedHosts specified")
+		return query, errors.New("no allowedHosts specified")
 	}
 
 	queries := []Query{
@@ -353,13 +353,9 @@ func CreateUserIfNotExists(sqlRunner SQLRunner, user *apiv1alpha1.MysqlUser, pas
 		queries = append(queries, permissionsToQuery(permissions, userName, hosts, user.Spec.WithGrantOption))
 	}
 
-	query := BuildAtomicQuery(queries...)
+	query = BuildAtomicQuery(queries...)
 
-	if err := sqlRunner.QueryExec(query); err != nil {
-		return fmt.Errorf("failed to configure user (user/pass/access), err: %s", err)
-	}
-
-	return nil
+	return query, nil
 }
 
 func getCreateUserQuery(user, pwd string, allowedHosts []string, tlsOption apiv1alpha1.TLSOptions) Query {

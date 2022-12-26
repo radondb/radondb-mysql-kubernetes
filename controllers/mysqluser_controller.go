@@ -180,13 +180,6 @@ func (r *MysqlUserReconciler) reconcileUserInDB(ctx context.Context, mysqlUser *
 	if password == "" {
 		return fmt.Errorf("the MySQL user's password must not be empty")
 	}
-
-	// Create/Update user in database.
-	userLog.Info("creating mysql user", "key", mysqlUser.GetKey(), "username", mysqlUser.Spec.User, "cluster", mysqlUser.GetClusterKey())
-	if err := internal.CreateUserIfNotExists(sqlRunner, mysqlUser.Unwrap(), password); err != nil {
-		return err
-	}
-
 	// Remove allowed hosts for user.
 	toRemove := utils.StringDiffIn(mysqlUser.Status.AllowedHosts, mysqlUser.Spec.Hosts)
 	for _, host := range toRemove {
@@ -194,7 +187,24 @@ func (r *MysqlUserReconciler) reconcileUserInDB(ctx context.Context, mysqlUser *
 			return err
 		}
 	}
+	// build user management  sql and calculate hash.
+	SQL, err := internal.BuildUserManagementSQL(mysqlUser.Unwrap(), password)
+	if err != nil {
+		return err
+	}
+	argsToString := fmt.Sprintf("%v", SQL.Args())
+	SQLhash, err := utils.Hash(SQL.String() + argsToString)
+	if err == nil && SQLhash == mysqlUser.Status.Revision {
+		// If the user has not been changed, then skip the following steps.
+		return nil
+	}
+	// Create/Update user in database.
+	userLog.Info("creating mysql user", "key", mysqlUser.GetKey(), "username", mysqlUser.Spec.User, "cluster", mysqlUser.GetClusterKey())
+	if err := sqlRunner.QueryExec(SQL); err != nil {
+		return err
+	}
 
+	mysqlUser.Status.Revision = SQLhash
 	return nil
 }
 

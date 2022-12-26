@@ -59,3 +59,18 @@ func TestStingToBytes(t *testing.T) {
 		assert.Equal(t, want, got)
 	}
 }
+
+func TestHash(t *testing.T) {
+	{
+		want := "76b587cf9c"
+		got, err := Hash("SELECT * FROM t2")
+		assert.NoError(t, err)
+		assert.Equal(t, want, got)
+	}
+	{
+		want := "76b587cf9c"
+		got, err := Hash("SELECT * FROM t31")
+		assert.NoError(t, err)
+		assert.NotEqual(t, want, got)
+	}
+}

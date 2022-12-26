@@ -17,8 +17,12 @@ limitations under the License.
 package utils
 
 import (
+	"fmt"
+	"hash/fnv"
 	"reflect"
 	"unsafe"
+
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 // BytesToString casts slice to string without copy
@@ -49,4 +53,13 @@ func StringToBytes(s string) []byte {
 	sh.Cap = len(s)
 	sh.Len = len(s)
 	return b
+}
+
+// Caculate hash value of string
+func Hash(s string) (string, error) {
+	hash := fnv.New32()
+	if _, err := hash.Write([]byte(s)); err != nil {
+		return "", err
+	}
+	return rand.SafeEncodeString(fmt.Sprint(hash.Sum32())), nil
 }

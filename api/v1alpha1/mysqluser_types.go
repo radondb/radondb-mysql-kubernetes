@@ -113,6 +113,8 @@ type UserStatus struct {
 
 	// AllowedHosts contains the list of hosts that the user is allowed to connect from.
 	AllowedHosts []string `json:"allowedHosts,omitempty"`
+	// Identifies the users changed or not.
+	Revision string `json:"revision,omitempty"`
 }
 
 // MysqlUserConditionType defines the condition types of a MysqlUser resource.
