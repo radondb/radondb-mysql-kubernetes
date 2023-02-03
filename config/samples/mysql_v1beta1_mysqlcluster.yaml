@@ -1,0 +1,12 @@
+apiVersion: mysql.radondb.com/v1beta1
+kind: MysqlCluster
+metadata:
+  labels:
+    app.kubernetes.io/name: mysqlcluster
+    app.kubernetes.io/instance: mysqlcluster-sample
+    app.kubernetes.io/part-of: radondb-mysql-kubernetes
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: radondb-mysql-kubernetes
+  name: mysqlcluster-sample
+spec:
+  # TODO(user): Add fields here
