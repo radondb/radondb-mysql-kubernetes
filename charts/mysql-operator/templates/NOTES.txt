@@ -22,10 +22,10 @@ kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/la
 Connect to the database:
 {{- end }}
 
-kubectl exec -it svc/sample-leader -c mysql -- mysql -usuper_usr -pRadonDB@123
+kubectl exec -it svc/sample-leader -c mysql -- mysql -usuper_user -pRadonDB@123
 
 Change password:
 
-kubectl patch secret sample-user-password --patch="{\"data\": { \"super_usr\": \"$(echo -n <yourpass> |base64 -w0)\" }}" -oyaml
+kubectl patch secret sample-user-password --patch="{\"data\": { \"super_user\": \"$(echo -n <yourpass> |base64 -w0)\" }}" -oyaml
 
 Github: https://github.com/radondb/radondb-mysql-kubernetes
