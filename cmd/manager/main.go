@@ -138,10 +138,7 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "MysqlCluster")
 			os.Exit(1)
 		}
-		if err = (&mysqlv1alpha1.Backup{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Backup")
-			os.Exit(1)
-		}
+
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
