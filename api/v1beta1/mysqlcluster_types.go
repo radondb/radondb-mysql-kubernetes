@@ -82,7 +82,6 @@ type MysqlClusterSpec struct {
 
 	// Monitoring is the options of metrics container.
 	// +optional
-	// +kubebuilder:default:={image: "prom/mysqld-exporter:v0.12.1", resources: {limits: {cpu: "100m", memory: "128Mi"}, requests: {cpu: "10m", memory: "32Mi"}}, enabled: false}
 	Monitoring MonitoringSpec `json:"MonitoringSpec,omitempty"`
 
 	// ImagePullPolicy is used to determine when Kubernetes will attempt to
@@ -168,7 +167,6 @@ type MysqlClusterStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.readyNodes
 // +kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.state",description="The cluster status"
 // +kubebuilder:printcolumn:name="Desired",type="integer",JSONPath=".spec.replicas",description="The number of desired replicas"

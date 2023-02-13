@@ -1477,7 +1477,7 @@ spec:
             type: object
         type: object
     served: true
-    storage: false
+    storage: true
     subresources:
       scale:
         specReplicasPath: .spec.replicas
@@ -1524,16 +1524,6 @@ spec:
             description: MysqlClusterSpec defines the desired state of MysqlCluster
             properties:
               MonitoringSpec:
-                default:
-                  enabled: false
-                  image: prom/mysqld-exporter:v0.12.1
-                  resources:
-                    limits:
-                      cpu: 100m
-                      memory: 128Mi
-                    requests:
-                      cpu: 10m
-                      memory: 32Mi
                 description: Monitoring is the options of metrics container.
                 properties:
                   exporter:
@@ -3108,7 +3098,7 @@ spec:
             type: object
         type: object
     served: true
-    storage: true
+    storage: false
     subresources:
       scale:
         specReplicasPath: .spec.replicas
