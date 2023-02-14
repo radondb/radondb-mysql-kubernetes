@@ -431,6 +431,7 @@ type MysqlClusterStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:storageversion
 // +kubebuilder:subresource:scale:specpath=.spec.replicas,statuspath=.status.readyNodes
 // +kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.state",description="The cluster status"
 // +kubebuilder:printcolumn:name="Desired",type="integer",JSONPath=".spec.replicas",description="The number of desired replicas"
