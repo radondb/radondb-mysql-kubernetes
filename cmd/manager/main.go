@@ -32,12 +32,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/wgliang/cron"
-
 	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
-	mysqlv1beta1 "github.com/radondb/radondb-mysql-kubernetes/api/v1beta1"
 	"github.com/radondb/radondb-mysql-kubernetes/controllers"
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
+	"github.com/wgliang/cron"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -50,7 +48,6 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(mysqlv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(mysqlv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -131,15 +128,10 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "BackupCron")
 		os.Exit(1)
 	}
-
 	//+kubebuilder:scaffold:builder
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&mysqlv1alpha1.MysqlCluster{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "MysqlCluster")
-			os.Exit(1)
-		}
-		if err = (&mysqlv1alpha1.Backup{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "Backup")
 			os.Exit(1)
 		}
 	}

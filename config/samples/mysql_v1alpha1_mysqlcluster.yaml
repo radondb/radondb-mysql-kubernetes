@@ -8,25 +8,27 @@ spec:
   # the backupSecretName specify the secret file name which store S3 information,
   # if you want S3 backup or restore, please create backup_secret.yaml, uncomment below and fill secret name:
   # backupSecretName: 
-
+  
   # if you want create mysqlcluster from S3, uncomment and fill the directory in S3 bucket below:
   # such as restoreFrom: "backup_202241423817"
   # restoreFrom: 
-
+  
   # Restore from NFS, uncomment below and set the ip of NFS server
   # such as nfsServerAddress: "10.233.55.172"
   # nfsServerAddress: 
   mysqlOpts:
-    image: acekingke/percona-server:5.7.34
+    image: percona/percona-server:5.7.34
     user: radondb_usr
     password: RadonDB@123
     database: radondb
     initTokuDB: false
+
     # A simple map between string and string.
     # Such as:
     #    mysqlConf:
     #      expire_logs_days: "7"
     mysqlConf: {}
+
     resources:
       requests:
         cpu: 100m
@@ -34,10 +36,12 @@ spec:
       limits:
         cpu: 500m
         memory: 1Gi
+
   xenonOpts:
     image: radondb/xenon:v2.3.0
     admitDefeatHearbeatCount: 5
     electionTimeout: 10000
+
     resources:
       requests:
         cpu: 50m
@@ -45,9 +49,11 @@ spec:
       limits:
         cpu: 100m
         memory: 256Mi
+
   metricsOpts:
     enabled: false
     image: prom/mysqld-exporter:v0.12.1
+
     resources:
       requests:
         cpu: 10m
@@ -55,12 +61,15 @@ spec:
       limits:
         cpu: 100m
         memory: 128Mi
+
   podPolicy:
     imagePullPolicy: IfNotPresent
     sidecarImage: radondb/mysql57-sidecar:v2.3.0
     busyboxImage: busybox:1.32
+
     slowLogTail: false
     auditLogTail: false
+
     labels: {}
     annotations: {}
     affinity: {}
@@ -72,10 +81,10 @@ spec:
       requests:
         cpu: 10m
         memory: 32Mi
+
   persistence:
     enabled: true
     accessModes:
-      - ReadWriteOnce
+    - ReadWriteOnce
     #storageClass: ""
     size: 20Gi
-  backupSecretName: sample-backup-secret
