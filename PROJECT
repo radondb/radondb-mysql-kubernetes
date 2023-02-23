@@ -14,6 +14,7 @@ resources:
   path: github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1
   version: v1alpha1
   webhooks:
+    conversion: true
     validation: true
     webhookVersion: v1
 - controller: true
@@ -30,9 +31,6 @@ resources:
   kind: Backup
   path: github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1
   version: v1alpha1
-  webhooks:
-    conversion: true
-    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
