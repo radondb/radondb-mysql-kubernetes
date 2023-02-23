@@ -1,0 +1,11 @@
+apiVersion: mysql.radondb.com/v1beta1
+kind: Backup
+metadata:
+  name: backup-sample
+spec:
+  # Add fields here
+  image: radondb/mysql57-sidecar:v2.3.0
+  # hostfrom if empty, use the leader as hostfrom
+  hostfrom: sample-mysql-0
+  clusterName: sample
+  # nfsServerAddress: ""
