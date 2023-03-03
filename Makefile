@@ -5,7 +5,7 @@ CHART_TOVERSION ?=2.3.0
 TO_VERSION ?=v2.3.0
 IMGPREFIX ?=radondb/
 MYSQL_IMAGE_57 ?=5.7.39
-MYSQL_IMAGE_80 ?=8.0.26
+MYSQL_IMAGE_80 ?=8.0.25
 MYSQL_IMAGE_57_TAG ?=$(IMGPREFIX)percona-server:$(MYSQL_IMAGE_57)
 MYSQL_IMAGE_80_TAG ?=$(IMGPREFIX)percona-server:$(MYSQL_IMAGE_80)
 IMG ?= $(IMGPREFIX)mysql-operator:latest
@@ -56,7 +56,7 @@ update-crd:	## Synchronize the generated YAML files to operator Chart after make
 	make manifests
 	cp config/crd/bases/* charts/mysql-operator/crds/
 
-generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: controller-gen generate-go-conversions ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 fmt: ## Run go fmt against code.
@@ -64,7 +64,16 @@ fmt: ## Run go fmt against code.
 
 vet: ## Run go vet against code.
 	go vet ./...
-
+	
+CONVERSION_GEN := $(shell pwd)/bin/conversion-gen
+CODE_GENERATOR_VERSION := $(shell awk '/k8s.io\/client-go/ {print substr($$2, 2)}' go.mod)
+conversion-gen: ## Donwload conversion-gen locally if necessary.
+	$(call go-get-tool,$(CONVERSION_GEN),k8s.io/code-generator/cmd/conversion-gen@v$(CODE_GENERATOR_VERSION))
+generate-go-conversions: conversion-gen $(CONVERSION_GEN) ## Generate conversions go code
+	$(CONVERSION_GEN) \
+		--input-dirs=./api/v1beta1 \
+		--output-file-base=zz_generated.conversion --output-base=. \
+		--go-header-file=./hack/boilerplate.go.txt
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
@@ -90,6 +99,8 @@ docker-build: test ## Build docker image with the manager.
 	docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_80}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_80_TAG}   .
 docker-build-mysql57: test ## Build docker image with the manager.
 	docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_57}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_57_TAG}   .
+docker-build-mysql80: 
+		docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_80}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_80_TAG}   .
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 	docker push ${SIDECAR_IMG}

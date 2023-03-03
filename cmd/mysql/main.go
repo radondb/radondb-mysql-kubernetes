@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	clientConfDir         = "/etc/my.cnf.d/client.conf"
+	clientConfDir         = "/etc/mysql/client.conf"
 	connectionMaxIdleTime = 30 * time.Second
 	connectionTimeout     = 30 * time.Second
 	raftStatusCmd         = "xenoncli raft status"
