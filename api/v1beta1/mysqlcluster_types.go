@@ -372,6 +372,10 @@ type ExporterSpec struct {
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// enabled is used to enable/disable the exporter.
+	// +optional
+	// +kubebuilder:default:=true
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 type DataSource struct {
@@ -391,7 +395,7 @@ type LogOpts struct {
 	// The busybox image.
 	// +optional
 	// +kubebuilder:default:="busybox:1.32"
-	BusyboxImage string `json:"busyboxImage,omitempty"`
+	BusyboxImage string `json:"image,omitempty"`
 
 	// SlowLogTail represents if tail the mysql slow log.
 	// +optional

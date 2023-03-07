@@ -1,17 +1,18 @@
 # Image URL to use all building/pushing image targets
-FROM_VERSION ?=v2.2.1
-CHART_VERSION ?=2.2.1
-CHART_TOVERSION ?=2.3.0
-TO_VERSION ?=v2.3.0
+FROM_VERSION ?=v2.3.0
+CHART_VERSION ?=2.3.0
+CHART_TOVERSION ?=3.0.0
+TO_VERSION ?=v3.0.0
+TAG ?=v3.0.0
 IMGPREFIX ?=radondb/
-MYSQL_IMAGE_57 ?=5.7.39
+MYSQL_IMAGE_57 ?=5.7.34
 MYSQL_IMAGE_80 ?=8.0.25
 MYSQL_IMAGE_57_TAG ?=$(IMGPREFIX)percona-server:$(MYSQL_IMAGE_57)
 MYSQL_IMAGE_80_TAG ?=$(IMGPREFIX)percona-server:$(MYSQL_IMAGE_80)
-IMG ?= $(IMGPREFIX)mysql-operator:latest
-SIDECAR57_IMG ?= $(IMGPREFIX)mysql57-sidecar:latest
-SIDECAR80_IMG ?= $(IMGPREFIX)mysql80-sidecar:latest
-XENON_IMG ?= $(IMGPREFIX)xenon:latest
+IMG ?= $(IMGPREFIX)mysql-operator:$(TAG)
+SIDECAR57_IMG ?= $(IMGPREFIX)mysql57-sidecar:$(TAG)
+SIDECAR80_IMG ?= $(IMGPREFIX)mysql80-sidecar:$(TAG)
+XENON_IMG ?= $(IMGPREFIX)xenon:$(TAG)
 GO_PORXY ?= off
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
@@ -90,11 +91,12 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/manager/main.go
 
-docker-build: test ## Build docker image with the manager.
+docker-build:  ## Build docker image with the manager.
 	docker buildx build --build-arg GO_PROXY=${GO_PORXY} -t ${IMG} .
 	docker buildx build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PORXY} -t ${SIDECAR57_IMG} .
 	docker buildx build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PORXY} -t ${XENON_IMG} .
 	docker buildx build  --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  --build-arg GO_PROXY=${GO_PORXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
+	docker buildx build  --build-arg XTRABACKUP_PKG=percona-xtrabackup-57  --build-arg GO_PROXY=${GO_PORXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
 	docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_57}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_57_TAG}   .
 	docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_80}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_80_TAG}   .
 docker-build-mysql57: test ## Build docker image with the manager.
@@ -152,13 +154,20 @@ todo:
 	@grep -Irnw './' -e 'TODO:'|grep -v grep
 
 updateVersion:
-	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i "s/mysql57-sidecar:$(FROM_VERSION)/mysql57-sidecar:$(TO_VERSION)/g" {} \;
-	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i "s/xenon:$(FROM_VERSION)/xenon:$(TO_VERSION)/g" {} \;
-	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "s/mysql-operator:$(FROM_VERSION)/mysql-operator:$(TO_VERSION)/g" {} \;
-	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "s/mysql80-sidecar:$(FROM_VERSION)/mysql80-sidecar:$(TO_VERSION)/g" {} \;
-	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "s/mysql-operator-$(FROM_VERSION)/mysql-operator-$(TO_VERSION)/g" {} \;
-	find ./ -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "s/\"$(FROM_VERSION)\"/\"$(TO_VERSION)\"/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i "" "s/mysql57-sidecar:$(FROM_VERSION)/mysql57-sidecar:$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i "" "s/xenon:$(FROM_VERSION)/xenon:$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "" "s/mysql-operator:$(FROM_VERSION)/mysql-operator:$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "" "s/mysql80-sidecar:$(FROM_VERSION)/mysql80-sidecar:$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "" "s/mysql-operator-$(FROM_VERSION)/mysql-operator-$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "" "s/\"$(FROM_VERSION)\"/\"$(TO_VERSION)\"/g" {} \;
 	# sed -i "18s/$(CHART_VERSION)/$(CHART_TOVERSION)/"  charts/mysql-operator/charts/Chart.yaml
-	find ./charts  -type f -name "*.yaml" -exec sed -i  "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
-	find ./config  -type f -name "*.yaml" -exec sed -i  "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
+	find ./charts/*  -type f -name "*.yaml" -exec sed -i  "" "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
+	find ./config/*  -type f -name "*.yaml" -exec sed -i  "" "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
 	
+CRD_TO_MARKDOWN := $(shell pwd)/bin/crd-to-markdown
+CRD_TO_MARKDOWN_VERSION = 0.0.3
+crd-to-markdown: ## Download crd-to-markdown locally if necessary.
+	$(call go-get-tool,$(CRD_TO_MARKDOWN),github.com/clamoriniere/crd-to-markdown@v$(CRD_TO_MARKDOWN_VERSION))
+apidoc: crd-to-markdown $(wildcard api/*/*_types.go)
+	$(CRD_TO_MARKDOWN) --links docs/links.csv -f api/v1beta1/mysqlcluster_types.go  -n MySQLCluster > docs/crd_mysqlcluster_v1beta1.md
+

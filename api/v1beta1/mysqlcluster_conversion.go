@@ -47,6 +47,7 @@ func Convert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alpha1.
 	out.User = in.MysqlOpts.User
 	out.Xenon = XenonOpts(in.XenonOpts)
 	out.Monitoring.Exporter.Image = in.MetricsOpts.Image
+	out.Monitoring.Exporter.Enabled = in.MetricsOpts.Enabled
 	out.Monitoring.Exporter.Resources = in.MetricsOpts.Resources
 	out.Affinity = (*corev1.Affinity)(unsafe.Pointer(in.PodPolicy.Affinity))
 	out.ImagePullPolicy = in.PodPolicy.ImagePullPolicy
@@ -85,11 +86,14 @@ func Convert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *MysqlClus
 	out.MetricsOpts.Image = in.Monitoring.Exporter.Image
 	out.MetricsOpts.Resources = in.Monitoring.Exporter.Resources
 	out.MysqlOpts.Image = in.Image
+	out.PodPolicy.SlowLogTail = in.Log.SlowLogTail
+	out.PodPolicy.BusyboxImage = in.Log.BusyboxImage
+	out.MetricsOpts.Enabled = in.Monitoring.Exporter.Enabled
 	out.PodPolicy.ImagePullPolicy = in.ImagePullPolicy
 	out.PodPolicy.Tolerations = in.Tolerations
 	out.PodPolicy.Affinity = (*corev1.Affinity)(unsafe.Pointer(in.Affinity))
 	out.PodPolicy.PriorityClassName = in.PriorityClassName
-	// //TODO in.DataSource in.Standby
+	//TODO in.DataSource in.Standby
 	out.XenonOpts.EnableAutoRebuild = in.EnableAutoRebuild
 	//TODO in.Log n.Service
 	return nil

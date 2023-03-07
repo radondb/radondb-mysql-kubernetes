@@ -2533,7 +2533,7 @@ spec:
                     default: false
                     description: AuditLogTail represents if tail the mysql audit log.
                     type: boolean
-                  busyboxImage:
+                  image:
                     default: busybox:1.32
                     description: To specify the image that will be used for log container.
                       The busybox image.
@@ -2638,6 +2638,10 @@ spec:
                               be defined
                             type: boolean
                         type: object
+                      enabled:
+                        default: true
+                        description: enabled is used to enable/disable the exporter.
+                        type: boolean
                       image:
                         default: prom/mysqld-exporter:v0.12.1
                         description: To specify the image that will be used for metrics

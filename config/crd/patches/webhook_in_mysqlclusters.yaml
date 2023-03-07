@@ -10,7 +10,7 @@ spec:
       clientConfig:
         service:
           namespace: system
-          name: webhook-service
+          name: radondb-mysql-webhook
           path: /convert
       conversionReviewVersions:
       - v1

@@ -6,7 +6,7 @@ name: "sample"
 namespace: "default"
 
 mysqlVersion: "8.0"
-version: v2.3.0
+version: v3.0.0
 
 tls: 
   enable: false
