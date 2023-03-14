@@ -106,32 +106,24 @@ type Config struct {
 	// XtrabackupTargetDir is a backup destination directory for xtrabackup.
 	XtrabackupTargetDir string
 
-	// S3 endpoint domain name
-	XCloudS3EndPoint string
-
-	// S3 access key
-	XCloudS3AccessKey string
-
-	// S3 secrete key
-	XCloudS3SecretKey string
-
-	// S3 Bucket names
-	XCloudS3Bucket string
-
-	// directory in S3 bucket for cluster restore from
-	XRestoreFrom string
-
 	// Clone flag
 	CloneFlag bool
 
 	// GtidPurged is the gtid set of the slave cluster to purged.
 	GtidPurged string
 
-	// NFS server which Restore from
-	XRestoreFromNFS string
+	// XRestoreFromNFS string
 
 	// User customized initsql.
 	InitSQL string
+
+	// directory in S3 bucket for cluster restore from
+	XRestoreFrom      string
+	XRestoreFromNFS   string
+	XCloudS3EndPoint  string
+	XCloudS3AccessKey string
+	XCloudS3SecretKey string
+	XCloudS3Bucket    string
 }
 
 // NewInitConfig returns a pointer to Config.
@@ -221,24 +213,24 @@ func NewBackupConfig() *Config {
 		BackupUser:     getEnvValue("BACKUP_USER"),
 		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
 
-		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
-		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
-		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
-		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
+		// XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
+		// XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
+		// XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
+		// XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
 	}
 }
 
 // NewReqBackupConfig returns the configuration file needed for backup job.
-func NewReqBackupConfig() *Config {
-	return &Config{
-		NameSpace:   getEnvValue("NAMESPACE"),
-		ServiceName: getEnvValue("SERVICE_NAME"),
+// func NewReqBackupConfig() *Config {
+// 	return &Config{
+// 		NameSpace:   getEnvValue("NAMESPACE"),
+// 		ServiceName: getEnvValue("SERVICE_NAME"),
 
-		BackupUser:     getEnvValue("BACKUP_USER"),
-		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
-		JobName:        getEnvValue("JOB_NAME"),
-	}
-}
+// 		BackupUser:     getEnvValue("BACKUP_USER"),
+// 		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
+// 		JobName:        getEnvValue("JOB_NAME"),
+// 	}
+// }
 
 // GetContainerType returns the CONTAINER_TYPE of the currently running container.
 // CONTAINER_TYPE used to mark the container type.
@@ -479,12 +471,16 @@ func (cfg *Config) buildClientConfig() (*ini.File, error) {
 // 	return utils.StringToBytes(str)
 // }
 
-/* The function is equivalent to the following shell script template:
+/*
+	The function is equivalent to the following shell script template:
+
 #!/bin/sh
 if [ ! -d {{.DataDir}} ] ; then
-    echo "is not exist the var lib mysql"
-    mkdir {{.DataDir}}
-    chown -R mysql.mysql {{.DataDir}}
+
+	echo "is not exist the var lib mysql"
+	mkdir {{.DataDir}}
+	chown -R mysql.mysql {{.DataDir}}
+
 fi
 mkdir /root/backup
 xbcloud get --storage=S3 \
@@ -658,19 +654,20 @@ func GetXtrabackupGTIDPurged(backuppath string) (string, error) {
 
 /*
 `#!/bin/sh
-	if [ ! -d  {{.DataDir}} ]; then
-        echo "is not exist the var lib mysql"
-        mkdir  {{.DataDir}}
-        chown -R mysql.mysql  {{.DataDir}}
-    fi
-    rm -rf  {{.DataDir}}/*
-    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --apply-log-only --target-dir=/backup/{{.XRestoreFrom}}
-    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --target-dir=/backup/{{.XRestoreFrom}}
-    chown -R mysql.mysql /backup/{{.XRestoreFromNFS}}
-    xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-back --target-dir=/backup/{{.XRestoreFrom}}
-    exit_code=$?
-    chown -R mysql.mysql {{.DataDir}}
-    exit $exit_code
+
+		if [ ! -d  {{.DataDir}} ]; then
+	        echo "is not exist the var lib mysql"
+	        mkdir  {{.DataDir}}
+	        chown -R mysql.mysql  {{.DataDir}}
+	    fi
+	    rm -rf  {{.DataDir}}/*
+	    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --apply-log-only --target-dir=/backup/{{.XRestoreFrom}}
+	    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --target-dir=/backup/{{.XRestoreFrom}}
+	    chown -R mysql.mysql /backup/{{.XRestoreFromNFS}}
+	    xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-back --target-dir=/backup/{{.XRestoreFrom}}
+	    exit_code=$?
+	    chown -R mysql.mysql {{.DataDir}}
+	    exit $exit_code
 */
 func (cfg *Config) ExecuteNFSRestore() error {
 	if len(cfg.XRestoreFromNFS) == 0 {

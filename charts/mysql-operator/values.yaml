@@ -98,7 +98,7 @@ nfsBackup:
 webhook:
   certManager:
     # If true, make sure that cert-manager has been installed.
-    enabled: false
+    enabled: true
   # If empty and disable certManager, Helm will auto-generate these fields.
   caBundlePEM: |
 

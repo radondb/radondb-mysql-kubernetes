@@ -122,7 +122,7 @@ func runCloneAndInit(cfg *Config) (bool, error) {
 		if err := cmd.Run(); err != nil {
 			return hasInitialized, fmt.Errorf("failed to disable the run restore: %s", err)
 		}
-		cfg.XRestoreFrom = utils.DataVolumeMountPath // just for init clone
+		// cfg.XRestoreFrom = utils.DataVolumeMountPath // just for init clone
 		cfg.CloneFlag = true
 		return hasInitialized, nil
 	}
@@ -276,7 +276,7 @@ func RunHttpServer(cfg *Config, stop <-chan struct{}) error {
 }
 
 // request a backup command.
-func RunRequestBackup(cfg *Config, host string) error {
+func RunRequestBackup(cfg *BackupClientConfig, host string) error {
 	_, err := requestABackup(cfg, host, serverBackupEndpoint)
 	return err
 }

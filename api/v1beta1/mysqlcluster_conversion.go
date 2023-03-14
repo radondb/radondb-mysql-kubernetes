@@ -113,6 +113,20 @@ func Convert_v1beta1_BackupSpec_To_v1alpha1_BackupSpec(in *BackupSpec, out *v1al
 	return nil
 }
 
+func Convert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in *BackupStatus, out *v1alpha1.BackupStatus, s apiconversion.Scope) error {
+	if err := autoConvert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in, out, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+func Convert_v1alpha1_BackupStatus_To_v1beta1_BackupStatus(in *v1alpha1.BackupStatus, out *BackupStatus, s apiconversion.Scope) error {
+	if err := autoConvert_v1alpha1_BackupStatus_To_v1beta1_BackupStatus(in, out, s); err != nil {
+		return err
+	}
+	return nil
+}
+
 func FormatQuantity(q resource.Quantity) string {
 	if q.IsZero() {
 		return ""
