@@ -31,6 +31,9 @@ var (
 	// MysqlServerIDOffset represents the offset with which all server ids are shifted from 0
 	mysqlServerIDOffset = 100
 
+	//MySQL readonly server id start index
+	mysqlReadOnlyIDOffset = 200
+
 	// mysqlConfigPath is the mysql configs path.
 	mysqlConfigPath = utils.MysqlConfVolumeMountPath
 

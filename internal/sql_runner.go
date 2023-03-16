@@ -188,7 +188,7 @@ func CheckSlaveStatusWithRetry(sqlRunner SQLRunner, retry uint32) (isLagged, isR
 			break
 		}
 
-		if isLagged, isReplicating, err = checkSlaveStatus(sqlRunner); err == nil {
+		if isLagged, isReplicating, err = CheckSlaveStatus(sqlRunner); err == nil {
 			return
 		}
 
@@ -199,8 +199,8 @@ func CheckSlaveStatusWithRetry(sqlRunner SQLRunner, retry uint32) (isLagged, isR
 	return
 }
 
-// checkSlaveStatus check the slave status.
-func checkSlaveStatus(sqlRunner SQLRunner) (isLagged, isReplicating corev1.ConditionStatus, err error) {
+// CheckSlaveStatus check the slave status.
+func CheckSlaveStatus(sqlRunner SQLRunner) (isLagged, isReplicating corev1.ConditionStatus, err error) {
 	var rows *sql.Rows
 	isLagged, isReplicating = corev1.ConditionUnknown, corev1.ConditionUnknown
 	rows, err = sqlRunner.QueryRows(NewQuery("show slave status;"))
@@ -488,4 +488,18 @@ func Escape(sql string) string {
 	}
 
 	return string(dest)
+}
+
+// check readonly node, rpl_semi_sync_slave_enabled
+func CheckSemSync(sqlRunner SQLRunner) (corev1.ConditionStatus, error) {
+	var SemiSync uint8
+	if err := GetGlobalVariable(sqlRunner, "rpl_semi_sync_slave_enabled", &SemiSync); err != nil {
+		return corev1.ConditionUnknown, err
+	}
+
+	if SemiSync == 0 {
+		return corev1.ConditionFalse, nil
+	}
+
+	return corev1.ConditionTrue, nil
 }

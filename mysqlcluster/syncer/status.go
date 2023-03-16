@@ -25,7 +25,9 @@ import (
 	"github.com/presslabs/controller-util/pkg/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -86,14 +88,22 @@ func (s *StatusSyncer) GetOwner() runtime.Object { return s.MysqlCluster }
 // Sync persists data into the external store.
 func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	clusterCondition := s.updateClusterStatus()
+	labelSelector := s.GetLabels().AsSelector()
+	// Find the pods that revision is old.
+	r, err := labels.NewRequirement("readonly", selection.DoesNotExist, []string{})
+	if err != nil {
+		s.log.V(1).Info("failed to create label requirement", "error", err)
+		return syncer.SyncResult{}, err
+	}
+	labelSelector = labelSelector.Add(*r)
 
 	list := corev1.PodList{}
-	err := s.cli.List(
+	err = s.cli.List(
 		ctx,
 		&list,
 		&client.ListOptions{
 			Namespace:     s.Namespace,
-			LabelSelector: s.GetLabels().AsSelector(),
+			LabelSelector: labelSelector,
 		},
 	)
 	if err != nil {
