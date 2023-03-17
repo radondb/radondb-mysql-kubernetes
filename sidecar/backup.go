@@ -3,8 +3,10 @@ package sidecar
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -135,7 +137,7 @@ func (cfg *BackupClientConfig) XBackupName() (string, string) {
 	return utils.BuildBackupName(cfg.ClusterName)
 }
 
-func setAnnonations(cfg *BackupClientConfig, backname string, DateTime string, BackupType string) error {
+func setAnnonations(cfg *BackupClientConfig, backname string, DateTime string, BackupType string, BackupSize int64) error {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return err
@@ -156,9 +158,82 @@ func setAnnonations(cfg *BackupClientConfig, backname string, DateTime string, B
 	job.Annotations[utils.JobAnonationName] = backname
 	job.Annotations[utils.JobAnonationDate] = DateTime
 	job.Annotations[utils.JobAnonationType] = BackupType
+	job.Annotations[utils.JobAnonationSize] = strconv.FormatInt(BackupSize, 10)
 	_, err = clientset.BatchV1().Jobs(cfg.NameSpace).Update(context.TODO(), job, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func RunTakeS3BackupCommand(cfg *BackupClientConfig) (string, string, int64, error) {
+	// cfg->XtrabackupArgs()
+	xtrabackup := exec.Command(xtrabackupCommand, cfg.XtrabackupArgs()...)
+
+	var err error
+	backupName, DateTime := cfg.XBackupName()
+	xcloud := exec.Command(xcloudCommand, cfg.XCloudArgs(backupName)...)
+	log.Info("xargs ", "xargs", strings.Join(cfg.XCloudArgs(backupName), " "))
+
+	// Create a pipe between xtrabackup and xcloud
+	r, w := io.Pipe()
+	defer r.Close()
+	xcloud.Stdin = r
+
+	// Start xtrabackup command with stdout directed to the pipe
+	xtrabackupReader, err := xtrabackup.StdoutPipe()
+	if err != nil {
+		log.Error(err, "failed to create stdout pipe for xtrabackup")
+		return "", "", 0, err
+	}
+
+	// set xtrabackup and xcloud stderr to os.Stderr
+	xtrabackup.Stderr = os.Stderr
+	xcloud.Stderr = os.Stderr
+
+	// Start xtrabackup and xcloud in separate goroutines
+	if err := xtrabackup.Start(); err != nil {
+		log.Error(err, "failed to start xtrabackup command")
+		return "", "", 0, err
+	}
+	if err := xcloud.Start(); err != nil {
+		log.Error(err, "fail start xcloud ")
+		return "", "", 0, err
+	}
+
+	// Use io.Copy to write xtrabackup output to the pipe while tracking the number of bytes written
+	var n int64
+	go func() {
+		n, err = io.Copy(w, xtrabackupReader)
+		if err != nil {
+			log.Error(err, "failed to write xtrabackup output to pipe")
+		}
+		w.Close()
+	}()
+
+	// Wait for xtrabackup and xcloud to finish
+	// pipe command fail one, whole things fail
+	errorChannel := make(chan error, 2)
+	go func() {
+		errorChannel <- xcloud.Wait()
+	}()
+	go func() {
+		errorChannel <- xtrabackup.Wait()
+	}()
+
+	for i := 0; i < 2; i++ {
+		if err = <-errorChannel; err != nil {
+			// If xtrabackup or xcloud failed, stop the pipe and kill the other command
+			log.Error(err, "xtrabackup or xcloud failed closing the pipe...")
+			xtrabackup.Process.Kill()
+			xcloud.Process.Kill()
+			return "", "", 0, err
+		}
+	}
+
+	// Log backup size and upload speed
+	backupSizeMB := float64(n) / (1024 * 1024)
+	log.Info(fmt.Sprintf("Backup size: %.2f MB", backupSizeMB))
+
+	return backupName, DateTime, n, nil
 }

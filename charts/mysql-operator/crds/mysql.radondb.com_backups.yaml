@@ -138,17 +138,29 @@ spec:
       jsonPath: .status.backupName
       name: BackupName
       type: string
-    - description: The Backup Date time
-      jsonPath: .status.backupDate
-      name: BackupDate
+    - description: The Backup Start time
+      jsonPath: .status.startTime
+      name: StartTime
+      type: string
+    - description: The Backup CompletionTime time
+      jsonPath: .status.completionTime
+      name: completionTime
       type: string
     - description: The Backup Type
       jsonPath: .status.backupType
       name: Type
       type: string
-    - description: Whether the backup Success?
-      jsonPath: .status.conditions[?(@.type=="Complete")].status
-      name: Success
+    - description: The Backup Initiator
+      jsonPath: .status.type
+      name: Initiator
+      type: string
+    - description: The Backup State
+      jsonPath: .status.state
+      name: State
+      type: string
+    - description: The Backup State
+      jsonPath: .status.backupSize
+      name: Size
       type: string
     name: v1beta1
     schema:
@@ -170,80 +182,172 @@ spec:
           spec:
             description: BackupSpec defines the desired state of Backup
             properties:
+              backupops:
+                description: Backup Storage
+                properties:
+                  host:
+                    description: BackupHost
+                    type: string
+                  nfs:
+                    properties:
+                      nfsServerAddress:
+                        description: NFS Server Address
+                        type: string
+                    type: object
+                  s3:
+                    properties:
+                      secretName:
+                        description: S3 Bucket
+                        type: string
+                    type: object
+                type: object
               clusterName:
-                description: ClusterName represents the cluster name to backup
+                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                  ClusterName is the name of the cluster to be backed up.'
                 type: string
-              historyLimit:
-                default: 3
-                description: History Limit of job
-                format: int32
-                type: integer
-              hostfrom:
-                description: HostFrom represents the host for which to take backup
-                  If is empty, is use leader HostFrom
+              manual:
+                description: Defines details for manual pgBackRest backup Jobs
+                properties:
+                  backupRetention:
+                    default: 7
+                    description: Backup Retention
+                    format: int32
+                    type: integer
+                  type:
+                    type: string
+                type: object
+              method:
+                default: xtrabackup
+                description: BackupMethod represents the type of backup
                 type: string
-              image:
-                default: radondb/mysql57-sidecar:v2.3.0
-                description: To specify the image that will be used for sidecar container.
-                type: string
-              nfsServerAddress:
-                description: Represents the ip address of the nfs server.
-                type: string
-            required:
-            - clusterName
+              schedule:
+                description: Backup Schedule
+                properties:
+                  backupRetention:
+                    default: 7
+                    description: Backup Retention
+                    format: int32
+                    type: integer
+                  cronExpression:
+                    description: Cron expression for backup schedule
+                    type: string
+                  jobhistoryLimit:
+                    default: 3
+                    description: History Limit of job
+                    format: int32
+                    type: integer
+                  type:
+                    type: string
+                type: object
             type: object
           status:
-            description: BackupStatus defines the observed state of Backup
             properties:
-              backupDate:
-                description: Get the backup Date
-                type: string
               backupName:
-                description: Get the backup path.
+                type: string
+              backupSize:
                 type: string
               backupType:
-                description: Get the backup Type
                 type: string
-              completed:
-                default: false
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
-                type: boolean
-              conditions:
-                description: Conditions represents the backup resource conditions
-                  list.
+              completionTime:
+                format: date-time
+                type: string
+              manual:
+                properties:
+                  active:
+                    description: The number of actively running manual backup Pods.
+                    format: int32
+                    type: integer
+                  backupName:
+                    type: string
+                  backupSize:
+                    description: Get the backup Size
+                    type: string
+                  backupType:
+                    description: Get the backup Type
+                    type: string
+                  completionTime:
+                    description: Get the backup Type
+                    format: date-time
+                    type: string
+                  failed:
+                    format: int32
+                    type: integer
+                  finished:
+                    description: Specifies whether or not the Job is finished executing
+                      (does not indicate success or failure).
+                    type: boolean
+                  reason:
+                    type: string
+                  startTime:
+                    description: Get the backup Date
+                    format: date-time
+                    type: string
+                  state:
+                    description: Get current backup status
+                    type: string
+                  succeeded:
+                    description: Conditions represents the backup resource conditions
+                      list.
+                    format: int32
+                    type: integer
+                required:
+                - finished
+                - reason
+                type: object
+              scheduled:
                 items:
-                  description: BackupCondition defines condition struct for backup
-                    resource
                   properties:
-                    lastTransitionTime:
-                      description: LastTransitionTime
+                    backupName:
+                      description: Get the backup path.
+                      type: string
+                    backupSize:
+                      description: Get the backup Size
+                      type: string
+                    backupType:
+                      description: Get the backup Type
+                      type: string
+                    completionTime:
+                      description: Get the backup Type
                       format: date-time
                       type: string
-                    message:
-                      description: Message
+                    cronJobName:
+                      description: The name of the associated pgBackRest scheduled
+                        backup CronJob
                       type: string
+                    failed:
+                      format: int32
+                      type: integer
+                    finished:
+                      description: Specifies whether or not the Job is finished executing
+                        (does not indicate success or failure).
+                      type: boolean
                     reason:
-                      description: Reason
                       type: string
-                    status:
-                      description: Status of the condition, one of (\"True\", \"False\",
-                        \"Unknown\")
+                    startTime:
+                      description: Get the backup Date
+                      format: date-time
                       type: string
-                    type:
-                      description: type of cluster condition, values in (\"Ready\")
+                    state:
+                      description: Get current backup status
                       type: string
+                    succeeded:
+                      description: Conditions represents the backup resource conditions
+                        list.
+                      format: int32
+                      type: integer
                   required:
-                  - lastTransitionTime
-                  - message
+                  - finished
                   - reason
-                  - status
-                  - type
                   type: object
                 type: array
-            required:
-            - completed
+              startTime:
+                format: date-time
+                type: string
+              state:
+                type: string
+              type:
+                type: string
             type: object
         type: object
     served: true

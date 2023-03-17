@@ -96,7 +96,6 @@ docker-build:  ## Build docker image with the manager.
 	docker buildx build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PORXY} -t ${SIDECAR57_IMG} .
 	docker buildx build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PORXY} -t ${XENON_IMG} .
 	docker buildx build  --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  --build-arg GO_PROXY=${GO_PORXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
-	docker buildx build  --build-arg XTRABACKUP_PKG=percona-xtrabackup-57  --build-arg GO_PROXY=${GO_PORXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
 	docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_57}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_57_TAG}   .
 	docker buildx build  --build-arg "MYSQL_IMAGE=${MYSQL_IMAGE_80}"  --build-arg GO_PROXY=${GO_PORXY} -f build/mysql/Dockerfile  -t ${MYSQL_IMAGE_80_TAG}   .
 docker-build-mysql57: test ## Build docker image with the manager.

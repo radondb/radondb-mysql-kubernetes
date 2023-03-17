@@ -159,7 +159,11 @@ func (in *BackupSpec) DeepCopyInto(out *BackupSpec) {
 		*out = new(ManualBackup)
 		(*in).DeepCopyInto(*out)
 	}
-	in.BackupSchedule.DeepCopyInto(&out.BackupSchedule)
+	if in.BackupSchedule != nil {
+		in, out := &in.BackupSchedule, &out.BackupSchedule
+		*out = new(BackupSchedule)
+		(*in).DeepCopyInto(*out)
+	}
 	in.BackupOpts.DeepCopyInto(&out.BackupOpts)
 }
 

@@ -37,6 +37,7 @@ import (
 	mysqlv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	mysqlv1beta1 "github.com/radondb/radondb-mysql-kubernetes/api/v1beta1"
 	"github.com/radondb/radondb-mysql-kubernetes/controllers"
+	"github.com/radondb/radondb-mysql-kubernetes/controllers/backup"
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
 	//+kubebuilder:scaffold:imports
 )
@@ -64,7 +65,7 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	opts := zap.Options{
-		Development: true,
+		Development: false,
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -104,12 +105,21 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Status")
 		os.Exit(1)
 	}
-	if err = (&controllers.BackupReconciler{
+	// if err = (&controllers.BackupReconciler{
+	// 	Client:   mgr.GetClient(),
+	// 	Scheme:   mgr.GetScheme(),
+	// 	Recorder: mgr.GetEventRecorderFor("controller.Backup"),
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "Backup")
+	// 	os.Exit(1)
+	// }
+	if err = (&backup.BackupReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("controller.Backup"),
+		Recorder: mgr.GetEventRecorderFor("controller.Backups"),
+		Owner:    "backup",
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Backup")
+		setupLog.Error(err, "unable to create v1beta1 controller", "controller", "Backup")
 		os.Exit(1)
 	}
 	if err = (&controllers.MysqlUserReconciler{

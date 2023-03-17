@@ -1,6 +1,7 @@
 package sidecar
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,9 +10,15 @@ import (
 )
 
 func requestABackup(cfg *BackupClientConfig, host string, endpoint string) (*http.Response, error) {
-	log.Info("initialize a backup", "host", host, "endpoint", endpoint)
 
-	req, err := http.NewRequest("GET", prepareURL(host, endpoint), nil)
+	log.Info("initialize a backup", "host", host, "endpoint", endpoint)
+	reqBody, err := json.Marshal(cfg)
+	if err != nil {
+		log.Error(err, "fail to marshal request body")
+		return nil, fmt.Errorf("fail to marshal request body: %s", err)
+	}
+
+	req, err := http.NewRequest("POST", prepareURL(host, endpoint), bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, fmt.Errorf("fail to create request: %s", err)
 	}
@@ -34,7 +41,7 @@ func requestABackup(cfg *BackupClientConfig, host string, endpoint string) (*htt
 	var result utils.JsonResult
 	json.NewDecoder(resp.Body).Decode(&result)
 
-	err = setAnnonations(cfg, result.BackupName, result.Date, "S3") // set annotation
+	err = setAnnonations(cfg, result.BackupName, result.Date, "S3", result.BackupSize) // set annotation
 	if err != nil {
 		return nil, fmt.Errorf("fail to set annotation: %s", err)
 	}

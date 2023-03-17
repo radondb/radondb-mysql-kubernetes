@@ -128,11 +128,11 @@ func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	backName, Datetime, err := RunTakeBackupCommand(&requestBody)
+	backName, Datetime, backupSize, err := RunTakeS3BackupCommand(&requestBody)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
-		msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime})
+		msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime, BackupSize: backupSize})
 		w.Write(msg)
 	}
 }

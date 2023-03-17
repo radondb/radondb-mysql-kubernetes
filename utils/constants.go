@@ -165,6 +165,8 @@ const (
 	JobAnonationDate = "backupDate"
 	// Job Annonations type
 	JobAnonationType = "backupType"
+	// Job Annonations size
+	JobAnonationSize = "backupSize"
 )
 
 // JobType
@@ -198,6 +200,7 @@ type JsonResult struct {
 	Status     string `json:"status"`
 	BackupName string `json:"backupName"`
 	Date       string `json:"date"`
+	BackupSize int64  `json:"backupSize"`
 }
 
 // MySQLDefaultVersionMap is a map of supported mysql version and their image

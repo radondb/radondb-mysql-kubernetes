@@ -56,16 +56,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*BackupStatus)(nil), (*v1alpha1.BackupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(a.(*BackupStatus), b.(*v1alpha1.BackupStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*v1alpha1.BackupStatus)(nil), (*BackupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_BackupStatus_To_v1beta1_BackupStatus(a.(*v1alpha1.BackupStatus), b.(*BackupStatus), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*ClusterCondition)(nil), (*v1alpha1.ClusterCondition)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_ClusterCondition_To_v1alpha1_ClusterCondition(a.(*ClusterCondition), b.(*v1alpha1.ClusterCondition), scope)
 	}); err != nil {
@@ -151,6 +141,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*v1alpha1.BackupStatus)(nil), (*BackupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_BackupStatus_To_v1beta1_BackupStatus(a.(*v1alpha1.BackupStatus), b.(*BackupStatus), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddConversionFunc((*v1alpha1.MysqlClusterSpec)(nil), (*MysqlClusterSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(a.(*v1alpha1.MysqlClusterSpec), b.(*MysqlClusterSpec), scope)
 	}); err != nil {
@@ -158,6 +153,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddConversionFunc((*BackupSpec)(nil), (*v1alpha1.BackupSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_BackupSpec_To_v1alpha1_BackupSpec(a.(*BackupSpec), b.(*v1alpha1.BackupSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*BackupStatus)(nil), (*v1alpha1.BackupStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(a.(*BackupStatus), b.(*v1alpha1.BackupStatus), scope)
 	}); err != nil {
 		return err
 	}

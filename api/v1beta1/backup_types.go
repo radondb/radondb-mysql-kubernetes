@@ -40,7 +40,7 @@ type BackupSpec struct {
 	Manual *ManualBackup `json:"manual,omitempty"`
 	// Backup Schedule
 	// +optional
-	BackupSchedule BackupSchedule `json:"schedule,omitempty"`
+	BackupSchedule *BackupSchedule `json:"schedule,omitempty"`
 	// Backup Storage
 	BackupOpts BackupOps `json:"backupops,omitempty"`
 }
@@ -120,12 +120,17 @@ type ManualBackupStatus struct {
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 	// Conditions represents the backup resource conditions list.
 	// +optional
-	Succeeded bool `json:"succeeded,omitempty"`
+	Succeeded int32 `json:"succeeded,omitempty"`
 	// +optional
+	// The number of actively running manual backup Pods.
+	// +optional
+	Active int32  `json:"active,omitempty"`
 	Failed int32  `json:"failed,omitempty"`
 	Reason string `json:"reason"`
 	// Get the backup Type
 	BackupType string `json:"backupType,omitempty"`
+	// Get the backup Size
+	BackupSize string `json:"backupSize,omitempty"`
 }
 
 type ScheduledBackupStatus struct {
@@ -146,20 +151,22 @@ type ScheduledBackupStatus struct {
 	CompletionTime *metav1.Time `json:"completionTime,omitempty"`
 	// Conditions represents the backup resource conditions list.
 	// +optional
-	Succeeded bool `json:"succeeded,omitempty"`
+	Succeeded int32 `json:"succeeded,omitempty"`
 	// +optional
 	Failed int32  `json:"failed,omitempty"`
 	Reason string `json:"reason"`
+	// Get the backup Size
+	BackupSize string `json:"backupSize,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="BackupName",type="string",JSONPath=".status.backupName",description="The Backup name"
-// +kubebuilder:printcolumn:name="BackupDate",type="string",JSONPath=".status.backupDate",description="The Backup Date time"
-// +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".status.backupType",description="The Backup Type"
-// +kubebuilder:printcolumn:name="Success",type="string",JSONPath=".status.conditions[?(@.type==\"Complete\")].status",description="Whether the backup Success?"
+// +kubebuilder:printcolumn:name="BackupName",type="string",JSONPath=".status.manual.backupName",description="The Backup name"
+// +kubebuilder:printcolumn:name="BackupDate",type="string",JSONPath=".status.manual.startTime",description="The Backup Date time"
+// +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".status.manual.backupType",description="The Backup Type"
+// +kubebuilder:printcolumn:name="Success",type="string",JSONPath=".status.manual.conditions[?(@.type==\"Complete\")].status",description="Whether the backup Success?"
 // Backup is the Schema for the backups API
 type Backup struct {
 	metav1.TypeMeta   `json:",inline"`
