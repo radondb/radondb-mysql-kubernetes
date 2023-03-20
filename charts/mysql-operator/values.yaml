@@ -7,7 +7,7 @@ installCRDS: true
 
 mysqlcluster:
   install: false
-  version: v2.3.0
+  version: v2.4.0-alpha
 ## Specify an imagePullPolicy (Required)
 ## It's recommended to change this to 'Always' if the image tag is 'latest'
 ## ref: http://kubernetes.io/docs/user-guide/images/#updating-images
@@ -25,7 +25,7 @@ tolerationSeconds: 30
 
 manager:
   image: radondb/mysql-operator
-  tag: v2.3.0
+  tag: v2.4.0-alpha
   enableWebhooks: true
   resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
