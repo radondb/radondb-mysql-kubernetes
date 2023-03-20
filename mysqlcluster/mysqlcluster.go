@@ -335,6 +335,8 @@ func (c *MysqlCluster) GetNameForResource(name utils.ResourceName) string {
 			return template
 		}
 		return fmt.Sprintf("%s-mysql", c.Name)
+	case utils.ReadOnlyHeadlessSVC:
+		return fmt.Sprintf("%s-ro", c.Name)
 	default:
 		return c.Name
 	}

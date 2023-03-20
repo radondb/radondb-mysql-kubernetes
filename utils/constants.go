@@ -137,6 +137,8 @@ type ResourceName string
 const (
 	// HeadlessSVC is the alias of the headless service resource.
 	HeadlessSVC ResourceName = "headless"
+	// ReadOnlyHeadlessSVC is the alias  of the headless service resource
+	ReadOnlyHeadlessSVC = "ROHeadless"
 	// StatefulSet is the alias of the statefulset resource.
 	StatefulSet ResourceName = "mysql"
 	// ConfigMap is the alias for mysql configs, the config map resource.

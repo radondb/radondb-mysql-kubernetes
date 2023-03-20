@@ -151,6 +151,8 @@ func (s *StatefulSetSyncer) Sync(ctx context.Context) (syncer.SyncResult, error)
 		}
 
 	default:
+		// readonly node processing.
+		s.SfsReadOnly(ctx)
 		result.SetEventData("Normal", basicEventReason(s.Name, err),
 			fmt.Sprintf("%s %s %s successfully", kind, key, result.Operation))
 		s.log.Info(string(result.Operation), "key", key, "kind", kind)

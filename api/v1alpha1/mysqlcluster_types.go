@@ -34,7 +34,9 @@ type MysqlClusterSpec struct {
 	// +kubebuilder:validation:Enum=0;1;2;3;5
 	// +kubebuilder:default:=3
 	Replicas *int32 `json:"replicas,omitempty"`
-
+	// Readonlys Info.
+	// +optional
+	ReadOnlys *ReadOnlyType `json:"readonlys,omitempty"`
 	// The number of pods from that set that must still be available after the
 	// eviction, even in the absence of the evicted pod
 	// +optional
@@ -104,6 +106,22 @@ type MysqlClusterSpec struct {
 	// Containing CA (ca.crt) and server cert (tls.crt), server private key (tls.key) for SSL
 	// +optional
 	TlsSecretName string `json:"tlsSecretName,omitempty"`
+}
+
+// ReadOnly define the ReadOnly pods
+type ReadOnlyType struct {
+	// ReadOnlys is the number of readonly pods.
+	Num int32 `json:"num"`
+	// When the host name is empty, use the leader to change master
+	// +optional
+	Host string `json:"hostname"`
+	// The compute resource requirements.
+	// +optional
+	Resources *corev1.ResourceRequirements `json:"resources,omitempty"`
+	// +optional
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
+	// +optional
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.
