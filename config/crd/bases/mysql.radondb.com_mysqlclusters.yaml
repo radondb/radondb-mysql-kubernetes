@@ -2433,6 +2433,16 @@ spec:
               dataSource:
                 description: Specifies a data source for bootstrapping the MySQL cluster.
                 properties:
+                  S3backup:
+                    description: Bootstraping from backup
+                    properties:
+                      name:
+                        description: Backup name
+                        type: string
+                      secretName:
+                        description: Secret name
+                        type: string
+                    type: object
                   remote:
                     description: Bootstraping from remote data source
                     properties:
@@ -2492,22 +2502,6 @@ spec:
                             type: boolean
                         type: object
                     type: object
-                type: object
-              databaseInitSQL:
-                description: DatabaseInitSQL defines a ConfigMap containing custom
-                  SQL that will be run after the cluster is initialized. This ConfigMap
-                  must be in the same namespace as the cluster.
-                properties:
-                  key:
-                    description: Key is the ConfigMap data key that points to a SQL
-                      string
-                    type: string
-                  name:
-                    description: Name is the name of a ConfigMap
-                    type: string
-                required:
-                - key
-                - name
                 type: object
               enableAutoRebuild:
                 default: false
@@ -2679,7 +2673,21 @@ spec:
                 type: object
               mysqlConfig:
                 description: MySQLConfig `ConfigMap` name of MySQL config.
-                type: string
+                properties:
+                  configMapName:
+                    description: Name of the `ConfigMap` containing MySQL config.
+                    type: string
+                  myCnf:
+                    additionalProperties:
+                      type: string
+                    description: A map[string]string that will be passed to my.cnf
+                      file. The key/value pairs is persisted in the configmap.
+                    type: object
+                  pluginCnf:
+                    additionalProperties:
+                      type: string
+                    type: object
+                type: object
               mysqlVersion:
                 default: "5.7"
                 description: 'Represents the MySQL version that will be run. The available

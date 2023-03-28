@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,8 +35,8 @@ type BackupSpec struct {
 	ClusterName string `json:"clusterName,omitempty"`
 	// BackupMethod represents the type of backup
 	// +kubebuilder:default:="xtrabackup"
-	BackupMethod string `json:"mothod,omitempty"`
-	// Defines details for manual pgBackRest backup Jobs
+	BackupMethod string `json:"method,omitempty"`
+	// Defines details for manual  backup Jobs
 	// +optional
 	Manual *ManualBackup `json:"manual,omitempty"`
 	// Backup Schedule
@@ -60,9 +61,9 @@ type S3 struct {
 }
 
 type NFS struct {
-	// NFS Server Address
-	// +optional
-	NFSServerAddress string `json:"nfsServerAddress,omitempty"`
+	// Defines a Volume for backup MySQL data.
+	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes
+	Volume corev1.NFSVolumeSource `json:"volume,omitempty"`
 }
 
 type ManualBackup struct {
@@ -88,25 +89,35 @@ type BackupSchedule struct {
 	BackupJobHistoryLimit *int32 `json:"jobhistoryLimit,omitempty"`
 }
 
-// type BackupStatus struct {
-// 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-// 	// Important: Run "make" to regenerate code after modifying this file
-// 	// +kubebuilder:default:=false
-// 	Completed bool `json:"completed"`
-// 	// Get the backup path.
-// 	BackupName string `json:"backupName,omitempty"`
-// 	// Get the backup Date
-// 	BackupDate string `json:"backupDate,omitempty"`
-// 	// Get the backup Type
-// 	BackupType string `json:"backupType,omitempty"`
-// 	// Conditions represents the backup resource conditions list.
-// 	Conditions []BackupCondition `json:"conditions,omitempty"`
-// }
-
 type BackupStatus struct {
+	Type             BackupInitiator         `json:"type,omitempty"`
+	BackupName       string                  `json:"backupName,omitempty"`
+	BackupSize       string                  `json:"backupSize,omitempty"`
+	BackupType       string                  `json:"backupType,omitempty"`
+	StartTime        *metav1.Time            `json:"startTime,omitempty"`
+	CompletionTime   *metav1.Time            `json:"completionTime,omitempty"`
+	State            BackupConditionType     `json:"state,omitempty"`
 	ManualBackup     *ManualBackupStatus     `json:"manual,omitempty"`
 	ScheduledBackups []ScheduledBackupStatus `json:"scheduled,omitempty"`
 }
+
+type BackupConditionType string
+
+const (
+	// BackupComplete means the backup has finished his execution
+	BackupSucceeded BackupConditionType = "Succeeded"
+	// BackupFailed means backup has failed
+	BackupFailed BackupConditionType = "Failed"
+	BackupStart  BackupConditionType = "Started"
+	BackupActive BackupConditionType = "Active"
+)
+
+type BackupInitiator string
+
+const (
+	CronJobBackupInitiator BackupInitiator = "CronJob"
+	ManualBackupInitiator  BackupInitiator = "Manual"
+)
 
 type ManualBackupStatus struct {
 	// Specifies whether or not the Job is finished executing (does not indicate success or
@@ -131,10 +142,12 @@ type ManualBackupStatus struct {
 	BackupType string `json:"backupType,omitempty"`
 	// Get the backup Size
 	BackupSize string `json:"backupSize,omitempty"`
+	// Get current backup status
+	State BackupConditionType `json:"state,omitempty"`
 }
 
 type ScheduledBackupStatus struct {
-	// The name of the associated pgBackRest scheduled backup CronJob
+	// The name of the associated  scheduled backup CronJob
 	// +kubebuilder:validation:Required
 	CronJobName string `json:"cronJobName,omitempty"`
 	// Get the backup path.
@@ -157,16 +170,22 @@ type ScheduledBackupStatus struct {
 	Reason string `json:"reason"`
 	// Get the backup Size
 	BackupSize string `json:"backupSize,omitempty"`
+	// Get current backup status
+	State BackupConditionType `json:"state,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="BackupName",type="string",JSONPath=".status.manual.backupName",description="The Backup name"
-// +kubebuilder:printcolumn:name="BackupDate",type="string",JSONPath=".status.manual.startTime",description="The Backup Date time"
-// +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".status.manual.backupType",description="The Backup Type"
-// +kubebuilder:printcolumn:name="Success",type="string",JSONPath=".status.manual.conditions[?(@.type==\"Complete\")].status",description="Whether the backup Success?"
+// +kubebuilder:printcolumn:name="BackupName",type="string",JSONPath=".status.backupName",description="The Backup name"
+// +kubebuilder:printcolumn:name="StartTime",type="string",JSONPath=".status.startTime",description="The Backup Start time"
+// +kubebuilder:printcolumn:name="completionTime",type="string",JSONPath=".status.completionTime",description="The Backup CompletionTime time"
+// +kubebuilder:printcolumn:name="Type",type="string",JSONPath=".status.backupType",description="The Backup Type"
+// +kubebuilder:printcolumn:name="Initiator",type="string",JSONPath=".status.type",description="The Backup Initiator"
+// +kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.state",description="The Backup State"
+// +kubebuilder:printcolumn:name="Size",type="string",JSONPath=".status.backupSize",description="The Backup State"
+
 // Backup is the Schema for the backups API
 type Backup struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -175,31 +194,6 @@ type Backup struct {
 	Spec   BackupSpec   `json:"spec,omitempty"`
 	Status BackupStatus `json:"status,omitempty"`
 }
-
-// BackupCondition defines condition struct for backup resource
-// type BackupCondition struct {
-// 	// type of cluster condition, values in (\"Ready\")
-// 	Type BackupConditionType `json:"type"`
-// 	// Status of the condition, one of (\"True\", \"False\", \"Unknown\")
-// 	Status corev1.ConditionStatus `json:"status"`
-// 	// LastTransitionTime
-// 	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
-// 	// Reason
-// 	Reason string `json:"reason"`
-// 	// Message
-// 	Message string `json:"message"`
-// }
-
-// BackupConditionType defines condition types of a backup resources
-// type BackupConditionType string
-
-// const (
-// 	// BackupComplete means the backup has finished his execution
-// 	BackupComplete BackupConditionType = "Complete"
-// 	// BackupFailed means backup has failed
-// 	BackupFailed BackupConditionType = "Failed"
-// 	BackupStart  BackupConditionType = "Started"
-// )
 
 //+kubebuilder:object:root=true
 

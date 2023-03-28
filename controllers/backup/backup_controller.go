@@ -219,6 +219,25 @@ func (r *BackupReconciler) reconcileManualBackup(ctx context.Context,
 			if completed || failed {
 				manualStatus.Finished = true
 			}
+			// Get State to the Status
+			switch {
+			case currentBackupJob.Status.Succeeded > 0:
+				manualStatus.State = v1beta1.BackupSucceeded
+			case currentBackupJob.Status.Active > 0:
+				manualStatus.State = v1beta1.BackupActive
+			case currentBackupJob.Status.Failed > 0:
+				manualStatus.State = v1beta1.BackupFailed
+			default:
+				manualStatus.State = v1beta1.BackupStart
+			}
+			// return manual backup status to the backup status
+			backup.Status.BackupName = manualStatus.BackupName
+			backup.Status.BackupSize = manualStatus.BackupSize
+			backup.Status.BackupType = manualStatus.BackupType
+			backup.Status.State = manualStatus.State
+			backup.Status.CompletionTime = manualStatus.CompletionTime
+			backup.Status.StartTime = manualStatus.StartTime
+			backup.Status.Type = v1beta1.ManualBackupInitiator
 
 		}
 
@@ -247,8 +266,7 @@ func (r *BackupReconciler) reconcileManualBackup(ctx context.Context,
 	labels := ManualBackupLabels(cluster.Name)
 	backupJob.ObjectMeta.Labels = labels
 
-	jobName := backupJob.ObjectMeta.Name
-	spec, err := generateBackupJobSpec(backup, cluster, labels, jobName)
+	spec, err := generateBackupJobSpec(backup, cluster, labels)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -315,16 +333,40 @@ func (r *BackupReconciler) reconcileCronBackup(ctx context.Context, backup *v1be
 			}
 			sbs.BackupName = job.GetAnnotations()["backupName"]
 			sbs.BackupSize = job.GetAnnotations()["backupSize"]
+			sbs.BackupType = job.GetAnnotations()["backupType"]
 			sbs.CompletionTime = job.Status.CompletionTime
 			sbs.Failed = job.Status.Failed
 			sbs.Succeeded = job.Status.Succeeded
+			sbs.StartTime = job.Status.StartTime
+			if jobCompleted(job) || jobFailed(job) {
+				sbs.Finished = true
+			}
+			switch {
+			case job.Status.Succeeded > 0:
+				sbs.State = v1beta1.BackupSucceeded
+			case job.Status.Active > 0:
+				sbs.State = v1beta1.BackupActive
+			case job.Status.Failed > 0:
+				sbs.State = v1beta1.BackupFailed
+			default:
+				sbs.State = v1beta1.BackupStart
+			}
 			scheduledStatus = append(scheduledStatus, sbs)
 		}
 	}
-	// if nil ,create status
-	if backup.Status.ScheduledBackups == nil {
-		backup.Status.ScheduledBackups = scheduledStatus
+	// fill the backup status, always return the latest backup job status
+	if len(scheduledStatus) > 0 {
+		latestScheduledStatus := scheduledStatus[len(scheduledStatus)-1]
+		backup.Status.StartTime = latestScheduledStatus.StartTime
+		backup.Status.CompletionTime = latestScheduledStatus.CompletionTime
+		backup.Status.BackupName = latestScheduledStatus.BackupName
+		backup.Status.BackupSize = latestScheduledStatus.BackupSize
+		backup.Status.Type = v1beta1.CronJobBackupInitiator
+		backup.Status.State = latestScheduledStatus.State
+		backup.Status.BackupType = latestScheduledStatus.BackupType
 	}
+	// file the scheduled backup status
+	backup.Status.ScheduledBackups = scheduledStatus
 
 	labels := CronBackupLabels(cluster.Name)
 	objectMeta := CronBackupJobMeta(cluster)
@@ -344,7 +386,7 @@ func (r *BackupReconciler) reconcileCronBackup(ctx context.Context, backup *v1be
 	}
 	objectMeta.Labels = labels
 	// objectmeta.Annotations = annotations
-	jobSpec, err := generateBackupJobSpec(backup, cluster, labels, objectMeta.Name)
+	jobSpec, err := generateBackupJobSpec(backup, cluster, labels)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -376,12 +418,49 @@ func (r *BackupReconciler) reconcileCronBackup(ctx context.Context, backup *v1be
 
 }
 
-func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster, labels map[string]string, jobName string) (*batchv1.JobSpec, error) {
+func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster, labels map[string]string) (*batchv1.JobSpec, error) {
+
+	// If backup.Spec.BackupOpts.S3 is not nil then use ENV BACKUP_TYPE=s3 and set the s3SecretName
+	// If backup.Spec.BackupOpts.NFS is not nil then use ENV BACKUP_TYPE=nfs and mount the nfs volume
+
 	backupHost := GetBackupHost(cluster)
 	backupImage := cluster.Spec.Backup.Image
 	serviceAccountName := backup.Spec.ClusterName
 	clusterAuthsctName := fmt.Sprintf("%s-secret", cluster.GetName())
-	s3SecretName := backup.Spec.BackupOpts.S3.BackupSecretName
+	var S3BackuptEnv []corev1.EnvVar
+	var NFSBackupEnv *corev1.EnvVar
+	var backupTypeEnv corev1.EnvVar
+	var NFSVolume *corev1.Volume
+	var NFSVolumeMount *corev1.VolumeMount
+
+	if backup.Spec.BackupOpts.S3 != nil && backup.Spec.BackupOpts.NFS != nil {
+		return nil, errors.New("backup can only be configured with one of S3 or NFS")
+	}
+
+	if backup.Spec.BackupOpts.S3 != nil {
+		s3SecretName := backup.Spec.BackupOpts.S3.BackupSecretName
+		S3BackuptEnv = append(S3BackuptEnv,
+			getEnvVarFromSecret(s3SecretName, "S3_ENDPOINT", "s3-endpoint", false),
+			getEnvVarFromSecret(s3SecretName, "S3_ACCESSKEY", "s3-access-key", true),
+			getEnvVarFromSecret(s3SecretName, "S3_SECRETKEY", "s3-secret-key", true),
+			getEnvVarFromSecret(s3SecretName, "S3_BUCKET", "s3-bucket", true),
+		)
+		backupTypeEnv = corev1.EnvVar{Name: "BACKUP_TYPE", Value: "s3"}
+
+	}
+
+	if backup.Spec.BackupOpts.NFS != nil {
+		NFSVolume = &corev1.Volume{
+			Name:         "nfs-backup",
+			VolumeSource: corev1.VolumeSource{NFS: &backup.Spec.BackupOpts.NFS.Volume},
+		}
+		NFSVolumeMount = &corev1.VolumeMount{
+			Name:      "nfs-backup",
+			MountPath: "/backup",
+		}
+		backupTypeEnv = corev1.EnvVar{Name: "BACKUP_TYPE", Value: "nfs"}
+
+	}
 
 	container := corev1.Container{
 		Env: []corev1.EnvVar{
@@ -390,8 +469,11 @@ func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster
 			{Name: "CLUSTER_NAME", Value: cluster.GetName()},
 			{Name: "SERVICE_NAME", Value: fmt.Sprintf("%s-mysql", cluster.GetName())},
 			{Name: "HOST_NAME", Value: backupHost},
-			{Name: "REPLICAS", Value: "1"},
-			{Name: "JOB_NAME", Value: jobName},
+			{Name: "JOB_NAME", ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "metadata.labels['job-name']",
+				},
+			}},
 		},
 		Image:           backupImage,
 		ImagePullPolicy: cluster.Spec.ImagePullPolicy,
@@ -401,14 +483,22 @@ func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster
 		"request_a_backup",
 		GetXtrabackupURL(GetBackupHost(cluster)),
 	}
+	// Add backup user and password to the env
 	container.Env = append(container.Env,
-		getEnvVarFromSecret(s3SecretName, "S3_ENDPOINT", "s3-endpoint", false),
-		getEnvVarFromSecret(s3SecretName, "S3_ACCESSKEY", "s3-access-key", true),
-		getEnvVarFromSecret(s3SecretName, "S3_SECRETKEY", "s3-secret-key", true),
-		getEnvVarFromSecret(s3SecretName, "S3_BUCKET", "s3-bucket", true),
 		getEnvVarFromSecret(clusterAuthsctName, "BACKUP_USER", "backup-user", true),
 		getEnvVarFromSecret(clusterAuthsctName, "BACKUP_PASSWORD", "backup-password", true),
 	)
+	if NFSBackupEnv != nil && S3BackuptEnv != nil {
+		container.Env = append(container.Env, *NFSBackupEnv)
+		container.Env = append(container.Env, S3BackuptEnv...)
+	}
+
+	if NFSVolumeMount != nil {
+		container.VolumeMounts = append(container.VolumeMounts, *NFSVolumeMount)
+	}
+
+	container.Env = append(container.Env, backupTypeEnv)
+
 	jobSpec := &batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{Labels: labels},
@@ -418,6 +508,9 @@ func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster
 				ServiceAccountName: serviceAccountName,
 			},
 		},
+	}
+	if NFSVolume != nil {
+		jobSpec.Template.Spec.Volumes = []corev1.Volume{*NFSVolume}
 	}
 	var backoffLimit int32 = 1
 

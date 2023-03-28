@@ -190,9 +190,27 @@ spec:
                     type: string
                   nfs:
                     properties:
-                      nfsServerAddress:
-                        description: NFS Server Address
-                        type: string
+                      volume:
+                        description: 'Defines a Volume for backup MySQL data. More
+                          info: https://kubernetes.io/docs/concepts/storage/persistent-volumes'
+                        properties:
+                          path:
+                            description: 'Path that is exported by the NFS server.
+                              More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
+                            type: string
+                          readOnly:
+                            description: 'ReadOnly here will force the NFS export
+                              to be mounted with read-only permissions. Defaults to
+                              false. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
+                            type: boolean
+                          server:
+                            description: 'Server is the hostname or IP address of
+                              the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
+                            type: string
+                        required:
+                        - path
+                        - server
+                        type: object
                     type: object
                   s3:
                     properties:
@@ -207,7 +225,7 @@ spec:
                   ClusterName is the name of the cluster to be backed up.'
                 type: string
               manual:
-                description: Defines details for manual pgBackRest backup Jobs
+                description: Defines details for manual  backup Jobs
                 properties:
                   backupRetention:
                     default: 7
@@ -312,8 +330,7 @@ spec:
                       format: date-time
                       type: string
                     cronJobName:
-                      description: The name of the associated pgBackRest scheduled
-                        backup CronJob
+                      description: The name of the associated  scheduled backup CronJob
                       type: string
                     failed:
                       format: int32

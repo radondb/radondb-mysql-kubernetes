@@ -35,7 +35,18 @@ type BackupClientConfig struct {
 	XtrabackupExtraArgs []string `json:"xtrabackup_extra_args"`
 	// XtrabackupTargetDir is a backup destination directory for xtrabackup.
 	XtrabackupTargetDir string `json:"xtrabackup_target_dir"`
+	// BackupType is a backup type for xtrabackup. s3 or disk
+	BackupType BkType `json:"backup_type"`
 }
+
+type BkType string
+
+const (
+	// BackupTypeS3 is a backup type for xtrabackup. s3
+	S3 BkType = "s3"
+	// BackupTypeDisk is a backup type for xtrabackup. disk
+	NFS BkType = "nfs"
+)
 
 // NewReqBackupConfig returns the configuration file needed for backup job call /backup.
 // The configuration file is obtained from the environment variables.
@@ -54,6 +65,7 @@ func NewReqBackupConfig() *BackupClientConfig {
 		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
 		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
 		BackupName:        BackupName,
+		BackupType:        BkType(getEnvValue("BACKUP_TYPE")),
 	}
 }
 
@@ -72,47 +84,6 @@ func (cfg *BackupClientConfig) XCloudArgs(backupName string) []string {
 		"--insecure",
 	}
 	return xcloudArgs
-}
-
-func RunTakeBackupCommand(cfg *BackupClientConfig) (string, string, error) {
-	// cfg->XtrabackupArgs()
-	xtrabackup := exec.Command(xtrabackupCommand, cfg.XtrabackupArgs()...)
-
-	var err error
-	backupName, DateTime := cfg.XBackupName()
-	xcloud := exec.Command(xcloudCommand, cfg.XCloudArgs(backupName)...)
-	log.Info("xargs ", "xargs", strings.Join(cfg.XCloudArgs(backupName), " "))
-	if xcloud.Stdin, err = xtrabackup.StdoutPipe(); err != nil {
-		log.Error(err, "failed to pipline")
-		return "", "", err
-	}
-	xtrabackup.Stderr = os.Stderr
-	xcloud.Stderr = os.Stderr
-
-	if err := xtrabackup.Start(); err != nil {
-		log.Error(err, "failed to start xtrabackup command")
-		return "", "", err
-	}
-	if err := xcloud.Start(); err != nil {
-		log.Error(err, "fail start xcloud ")
-		return "", "", err
-	}
-
-	// pipe command fail one, whole things fail
-	errorChannel := make(chan error, 2)
-	go func() {
-		errorChannel <- xcloud.Wait()
-	}()
-	go func() {
-		errorChannel <- xtrabackup.Wait()
-	}()
-
-	for i := 0; i < 2; i++ {
-		if err = <-errorChannel; err != nil {
-			return "", "", err
-		}
-	}
-	return backupName, DateTime, nil
 }
 
 func (cfg *BackupClientConfig) XtrabackupArgs() []string {

@@ -262,6 +262,13 @@ func autoConvert_v1alpha1_BackupSpec_To_v1beta1_BackupSpec(in *v1alpha1.BackupSp
 }
 
 func autoConvert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in *BackupStatus, out *v1alpha1.BackupStatus, s conversion.Scope) error {
+	// WARNING: in.Type requires manual conversion: does not exist in peer-type
+	out.BackupName = in.BackupName
+	// WARNING: in.BackupSize requires manual conversion: does not exist in peer-type
+	out.BackupType = in.BackupType
+	// WARNING: in.StartTime requires manual conversion: does not exist in peer-type
+	// WARNING: in.CompletionTime requires manual conversion: does not exist in peer-type
+	// WARNING: in.State requires manual conversion: does not exist in peer-type
 	// WARNING: in.ManualBackup requires manual conversion: does not exist in peer-type
 	// WARNING: in.ScheduledBackups requires manual conversion: does not exist in peer-type
 	return nil
@@ -269,9 +276,9 @@ func autoConvert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in *BackupStatus,
 
 func autoConvert_v1alpha1_BackupStatus_To_v1beta1_BackupStatus(in *v1alpha1.BackupStatus, out *BackupStatus, s conversion.Scope) error {
 	// WARNING: in.Completed requires manual conversion: does not exist in peer-type
-	// WARNING: in.BackupName requires manual conversion: does not exist in peer-type
+	out.BackupName = in.BackupName
 	// WARNING: in.BackupDate requires manual conversion: does not exist in peer-type
-	// WARNING: in.BackupType requires manual conversion: does not exist in peer-type
+	out.BackupType = in.BackupType
 	// WARNING: in.Conditions requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -386,7 +393,6 @@ func autoConvert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *Mysql
 	// WARNING: in.CustomTLSSecret requires manual conversion: does not exist in peer-type
 	// WARNING: in.Storage requires manual conversion: does not exist in peer-type
 	out.MysqlVersion = in.MysqlVersion
-	// WARNING: in.DatabaseInitSQL requires manual conversion: does not exist in peer-type
 	// WARNING: in.Xenon requires manual conversion: does not exist in peer-type
 	// WARNING: in.Backup requires manual conversion: does not exist in peer-type
 	// WARNING: in.Monitoring requires manual conversion: does not exist in peer-type

@@ -138,17 +138,29 @@ spec:
       jsonPath: .status.backupName
       name: BackupName
       type: string
-    - description: The Backup Date time
-      jsonPath: .status.backupDate
-      name: BackupDate
+    - description: The Backup Start time
+      jsonPath: .status.startTime
+      name: StartTime
+      type: string
+    - description: The Backup CompletionTime time
+      jsonPath: .status.completionTime
+      name: completionTime
       type: string
     - description: The Backup Type
       jsonPath: .status.backupType
       name: Type
       type: string
-    - description: Whether the backup Success?
-      jsonPath: .status.conditions[?(@.type=="Complete")].status
-      name: Success
+    - description: The Backup Initiator
+      jsonPath: .status.type
+      name: Initiator
+      type: string
+    - description: The Backup State
+      jsonPath: .status.state
+      name: State
+      type: string
+    - description: The Backup State
+      jsonPath: .status.backupSize
+      name: Size
       type: string
     name: v1beta1
     schema:
@@ -178,9 +190,27 @@ spec:
                     type: string
                   nfs:
                     properties:
-                      nfsServerAddress:
-                        description: NFS Server Address
-                        type: string
+                      volume:
+                        description: 'Defines a Volume for backup MySQL data. More
+                          info: https://kubernetes.io/docs/concepts/storage/persistent-volumes'
+                        properties:
+                          path:
+                            description: 'Path that is exported by the NFS server.
+                              More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
+                            type: string
+                          readOnly:
+                            description: 'ReadOnly here will force the NFS export
+                              to be mounted with read-only permissions. Defaults to
+                              false. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
+                            type: boolean
+                          server:
+                            description: 'Server is the hostname or IP address of
+                              the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
+                            type: string
+                        required:
+                        - path
+                        - server
+                        type: object
                     type: object
                   s3:
                     properties:
@@ -195,7 +225,7 @@ spec:
                   ClusterName is the name of the cluster to be backed up.'
                 type: string
               manual:
-                description: Defines details for manual pgBackRest backup Jobs
+                description: Defines details for manual  backup Jobs
                 properties:
                   backupRetention:
                     default: 7
@@ -205,7 +235,7 @@ spec:
                   type:
                     type: string
                 type: object
-              mothod:
+              method:
                 default: xtrabackup
                 description: BackupMethod represents the type of backup
                 type: string
@@ -231,6 +261,15 @@ spec:
             type: object
           status:
             properties:
+              backupName:
+                type: string
+              backupSize:
+                type: string
+              backupType:
+                type: string
+              completionTime:
+                format: date-time
+                type: string
               manual:
                 properties:
                   active:
@@ -262,6 +301,9 @@ spec:
                     description: Get the backup Date
                     format: date-time
                     type: string
+                  state:
+                    description: Get current backup status
+                    type: string
                   succeeded:
                     description: Conditions represents the backup resource conditions
                       list.
@@ -277,6 +319,9 @@ spec:
                     backupName:
                       description: Get the backup path.
                       type: string
+                    backupSize:
+                      description: Get the backup Size
+                      type: string
                     backupType:
                       description: Get the backup Type
                       type: string
@@ -285,8 +330,7 @@ spec:
                       format: date-time
                       type: string
                     cronJobName:
-                      description: The name of the associated pgBackRest scheduled
-                        backup CronJob
+                      description: The name of the associated  scheduled backup CronJob
                       type: string
                     failed:
                       format: int32
@@ -301,15 +345,26 @@ spec:
                       description: Get the backup Date
                       format: date-time
                       type: string
+                    state:
+                      description: Get current backup status
+                      type: string
                     succeeded:
                       description: Conditions represents the backup resource conditions
                         list.
-                      type: boolean
+                      format: int32
+                      type: integer
                   required:
                   - finished
                   - reason
                   type: object
                 type: array
+              startTime:
+                format: date-time
+                type: string
+              state:
+                type: string
+              type:
+                type: string
             type: object
         type: object
     served: true

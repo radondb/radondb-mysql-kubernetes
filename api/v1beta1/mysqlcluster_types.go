@@ -44,7 +44,7 @@ type MysqlClusterSpec struct {
 
 	// MySQLConfig `ConfigMap` name of MySQL config.
 	// +optional
-	MySQLConfig string `json:"mysqlConfig,omitempty"`
+	MySQLConfig MySQLConfigs `json:"mysqlConfig,omitempty"`
 
 	//Compute resources of a MySQL container.
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
@@ -64,12 +64,6 @@ type MysqlClusterSpec struct {
 	// +optional
 	// +kubebuilder:default:="5.7"
 	MysqlVersion string `json:"mysqlVersion,omitempty"`
-
-	// DatabaseInitSQL defines a ConfigMap containing custom SQL that will
-	// be run after the cluster is initialized. This ConfigMap must be in the same
-	// namespace as the cluster.
-	// +optional
-	DatabaseInitSQL *DatabaseInitSQL `json:"databaseInitSQL,omitempty"`
 
 	// XenonOpts is the options of xenon container.
 	// +optional
@@ -128,7 +122,7 @@ type MysqlClusterSpec struct {
 
 	// Specifies a data source for bootstrapping the MySQL cluster.
 	// +optional
-	DataSource *DataSource `json:"dataSource,omitempty"`
+	DataSource DataSource `json:"dataSource,omitempty"`
 
 	// Run this cluster as a read-only copy of an existing cluster or archive.
 	// +optional
@@ -150,6 +144,17 @@ type MysqlClusterSpec struct {
 	// Specification of the service that exposes the MySQL leader instance.
 	// +optional
 	Service *ServiceSpec `json:"service,omitempty"`
+}
+
+type MySQLConfigs struct {
+	// Name of the `ConfigMap` containing MySQL config.
+	// +optional
+	ConfigMapName string `json:"configMapName,omitempty"`
+
+	// A map[string]string that will be passed to my.cnf file.
+	// The key/value pairs is persisted in the configmap.
+	MysqlConfig  map[string]string `json:"myCnf,omitempty"`
+	PluginConfig map[string]string `json:"pluginCnf,omitempty"`
 }
 
 type BackupOpts struct {
@@ -311,19 +316,6 @@ const (
 	NodeConditionReplicating NodeConditionType = "Replicating"
 )
 
-// DatabaseInitSQL defines a ConfigMap containing custom SQL that will
-// be run after the cluster is initialized. This ConfigMap must be in the same
-// namespace as the cluster.
-type DatabaseInitSQL struct {
-	// Name is the name of a ConfigMap
-	// +required
-	Name string `json:"name"`
-
-	// Key is the ConfigMap data key that points to a SQL string
-	// +required
-	Key string `json:"key"`
-}
-
 type XenonOpts struct {
 	// To specify the image that will be used for xenon container.
 	// +optional
@@ -381,7 +373,10 @@ type ExporterSpec struct {
 type DataSource struct {
 	// Bootstraping from remote data source
 	// +optional
-	Remote *RemoteDataSource `json:"remote,omitempty"`
+	Remote RemoteDataSource `json:"remote,omitempty"`
+	// Bootstraping from backup
+	// +optional
+	S3Backup S3BackupDataSource `json:"S3backup,omitempty"`
 }
 
 type RemoteDataSource struct {
@@ -389,6 +384,14 @@ type RemoteDataSource struct {
 	SourceConfig *corev1.SecretProjection `json:"sourceConfig,omitempty"`
 }
 
+type S3BackupDataSource struct {
+	// Backup name
+	// +optional
+	Name string `json:"name"`
+	// Secret name
+	// +optional
+	SecretName string `json:"secretName"`
+}
 type LogOpts struct {
 	// To specify the image that will be used for log container.
 	// +optional

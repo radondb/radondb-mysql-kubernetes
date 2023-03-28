@@ -73,7 +73,7 @@ func newServer(cfg *Config, stop <-chan struct{}) *server {
 	mux.Handle(serverBackupEndpoint, maxClients(http.HandlerFunc(srv.backupHandler), 1))
 	// Backup download server.
 	mux.Handle(serverBackupDownLoadEndpoint,
-		maxClients(http.HandlerFunc(srv.backupDownLoadHandler), 1))
+		maxClients(http.HandlerFunc(srv.backupDownloadHandler), 1))
 
 	// Shutdown gracefully the http server.
 	go func() {
@@ -94,22 +94,6 @@ func (s *server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Connection", "keep-alive")
-// 	w.Header().Set("content-type", "text/json")
-// 	if !s.isAuthenticated(r) {
-// 		http.Error(w, "Not authenticated!", http.StatusForbidden)
-// 		return
-// 	}
-// 	backName, Datetime, err := RunTakeBackupCommand(requestBody)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 	} else {
-// 		msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime})
-// 		w.Write(msg)
-// 	}
-// }
-
 func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("content-type", "text/json")
@@ -127,18 +111,20 @@ func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
 		return
 	}
+	// /backup only handle S3 backup
+	if requestBody.BackupType == S3 {
 
-	backName, Datetime, backupSize, err := RunTakeS3BackupCommand(&requestBody)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else {
-		msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime, BackupSize: backupSize})
-		w.Write(msg)
+		backName, Datetime, backupSize, err := RunTakeS3BackupCommand(&requestBody)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		} else {
+			msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime, BackupSize: backupSize})
+			w.Write(msg)
+		}
 	}
 }
 
-// DownLoad handler.
-func (s *server) backupDownLoadHandler(w http.ResponseWriter, r *http.Request) {
+func (s *server) backupDownloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !s.isAuthenticated(r) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
@@ -235,37 +221,3 @@ func transportWithTimeout(connectTimeout time.Duration) http.RoundTripper {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 }
-
-// requestABackup connects to specified host and endpoint and gets the backup.
-// func requestABackup(cfg *Config, host string, endpoint string) (*http.Response, error) {
-// 	log.Info("initialize a backup", "host", host, "endpoint", endpoint)
-
-// 	req, err := http.NewRequest("GET", prepareURL(host, endpoint), nil)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("fail to create request: %s", err)
-// 	}
-
-// 	// set authentication user and password
-// 	req.SetBasicAuth(cfg.BackupUser, cfg.BackupPassword)
-
-// 	client := &http.Client{}
-// 	client.Transport = transportWithTimeout(serverConnectTimeout)
-
-// 	resp, err := client.Do(req)
-// 	if err != nil || resp.StatusCode != 200 {
-// 		status := "unknown"
-// 		if resp != nil {
-// 			status = resp.Status
-// 		}
-// 		return nil, fmt.Errorf("fail to get backup: %s, code: %s", err, status)
-// 	}
-// 	defer resp.Body.Close()
-// 	var result utils.JsonResult
-// 	json.NewDecoder(resp.Body).Decode(&result)
-
-// 	err = setAnnonations(cfg, result.BackupName, result.Date, "S3") // set annotation
-// 	if err != nil {
-// 		return nil, fmt.Errorf("fail to set annotation: %s", err)
-// 	}
-// 	return resp, nil
-// }

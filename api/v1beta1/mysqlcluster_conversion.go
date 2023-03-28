@@ -38,10 +38,15 @@ func Convert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alpha1.
 	if err := autoConvert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in, out, s); err != nil {
 		return err
 	}
+	// if err := Convert_v1alpha1_MysqlOpts_To_v1beta1_MysqlConfig(in, out, s); err != nil {
+	// 	return err
+	// }
 	//TODO in.MysqlOpts.Database in.MysqlOpts.InitTokuDB
 	out.Image = in.MysqlOpts.Image
 	out.MaxLagSeconds = in.MysqlOpts.MaxLagSeconds
-	out.MySQLConfig = in.MysqlOpts.MysqlConfTemplate
+	out.MySQLConfig.ConfigMapName = in.MysqlOpts.MysqlConfTemplate
+	out.MySQLConfig.MysqlConfig = *(*map[string]string)(unsafe.Pointer(&in.MysqlOpts.MysqlConf))
+	out.MySQLConfig.PluginConfig = *(*map[string]string)(unsafe.Pointer(&in.MysqlOpts.PluginConf))
 	//TODO in.MysqlOpts.Password in.MysqlOpts.PluginConf in.MysqlOpts.RootHost
 	out.Resources = in.MysqlOpts.Resources
 	out.User = in.MysqlOpts.User
@@ -62,6 +67,8 @@ func Convert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alpha1.
 	out.Storage.Resources.Requests = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceStorage: resource.MustParse(in.Persistence.Size),
 	}
+	out.DataSource.S3Backup.Name = in.RestoreFrom
+	out.DataSource.S3Backup.SecretName = in.BackupSecretName
 
 	//TODO in.Backup
 
@@ -73,7 +80,9 @@ func Convert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *MysqlClus
 		return err
 	}
 	out.MysqlOpts.User = in.User
-	out.MysqlOpts.MysqlConfTemplate = in.MySQLConfig
+	out.MysqlOpts.MysqlConfTemplate = in.MySQLConfig.ConfigMapName
+	out.MysqlOpts.MysqlConf = in.MySQLConfig.MysqlConfig
+	out.MysqlOpts.PluginConf = in.MySQLConfig.PluginConfig
 	out.MysqlOpts.Resources = in.Resources
 	out.TlsSecretName = in.CustomTLSSecret.Name
 	out.Persistence.StorageClass = in.Storage.StorageClassName
@@ -95,6 +104,10 @@ func Convert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *MysqlClus
 	out.PodPolicy.PriorityClassName = in.PriorityClassName
 	//TODO in.DataSource in.Standby
 	out.XenonOpts.EnableAutoRebuild = in.EnableAutoRebuild
+
+	out.RestoreFrom = in.DataSource.S3Backup.Name
+	out.BackupSecretName = in.DataSource.S3Backup.SecretName
+
 	//TODO in.Log n.Service
 	return nil
 }

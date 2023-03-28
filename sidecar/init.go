@@ -122,7 +122,7 @@ func runCloneAndInit(cfg *Config) (bool, error) {
 		if err := cmd.Run(); err != nil {
 			return hasInitialized, fmt.Errorf("failed to disable the run restore: %s", err)
 		}
-		// cfg.XRestoreFrom = utils.DataVolumeMountPath // just for init clone
+		cfg.XRestoreFrom = utils.DataVolumeMountPath // just for init clone
 		cfg.CloneFlag = true
 		return hasInitialized, nil
 	}
@@ -277,8 +277,15 @@ func RunHttpServer(cfg *Config, stop <-chan struct{}) error {
 
 // request a backup command.
 func RunRequestBackup(cfg *BackupClientConfig, host string) error {
-	_, err := requestABackup(cfg, host, serverBackupEndpoint)
-	return err
+	if cfg.BackupType == S3 {
+		_, err := requestS3Backup(cfg, host, serverBackupEndpoint)
+		return err
+	}
+	if cfg.BackupType == NFS {
+		err := requestNFSBackup(cfg, host, serverBackupDownLoadEndpoint)
+		return err
+	}
+	return fmt.Errorf("unknown backup type: %s", cfg.BackupType)
 }
 
 // Save plugin.cnf and extra.cnf to specified path.
