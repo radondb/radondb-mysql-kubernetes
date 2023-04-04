@@ -28,13 +28,9 @@ import (
 type BackupSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 	// ClusterName is the name of the cluster to be backed up.
 	ClusterName string `json:"clusterName,omitempty"`
 	// BackupMethod represents the type of backup
-	// +kubebuilder:default:="xtrabackup"
 	BackupMethod string `json:"method,omitempty"`
 	// Defines details for manual  backup Jobs
 	// +optional
@@ -80,12 +76,10 @@ type BackupSchedule struct {
 	CronExpression string `json:"cronExpression,omitempty"`
 	// Backup Retention
 	// +optional
-	// +kubebuilder:default:=7
 	BackupRetention *int32 `json:"backupRetention,omitempty"`
 	BackupType      string `json:"type,omitempty"`
 	// History Limit of job
 	// +optional
-	// +kubebuilder:default:=3
 	BackupJobHistoryLimit *int32 `json:"jobhistoryLimit,omitempty"`
 }
 

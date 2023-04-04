@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-// Defile the label of backup.
+// Define the label of backup.
 const (
 	labelPrefix    = "backups.mysql.radondb.com/"
 	LabelCluster   = labelPrefix + "cluster"
@@ -20,7 +20,7 @@ const (
 	LableManualJob = labelPrefix + "manualjob"
 )
 
-// Defile the annotation of backup.
+// Define the annotation of backup.
 const (
 	AnnotationPrefix = "backups.mysql.radondb.com/"
 )
