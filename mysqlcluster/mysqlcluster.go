@@ -276,6 +276,14 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			},
 		})
 	}
+
+	// Add mysql checker volume
+	volumes = append(volumes, corev1.Volume{
+		Name: utils.MySQLcheckerVolumeName,
+		VolumeSource: corev1.VolumeSource{
+			EmptyDir: &corev1.EmptyDirVolumeSource{},
+		},
+	})
 	return volumes
 }
 

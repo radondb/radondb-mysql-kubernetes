@@ -199,6 +199,10 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			Name:      utils.SysLocalTimeZone,
 			MountPath: utils.SysLocalTimeZoneMountPath,
 		},
+		{
+			Name:      utils.MySQLcheckerVolumeName,
+			MountPath: utils.RadonDBBinDir,
+		},
 	}
 	if c.Spec.TlsSecretName != "" {
 		volumeMounts = append(volumeMounts,

@@ -167,6 +167,11 @@ func runInitCommand(cfg *Config, hasInitialized bool) error {
 	if exists, _ := checkIfPathExists(utils.TlsMountPath); exists {
 		buildSSLdata()
 	}
+	// copy mysqlchecker to /opt/radondb/
+	if exists, _ := checkIfPathExists(utils.TlsMountPath); exists {
+		copyMySQLchecker()
+	}
+
 	buildDefaultXenonMeta(uid, gid)
 
 	// build client.conf.
@@ -345,6 +350,20 @@ func buildSSLdata() error {
 	cmd = exec.Command("sh", "-c", cronCmd)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to copy ssl: %s", err)
+	}
+	return nil
+}
+
+func copyMySQLchecker() error {
+	cpCmd := "cp /mnt/mysqlchecker " + utils.RadonDBBinDir
+	cmd := exec.Command("sh", "-c", cpCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to copy mysqlchecker: %s", err)
+	}
+	chownCmd := "chown -R mysql.mysql " + utils.RadonDBBinDir
+	cmd = exec.Command("sh", "-c", chownCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chown mysqlchecker: %s", err)
 	}
 	return nil
 }

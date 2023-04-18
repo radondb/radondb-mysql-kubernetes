@@ -132,7 +132,7 @@ func TestGetMysqlLivenessProbe(t *testing.T) {
 	livenessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"/usr/bin/bash", "-c", "mysqlchecker liveness"},
+				Command: []string{"/usr/bin/bash", "-c", "/opt/radondb/mysqlchecker liveness"},
 			},
 		},
 		InitialDelaySeconds: 30,
@@ -148,7 +148,7 @@ func TestGetMysqlReadinessProbe(t *testing.T) {
 	readinessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"/usr/bin/bash", "-c", "mysqlchecker readiness"},
+				Command: []string{"/usr/bin/bash", "-c", "/opt/radondb/mysqlchecker readiness"},
 			},
 		},
 		InitialDelaySeconds: 10,
