@@ -77,7 +77,7 @@ func Convert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alpha1.
 	out.Log.SlowLogTail = in.PodPolicy.SlowLogTail
 	out.Tolerations = in.PodPolicy.Tolerations
 	out.PriorityClassName = in.PodPolicy.PriorityClassName
-	out.Log.BusyboxImage = in.PodPolicy.SidecarImage
+	out.Log.BusyboxImage = in.PodPolicy.BusyboxImage
 	out.Log.Resources = in.PodPolicy.ExtraResources
 	out.Storage.AccessModes = in.Persistence.AccessModes
 	out.Storage.Resources.Requests = map[corev1.ResourceName]resource.Quantity{
@@ -85,6 +85,13 @@ func Convert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alpha1.
 	}
 	out.DataSource.S3Backup.Name = in.RestoreFrom
 	out.DataSource.S3Backup.SecretName = in.BackupSecretName
+	if in.TlsSecretName != "" {
+		out.CustomTLSSecret = &corev1.SecretProjection{
+			LocalObjectReference: corev1.LocalObjectReference{
+				Name: in.TlsSecretName,
+			},
+		}
+	}
 
 	//TODO in.Backup
 
@@ -100,7 +107,9 @@ func Convert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *MysqlClus
 	out.MysqlOpts.MysqlConf = in.MySQLConfig.MysqlConfig
 	out.MysqlOpts.PluginConf = in.MySQLConfig.PluginConfig
 	out.MysqlOpts.Resources = in.Resources
-	out.TlsSecretName = in.CustomTLSSecret.Name
+	if in.CustomTLSSecret != nil {
+		out.TlsSecretName = in.CustomTLSSecret.Name
+	}
 	out.Persistence.StorageClass = in.Storage.StorageClassName
 	out.Persistence.Size = FormatQuantity(in.Storage.Resources.Requests[corev1.ResourceStorage])
 	out.Persistence.AccessModes = in.Storage.AccessModes

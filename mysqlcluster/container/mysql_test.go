@@ -178,6 +178,10 @@ func TestGetMysqlVolumeMounts(t *testing.T) {
 			Name:      utils.SysLocalTimeZone,
 			MountPath: "/etc/localtime",
 		},
+		{
+			Name:      utils.MySQLcheckerVolumeName,
+			MountPath: "/opt/radondb",
+		},
 	}
 	assert.Equal(t, volumeMounts, mysqlCase.VolumeMounts)
 }

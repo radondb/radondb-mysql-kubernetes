@@ -459,7 +459,11 @@ func (in *MysqlClusterSpec) DeepCopyInto(out *MysqlClusterSpec) {
 	}
 	in.MySQLConfig.DeepCopyInto(&out.MySQLConfig)
 	in.Resources.DeepCopyInto(&out.Resources)
-	in.CustomTLSSecret.DeepCopyInto(&out.CustomTLSSecret)
+	if in.CustomTLSSecret != nil {
+		in, out := &in.CustomTLSSecret, &out.CustomTLSSecret
+		*out = new(v1.SecretProjection)
+		(*in).DeepCopyInto(*out)
+	}
 	in.Storage.DeepCopyInto(&out.Storage)
 	in.Xenon.DeepCopyInto(&out.Xenon)
 	in.Backup.DeepCopyInto(&out.Backup)

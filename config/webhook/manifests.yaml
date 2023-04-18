@@ -10,7 +10,7 @@ webhooks:
   - v1
   clientConfig:
     service:
-      name: webhook-service
+      name: radondb-mysql-webhook
       namespace: system
       path: /validate-mysql-radondb-com-v1alpha1-mysqlcluster
   failurePolicy: Fail

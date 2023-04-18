@@ -168,7 +168,8 @@ func runInitCommand(cfg *Config, hasInitialized bool) error {
 		buildSSLdata()
 	}
 	// copy mysqlchecker to /opt/radondb/
-	if exists, _ := checkIfPathExists(utils.TlsMountPath); exists {
+	if exists, _ := checkIfPathExists(utils.RadonDBBinDir); exists {
+		log.Info("copy mysqlchecker to /opt/radondb/")
 		copyMySQLchecker()
 	}
 

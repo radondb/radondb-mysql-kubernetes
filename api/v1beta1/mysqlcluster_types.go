@@ -51,7 +51,7 @@ type MysqlClusterSpec struct {
 
 	// Containing CA (ca.crt) and server cert (tls.crt), server private key (tls.key) for SSL
 	// +optional
-	CustomTLSSecret corev1.SecretProjection `json:"customTLSSecret,omitempty"`
+	CustomTLSSecret *corev1.SecretProjection `json:"customTLSSecret,omitempty"`
 
 	// Defines a PersistentVolumeClaim for MySQL data.
 	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes
