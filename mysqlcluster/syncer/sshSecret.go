@@ -18,32 +18,42 @@ package syncer
 
 import (
 	"github.com/presslabs/controller-util/pkg/syncer"
-	policyv1beta1 "k8s.io/api/policy/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// NewPDBSyncer returns podDisruptionBudget syncer.
-func NewPDBSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Interface {
-	pdb := &policyv1beta1.PodDisruptionBudget{
+// NewSecretSyncer returns secret syncer.
+func NewSShKeySyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Interface {
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      c.GetNameForResource(utils.PodDisruptionBudget),
+			Name:      c.GetNameForResource(utils.SShKey),
 			Namespace: c.Namespace,
 		},
 	}
 
-	return syncer.NewObjectSyncer("PDB", c.Unwrap(), pdb, cli, func() error {
-		if pdb.Spec.MinAvailable != nil {
-			// this mean that pdb is created and should return because spec is imutable
-			return nil
+	return syncer.NewObjectSyncer("Secret", c.Unwrap(), secret, cli, func() error {
+
+		if secret.Data == nil {
+			secret.Data = make(map[string][]byte)
 		}
-		ma := intstr.FromString(c.Spec.MinAvailable)
-		pdb.Spec.MinAvailable = &ma
-		pdb.Spec.Selector = metav1.SetAsLabelSelector(c.GetSelectorLabels())
+
+		if len(secret.Data["id_ecdsa"]) == 0 {
+			pub, priv, err := GenSSHKey()
+			if err != nil {
+				return err
+			}
+			secret.Data["id_ecdsa"] = priv
+			secret.Data["authorized_keys"] = pub
+
+		}
+
 		return nil
 	})
 }

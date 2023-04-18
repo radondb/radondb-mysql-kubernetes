@@ -17,13 +17,16 @@ limitations under the License.
 package syncer
 
 import (
+	"context"
 	"fmt"
+	"strings"
 
 	"github.com/presslabs/controller-util/pkg/syncer"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
@@ -33,6 +36,7 @@ import (
 )
 
 type jobSyncer struct {
+	client client.Client
 	job    *batchv1.Job
 	backup *backup.Backup
 }
@@ -50,6 +54,7 @@ func NewJobSyncer(c client.Client, backup *backup.Backup) syncer.Interface {
 	}
 
 	sync := &jobSyncer{
+		client: c,
 		job:    obj,
 		backup: backup,
 	}
@@ -174,6 +179,10 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 				MountPath: utils.XtrabckupLocal,
 			},
 		}
+	} else if s.backup.Spec.JuiceOpt != nil {
+		// Deal it for juiceOpt
+		s.buildJuicefsBackPod(&in)
+
 	} else {
 		// in.Containers[0].ImagePullPolicy = s.opt.ImagePullPolicy
 		in.Containers[0].Args = []string{
@@ -237,4 +246,85 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 		},
 	}
 	return in
+}
+
+func (s *jobSyncer) buildJuicefsBackPod(in *corev1.PodSpec) error {
+	// add volumn about pvc
+	var defMode int32 = 0600
+	var err error
+	var cmdstr string
+	in.Volumes = []corev1.Volume{
+		{
+			Name: utils.SShVolumnName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName:  fmt.Sprintf("%s-ssh-key", s.backup.Spec.ClusterName),
+					DefaultMode: &defMode,
+				},
+			},
+		},
+	}
+
+	in.Containers[0].VolumeMounts = []corev1.VolumeMount{
+		{
+			Name:      utils.SShVolumnName,
+			MountPath: utils.SshVolumnPath,
+		},
+	}
+
+	// PodName.clusterName-mysql.Namespace
+	// sample-mysql-0.sample-mysql.default
+	hostname := fmt.Sprintf("%s.%s-mysql.%s", s.backup.Spec.HostName, s.backup.Spec.ClusterName, s.backup.Namespace)
+	if cmdstr, err = s.buildJuicefsCmd(s.backup.Spec.JuiceOpt.BackupSecretName); err != nil {
+		return err
+	}
+
+	in.Containers[0].Command = []string{"bash", "-c", "--", `cp  /etc/secret-ssh/* /root/.ssh
+chmod 600 /root/.ssh/authorized_keys ;` +
+		strings.Join([]string{
+			"ssh", "-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no", hostname, cmdstr,
+		}, " ")}
+
+	return nil
+}
+
+func (s *jobSyncer) buildJuicefsCmd(secName string) (string, error) {
+	juiceopt := s.backup.Spec.JuiceOpt
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secName,
+			Namespace: s.backup.Namespace,
+		},
+	}
+	err := s.client.Get(context.TODO(),
+		types.NamespacedName{Namespace: s.backup.Namespace,
+			Name: secName}, secret)
+
+	if err != nil {
+		return "", err
+	}
+	url, bucket := secret.Data["s3-endpoint"], secret.Data["s3-bucket"]
+	accesskey, secretkey := secret.Data["s3-access-key"], secret.Data["s3-secret-key"]
+	juicebucket := utils.InstallBucket(string(url), string(bucket))
+	cmdstr := fmt.Sprintf(`<<EOF
+	export CLUSTER_NAME=%s
+	juicefs format --storage s3 \
+    --bucket  %s \
+    --access-key %s \
+    --secret-key %s \
+    %s \
+    %s`, s.backup.Spec.ClusterName, juicebucket, accesskey, secretkey, juiceopt.JuiceMeta, juiceopt.JuiceName)
+	cmdstr += fmt.Sprintf(`
+	juicefs mount -d %s /%s/
+	`, juiceopt.JuiceMeta, juiceopt.JuiceName)
+	cmdstr += fmt.Sprintf(`
+	source /backup.sh
+    backup
+	juicefs umount /%s/
+EOF`, juiceopt.JuiceName)
+	return cmdstr, nil
 }

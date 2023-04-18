@@ -180,7 +180,7 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			},
 		)
 	}
-
+	var defMode int32 = 0600
 	volumes = append(volumes,
 		corev1.Volume{
 			Name: utils.MysqlConfVolumeName,
@@ -243,6 +243,23 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			VolumeSource: corev1.VolumeSource{
 				HostPath: &corev1.HostPathVolumeSource{
 					Path: utils.SysLocalTimeZoneHostPath,
+				},
+			},
+		},
+		corev1.Volume{
+			Name: utils.SysFuseVolume,
+			VolumeSource: corev1.VolumeSource{
+				HostPath: &corev1.HostPathVolumeSource{
+					Path: "/dev/fuse",
+				},
+			},
+		},
+		corev1.Volume{
+			Name: utils.SShVolumnName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName:  c.GetNameForResource(utils.SShKey),
+					DefaultMode: &defMode,
 				},
 			},
 		},
@@ -328,8 +345,12 @@ func (c *MysqlCluster) GetNameForResource(name utils.ResourceName) string {
 		return fmt.Sprintf("%s-metrics", c.Name)
 	case utils.Secret:
 		return fmt.Sprintf("%s-secret", c.Name)
+	case utils.SShKey:
+		return fmt.Sprintf("%s-ssh-key", c.Name)
 	case utils.XenonMetaData:
 		return fmt.Sprintf("%s-xenon", c.Name)
+	case utils.RestoreCMN:
+		return fmt.Sprintf("%s-restore", c.Name)
 	case utils.ConfigMap:
 		if template := c.Spec.MysqlOpts.MysqlConfTemplate; template != "" {
 			return template

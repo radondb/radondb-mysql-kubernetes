@@ -17,6 +17,7 @@ limitations under the License.
 package syncer
 
 import (
+	"fmt"
 	"testing"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -144,4 +145,10 @@ func TestStatefulSetSyncer_sfsUpdated(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSecretKey(t *testing.T) {
+	pub, priv, _ := GenSSHKey()
+	fmt.Println(string(pub))
+	fmt.Println(string(priv))
 }

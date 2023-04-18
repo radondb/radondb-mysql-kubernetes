@@ -159,3 +159,7 @@ func ParseIPAndPath(nfsaddr string) (string, string) {
 		return res[0], "/"
 	}
 }
+
+func InstallBucket(url, bucket string) string {
+	return strings.Join(strings.Split(url, "//"), "//"+bucket+".")
+}

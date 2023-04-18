@@ -88,6 +88,12 @@ const (
 	LogsVolumeName      = "logs"
 	DataVolumeName      = "data"
 	SysVolumeName       = "host-sys"
+
+	// just for juicefs
+	SysFuseVolume = "host-fuse"
+	SshPortName   = "ssh"
+	SshPort       = 22
+
 	ScriptsVolumeName   = "scripts"
 	XenonConfVolumeName = "xenon-conf"
 	InitFileVolumeName  = "init-mysql"
@@ -100,6 +106,8 @@ const (
 	LogsVolumeMountPath      = "/var/log/mysql"
 	DataVolumeMountPath      = "/var/lib/mysql"
 	SysVolumeMountPath       = "/host-sys"
+
+	SysFuseVolumnMountPath   = "/dev/fuse"
 	ScriptsVolumeMountPath   = "/scripts"
 	XenonConfVolumeMountPath = "/etc/xenon"
 	InitFileVolumeMountPath  = "/docker-entrypoint-initdb.d"
@@ -129,6 +137,10 @@ const (
 	TlsVolumeName = "tls"
 	// TlsMountPath is the volume mount path for tls
 	TlsMountPath = "/etc/mysql-ssl"
+
+	// ssh path
+	SShVolumnName = "ssh-key"
+	SshVolumnPath = "/etc/secret-ssh"
 )
 
 // ResourceName is the type for aliasing resources that will be created.
@@ -165,6 +177,10 @@ const (
 	JobAnonationDate = "backupDate"
 	// Job Annonations type
 	JobAnonationType = "backupType"
+	// SSh key
+	SShKey = "ssh"
+	// restore config
+	RestoreCMN = "restore"
 )
 
 // JobType

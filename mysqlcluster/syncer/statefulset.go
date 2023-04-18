@@ -262,7 +262,10 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 		if err = s.mutate(); err != nil {
 			return controllerutil.OperationResultNone, err
 		}
-
+		//TODO: Do the Restore job
+		if err = s.createRestoreJob(ctx); err != nil {
+			s.log.Info("do not need restore the pvcs")
+		}
 		if err = s.cli.Create(ctx, s.sfs); err != nil {
 			return controllerutil.OperationResultNone, err
 		} else {
