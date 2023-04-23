@@ -296,12 +296,21 @@ func RunRequestBackup(cfg *BackupClientConfig, host string) error {
 
 // Save plugin.cnf and extra.cnf to specified path.
 func saveCnfTo(targetPath string, extraCnf *ini.File) error {
+	userId := 1001
+	groupId := 1001
 	if err := copyFile(path.Join(mysqlCMPath, utils.PluginConfigs), path.Join(targetPath, utils.PluginConfigs)); err != nil {
 		return fmt.Errorf("failed to copy plugin.cnf: %s", err)
+	}
+	if err := os.Chown(path.Join(targetPath, utils.PluginConfigs), userId, groupId); err != nil {
+		return fmt.Errorf("failed to change owner of plugin.cnf: %s", err)
 	}
 	if err := extraCnf.SaveTo(path.Join(targetPath, "extra.cnf")); err != nil {
 		return fmt.Errorf("failed to save extra.cnf: %s", err)
 	}
+	if err := os.Chown(path.Join(targetPath, "extra.cnf"), userId, groupId); err != nil {
+		return fmt.Errorf("failed to change owner of plugin.cnf: %s", err)
+	}
+
 	return nil
 }
 
