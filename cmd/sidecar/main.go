@@ -18,13 +18,18 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"time"
 
-	"github.com/spf13/cobra"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/radondb/radondb-mysql-kubernetes/sidecar"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
+	"github.com/spf13/cobra"
+	zaplogfmt "github.com/sykesm/zap-logfmt"
+	uzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 const (
@@ -46,8 +51,16 @@ var (
 
 func init() {
 	// setup logging
-	logf.SetLogger(zap.New(zap.UseDevMode(true)))
+  configLog := uzap.NewProductionEncoderConfig()
+	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+		encoder.AppendString(ts.UTC().Format(time.RFC3339Nano))
+	}
+	logfmtEncoder := zaplogfmt.NewEncoder(configLog)
+
+	// setup logging
+	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder)))
 }
+
 
 func main() {
 	containerName := sidecar.GetContainerType()

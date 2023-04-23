@@ -20,12 +20,17 @@ import (
 	"flag"
 	"os"
 	"sync"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
+
+	zaplogfmt "github.com/sykesm/zap-logfmt"
+	uzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -64,13 +69,20 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+
+	configLog := uzap.NewProductionEncoderConfig()
+	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+		encoder.AppendString(ts.UTC().Format(time.RFC3339Nano))
+	}
+	logfmtEncoder := zaplogfmt.NewEncoder(configLog)
 	opts := zap.Options{
 		Development: false,
 	}
 	opts.BindFlags(flag.CommandLine)
+
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder)))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
