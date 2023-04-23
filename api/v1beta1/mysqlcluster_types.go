@@ -44,7 +44,7 @@ type MysqlClusterSpec struct {
 
 	// MySQLConfig `ConfigMap` name of MySQL config.
 	// +optional
-	MySQLConfig *string `json:"mysqlConfig,omitempty"`
+	MySQLConfig MySQLConfigs `json:"mysqlConfig,omitempty"`
 
 	//Compute resources of a MySQL container.
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
@@ -65,12 +65,6 @@ type MysqlClusterSpec struct {
 	// +kubebuilder:default:="5.7"
 	MysqlVersion string `json:"mysqlVersion,omitempty"`
 
-	// DatabaseInitSQL defines a ConfigMap containing custom SQL that will
-	// be run after the cluster is initialized. This ConfigMap must be in the same
-	// namespace as the cluster.
-	// +optional
-	DatabaseInitSQL *DatabaseInitSQL `json:"databaseInitSQL,omitempty"`
-
 	// XenonOpts is the options of xenon container.
 	// +optional
 	// +kubebuilder:default:={image: "radondb/xenon:v2.3.0", admitDefeatHearbeatCount: 5, electionTimeout: 10000, resources: {limits: {cpu: "100m", memory: "256Mi"}, requests: {cpu: "50m", memory: "128Mi"}}}
@@ -82,7 +76,19 @@ type MysqlClusterSpec struct {
 
 	// Monitoring is the options of metrics container.
 	// +optional
-	Monitoring MonitoringSpec `json:"MonitoringSpec,omitempty"`
+	Monitoring MonitoringSpec `json:"monitoringSpec,omitempty"`
+
+	// Specifies mysql image to use.
+	// +optional
+	// +kubebuilder:default:="percona/percona-server:5.7.34"
+	Image string `json:"image,omitempty"`
+
+	// MaxLagSeconds configures the readiness probe of mysqld container
+	// if the replication lag is greater than MaxLagSeconds, the mysqld container will not be not healthy.
+	// +kubebuilder:default:=30
+	// +kubebuilder:validation:Minimum=0
+	// +optional
+	MaxLagSeconds int `json:"maxLagTime,omitempty"`
 
 	// ImagePullPolicy is used to determine when Kubernetes will attempt to
 	// pull (download) container images.
@@ -106,7 +112,7 @@ type MysqlClusterSpec struct {
 	// MySQL to restart.
 	// More info: https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
 	// +optional
-	PriorityClassName *string `json:"priorityClassName,omitempty"`
+	PriorityClassName string `json:"priorityClassName,omitempty"`
 
 	// The number of pods from that set that must still be available after the
 	// eviction, even in the absence of the evicted pod
@@ -116,7 +122,7 @@ type MysqlClusterSpec struct {
 
 	// Specifies a data source for bootstrapping the MySQL cluster.
 	// +optional
-	DataSource *DataSource `json:"dataSource,omitempty"`
+	DataSource DataSource `json:"dataSource,omitempty"`
 
 	// Run this cluster as a read-only copy of an existing cluster or archive.
 	// +optional
@@ -138,6 +144,17 @@ type MysqlClusterSpec struct {
 	// Specification of the service that exposes the MySQL leader instance.
 	// +optional
 	Service *ServiceSpec `json:"service,omitempty"`
+}
+
+type MySQLConfigs struct {
+	// Name of the `ConfigMap` containing MySQL config.
+	// +optional
+	ConfigMapName string `json:"configMapName,omitempty"`
+
+	// A map[string]string that will be passed to my.cnf file.
+	// The key/value pairs is persisted in the configmap.
+	MysqlConfig  map[string]string `json:"myCnf,omitempty"`
+	PluginConfig map[string]string `json:"pluginCnf,omitempty"`
 }
 
 type BackupOpts struct {
@@ -183,7 +200,7 @@ type MysqlCluster struct {
 	Status MysqlClusterStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 // MysqlClusterList contains a list of MysqlCluster
 type MysqlClusterList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -299,19 +316,6 @@ const (
 	NodeConditionReplicating NodeConditionType = "Replicating"
 )
 
-// DatabaseInitSQL defines a ConfigMap containing custom SQL that will
-// be run after the cluster is initialized. This ConfigMap must be in the same
-// namespace as the cluster.
-type DatabaseInitSQL struct {
-	// Name is the name of a ConfigMap
-	// +required
-	Name string `json:"name"`
-
-	// Key is the ConfigMap data key that points to a SQL string
-	// +required
-	Key string `json:"key"`
-}
-
 type XenonOpts struct {
 	// To specify the image that will be used for xenon container.
 	// +optional
@@ -341,7 +345,7 @@ type XenonOpts struct {
 
 type MonitoringSpec struct {
 	// +optional
-	Exporter *ExporterSpec `json:"exporter,omitempty"`
+	Exporter ExporterSpec `json:"exporter,omitempty"`
 }
 
 type ExporterSpec struct {
@@ -360,12 +364,19 @@ type ExporterSpec struct {
 	// More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+	// enabled is used to enable/disable the exporter.
+	// +optional
+	// +kubebuilder:default:=true
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 type DataSource struct {
 	// Bootstraping from remote data source
 	// +optional
-	Remote *RemoteDataSource `json:"remote,omitempty"`
+	Remote RemoteDataSource `json:"remote,omitempty"`
+	// Bootstraping from backup
+	// +optional
+	S3Backup S3BackupDataSource `json:"S3backup,omitempty"`
 }
 
 type RemoteDataSource struct {
@@ -373,10 +384,34 @@ type RemoteDataSource struct {
 	SourceConfig *corev1.SecretProjection `json:"sourceConfig,omitempty"`
 }
 
+type S3BackupDataSource struct {
+	// Backup name
+	// +optional
+	Name string `json:"name"`
+	// Secret name
+	// +optional
+	SecretName string `json:"secretName"`
+}
 type LogOpts struct {
 	// To specify the image that will be used for log container.
 	// +optional
+	// The busybox image.
+	// +optional
+	// +kubebuilder:default:="busybox:1.32"
+	BusyboxImage string `json:"image,omitempty"`
 
+	// SlowLogTail represents if tail the mysql slow log.
+	// +optional
+	// +kubebuilder:default:=false
+	SlowLogTail bool `json:"slowLogTail,omitempty"`
+
+	// AuditLogTail represents if tail the mysql audit log.
+	// +optional
+	// +kubebuilder:default:=false
+	AuditLogTail bool `json:"auditLogTail,omitempty"`
+
+	//Log container resources of a MySQL container.
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type MySQLStandbySpec struct {

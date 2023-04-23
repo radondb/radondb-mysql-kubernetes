@@ -318,6 +318,12 @@ func TestEnsureVolumes(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: utils.MySQLcheckerVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
 	}
 	// when disable Persistence
 	{

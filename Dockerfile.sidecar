@@ -23,7 +23,11 @@ COPY sidecar/ sidecar/
 COPY utils/ utils/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/sidecar cmd/sidecar/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/sidecar cmd/sidecar/main.go
+
+# Build mysql checker for mysql conatiner
+COPY cmd/mysql/main.go cmd/mysql/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/mysqlchecker cmd/mysql/main.go
 
 ###############################################################################
 #  Docker image for Sidecar
@@ -52,4 +56,5 @@ RUN set -ex; \
 
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
+COPY --from=builder /workspace/bin/mysqlchecker /mnt/mysqlchecker
 ENTRYPOINT ["sidecar"]

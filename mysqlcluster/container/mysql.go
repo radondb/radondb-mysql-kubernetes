@@ -122,7 +122,7 @@ func (c *mysql) getLivenessProbe() *corev1.Probe {
 				Command: []string{
 					"/usr/bin/bash",
 					"-c",
-					"mysqlchecker liveness",
+					"/opt/radondb/mysqlchecker liveness",
 				},
 			},
 		},
@@ -142,7 +142,7 @@ func (c *mysql) getReadinessProbe() *corev1.Probe {
 				Command: []string{
 					"/usr/bin/bash",
 					"-c",
-					"mysqlchecker readiness",
+					"/opt/radondb/mysqlchecker readiness",
 				},
 			},
 		},
@@ -172,6 +172,10 @@ func (c *mysql) getVolumeMounts() []corev1.VolumeMount {
 		{
 			Name:      utils.SysLocalTimeZone,
 			MountPath: utils.SysLocalTimeZoneMountPath,
+		},
+		{
+			Name:      utils.MySQLcheckerVolumeName,
+			MountPath: utils.RadonDBBinDir,
 		},
 	}
 	if c.Spec.TlsSecretName != "" {

@@ -32,5 +32,6 @@ var (
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}
 
 	// AddToScheme adds the types in this group-version to the given scheme.
-	AddToScheme = SchemeBuilder.AddToScheme
+	AddToScheme        = SchemeBuilder.AddToScheme
+	localSchemeBuilder = &SchemeBuilder.SchemeBuilder
 )

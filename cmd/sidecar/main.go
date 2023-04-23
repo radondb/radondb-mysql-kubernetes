@@ -21,6 +21,7 @@ import (
 	"os"
 	"time"
 
+
 	"github.com/radondb/radondb-mysql-kubernetes/sidecar"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	"github.com/spf13/cobra"
@@ -32,27 +33,25 @@ import (
 )
 
 const (
-	// The name of the sidecar.
-	sidecarName = "sidecar"
-	// The short description of the sidecar.
-	sidecarShort = "A simple helper for mysql operator."
+	SidecarName  = "sidecar"                             // The name of the sidecar.
+	SidecarShort = "A simple helper for mysql operator." // The short description of the sidecar.
 )
 
 var (
 	log = logf.Log.WithName("sidecar")
 	// A command for sidecar.
 	cmd = &cobra.Command{
-		Use:   sidecarName,
-		Short: sidecarShort,
+		Use:   SidecarName,
+		Short: SidecarShort,
 		Run: func(cmd *cobra.Command, args []string) {
 			log.Info("run the sidecar, see help section")
-			os.Exit(1)
 		},
 	}
 )
 
-func main() {
-	configLog := uzap.NewProductionEncoderConfig()
+func init() {
+	// setup logging
+  configLog := uzap.NewProductionEncoderConfig()
 	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
 		encoder.AppendString(ts.UTC().Format(time.RFC3339Nano))
 	}
@@ -60,11 +59,15 @@ func main() {
 
 	// setup logging
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder)))
+}
+
+
+func main() {
+	containerName := sidecar.GetContainerType()
 	stop := make(chan struct{}, 1)
 
-	containerName := sidecar.GetContainerType()
-
-	if containerName == utils.ContainerBackupName {
+	switch containerName {
+	case utils.ContainerBackupName:
 		backupCfg := sidecar.NewBackupConfig()
 		httpCmd := &cobra.Command{
 			Use:   "http",
@@ -72,12 +75,12 @@ func main() {
 			Run: func(cmd *cobra.Command, args []string) {
 				if err := sidecar.RunHttpServer(backupCfg, stop); err != nil {
 					log.Error(err, "run command failed")
-					os.Exit(1)
 				}
 			},
 		}
 		cmd.AddCommand(httpCmd)
-	} else if containerName == utils.ContainerBackupJobName {
+
+	case utils.ContainerBackupJobName:
 		reqBackupCfg := sidecar.NewReqBackupConfig()
 		reqBackupCmd := &cobra.Command{
 			Use:   "request_a_backup",
@@ -91,12 +94,12 @@ func main() {
 			Run: func(cmd *cobra.Command, args []string) {
 				if err := sidecar.RunRequestBackup(reqBackupCfg, args[0]); err != nil {
 					log.Error(err, "run command failed")
-					os.Exit(1)
 				}
 			},
 		}
 		cmd.AddCommand(reqBackupCmd)
-	} else {
+
+	default:
 		initCfg := sidecar.NewInitConfig()
 		initCmd := sidecar.NewInitCommand(initCfg)
 		cmd.AddCommand(initCmd)
@@ -104,6 +107,5 @@ func main() {
 
 	if err := cmd.Execute(); err != nil {
 		log.Error(err, "failed to execute command", "cmd", cmd)
-		os.Exit(1)
 	}
 }
