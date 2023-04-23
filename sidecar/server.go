@@ -28,10 +28,6 @@ import (
 	"strings"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
@@ -71,11 +67,13 @@ func newServer(cfg *Config, stop <-chan struct{}) *server {
 	}
 
 	// Add handle functions.
+	// Health check
 	mux.HandleFunc(serverProbeEndpoint, srv.healthHandler)
+	// Backup server
 	mux.Handle(serverBackupEndpoint, maxClients(http.HandlerFunc(srv.backupHandler), 1))
-
+	// Backup download server.
 	mux.Handle(serverBackupDownLoadEndpoint,
-		maxClients(http.HandlerFunc(srv.backupDownLoadHandler), 1))
+		maxClients(http.HandlerFunc(srv.backupDownloadHandler), 1))
 
 	// Shutdown gracefully the http server.
 	go func() {
@@ -99,21 +97,34 @@ func (s *server) healthHandler(w http.ResponseWriter, r *http.Request) {
 func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("content-type", "text/json")
+
+	// Extract backup name from POST body
+
+	var requestBody BackupClientConfig
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	if !s.isAuthenticated(r) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
 		return
 	}
-	backName, Datetime, err := RunTakeBackupCommand(s.cfg)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else {
-		msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime})
-		w.Write(msg)
+	// /backup only handle S3 backup
+	if requestBody.BackupType == S3 {
+
+		backName, Datetime, backupSize, err := RunTakeS3BackupCommand(&requestBody)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		} else {
+			msg, _ := json.Marshal(utils.JsonResult{Status: backupSuccessful, BackupName: backName, Date: Datetime, BackupSize: backupSize})
+			w.Write(msg)
+		}
 	}
 }
 
-// DownLoad handler.
-func (s *server) backupDownLoadHandler(w http.ResponseWriter, r *http.Request) {
+func (s *server) backupDownloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !s.isAuthenticated(r) {
 		http.Error(w, "Not authenticated!", http.StatusForbidden)
@@ -209,66 +220,4 @@ func transportWithTimeout(connectTimeout time.Duration) http.RoundTripper {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
-}
-
-func setAnnonations(cfg *Config, backname string, DateTime string, BackupType string) error {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return err
-	}
-	// creates the clientset
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-
-	job, err := clientset.BatchV1().Jobs(cfg.NameSpace).Get(context.TODO(), cfg.JobName, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-	if job.Annotations == nil {
-		job.Annotations = make(map[string]string)
-	}
-	job.Annotations[utils.JobAnonationName] = backname
-	job.Annotations[utils.JobAnonationDate] = DateTime
-	job.Annotations[utils.JobAnonationType] = BackupType
-	_, err = clientset.BatchV1().Jobs(cfg.NameSpace).Update(context.TODO(), job, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// requestABackup connects to specified host and endpoint and gets the backup.
-func requestABackup(cfg *Config, host string, endpoint string) (*http.Response, error) {
-	log.Info("initialize a backup", "host", host, "endpoint", endpoint)
-
-	req, err := http.NewRequest("GET", prepareURL(host, endpoint), nil)
-	if err != nil {
-		return nil, fmt.Errorf("fail to create request: %s", err)
-	}
-
-	// set authentication user and password
-	req.SetBasicAuth(cfg.BackupUser, cfg.BackupPassword)
-
-	client := &http.Client{}
-	client.Transport = transportWithTimeout(serverConnectTimeout)
-
-	resp, err := client.Do(req)
-	if err != nil || resp.StatusCode != 200 {
-		status := "unknown"
-		if resp != nil {
-			status = resp.Status
-		}
-		return nil, fmt.Errorf("fail to get backup: %s, code: %s", err, status)
-	}
-	defer resp.Body.Close()
-	var result utils.JsonResult
-	json.NewDecoder(resp.Body).Decode(&result)
-
-	err = setAnnonations(cfg, result.BackupName, result.Date, "S3") // set annotation
-	if err != nil {
-		return nil, fmt.Errorf("fail to set annotation: %s", err)
-	}
-	return resp, nil
 }

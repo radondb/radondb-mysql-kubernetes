@@ -81,16 +81,17 @@ const (
 	BackupUser = "sys_backup"
 
 	// volumes names.
-	MysqlConfVolumeName = "mysql-conf"
-	MysqlCMVolumeName   = "mysql-cm"
-	XenonMetaVolumeName = "xenon-meta"
-	XenonCMVolumeName   = "xenon-cm"
-	LogsVolumeName      = "logs"
-	DataVolumeName      = "data"
-	SysVolumeName       = "host-sys"
-	ScriptsVolumeName   = "scripts"
-	XenonConfVolumeName = "xenon-conf"
-	InitFileVolumeName  = "init-mysql"
+	MysqlConfVolumeName    = "mysql-conf"
+	MysqlCMVolumeName      = "mysql-cm"
+	XenonMetaVolumeName    = "xenon-meta"
+	XenonCMVolumeName      = "xenon-cm"
+	LogsVolumeName         = "logs"
+	DataVolumeName         = "data"
+	SysVolumeName          = "host-sys"
+	ScriptsVolumeName      = "scripts"
+	XenonConfVolumeName    = "xenon-conf"
+	InitFileVolumeName     = "init-mysql"
+	MySQLcheckerVolumeName = "mysql-checker"
 
 	// volumes mount path.
 	MysqlConfVolumeMountPath = "/etc/mysql"
@@ -129,6 +130,9 @@ const (
 	TlsVolumeName = "tls"
 	// TlsMountPath is the volume mount path for tls
 	TlsMountPath = "/etc/mysql-ssl"
+
+	// RadonDB excutable files  dir
+	RadonDBBinDir = "/opt/radondb"
 )
 
 // ResourceName is the type for aliasing resources that will be created.
@@ -165,6 +169,8 @@ const (
 	JobAnonationDate = "backupDate"
 	// Job Annonations type
 	JobAnonationType = "backupType"
+	// Job Annonations size
+	JobAnonationSize = "backupSize"
 )
 
 // JobType
@@ -198,6 +204,7 @@ type JsonResult struct {
 	Status     string `json:"status"`
 	BackupName string `json:"backupName"`
 	Date       string `json:"date"`
+	BackupSize int64  `json:"backupSize"`
 }
 
 // MySQLDefaultVersionMap is a map of supported mysql version and their image

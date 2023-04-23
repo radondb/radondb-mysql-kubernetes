@@ -35,7 +35,7 @@ spec:
       {{- if .Values.rbacProxy.create }}
       - name: kube-rbac-proxy
       {{- $imagerepo:=(split "/" .Values.rbacProxy.image)._0 }}
-      {{- $imagetag:= (split "/" .Values.rbacProxy.image)._1 }}
+      {{- $imagetag:= (splitList "/" .Values.rbacProxy.image )|last }}
       {{- if .Values.imageNamespaceOverride}}
       {{- if .Values.imagePrefix}}
         image: {{ printf "%s/%s/%s" .Values.imagePrefix .Values.imageNamespaceOverride $imagetag|quote }}
@@ -82,7 +82,7 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         {{- $imagerepo:=(split "/" .Values.manager.image)._0 }}
-        {{- $imagetag:= printf "%s:%s" (split "/" .Values.manager.image)._1 .Values.manager.tag }}
+        {{- $imagetag:= printf "%s:%s" (splitList "/" .Values.manager.image|last) .Values.manager.tag }}
         {{- if .Values.imageNamespaceOverride}}
         {{- if .Values.imagePrefix}}
         image: {{ printf "%s/%s/%s" .Values.imagePrefix .Values.imageNamespaceOverride $imagetag|quote }}

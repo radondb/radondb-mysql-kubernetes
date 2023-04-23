@@ -167,6 +167,12 @@ func runInitCommand(cfg *Config, hasInitialized bool) error {
 	if exists, _ := checkIfPathExists(utils.TlsMountPath); exists {
 		buildSSLdata()
 	}
+	// copy mysqlchecker to /opt/radondb/
+	if exists, _ := checkIfPathExists(utils.RadonDBBinDir); exists {
+		log.Info("copy mysqlchecker to /opt/radondb/")
+		copyMySQLchecker()
+	}
+
 	buildDefaultXenonMeta(uid, gid)
 
 	// build client.conf.
@@ -276,9 +282,16 @@ func RunHttpServer(cfg *Config, stop <-chan struct{}) error {
 }
 
 // request a backup command.
-func RunRequestBackup(cfg *Config, host string) error {
-	_, err := requestABackup(cfg, host, serverBackupEndpoint)
-	return err
+func RunRequestBackup(cfg *BackupClientConfig, host string) error {
+	if cfg.BackupType == S3 {
+		_, err := requestS3Backup(cfg, host, serverBackupEndpoint)
+		return err
+	}
+	if cfg.BackupType == NFS {
+		err := requestNFSBackup(cfg, host, serverBackupDownLoadEndpoint)
+		return err
+	}
+	return fmt.Errorf("unknown backup type: %s", cfg.BackupType)
 }
 
 // Save plugin.cnf and extra.cnf to specified path.
@@ -347,6 +360,20 @@ func buildSSLdata() error {
 	cmd = exec.Command("sh", "-c", cronCmd)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to copy ssl: %s", err)
+	}
+	return nil
+}
+
+func copyMySQLchecker() error {
+	cpCmd := "cp /mnt/mysqlchecker " + utils.RadonDBBinDir
+	cmd := exec.Command("sh", "-c", cpCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to copy mysqlchecker: %s", err)
+	}
+	chownCmd := "chown -R mysql.mysql " + utils.RadonDBBinDir
+	cmd = exec.Command("sh", "-c", chownCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chown mysqlchecker: %s", err)
 	}
 	return nil
 }
