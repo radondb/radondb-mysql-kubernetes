@@ -21,7 +21,6 @@ import (
 	"os"
 	"time"
 
-
 	"github.com/radondb/radondb-mysql-kubernetes/sidecar"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	"github.com/spf13/cobra"
@@ -51,7 +50,7 @@ var (
 
 func init() {
 	// setup logging
-  configLog := uzap.NewProductionEncoderConfig()
+	configLog := uzap.NewProductionEncoderConfig()
 	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
 		encoder.AppendString(ts.UTC().Format(time.RFC3339Nano))
 	}
@@ -60,7 +59,6 @@ func init() {
 	// setup logging
 	logf.SetLogger(zap.New(zap.UseDevMode(true), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder)))
 }
-
 
 func main() {
 	containerName := sidecar.GetContainerType()
@@ -94,6 +92,7 @@ func main() {
 			Run: func(cmd *cobra.Command, args []string) {
 				if err := sidecar.RunRequestBackup(reqBackupCfg, args[0]); err != nil {
 					log.Error(err, "run command failed")
+					os.Exit(1)
 				}
 			},
 		}

@@ -38,7 +38,7 @@ const (
 	// // Image path of mysql operator.
 	// OperatorImagePath = "radondb/mysql-operator:v2.3.0"
 	// Image path for mysql sidecar.
-	SidecarImagePath = "radondb/mysql57-sidecar:v2.3.0"
+	SidecarImagePath = "radondb/mysql57-sidecar:v3.0.0-alpha"
 
 	// The namespace where the resource created by E2E.
 	E2ETestNamespace = "radondb-mysql-e2e"
