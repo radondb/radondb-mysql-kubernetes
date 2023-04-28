@@ -504,8 +504,10 @@ func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster
 		getEnvVarFromSecret(clusterAuthsctName, "BACKUP_USER", "backup-user", true),
 		getEnvVarFromSecret(clusterAuthsctName, "BACKUP_PASSWORD", "backup-password", true),
 	)
-	if NFSBackupEnv != nil && S3BackuptEnv != nil {
+	if NFSBackupEnv != nil {
 		container.Env = append(container.Env, *NFSBackupEnv)
+	}
+	if len(S3BackuptEnv) != 0 {
 		container.Env = append(container.Env, S3BackuptEnv...)
 	}
 
