@@ -1,18 +1,25 @@
 # Image URL to use all building/pushing image targets
 FROM_VERSION ?=v2.3.0
 CHART_VERSION ?=2.3.0
-CHART_TOVERSION ?=3.0.0
-TO_VERSION ?=v3.0.0
-TAG ?=v3.0.0
+CHART_TOVERSION ?=3.0.0-alpha
+TO_VERSION ?=v3.0.0-alpha
+TAG ?=v3.0.0-alpha
 IMGPREFIX ?=radondb/
 IMG ?= $(IMGPREFIX)mysql-operator:$(TAG)
 SIDECAR57_IMG ?= $(IMGPREFIX)mysql57-sidecar:$(TAG)
 SIDECAR80_IMG ?= $(IMGPREFIX)mysql80-sidecar:$(TAG)
 XENON_IMG ?= $(IMGPREFIX)xenon:$(TAG)
-GO_PORXY ?= off
+GO_PROXY ?= off
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
-
+UNAME := $(shell uname)
+SEDFLAG :=  -i
+ifeq ($(UNAME), Darwin)
+SEDFLAG :=  -i ""
+endif
+ifeq ($(UNAME), Solaris)
+# do something Solaris-y
+endif
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -88,18 +95,19 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/manager/main.go
 
 docker-build:  ## Build docker image with the manager.
-	docker buildx build --build-arg GO_PROXY=${GO_PORXY} -t ${IMG} .
-	docker buildx build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PORXY} -t ${SIDECAR57_IMG} .
-	docker buildx build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PORXY} -t ${XENON_IMG} .
-	docker buildx build  --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  --build-arg GO_PROXY=${GO_PORXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
+	DOCKER_BUILDKIT=1 docker  build --build-arg GO_PROXY=${GO_PROXY} -t ${IMG} .
+	DOCKER_BUILDKIT=1 docker  build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PROXY} -t ${SIDECAR57_IMG} .
+	DOCKER_BUILDKIT=1 docker  build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PROXY} -t ${XENON_IMG} .
+	DOCKER_BUILDKIT=1 docker  build  --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  --build-arg GO_PROXY=${GO_PROXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
-	docker push ${SIDECAR_IMG}
+	docker push ${SIDECAR57_IMG}
+	docker push ${SIDECAR80_IMG}
 	docker push ${XENON_IMG}
 
 ##@ Deployment
 
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+install:  kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
@@ -143,15 +151,15 @@ todo:
 	@grep -Irnw './' -e 'TODO:'|grep -v grep
 
 updateVersion:
-	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i "" "s/mysql57-sidecar:$(FROM_VERSION)/mysql57-sidecar:$(TO_VERSION)/g" {} \;
-	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i "" "s/xenon:$(FROM_VERSION)/xenon:$(TO_VERSION)/g" {} \;
-	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "" "s/mysql-operator:$(FROM_VERSION)/mysql-operator:$(TO_VERSION)/g" {} \;
-	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "" "s/mysql80-sidecar:$(FROM_VERSION)/mysql80-sidecar:$(TO_VERSION)/g" {} \;
-	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "" "s/mysql-operator-$(FROM_VERSION)/mysql-operator-$(TO_VERSION)/g" {} \;
-	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed -i  "" "s/\"$(FROM_VERSION)\"/\"$(TO_VERSION)\"/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed $(SEDFLAG) "s/mysql57-sidecar:$(FROM_VERSION)/mysql57-sidecar:$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed $(SEDFLAG) "s/xenon:$(FROM_VERSION)/xenon:$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed $(SEDFLAG) "s/mysql-operator:$(FROM_VERSION)/mysql-operator:$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed $(SEDFLAG) "s/mysql80-sidecar:$(FROM_VERSION)/mysql80-sidecar:$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed $(SEDFLAG) "s/mysql-operator-$(FROM_VERSION)/mysql-operator-$(TO_VERSION)/g" {} \;
+	find ./* -type f -name "*.go" -o -name "*.yaml" -exec sed $(SEDFLAG) "s/\"$(FROM_VERSION)\"/\"$(TO_VERSION)\"/g" {} \;
 	# sed -i "18s/$(CHART_VERSION)/$(CHART_TOVERSION)/"  charts/mysql-operator/charts/Chart.yaml
-	find ./charts/*  -type f -name "*.yaml" -exec sed -i  "" "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
-	find ./config/*  -type f -name "*.yaml" -exec sed -i  "" "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
+	find ./charts/*  -type f -name "*.yaml" -exec sed $(SEDFLAG) "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
+	find ./config/*  -type f -name "*.yaml" -exec sed $(SEDFLAG) "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
 	
 CRD_TO_MARKDOWN := $(shell pwd)/bin/crd-to-markdown
 CRD_TO_MARKDOWN_VERSION = 0.0.3
