@@ -208,11 +208,11 @@ func (r *MysqlCluster) validateMysqlVersion() error {
 	switch r.Spec.MysqlVersion {
 	case "5.7":
 		if !strings.Contains(r.Spec.PodPolicy.SidecarImage, "57") {
-			return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlVersion is 5.7, but spec.PodPolicy.SidecarImage is not 5.7"))
+			return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlVersion is 5.7, but spec.PodPolicy.SidecarImage is not 5.7, is %s", r.Spec.PodPolicy.SidecarImage))
 		}
 	case "8.0":
 		if !strings.Contains(r.Spec.PodPolicy.SidecarImage, "80") {
-			return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlVersion is 8.0, but spec.PodPolicy.SidecarImage is not 8.0"))
+			return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlVersion is 8.0, but spec.PodPolicy.SidecarImage is not 8.0, is %s", r.Spec.PodPolicy.SidecarImage))
 		}
 	default:
 		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlVersion is not provided"))

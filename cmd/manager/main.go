@@ -76,7 +76,7 @@ func main() {
 	}
 	logfmtEncoder := zaplogfmt.NewEncoder(configLog)
 	opts := zap.Options{
-		Development: false,
+		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
 
