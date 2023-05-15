@@ -377,6 +377,9 @@ type DataSource struct {
 	// Bootstraping from backup
 	// +optional
 	S3Backup S3BackupDataSource `json:"S3backup,omitempty"`
+	// restore from nfs
+	// +optional
+	NFSBackup *NFSBackupDataSource `json:"Nfsbackup,omitempty"`
 }
 
 type RemoteDataSource struct {
@@ -391,6 +394,13 @@ type S3BackupDataSource struct {
 	// Secret name
 	// +optional
 	SecretName string `json:"secretName"`
+}
+
+type NFSBackupDataSource struct {
+	// Backup name
+	Name string `json:"name"`
+	// Secret name
+	Volume corev1.NFSVolumeSource `json:"volume,omitempty"`
 }
 type LogOpts struct {
 	// To specify the image that will be used for log container.

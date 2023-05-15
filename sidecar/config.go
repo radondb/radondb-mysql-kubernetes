@@ -527,6 +527,7 @@ func (cfg *Config) executeS3Restore(path string) error {
 		cfg.XRestoreFrom,
 		"--insecure",
 	}
+	log.Info(fmt.Sprintf("run args %v", args))
 	xcloud := exec.Command(xcloudCommand, args...)                               //nolint
 	xbstream := exec.Command("xbstream", "-xv", "-C", utils.DataVolumeMountPath) //nolint
 	var err error

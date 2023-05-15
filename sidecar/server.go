@@ -115,6 +115,7 @@ func (s *server) backupHandler(w http.ResponseWriter, r *http.Request) {
 	if requestBody.BackupType == S3 {
 
 		backName, Datetime, backupSize, err := RunTakeS3BackupCommand(&requestBody)
+		log.Info("get backup result", "backName", backName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		} else {
