@@ -33,7 +33,6 @@ import (
 )
 
 type BackupClientConfig struct {
-	BackupName        string `json:"backup_name"`
 	NameSpace         string `json:"namespace"`
 	ServiceName       string `json:"service_name"`
 	BackupUser        string `json:"backup_user"`
@@ -67,7 +66,7 @@ const (
 // NewReqBackupConfig returns the configuration file needed for backup job call /backup.
 // The configuration file is obtained from the environment variables.
 func NewReqBackupConfig() *BackupClientConfig {
-	BackupName, _ := utils.BuildBackupName(getEnvValue("CLUSTER_NAME"))
+
 	return &BackupClientConfig{
 		NameSpace:         getEnvValue("NAMESPACE"),
 		ServiceName:       getEnvValue("SERVICE_NAME"),
@@ -80,7 +79,6 @@ func NewReqBackupConfig() *BackupClientConfig {
 		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
 		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
 		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
-		BackupName:        BackupName,
 		BackupType:        BkType(getEnvValue("BACKUP_TYPE")),
 	}
 }
@@ -96,7 +94,7 @@ func (cfg *BackupClientConfig) XCloudArgs(backupName string) []string {
 		fmt.Sprintf("--s3-bucket=%s", cfg.XCloudS3Bucket),
 		"--parallel=10",
 		// utils.BuildBackupName(cfg.ClusterName),
-		cfg.BackupName,
+		backupName,
 		"--insecure",
 	}
 	return xcloudArgs

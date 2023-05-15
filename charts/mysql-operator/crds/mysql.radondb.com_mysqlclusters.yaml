@@ -2445,6 +2445,35 @@ spec:
               dataSource:
                 description: Specifies a data source for bootstrapping the MySQL cluster.
                 properties:
+                  Nfsbackup:
+                    description: restore from nfs
+                    properties:
+                      name:
+                        description: Backup name
+                        type: string
+                      volume:
+                        description: Secret name
+                        properties:
+                          path:
+                            description: 'Path that is exported by the NFS server.
+                              More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
+                            type: string
+                          readOnly:
+                            description: 'ReadOnly here will force the NFS export
+                              to be mounted with read-only permissions. Defaults to
+                              false. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
+                            type: boolean
+                          server:
+                            description: 'Server is the hostname or IP address of
+                              the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs'
+                            type: string
+                        required:
+                        - path
+                        - server
+                        type: object
+                    required:
+                    - name
+                    type: object
                   S3backup:
                     description: Bootstraping from backup
                     properties:

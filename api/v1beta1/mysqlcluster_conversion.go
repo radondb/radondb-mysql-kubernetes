@@ -17,6 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+	"strings"
 	"unsafe"
 
 	"github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
@@ -83,8 +85,27 @@ func Convert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alpha1.
 	out.Storage.Resources.Requests = map[corev1.ResourceName]resource.Quantity{
 		corev1.ResourceStorage: resource.MustParse(in.Persistence.Size),
 	}
-	out.DataSource.S3Backup.Name = in.RestoreFrom
-	out.DataSource.S3Backup.SecretName = in.BackupSecretName
+	if len(in.BackupSecretName) != 0 {
+		out.DataSource.S3Backup.Name = in.RestoreFrom
+		out.DataSource.S3Backup.SecretName = in.BackupSecretName
+	}
+	if len(in.NFSServerAddress) != 0 {
+		ipStr := strings.Split(in.NFSServerAddress, ":")
+		out.DataSource.NFSBackup = &NFSBackupDataSource{
+			Name: in.RestoreFrom,
+			Volume: corev1.NFSVolumeSource{
+				Server: ipStr[0],
+				Path: func() string {
+					if len(ipStr) == 2 {
+						return ipStr[1]
+					} else {
+						return "/"
+					}
+				}(),
+			},
+		}
+
+	}
 	if in.TlsSecretName != "" {
 		out.CustomTLSSecret = &corev1.SecretProjection{
 			LocalObjectReference: corev1.LocalObjectReference{
@@ -127,11 +148,18 @@ func Convert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *MysqlClus
 	out.PodPolicy.Tolerations = in.Tolerations
 	out.PodPolicy.Affinity = (*corev1.Affinity)(unsafe.Pointer(in.Affinity))
 	out.PodPolicy.PriorityClassName = in.PriorityClassName
-	//TODO in.DataSource in.Standby
+	// in.DataSource in.Standby
 	out.XenonOpts.EnableAutoRebuild = in.EnableAutoRebuild
+	if len(in.DataSource.S3Backup.Name) != 0 {
+		out.RestoreFrom = in.DataSource.S3Backup.Name
+		out.BackupSecretName = in.DataSource.S3Backup.SecretName
+	}
 
-	out.RestoreFrom = in.DataSource.S3Backup.Name
-	out.BackupSecretName = in.DataSource.S3Backup.SecretName
+	if in.DataSource.NFSBackup != nil {
+		out.RestoreFrom = in.DataSource.NFSBackup.Name
+		out.NFSServerAddress = fmt.Sprintf("%s:%s",
+			in.DataSource.NFSBackup.Volume.Server, in.DataSource.NFSBackup.Volume.Path)
+	}
 
 	//TODO in.Log n.Service
 	return nil
