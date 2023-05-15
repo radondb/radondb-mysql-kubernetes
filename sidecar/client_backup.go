@@ -59,7 +59,7 @@ func requestS3Backup(cfg *BackupClientConfig, host string, endpoint string) (*ht
 	defer resp.Body.Close()
 	var result utils.JsonResult
 	json.NewDecoder(resp.Body).Decode(&result)
-
+	log.Info("recive json", "json", result)
 	err = setAnnonations(cfg, result.BackupName, result.Date, "S3", result.BackupSize) // set annotation
 	if err != nil {
 		return nil, fmt.Errorf("fail to set annotation: %s", err)

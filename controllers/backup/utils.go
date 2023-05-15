@@ -130,3 +130,11 @@ func getEnvVarFromSecret(sctName, name, key string, opt bool) corev1.EnvVar {
 		},
 	}
 }
+
+func GetBackupURL(clusterName string, hostName, Namespace string) string {
+	if len(hostName) != 0 {
+		return fmt.Sprintf("%s.%s-mysql.%s:%v", hostName, clusterName, Namespace, utils.XBackupPort)
+	} else {
+		return fmt.Sprintf("%s-leader.%s:%v", clusterName, Namespace, utils.XBackupPort)
+	}
+}

@@ -497,7 +497,13 @@ func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster
 	}
 	container.Args = []string{
 		"request_a_backup",
-		GetXtrabackupURL(GetBackupHost(cluster)),
+		func() string {
+			if len(backup.Spec.BackupOpts.BackupHost) != 0 {
+				return GetBackupURL(cluster.Name, backup.Spec.BackupOpts.BackupHost, cluster.Namespace)
+			} else {
+				return GetXtrabackupURL(GetBackupHost(cluster))
+			}
+		}(),
 	}
 	// Add backup user and password to the env
 	container.Env = append(container.Env,
