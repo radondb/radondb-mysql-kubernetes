@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -106,6 +107,9 @@ func (r *MysqlCluster) ValidateUpdate(old runtime.Object) error {
 		return err
 	}
 	if err := r.validateNFSServerAddress(oldCluster); err != nil {
+		return err
+	}
+	if err := r.ValidataRo(); err != nil {
 		return err
 	}
 	return nil
@@ -229,4 +233,24 @@ func (r *MysqlCluster) validBothS3NFS() error {
 		return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("if BothS3NFS is set, backupSchedule/backupSecret/nfsAddress should not empty"))
 	}
 	return nil
+}
+
+// Validata Readonly
+func (r *MysqlCluster) ValidataRo() error {
+	if r.Spec.ReadOnlys != nil && len(r.Spec.ReadOnlys.Host) != 0 {
+		// 1. Host name must startwith <clusterName>-mysql-<number>
+		if !strings.HasPrefix(r.Spec.ReadOnlys.Host, r.Name+"-mysql-") {
+			goto err
+		}
+		numstr := strings.TrimPrefix(r.Spec.ReadOnlys.Host, r.Name+"-mysql-")
+		// if not num, or num is greater than Spec Replica - 1, return error
+		if num, err := strconv.Atoi(numstr); err != nil {
+			goto err
+		} else if num >= int(*r.Spec.Replicas) || num < 0 {
+			goto err
+		}
+	}
+	return nil
+err:
+	return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.readonly's hostname is not exist in the cluster"))
 }

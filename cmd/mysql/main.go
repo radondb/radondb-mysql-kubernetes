@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-ini/ini"
@@ -257,7 +258,24 @@ func (c *Agent) readiness() error {
 			}
 
 		}
+	default:
+		if strings.Contains(c.podName, "-ro-") { //is ro pod
+			status := &SlaveStatus{}
+			err1 := c.db.GetContext(context.Background(), status, `show slave status`)
+			if err1 != nil {
+				return err
+			}
 
+			if status.SlaveIORunning != "Yes" || status.SlaveSQLRunning != "Yes" {
+				return fmt.Errorf("replication threads are stopped")
+			}
+			if status.LastError != "" {
+				return fmt.Errorf("slave has error: %s", status.LastError)
+			}
+			if status.SecondsBehindMaster.Int64 > int64(c.maxDelay.Seconds()) {
+				return fmt.Errorf("slave is too far behind master")
+			}
+		}
 	}
 	return nil
 }
@@ -322,6 +340,9 @@ func getMySQLConn(conf *MySQLConfig) (*sqlx.DB, error) {
 }
 
 func (c *Agent) getRoleBylabel() (string, error) {
+	if strings.Contains(c.podName, "-ro-") { // it's readonly pod
+		return "RO", nil
+	}
 	podMeta, err := c.ksClient.CoreV1().Pods(c.nameSpace).Get(context.TODO(), c.podName, metav1.GetOptions{})
 	if err != nil {
 		return "", err

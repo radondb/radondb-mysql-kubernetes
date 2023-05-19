@@ -282,12 +282,17 @@ func (cfg *Config) XBackupName() (string, string) {
 func (cfg *Config) buildExtraConfig(filePath string) (*ini.File, error) {
 	conf := ini.Empty()
 	sec := conf.Section("mysqld")
-
+	startIndex := mysqlServerIDOffset
 	ordinal, err := utils.GetOrdinal(cfg.HostName)
+	arr := strings.Split(cfg.HostName, "-")
+	if len(arr) == 3 && arr[1] == "ro" {
+		log.Info("It is readonly pod, server-id start at 200")
+		startIndex = mysqlReadOnlyIDOffset
+	}
 	if err != nil {
 		return nil, err
 	}
-	if _, err := sec.NewKey("server-id", strconv.Itoa(mysqlServerIDOffset+ordinal)); err != nil {
+	if _, err := sec.NewKey("server-id", strconv.Itoa(startIndex+ordinal)); err != nil {
 		return nil, err
 	}
 

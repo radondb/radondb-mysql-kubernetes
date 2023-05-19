@@ -162,7 +162,37 @@ func runInitCommand(cfg *Config, hasInitialized bool) error {
 	if err = copyFile(path.Join(mysqlCMPath, "my.cnf"), path.Join(mysqlConfigPath, "my.cnf")); err != nil {
 		return fmt.Errorf("failed to copy my.cnf: %s", err)
 	}
-
+	// check env exist
+	if ib_pool := getEnvValue(utils.ROIbPool); len(ib_pool) != 0 {
+		//replace sed
+		arg := fmt.Sprintf("sed -i 's/^innodb_buffer_pool_size.*/innodb_buffer_pool_size\t=\t%s/' "+path.Join(mysqlConfigPath, "my.cnf"), ib_pool)
+		log.Info("run sed", "arg", arg)
+		cmd := exec.Command("sh", "-c", arg)
+		cmd.Stderr = os.Stderr
+		if err = cmd.Run(); err != nil {
+			return fmt.Errorf("failed to sed innodb_buffer_pool_size : %s", err)
+		}
+	}
+	if ib_inst := getEnvValue(utils.ROIbInst); len(ib_inst) != 0 {
+		//replace sed
+		arg := fmt.Sprintf("sed -i 's/^innodb_buffer_pool_instances.*/innodb_buffer_pool_instances\t=\t%s/' "+path.Join(mysqlConfigPath, "my.cnf"), ib_inst)
+		log.Info("run sed", "arg", arg)
+		cmd := exec.Command("sh", "-c", arg)
+		cmd.Stderr = os.Stderr
+		if err = cmd.Run(); err != nil {
+			return fmt.Errorf("failed to sed innodb_buffer_pool_instances : %s", err)
+		}
+	}
+	if ib_log := getEnvValue(utils.ROIbLog); len(ib_log) != 0 {
+		//replace sed
+		arg := fmt.Sprintf("sed -i 's/^innodb_log_file_size.*/innodb_log_file_size\t=\t%s/' "+path.Join(mysqlConfigPath, "my.cnf"), ib_log)
+		log.Info("run sed", "arg", arg)
+		cmd := exec.Command("sh", "-c", arg)
+		cmd.Stderr = os.Stderr
+		if err = cmd.Run(); err != nil {
+			return fmt.Errorf("failed to sed innodb_log_file_size : %s", err)
+		}
+	}
 	// SSL settings.
 	if exists, _ := checkIfPathExists(utils.TlsMountPath); exists {
 		buildSSLdata()

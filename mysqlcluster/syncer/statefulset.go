@@ -151,6 +151,11 @@ func (s *StatefulSetSyncer) Sync(ctx context.Context) (syncer.SyncResult, error)
 		}
 
 	default:
+		// readonly node processing.
+		s.SfsReadOnly(ctx)
+		if err = s.SingleLeaderAction(); err != nil {
+			s.log.Error(err, "single Leader operation", "key", key, "kind", kind)
+		}
 		result.SetEventData("Normal", basicEventReason(s.Name, err),
 			fmt.Sprintf("%s %s %s successfully", kind, key, result.Operation))
 		s.log.Info(string(result.Operation), "key", key, "kind", kind)
@@ -615,4 +620,35 @@ func (s *StatefulSetSyncer) podsAllUpdated(ctx context.Context) bool {
 		return false
 	}
 	return len(podlist.Items) == 0
+}
+
+// Execute Comm
+func (s *StatefulSetSyncer) SingleLeaderAction() error {
+	if *s.Spec.Replicas != 1 {
+		return nil
+	}
+	if s.Status.State != apiv1alpha1.ClusterReadyState {
+		return nil
+	}
+	// 1. close the xenon's SemiCheck.
+	executor, err := internal.NewPodExecutor()
+	if err != nil {
+		return err
+	}
+	podName := fmt.Sprintf("%s-mysql-0", s.Name)
+	err = executor.CloseXenonSemiCheck(s.Namespace, podName)
+	s.log.Info("close the xenon's semicheck", "pod", podName)
+	if err != nil {
+		return err
+	}
+	// 2. close mysql semi
+
+	// SET GLOBAL rpl_semi_sync_master_enabled=OFF
+	err = executor.SetGlobalSysVar(s.Namespace, podName, "SET GLOBAL rpl_semi_sync_master_enabled=off")
+	s.log.Info("close the mysql's rpl_semi_sync_master_enabled", "pod", podName)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

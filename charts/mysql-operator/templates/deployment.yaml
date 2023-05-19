@@ -34,7 +34,9 @@ spec:
       containers:
       {{- if .Values.rbacProxy.create }}
       - name: kube-rbac-proxy
-      {{- $imagerepo:=(split "/" .Values.rbacProxy.image)._0 }}
+      {{- $imageList:=(splitList "/" .Values.rbacProxy.image) }}
+        {{- $imagerepo:=(join "/" (slice $imageList 0 (sub (len $imageList) 1)) | default "library") }}
+        {{- $imagetag:= printf "%s:%s" $imageList .Values.manager.tag }}
       {{- $imagetag:= (splitList "/" .Values.rbacProxy.image )|last }}
       {{- if .Values.imageNamespaceOverride}}
       {{- if .Values.imagePrefix}}
@@ -81,8 +83,9 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
-        {{- $imagerepo:=(split "/" .Values.manager.image)._0 }}
-        {{- $imagetag:= printf "%s:%s" (splitList "/" .Values.manager.image|last) .Values.manager.tag }}
+        {{- $imageList:=(splitList "/" .Values.manager.image) }}
+        {{- $imagerepo:=(join "/" (slice $imageList 0 (sub (len $imageList) 1)) | default "library") }}
+        {{- $imagetag:= printf "%s:%s" ($imageList | last) .Values.manager.tag }}
         {{- if .Values.imageNamespaceOverride}}
         {{- if .Values.imagePrefix}}
         image: {{ printf "%s/%s/%s" .Values.imagePrefix .Values.imageNamespaceOverride $imagetag|quote }}
