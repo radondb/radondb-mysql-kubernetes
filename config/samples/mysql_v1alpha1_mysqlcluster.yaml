@@ -16,6 +16,9 @@ spec:
   # Restore from NFS, uncomment below and set the ip of NFS server
   # such as nfsServerAddress: "10.233.55.172"
   # nfsServerAddress: 
+  readonlys: 
+    num: 1
+
   mysqlOpts:
     image: percona/percona-server:5.7.34
     user: radondb_usr

@@ -25,7 +25,9 @@ import (
 	"github.com/presslabs/controller-util/pkg/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -86,14 +88,22 @@ func (s *StatusSyncer) GetOwner() runtime.Object { return s.MysqlCluster }
 // Sync persists data into the external store.
 func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	clusterCondition := s.updateClusterStatus()
+	labelSelector := s.GetLabels().AsSelector()
+	// Find the pods that revision is old.
+	r, err := labels.NewRequirement("readonly", selection.DoesNotExist, []string{})
+	if err != nil {
+		s.log.V(1).Info("failed to create label requirement", "error", err)
+		return syncer.SyncResult{}, err
+	}
+	labelSelector = labelSelector.Add(*r)
 
 	list := corev1.PodList{}
-	err := s.cli.List(
+	err = s.cli.List(
 		ctx,
 		&list,
 		&client.ListOptions{
 			Namespace:     s.Namespace,
-			LabelSelector: s.GetLabels().AsSelector(),
+			LabelSelector: labelSelector,
 		},
 	)
 	if err != nil {
@@ -153,7 +163,12 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	if len(s.Status.Conditions) > maxStatusesQuantity {
 		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
 	}
-
+	//(RO) because the ReadOnly Pods create after the cluster ready, so the ReadOnly pods are always
+	// the last part of node status
+	if err := s.updateReadOnlyNodeStatus(ctx, s.cli); err != nil {
+		//Notice!!! ReadOnly node fail, just show the error log, do not return here!
+		s.log.Error(err, "ReadOnly pod fail", "namespace", s.Namespace)
+	}
 	// Update all nodes' status.
 	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, list.Items)
 }
@@ -329,7 +344,14 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 
 	// Delete node status of nodes that have been deleted.
 	if len(s.Status.Nodes) > len(pods) {
-		s.Status.Nodes = s.Status.Nodes[:len(pods)]
+		trimNodes := s.Status.Nodes[:len(pods)]
+		if s.Spec.ReadOnlys != nil {
+			// get the last parts of ReadOnly Nodes.
+			roNodes := s.Status.Nodes[len(s.Status.Nodes)-int(s.Spec.ReadOnlys.Num) : len(s.Status.Nodes)]
+			trimNodes = append(trimNodes, roNodes...)
+		}
+		s.Status.Nodes = trimNodes
+
 	}
 	return nil
 }
@@ -496,4 +518,163 @@ func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node
 		}
 	}
 	return nil
+}
+
+// Update the Readonly node status
+func (s *StatusSyncer) updateReadOnlyNodeStatus(ctx context.Context, cli client.Client) error {
+	labels := s.GetLabels()
+	labels["app.kubernetes.io/name"] = "mysql-readonly"
+	labels["readonly"] = "true"
+
+	list := corev1.PodList{}
+	err := s.cli.List(
+		ctx,
+		&list,
+		&client.ListOptions{
+			Namespace:     s.Namespace,
+			LabelSelector: labels.AsSelector(),
+		},
+	)
+	if err != nil {
+		return err
+	}
+	// (RO) 1. status update
+	if err := s.RoCheckStatus(ctx, cli, list.Items); err != nil {
+		return err
+	}
+	return nil
+}
+
+// (RO) check readonly and check semi replication
+func (s *StatusSyncer) RoCheckStatus(ctx context.Context, cli client.Client, pods []corev1.Pod) error {
+	closeCh := make(chan func())
+	for _, pod := range pods {
+		podName := pod.Name
+		host := fmt.Sprintf("%s.%s.%s", podName, s.GetNameForResource(utils.ReadOnlyHeadlessSVC), s.Namespace)
+		index := s.getRoStatusIndex(host)
+		node := &s.Status.Nodes[index]
+		node.Message = ""
+
+		isInitial, isReadonly, isCloseSemi, isReplicating := corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown
+		isSupperReadOnly := corev1.ConditionUnknown
+		if pod.Status.Phase == corev1.PodRunning {
+			isInitial = corev1.ConditionTrue
+		}
+		var sqlRunner internal.SQLRunner
+		var closeConn func()
+		errCh := make(chan error)
+		go func(sqlRunner *internal.SQLRunner, errCh chan error, closeCh chan func()) {
+			var err error
+			*sqlRunner, closeConn, err = s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
+				s.cli, s.MysqlCluster.GetClusterKey(), utils.OperatorUser, host))
+			if err != nil {
+				s.log.V(1).Info("failed to get sql runner", "node", node.Name, "error", err)
+				errCh <- err
+				return
+			}
+			if closeConn != nil {
+				closeCh <- closeConn
+				return
+			}
+			errCh <- nil
+		}(&sqlRunner, errCh, closeCh)
+
+		select {
+		case <-errCh:
+		case closeConn := <-closeCh:
+			defer closeConn()
+		case <-time.After(time.Second * 5):
+		}
+		var err error
+
+		if sqlRunner != nil {
+			// (RO) 1. add check readonly
+			if isReadonly, err = internal.CheckReadOnly(sqlRunner); err != nil {
+				node.Message = err.Error()
+			}
+			if isSupperReadOnly, err = internal.CheckSuperReadOnly(sqlRunner); err != nil {
+				node.Message = err.Error()
+			}
+			// 2. set rpl_semi_sync_slave_enabled off
+			if status, err := internal.CheckSemSync(sqlRunner); err != nil {
+				node.Message = err.Error()
+
+			} else if status == corev1.ConditionFalse {
+				isCloseSemi = corev1.ConditionTrue
+			}
+			// 3. change master
+			if _, isReplicating, err = internal.CheckSlaveStatus(sqlRunner); err != nil {
+				node.Message = err.Error()
+			}
+		}
+		//update node Rostatus
+		node.RoStatus = &apiv1alpha1.RoStatus{
+			ReadOnly:    isReadonly == corev1.ConditionTrue && isSupperReadOnly == corev1.ConditionTrue,
+			Replication: isReplicating == corev1.ConditionTrue && isCloseSemi == corev1.ConditionTrue,
+			Master: func(cr *StatusSyncer) string {
+				if *cr.Spec.Replicas == 1 {
+					return fmt.Sprintf("%s-0.%s.%s", cr.GetNameForResource(utils.StatefulSet),
+						s.GetNameForResource(utils.StatefulSet), cr.Namespace)
+				}
+				if cr.Spec.ReadOnlys != nil {
+					if len(cr.Spec.ReadOnlys.Host) == 0 {
+						return fmt.Sprintf("%s-follower", cr.Name)
+					} else {
+						return fmt.Sprintf("%s.%s.%s", cr.Spec.ReadOnlys.Host, cr.GetNameForResource(utils.StatefulSet), cr.Namespace)
+					}
+				} else {
+					return ""
+				}
+			}(s),
+		}
+		// update apiv1alpha1.NodeConditionLagged.
+		s.updateNodeCondition(node, 0, isInitial)
+		// readonly
+		s.updateNodeCondition(node, int(apiv1alpha1.IndexRoReadOnly-apiv1alpha1.IndexRoInit), isReadonly)
+		// close semi check
+		s.updateNodeCondition(node, int(apiv1alpha1.IndexRoSemiClose-apiv1alpha1.IndexRoInit), isCloseSemi)
+		// update apiv1alpha1.NodeConditionReplicating.
+		s.updateNodeCondition(node, int(apiv1alpha1.IndexRoReplicating-apiv1alpha1.IndexRoInit), isReplicating)
+
+	}
+	return nil
+}
+
+// (RO) 3. get status index and set conditon
+func (s *StatusSyncer) getRoStatusIndex(name string) int {
+	len := len(s.Status.Nodes)
+	for i := 0; i < len; i++ {
+		if s.Status.Nodes[i].Name == name {
+			return i
+		}
+	}
+
+	lastTransitionTime := metav1.NewTime(time.Now())
+	status := apiv1alpha1.NodeStatus{
+		Name: name,
+		Conditions: []apiv1alpha1.NodeCondition{
+			{
+				Type:               apiv1alpha1.NodeConditionRoInitial,
+				Status:             corev1.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+			{
+				Type:               apiv1alpha1.NodeConditionRoReadOnly,
+				Status:             corev1.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+			{
+				Type:               apiv1alpha1.NodeConditionRoSemiClose,
+				Status:             corev1.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+			{
+				Type:               apiv1alpha1.NodeConditionRoReplicating,
+				Status:             corev1.ConditionUnknown,
+				LastTransitionTime: lastTransitionTime,
+			},
+		},
+	}
+	s.Status.Nodes = append(s.Status.Nodes, status)
+	return len
 }

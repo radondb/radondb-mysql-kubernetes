@@ -68,7 +68,7 @@ fmt: ## Run go fmt against code.
 
 vet: ## Run go vet against code.
 	go vet ./...
-	
+
 CONVERSION_GEN := $(shell pwd)/bin/conversion-gen
 CODE_GENERATOR_VERSION := $(shell awk '/k8s.io\/client-go/ {print substr($$2, 2)}' go.mod)
 conversion-gen: ## Donwload conversion-gen locally if necessary.
@@ -94,11 +94,12 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/manager/main.go
 
-docker-build:  ## Build docker image with the manager.
-	DOCKER_BUILDKIT=1 docker  build --build-arg GO_PROXY=${GO_PROXY} -t ${IMG} .
-	DOCKER_BUILDKIT=1 docker  build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PROXY} -t ${SIDECAR57_IMG} .
-	DOCKER_BUILDKIT=1 docker  build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PROXY} -t ${XENON_IMG} .
-	DOCKER_BUILDKIT=1 docker  build  --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  --build-arg GO_PROXY=${GO_PROXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
+docker-build: test ## Build docker image with the manager.
+	DOCKER_BUILDKIT=1 docker build --build-arg GO_PROXY=${GO_PROXY} -t ${IMG} .
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PROXY} -t ${SIDECAR57_IMG} .
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PROXY} -t ${SIDECAR80_IMG} .
+	DOCKER_BUILDKIT=1 docker build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PROXY} -t ${XENON_IMG} .
+	DOCKER_BUILDKIT=1 docker build --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  --build-arg GO_PROXY=${GO_PROXY} -f  Dockerfile.sidecar -t ${SIDECAR80_IMG} .
 docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 	docker push ${SIDECAR57_IMG}

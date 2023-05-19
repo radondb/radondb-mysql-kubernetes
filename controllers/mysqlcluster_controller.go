@@ -139,6 +139,10 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		clustersyncer.NewHeadlessSVCSyncer(r.Client, instance),
 		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
 	}
+	if instance.Unwrap().Spec.ReadOnlys != nil {
+		syncers = append(syncers, clustersyncer.NewHeadlessReadOnlySVCSyncer(r.Client, instance),
+			clustersyncer.NewReadOnlySVCSyncer(r.Client, instance))
+	}
 	if *instance.Unwrap().Spec.Replicas == 1 {
 		// Delete follower service
 		r.deleteFollowerService(ctx, req, instance.Unwrap())

@@ -188,7 +188,7 @@ func CheckSlaveStatusWithRetry(sqlRunner SQLRunner, retry uint32) (isLagged, isR
 			break
 		}
 
-		if isLagged, isReplicating, err = checkSlaveStatus(sqlRunner); err == nil {
+		if isLagged, isReplicating, err = CheckSlaveStatus(sqlRunner); err == nil {
 			return
 		}
 
@@ -199,8 +199,8 @@ func CheckSlaveStatusWithRetry(sqlRunner SQLRunner, retry uint32) (isLagged, isR
 	return
 }
 
-// checkSlaveStatus check the slave status.
-func checkSlaveStatus(sqlRunner SQLRunner) (isLagged, isReplicating corev1.ConditionStatus, err error) {
+// CheckSlaveStatus check the slave status.
+func CheckSlaveStatus(sqlRunner SQLRunner) (isLagged, isReplicating corev1.ConditionStatus, err error) {
 	var rows *sql.Rows
 	isLagged, isReplicating = corev1.ConditionUnknown, corev1.ConditionUnknown
 	rows, err = sqlRunner.QueryRows(NewQuery("show slave status;"))
@@ -235,13 +235,16 @@ func checkSlaveStatus(sqlRunner SQLRunner) (isLagged, isReplicating corev1.Condi
 
 	slaveIOState := strings.ToLower(columnValue(scanArgs, cols, "Slave_IO_State"))
 	slaveSQLRunning := columnValue(scanArgs, cols, "Slave_SQL_Running")
+	ioRunning := columnValue(scanArgs, cols, "Slave_IO_Running")
 	lastSQLError := columnValue(scanArgs, cols, "Last_SQL_Error")
 	secondsBehindMaster := columnValue(scanArgs, cols, "Seconds_Behind_Master")
 
 	if utils.StringInArray(slaveIOState, errorConnectionStates) {
 		return isLagged, corev1.ConditionFalse, fmt.Errorf("Slave_IO_State: %s", slaveIOState)
 	}
-
+	if ioRunning != "Yes" {
+		return isLagged, corev1.ConditionFalse, fmt.Errorf("Last_SQL_Error: %s", lastSQLError)
+	}
 	if slaveSQLRunning != "Yes" {
 		return isLagged, corev1.ConditionFalse, fmt.Errorf("Last_SQL_Error: %s", lastSQLError)
 	}
@@ -484,4 +487,32 @@ func Escape(sql string) string {
 	}
 
 	return string(dest)
+}
+
+// check readonly node, rpl_semi_sync_slave_enabled
+func CheckSemSync(sqlRunner SQLRunner) (corev1.ConditionStatus, error) {
+	var SemiSync uint8
+	if err := GetGlobalVariable(sqlRunner, "rpl_semi_sync_slave_enabled", &SemiSync); err != nil {
+		return corev1.ConditionUnknown, err
+	}
+
+	if SemiSync == 0 {
+		return corev1.ConditionFalse, nil
+	}
+
+	return corev1.ConditionTrue, nil
+}
+
+// check Super readonly
+func CheckSuperReadOnly(sqlRunner SQLRunner) (corev1.ConditionStatus, error) {
+	var readOnly uint8
+	if err := GetGlobalVariable(sqlRunner, "super_read_only", &readOnly); err != nil {
+		return corev1.ConditionUnknown, err
+	}
+
+	if readOnly == 0 {
+		return corev1.ConditionFalse, nil
+	}
+
+	return corev1.ConditionTrue, nil
 }

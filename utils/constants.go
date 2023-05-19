@@ -131,6 +131,11 @@ const (
 	// TlsMountPath is the volume mount path for tls
 	TlsMountPath = "/etc/mysql-ssl"
 
+	//extra env for readonly
+	ROIbPool = "IB_POOL"
+	ROIbInst = "IB_INST"
+	ROIbLog  = "IB_LOG"
+
 	// RadonDB excutable files  dir
 	RadonDBBinDir = "/opt/radondb"
 )
@@ -141,6 +146,9 @@ type ResourceName string
 const (
 	// HeadlessSVC is the alias of the headless service resource.
 	HeadlessSVC ResourceName = "headless"
+	// ReadOnlyHeadlessSVC is the alias  of the headless service resource
+	ReadOnlyHeadlessSVC = "ROHeadless"
+	ReadOnlySvc         = "Ro-service"
 	// StatefulSet is the alias of the statefulset resource.
 	StatefulSet ResourceName = "mysql"
 	// ConfigMap is the alias for mysql configs, the config map resource.
