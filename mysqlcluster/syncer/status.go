@@ -165,7 +165,7 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 	}
 	//(RO) because the ReadOnly Pods create after the cluster ready, so the ReadOnly pods are always
 	// the last part of node status
-	if err := s.updateReadOnlyNodeStatus(ctx, s.cli); err != nil {
+	if err := s.updateReadOnlyNodeStatus(ctx, s.cli, list.Items); err != nil {
 		//Notice!!! ReadOnly node fail, just show the error log, do not return here!
 		s.log.Error(err, "ReadOnly pod fail", "namespace", s.Namespace)
 	}
@@ -521,7 +521,7 @@ func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node
 }
 
 // Update the Readonly node status
-func (s *StatusSyncer) updateReadOnlyNodeStatus(ctx context.Context, cli client.Client) error {
+func (s *StatusSyncer) updateReadOnlyNodeStatus(ctx context.Context, cli client.Client, cluster_pods []corev1.Pod) error {
 	labels := s.GetLabels()
 	labels["app.kubernetes.io/name"] = "mysql-readonly"
 	labels["readonly"] = "true"
@@ -542,6 +542,13 @@ func (s *StatusSyncer) updateReadOnlyNodeStatus(ctx context.Context, cli client.
 	if err := s.RoCheckStatus(ctx, cli, list.Items); err != nil {
 		return err
 	}
+	for _, pod := range list.Items {
+		if err := s.DoRoRebuild(ctx, &pod, cluster_pods); err != nil {
+			// Cannot return ,just print log.
+			s.log.Error(err, "failed to AutoRebuild", "pod", pod.Name, "namespace", pod.Namespace)
+		}
+	}
+
 	return nil
 }
 
@@ -677,4 +684,58 @@ func (s *StatusSyncer) getRoStatusIndex(name string) int {
 	}
 	s.Status.Nodes = append(s.Status.Nodes, status)
 	return len
+}
+
+func (s *StatusSyncer) DoRoRebuild(ctx context.Context, pod *corev1.Pod, items []corev1.Pod) error {
+	if len(pod.ObjectMeta.Labels[utils.LableRebuild]) == 0 {
+		return nil
+	}
+	ordinal, err := utils.GetOrdinal(pod.Name)
+	if err != nil {
+		return err
+
+	}
+	if pod.ObjectMeta.Labels[utils.LableRebuild] != "true" {
+		podNumber, err := strconv.Atoi(pod.ObjectMeta.Labels[utils.LableRebuild])
+		if err != nil {
+			return fmt.Errorf("rebuild label should be true, or number")
+		}
+		for _, other := range items {
+			ord, err2 := utils.GetOrdinal(other.Name)
+			if err2 != nil {
+				return err
+
+			}
+			if ord == podNumber {
+				other.Labels[utils.LabelRebuildFrom] = "true"
+				if err := s.cli.Update(ctx, &other); err != nil {
+					return err
+				}
+				break
+			}
+		}
+	}
+	// Set Pod UnHealthy.
+	pod.Labels["healthy"] = "no"
+	if err := s.cli.Update(ctx, pod); err != nil {
+		return err
+	}
+	// Delete the Pod.
+	if err := s.cli.Delete(ctx, pod); err != nil {
+		return err
+	}
+	// Delete the pvc.
+	pvcName := fmt.Sprintf("%s-%s-%d", utils.DataVolumeName,
+		s.GetNameForResource(utils.ReadOnlyHeadlessSVC), ordinal)
+	pvc := corev1.PersistentVolumeClaim{}
+
+	if err := s.cli.Get(ctx,
+		types.NamespacedName{Name: pvcName, Namespace: s.Namespace},
+		&pvc); err != nil {
+		return err
+	}
+	if err := s.cli.Delete(ctx, &pvc); err != nil {
+		return err
+	}
+	return nil
 }
