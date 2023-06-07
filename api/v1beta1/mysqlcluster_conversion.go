@@ -19,11 +19,13 @@ package v1beta1
 import (
 	"fmt"
 	"strings"
+	"time"
 	"unsafe"
 
 	"github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
@@ -183,12 +185,57 @@ func Convert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in *BackupStatus, out
 	if err := autoConvert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in, out, s); err != nil {
 		return err
 	}
+	out.BackupDate = in.CompletionTime.Format("2006-01-02 15:04:05")
+	switch in.State {
+	case BackupFailed:
+		out.Conditions = append(out.Conditions, v1alpha1.BackupCondition{
+			Type:   v1alpha1.BackupStart,
+			Status: corev1.ConditionTrue,
+			Reason: "",
+		}, v1alpha1.BackupCondition{
+			Type:   v1alpha1.BackupFailed,
+			Status: corev1.ConditionTrue,
+			Reason: "",
+		})
+		out.Completed = true
+	case BackupSucceeded:
+		out.Conditions = append(out.Conditions, v1alpha1.BackupCondition{
+			Type:   v1alpha1.BackupStart,
+			Status: corev1.ConditionTrue,
+			Reason: "",
+		}, v1alpha1.BackupCondition{
+			Type:   v1alpha1.BackupComplete,
+			Status: corev1.ConditionTrue,
+			Reason: "",
+		})
+		out.Completed = true
+	}
 	return nil
 }
 
 func Convert_v1alpha1_BackupStatus_To_v1beta1_BackupStatus(in *v1alpha1.BackupStatus, out *BackupStatus, s apiconversion.Scope) error {
 	if err := autoConvert_v1alpha1_BackupStatus_To_v1beta1_BackupStatus(in, out, s); err != nil {
 		return err
+	}
+	if t, err := time.Parse("2006-01-02 15:04:05", in.BackupDate); err != nil {
+		return err
+	} else {
+		completeTime := metav1.NewTime(t)
+		out.CompletionTime = &completeTime
+	}
+	if in.Completed {
+		out.State = BackupFailed
+		for _, cond := range in.Conditions {
+
+			if cond.Type == v1alpha1.BackupStart && cond.Status == corev1.ConditionTrue &&
+				out.State != BackupSucceeded {
+				out.State = BackupStart
+			}
+			if cond.Type == v1alpha1.BackupComplete && cond.Status == corev1.ConditionTrue {
+				out.State = BackupSucceeded
+				break
+			}
+		}
 	}
 	return nil
 }

@@ -289,11 +289,6 @@ func autoConvert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in *BackupStatus,
 	// WARNING: in.StartTime requires manual conversion: does not exist in peer-type
 	// WARNING: in.CompletionTime requires manual conversion: does not exist in peer-type
 	// WARNING: in.State requires manual conversion: does not exist in peer-type
-	if in.State == BackupFailed ||  in.State == BackupSucceeded{
-		out.Completed = true;
-	}else {
-		out.Completed = false;
-	}
 	// WARNING: in.ManualBackup requires manual conversion: does not exist in peer-type
 	// WARNING: in.ScheduledBackups requires manual conversion: does not exist in peer-type
 	return nil
