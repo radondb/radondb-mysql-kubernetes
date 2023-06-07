@@ -8,11 +8,11 @@ Create MySQLCluster:
 > Create MySQLCluster:
 {{- end }}
 
-kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1alpha1_mysqlcluster.yaml
+kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1beta1_mysqlcluster.yaml
 
 Create Users:
 
-kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1alpha1_mysqluser.yaml
+kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1beta1_mysqluser.yaml
 
 {{- if .Values.mysqlcluster.install }}
 

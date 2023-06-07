@@ -1,13 +1,31 @@
-
----
+{{- $certManagerEnabled := .Values.webhook.certManager.enabled -}}
+{{- $caCertPEM := include "webhook.caBundleCertPEM" . -}}
+{{- $tlsCertPEM := include "webhook.certPEM" . -}}
+{{- $tlsKeyPEM := include "webhook.keyPEM" . -}}
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
+  {{- if $certManagerEnabled }}
+    cert-manager.io/inject-ca-from: "{{ .Release.Namespace }}/{{ template "certificate.name" . }}"
+  {{- end }}
   creationTimestamp: null
   name: backups.mysql.radondb.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+      {{- if not $certManagerEnabled }}
+        caBundle: {{ ternary (b64enc $caCertPEM) (b64enc (trim $tlsCertPEM)) (empty $tlsKeyPEM) }}
+      {{- end }}
+        service:
+          name: radondb-mysql-webhook
+          namespace: default
+          path: /convert
+      conversionReviewVersions:
+      - v1
   group: mysql.radondb.com
   names:
     kind: Backup
