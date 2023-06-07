@@ -12,7 +12,7 @@ patchesStrategicMerge:
 # patches here are for enabling the conversion webhook for each CRD
 - patches/webhook_in_mysqlclusters.yaml
 #- patches/webhook_in_mysqlclusters.yaml
-#- patches/webhook_in_backups.yaml
+- patches/webhook_in_backups.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.

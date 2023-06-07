@@ -60,4 +60,7 @@ resources:
   kind: Backup
   path: github.com/radondb/radondb-mysql-kubernetes/api/v1beta1
   version: v1beta1
+  webhooks:
+    conversion: true
+    webhookVersion: v1
 version: "3"
