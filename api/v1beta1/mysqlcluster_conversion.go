@@ -185,7 +185,10 @@ func Convert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in *BackupStatus, out
 	if err := autoConvert_v1beta1_BackupStatus_To_v1alpha1_BackupStatus(in, out, s); err != nil {
 		return err
 	}
-	out.BackupDate = in.CompletionTime.Format("2006-01-02 15:04:05")
+	if in.CompletionTime != nil {
+		out.BackupDate = in.CompletionTime.Format("2006-01-02 15:04:05")
+	}
+
 	switch in.State {
 	case BackupFailed:
 		out.Conditions = append(out.Conditions, v1alpha1.BackupCondition{
