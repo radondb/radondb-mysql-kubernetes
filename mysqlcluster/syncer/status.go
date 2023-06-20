@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/presslabs/controller-util/pkg/syncer"
@@ -430,7 +431,12 @@ func (s *StatusSyncer) updateNodeRaftStatus(node *apiv1alpha1.NodeStatus) error 
 
 func (s *StatusSyncer) reconcileXenon(readyNodes int) error {
 	expectXenonNodes := s.getExpectXenonNodes(readyNodes)
+	// filter nodes with out ro
 	for _, nodeStatus := range s.Status.Nodes {
+		if strings.HasPrefix(nodeStatus.Name, s.GetNameForResource(utils.ReadOnlyHeadlessSVC)) {
+			continue
+		}
+
 		toRemove := utils.StringDiffIn(nodeStatus.RaftStatus.Nodes, expectXenonNodes)
 		if err := s.removeNodesFromXenon(nodeStatus.Name, toRemove); err != nil {
 			return err
