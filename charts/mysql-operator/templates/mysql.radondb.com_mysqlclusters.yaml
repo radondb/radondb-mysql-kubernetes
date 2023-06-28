@@ -22,7 +22,7 @@ spec:
       {{- end }}
         service:
           name: radondb-mysql-webhook
-          namespace: default
+          namespace: {{ .Release.Namespace }}
           path: /convert
       conversionReviewVersions:
       - v1
