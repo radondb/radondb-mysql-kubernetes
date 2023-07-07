@@ -137,7 +137,12 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		clustersyncer.NewRoleBindingSyncer(r.Client, instance),
 		clustersyncer.NewServiceAccountSyncer(r.Client, instance),
 		clustersyncer.NewHeadlessSVCSyncer(r.Client, instance),
-		clustersyncer.NewLeaderSVCSyncer(r.Client, instance),
+	}
+	if instance.Unwrap().Labels[utils.LabelMaintain] == "true" {
+		log.V(1).Info("It has got a maintain label")
+		r.deletLeaderService(ctx, req, instance.Unwrap())
+	} else {
+		syncers = append(syncers, clustersyncer.NewLeaderSVCSyncer(r.Client, instance))
 	}
 	if instance.Unwrap().Spec.ReadOnlys != nil {
 		syncers = append(syncers, clustersyncer.NewHeadlessReadOnlySVCSyncer(r.Client, instance),
@@ -237,7 +242,29 @@ func (r *MysqlClusterReconciler) deleteFollowerService(ctx context.Context, req 
 	}
 	for _, svc := range serviceList.Items {
 		if err := r.Delete(context.TODO(), &svc); err != nil {
-			log.Error(err, "failed to delete a backup", "backup", svc)
+			log.Error(err, "failed to delete a service", "service", svc)
+		}
+	}
+	return nil
+}
+
+// For SingleNode, follower service do not need.
+func (r *MysqlClusterReconciler) deletLeaderService(ctx context.Context, req ctrl.Request, instance *apiv1alpha1.MysqlCluster) error {
+	log := log.FromContext(ctx).WithName("controllers").WithName("MysqlCluster")
+	labelSet := labels.Set{"mysql.radondb.com/service-type": string(utils.LeaderService)}
+	serviceList := corev1.ServiceList{}
+	if err := r.List(ctx,
+		&serviceList,
+		&client.ListOptions{
+			Namespace:     instance.Namespace,
+			LabelSelector: labelSet.AsSelector(),
+		},
+	); err != nil {
+		return err
+	}
+	for _, svc := range serviceList.Items {
+		if err := r.Delete(context.TODO(), &svc); err != nil {
+			log.Error(err, "failed to delete a leader service", "service", svc)
 		}
 	}
 	return nil
