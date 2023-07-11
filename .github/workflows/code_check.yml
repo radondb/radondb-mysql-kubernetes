@@ -55,6 +55,7 @@ jobs:
       run: |
         make manifests
         make generate
+        git checkout config/webhook/manifests.yaml
 
     - name: Check crd
       run: d="$(git status -s)" && if [ -n "$d" ]; then echo "check-crd error:" ; echo "$d"; exit 1; fi 
