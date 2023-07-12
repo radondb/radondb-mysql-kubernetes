@@ -1,9 +1,9 @@
 # Image URL to use all building/pushing image targets
-FROM_VERSION ?=v2.3.0
-CHART_VERSION ?=2.3.0
-CHART_TOVERSION ?=3.0.0-alpha
-TO_VERSION ?=v3.0.0-alpha
-TAG ?=v3.0.0-alpha
+FROM_VERSION ?=v3.0.0-alpha
+CHART_VERSION ?=3.0.0-alpha
+CHART_TOVERSION ?=3.0.0
+TO_VERSION ?=v3.0.0
+TAG ?=v3.0.0
 IMGPREFIX ?=radondb/
 IMG ?= $(IMGPREFIX)mysql-operator:$(TAG)
 SIDECAR57_IMG ?= $(IMGPREFIX)mysql57-sidecar:$(TAG)
