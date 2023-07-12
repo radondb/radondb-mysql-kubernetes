@@ -309,7 +309,7 @@ spec:
                       cpu: 10m
                       memory: 32Mi
                   imagePullPolicy: IfNotPresent
-                  sidecarImage: radondb/mysql57-sidecar:v3.0.0-alpha
+                  sidecarImage: radondb/mysql57-sidecar:v3.0.0
                 description: PodPolicy defines the policy to extra specification.
                 properties:
                   affinity:
@@ -1239,7 +1239,7 @@ spec:
                   schedulerName:
                     type: string
                   sidecarImage:
-                    default: radondb/mysql57-sidecar:v3.0.0-alpha
+                    default: radondb/mysql57-sidecar:v3.0.0
                     description: To specify the image that will be used for sidecar
                       container.
                     type: string
@@ -2256,7 +2256,7 @@ spec:
                 default:
                   admitDefeatHearbeatCount: 5
                   electionTimeout: 10000
-                  image: radondb/xenon:v3.0.0-alpha
+                  image: radondb/xenon:v3.0.0
                   resources:
                     limits:
                       cpu: 100m
@@ -2283,7 +2283,7 @@ spec:
                       automatically rebuild the invalid node.
                     type: boolean
                   image:
-                    default: radondb/xenon:v3.0.0-alpha
+                    default: radondb/xenon:v3.0.0
                     description: To specify the image that will be used for xenon
                       container.
                     type: string
@@ -4922,7 +4922,7 @@ spec:
                 default:
                   admitDefeatHearbeatCount: 5
                   electionTimeout: 10000
-                  image: radondb/xenon:v3.0.0-alpha
+                  image: radondb/xenon:v3.0.0
                   resources:
                     limits:
                       cpu: 100m
@@ -4949,7 +4949,7 @@ spec:
                       automatically rebuild the invalid node.
                     type: boolean
                   image:
-                    default: radondb/xenon:v3.0.0-alpha
+                    default: radondb/xenon:v3.0.0
                     description: To specify the image that will be used for xenon
                       container.
                     type: string

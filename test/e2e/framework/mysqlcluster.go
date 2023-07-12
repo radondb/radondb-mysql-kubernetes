@@ -42,7 +42,7 @@ metadata:
 spec:
   replicas: %d
   xenonOpts:
-    image: radondb/xenon:v3.0.0-alpha
+    image: radondb/xenon:v3.0.0
 `
 	MySQL57ReleaseAssetURL = "https://github.com/radondb/radondb-mysql-kubernetes/releases/latest/download/mysql_v1alpha1_mysqlcluster.yaml"
 )
