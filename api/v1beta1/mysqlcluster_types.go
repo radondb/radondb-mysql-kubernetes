@@ -459,6 +459,11 @@ type LogOpts struct {
 	// +kubebuilder:default:=false
 	AuditLogTail bool `json:"auditLogTail,omitempty"`
 
+	// ErrorLogTail represents if tail the mysql error log.
+	// +optional
+	// +kubebuilder:default:=false
+	ErrorLogTail bool `json:"errorLogTail,omitempty"`
+
 	//Log container resources of a MySQL container.
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }

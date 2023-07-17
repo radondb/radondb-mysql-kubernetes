@@ -79,6 +79,8 @@ func Convert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alpha1.
 	out.Backup.Image = in.PodPolicy.SidecarImage
 	out.Backup.Resources = in.PodPolicy.ExtraResources
 	out.Log.SlowLogTail = in.PodPolicy.SlowLogTail
+	out.Log.AuditLogTail = in.PodPolicy.AuditLogTail
+	out.Log.ErrorLogTail = in.PodPolicy.ErrorLogTail
 	out.Tolerations = in.PodPolicy.Tolerations
 	out.PriorityClassName = in.PodPolicy.PriorityClassName
 	out.Log.BusyboxImage = in.PodPolicy.BusyboxImage
@@ -137,13 +139,15 @@ func Convert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *MysqlClus
 	out.Persistence.Size = FormatQuantity(in.Storage.Resources.Requests[corev1.ResourceStorage])
 	out.Persistence.AccessModes = in.Storage.AccessModes
 	out.XenonOpts = v1alpha1.XenonOpts(in.Xenon)
-	// //TODO in.Backup
+
 	out.PodPolicy.ExtraResources = in.Backup.Resources
 	out.PodPolicy.SidecarImage = in.Backup.Image
 	out.MetricsOpts.Image = in.Monitoring.Exporter.Image
 	out.MetricsOpts.Resources = in.Monitoring.Exporter.Resources
 	out.MysqlOpts.Image = in.Image
 	out.PodPolicy.SlowLogTail = in.Log.SlowLogTail
+	out.PodPolicy.AuditLogTail = in.Log.AuditLogTail
+	out.PodPolicy.ErrorLogTail = in.Log.ErrorLogTail
 	out.PodPolicy.BusyboxImage = in.Log.BusyboxImage
 	out.MetricsOpts.Enabled = in.Monitoring.Exporter.Enabled
 	out.PodPolicy.ImagePullPolicy = in.ImagePullPolicy

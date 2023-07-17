@@ -441,7 +441,11 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 	if s.Spec.PodPolicy.AuditLogTail {
 		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, s.MysqlCluster))
 	}
+	if s.Spec.PodPolicy.ErrorLogTail {
+		// 1.create errorLog
+		containers = append(containers, container.EnsureContainer(utils.ContainerErrorLogName, s.MysqlCluster))
 
+	}
 	return corev1.PodSpec{
 		InitContainers:     initContainers,
 		Containers:         containers,

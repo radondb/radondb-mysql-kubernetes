@@ -78,6 +78,8 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 		ctr = &slowLog{c, name}
 	case utils.ContainerAuditLogName:
 		ctr = &auditLog{c, name}
+	case utils.ContainerErrorLogName:
+		ctr = &errorLog{c, name}
 	case utils.ContainerBackupName:
 		ctr = &backupSidecar{c, name}
 	}

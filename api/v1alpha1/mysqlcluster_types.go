@@ -290,6 +290,11 @@ type PodPolicy struct {
 	// +optional
 	// +kubebuilder:default:=false
 	AuditLogTail bool `json:"auditLogTail,omitempty"`
+
+	// ErrorLogTail represents if tail the mysql error log.
+	// +optional
+	// +kubebuilder:default:=false
+	ErrorLogTail bool `json:"errorLogTail,omitempty"`
 }
 
 // Persistence is the desired spec for storing mysql data. Only one of its
