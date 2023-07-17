@@ -1207,6 +1207,10 @@ spec:
                     default: busybox:1.32
                     description: The busybox image.
                     type: string
+                  errorLogTail:
+                    default: false
+                    description: ErrorLogTail represents if tail the mysql error log.
+                    type: boolean
                   extraResources:
                     default:
                       requests:
@@ -3528,6 +3532,10 @@ spec:
                   auditLogTail:
                     default: false
                     description: AuditLogTail represents if tail the mysql audit log.
+                    type: boolean
+                  errorLogTail:
+                    default: false
+                    description: ErrorLogTail represents if tail the mysql error log.
                     type: boolean
                   image:
                     default: busybox:1.32

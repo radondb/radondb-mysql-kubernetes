@@ -427,6 +427,9 @@ func (c *MysqlCluster) EnsureMysqlConf() {
 		}
 
 	}
+	if c.Spec.PodPolicy.ErrorLogTail {
+		c.Spec.MysqlOpts.MysqlConf["log-error"] = utils.LogsVolumeMountPath + "/mysql-error.log"
+	}
 }
 
 // sizeToBytes parses a string formatted by ByteSize as bytes.

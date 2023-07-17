@@ -46,6 +46,7 @@ const (
 	ContainerMetricsName   = "metrics"
 	ContainerSlowLogName   = "slowlog"
 	ContainerAuditLogName  = "auditlog"
+	ContainerErrorLogName  = "errorlog"
 	ContainerBackupName    = "backup"
 	ContainerBackupJobName = "backup-job"
 
