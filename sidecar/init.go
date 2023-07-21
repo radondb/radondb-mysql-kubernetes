@@ -90,29 +90,41 @@ func CheckServiceExist(cfg *Config, service string) bool {
 func runCloneAndInit(cfg *Config) (bool, error) {
 	//check follower is exists?
 	serviceURL := ""
+	server := ""
 	var hasInitialized = false
+	var err error
 	// Check the rebuildFrom exist?
-	if service, err := getPod(cfg); err == nil {
-		serviceURL = service
+	if serviceURL, server, err = getPod(cfg); err == nil {
 		log.Info("found the rebuild-from pod", "service", serviceURL)
 	} else {
 		log.Info("found the rebuild-from pod", "error", err.Error())
 	}
 	if len(serviceURL) == 0 && CheckServiceExist(cfg, "follower") {
 		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "follower", utils.XBackupPort)
+		server = fmt.Sprintf("%s-%s", cfg.ClusterName, "follower")
 	}
 	//check leader is exist?
 	if len(serviceURL) == 0 && CheckServiceExist(cfg, "leader") {
 		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "leader", utils.XBackupPort)
+		server = fmt.Sprintf("%s-%s", cfg.ClusterName, "leader")
 	}
 
 	if len(serviceURL) != 0 {
 		// Check has initialized. If so just return.
 		hasInitialized, _ = checkIfPathExists(path.Join(dataPath, "mysql"))
+		// TODO is MySQL8, CLone it
+		if cfg.MySQLVersion.Major == 8 {
+			// TODO return clone int
+			log.Info("server choose ", "server", server)
+			err := DoCLone(cfg, server)
+			return hasInitialized, err
+		}
+
 		if hasInitialized {
 			log.Info("MySQL data directory existing!")
 			return hasInitialized, nil
 		}
+
 		// backup at first
 		Args := fmt.Sprintf("curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C %s; exit ${PIPESTATUS[0]}",
 			serviceURL, utils.DataVolumeMountPath)
@@ -408,16 +420,16 @@ func copyMySQLchecker() error {
 	return nil
 }
 
-func getPod(cfg *Config) (string, error) {
+func getPod(cfg *Config) (string, string, error) {
 	log.Info("Now check the pod which has got rebuild-from")
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	// creates the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	match := map[string]string{
 		utils.LabelRebuildFrom: "true",
@@ -426,7 +438,7 @@ func getPod(cfg *Config) (string, error) {
 		List(context.TODO(), v1.ListOptions{
 			LabelSelector: labels.SelectorFromSet(match).String()})
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	if len(podList.Items) == 1 {
 		pod := podList.Items[0]
@@ -434,9 +446,10 @@ func getPod(cfg *Config) (string, error) {
 		if err := removeRebuildFrom(clientset, cfg, pod.Name); err != nil {
 			log.Info("remove rebuild from", "error", err.Error())
 		}
-		return fmt.Sprintf("%s.%s-mysql.%s:%v", pod.Name, cfg.ClusterName, cfg.NameSpace, utils.XBackupPort), nil
+		return fmt.Sprintf("%s.%s-mysql.%s:%v", pod.Name, cfg.ClusterName, cfg.NameSpace, utils.XBackupPort),
+			fmt.Sprintf("%s.%s-mysql.%s", pod.Name, cfg.ClusterName, cfg.NameSpace), nil
 	} else {
-		return "", fmt.Errorf("not correct pod choose")
+		return "", "", fmt.Errorf("not correct pod choose")
 	}
 
 }
@@ -446,4 +459,30 @@ func removeRebuildFrom(clientset *kubernetes.Clientset, cfg *Config, podName str
 	_, err := clientset.CoreV1().Pods(cfg.NameSpace).Patch(context.TODO(), podName, types.JSONPatchType, []byte(patch), v1.PatchOptions{})
 
 	return err
+}
+
+func DoCLone(cfg *Config, server string) error {
+	sql := fmt.Sprintf(`SET GLOBAL clone_valid_donor_list = '%s:3306' ;
+	CLONE INSTANCE FROM '%s'@'%s':3306
+	IDENTIFIED BY '%s';
+`, server, cfg.DonorClone, server, cfg.DonorClonePassword)
+	cloneSh := fmt.Sprintf(`#!/bin/bash
+mysqld &
+mysql=( mysql -uroot -hlocalhost  --password="" )
+
+for i in {120..0}; do
+	if echo 'SELECT 1' | "${mysql[@]}" &> /dev/null; then
+		break
+	fi
+	echo 'MySQL run process in progress...'
+	sleep 1
+done
+mysql -uroot -hlocalhost  --password="" -e "%s"
+`, sql)
+	log.Info("write clone shell", "shell", cloneSh)
+	//write to docker.
+	if err := ioutil.WriteFile(initFilePath+"/clone.sh", []byte(cloneSh), 0755); err != nil {
+		return fmt.Errorf("failed to write clone.sh: %s", err)
+	}
+	return nil
 }

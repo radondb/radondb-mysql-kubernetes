@@ -176,6 +176,15 @@ func (s *mysqlCMSyncer) appendConf() error {
 	if err := s.createOrReplaceIniKey("my.cnf", s.Spec.MysqlOpts.MysqlConf); err != nil {
 		return err
 	}
+	if s.Spec.MysqlVersion == "8.0" {
+		str := pluginConfigs["plugin-load"]
+		str = str[0:len(str)-1] + ";mysql_clone.so\""
+		if s.Spec.MysqlOpts.PluginConf != nil {
+			s.Spec.MysqlOpts.PluginConf["plugin-load"] = str
+		} else {
+			s.Spec.MysqlOpts.PluginConf = map[string]string{"plugin-load": str}
+		}
+	}
 	if err := s.createOrReplaceIniKey("plugin.cnf", s.Spec.MysqlOpts.PluginConf); err != nil {
 		return err
 	}
@@ -287,7 +296,6 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 func buildMysqlPluginConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
 	sec := cfg.Section("mysqld")
-
 	addKVConfigsToSection(sec, pluginConfigs)
 	addKVConfigsToSection(sec, c.Spec.MysqlOpts.PluginConf)
 	data, err := writeConfigs(cfg)

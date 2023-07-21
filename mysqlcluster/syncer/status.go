@@ -251,6 +251,10 @@ func (s *StatusSyncer) AutoRebuild(ctx context.Context, pod *corev1.Pod, items [
 	if err := s.cli.Delete(ctx, pod); err != nil {
 		return err
 	}
+	if s.Spec.MysqlVersion == "8.0" {
+		s.log.Info("Do not delete pvc")
+		return nil
+	}
 	// Delete the pvc.
 	pvcName := fmt.Sprintf("%s-%s-%d", utils.DataVolumeName,
 		s.GetNameForResource(utils.StatefulSet), ordinal)

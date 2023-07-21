@@ -57,6 +57,11 @@ func NewSecretSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Int
 			return err
 		}
 
+		secret.Data["donor-user"] = []byte(utils.DonorCloneUser)
+		if err := addRandomPassword(secret.Data, "donor-password"); err != nil {
+			return err
+		}
+
 		// xtrabackup http server user and password
 		secret.Data["backup-user"] = []byte(utils.BackupUser)
 		if err := addRandomPassword(secret.Data, "backup-password"); err != nil {
