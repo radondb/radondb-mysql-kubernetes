@@ -51,7 +51,10 @@ type Config struct {
 	Password string
 	// Name for new database to create.
 	Database string
-
+	// Name for donor clone
+	DonorClone string
+	// Name for donor clone
+	DonorClonePassword string
 	// The name of replication user.
 	ReplicationUser string
 	// The password of the replication user.
@@ -180,6 +183,9 @@ func NewInitConfig() *Config {
 
 		OperatorUser:     getEnvValue("OPERATOR_USER"),
 		OperatorPassword: getEnvValue("OPERATOR_PASSWORD"),
+
+		DonorClone:         getEnvValue("DONOR_USER"),
+		DonorClonePassword: getEnvValue("DONOR_PASSWORD"),
 
 		InitTokuDB: initTokuDB,
 
@@ -401,6 +407,9 @@ GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%';
 DROP user IF EXISTS '%s'@'%%';
 CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
 GRANT ALL ON %s.* TO '%s'@'%%' ;
+DROP user IF EXISTS '%s'@'%%';
+CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+GRANT BACKUP_ADMIN ON *.* TO '%s'@'%%' ;
 FLUSH PRIVILEGES;
 
 %s
@@ -423,6 +432,9 @@ FLUSH PRIVILEGES;
 		cfg.User,               //drop user
 		cfg.User, cfg.Password, //create user
 		cfg.Database, cfg.User, //grant
+		cfg.DonorClone,
+		cfg.DonorClone, cfg.DonorClonePassword,
+		cfg.DonorClone, // grant
 		initSQL,
 	)
 
@@ -451,6 +463,11 @@ func (cfg *Config) buildClientConfig() (*ini.File, error) {
 
 	if _, err := sec.NewKey("password", cfg.OperatorPassword); err != nil {
 		return nil, err
+	}
+	if cfg.MySQLVersion.Major == 8 {
+		if _, err := sec.NewKey("donor", cfg.DonorClone); err != nil {
+			return nil, err
+		}
 	}
 
 	return conf, nil

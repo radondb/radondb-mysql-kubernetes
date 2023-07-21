@@ -109,7 +109,9 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 		getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
 		getEnvVarFromSecret(sctName, "OPERATOR_USER", "operator-user", true),
 		getEnvVarFromSecret(sctName, "OPERATOR_PASSWORD", "operator-password", true),
-
+		//get donor and donor password
+		getEnvVarFromSecret(sctName, "DONOR_USER", "donor-user", true),
+		getEnvVarFromSecret(sctName, "DONOR_PASSWORD", "donor-password", true),
 		// backup user password for sidecar http server
 		getEnvVarFromSecret(sctName, "BACKUP_USER", "backup-user", true),
 		getEnvVarFromSecret(sctName, "BACKUP_PASSWORD", "backup-password", true),

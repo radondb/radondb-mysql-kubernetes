@@ -244,6 +244,30 @@ var (
 			},
 		},
 		{
+			Name: "DONOR_USER",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "donor-user",
+					Optional: &optTrue,
+				},
+			},
+		},
+		{
+			Name: "DONOR_PASSWORD",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: sctName,
+					},
+					Key:      "donor-password",
+					Optional: &optTrue,
+				},
+			},
+		},
+		{
 			Name: "BACKUP_USER",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{

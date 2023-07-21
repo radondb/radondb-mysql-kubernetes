@@ -75,6 +75,8 @@ const (
 	MetricsUser = "radondb_metrics"
 	// The MySQL user used for operator to connect to the mysql node for configuration.
 	OperatorUser = "radondb_operator"
+	// donor user
+	DonorCloneUser = "radondb_donor"
 	// The name of the MySQL root user.
 	RootUser = "root"
 
