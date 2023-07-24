@@ -2,34 +2,6 @@ apiVersion: v1
 entries:
   mysql-operator:
   - apiVersion: v2
-    appVersion: v3.0.1
-    created: "2023-07-13T06:37:08.78652564Z"
-    dependencies:
-    - name: mysqlcluster
-      repository: ""
-      version: v3.0.0
-    description: Open Source，High Availability Cluster，based on MySQL
-    digest: 9c06d92145aac88ccbc9b315534eec3a0242538a060854f910771a4f3b1a38c4
-    name: mysql-operator
-    type: application
-    urls:
-    - https://radondb.github.io/radondb-mysql-kubernetes/mysql-operator-3.0.1.tgz
-    version: 3.0.1
-  - apiVersion: v2
-    appVersion: v3.0.0-alpha
-    created: "2023-07-13T06:37:08.791623492Z"
-    dependencies:
-    - name: mysqlcluster
-      repository: ""
-      version: v3.0.0-alpha
-    description: Open Source，High Availability Cluster，based on MySQL
-    digest: 6da69f49d2548be851d74631c800990d0bf2a2497f9d9b3038ac0ac2a78cfd59
-    name: mysql-operator
-    type: application
-    urls:
-    - https://radondb.github.io/radondb-mysql-kubernetes/mysql-operator-v3.0.0-alpha.tgz
-    version: v3.0.0-alpha
-  - apiVersion: v2
     appVersion: v2.4.0
     created: "2023-07-13T06:37:08.788778363Z"
     dependencies:
