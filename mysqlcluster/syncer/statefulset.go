@@ -24,7 +24,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/imdario/mergo"
-	"github.com/presslabs/controller-util/pkg/mergo/transformers"
 	"github.com/presslabs/controller-util/pkg/syncer"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -371,43 +370,46 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 
 // mutate set the statefulset.
 func (s *StatefulSetSyncer) mutate() error {
-	s.sfs.Spec.ServiceName = s.GetNameForResource(utils.StatefulSet)
-	s.sfs.Spec.Replicas = s.Spec.Replicas
-	s.sfs.Spec.Selector = metav1.SetAsLabelSelector(s.GetSelectorLabels())
-	s.sfs.Spec.UpdateStrategy = appsv1.StatefulSetUpdateStrategy{
-		Type: appsv1.OnDeleteStatefulSetStrategyType,
-	}
-
-	s.sfs.Spec.Template.ObjectMeta.Labels = s.GetLabels()
+	// build lables.
+	podLables := s.GetLabels()
 	for k, v := range s.Spec.PodPolicy.Labels {
-		s.sfs.Spec.Template.ObjectMeta.Labels[k] = v
+		podLables[k] = v
 	}
-	s.sfs.Spec.Template.ObjectMeta.Labels["role"] = string(utils.Candidate)
-	s.sfs.Spec.Template.ObjectMeta.Labels["healthy"] = "no"
-
-	s.sfs.Spec.Template.Annotations = s.Spec.PodPolicy.Annotations
-	if len(s.sfs.Spec.Template.ObjectMeta.Annotations) == 0 {
-		s.sfs.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
+	podLables["role"] = string(utils.Follower)
+	podLables["healthy"] = "no"
+	// build annotations.
+	podAnnotations := make(map[string]string)
+	if len(s.Spec.PodPolicy.Annotations) > 0 {
+		podAnnotations = s.Spec.PodPolicy.Annotations
 	}
 	if s.Spec.MetricsOpts.Enabled {
-		s.sfs.Spec.Template.ObjectMeta.Annotations["prometheus.io/scrape"] = "true"
-		s.sfs.Spec.Template.ObjectMeta.Annotations["prometheus.io/port"] = fmt.Sprintf("%d", utils.MetricsPort)
+		podAnnotations["prometheus.io/scrape"] = "true"
+		podAnnotations["prometheus.io/port"] = fmt.Sprintf("%d", utils.MetricsPort)
 	}
-	s.sfs.Spec.Template.ObjectMeta.Annotations["config_rev"] = s.cmRev
-	s.sfs.Spec.Template.ObjectMeta.Annotations["secret_rev"] = s.sctRev
+	podAnnotations["config_rev"] = s.cmRev
+	podAnnotations["secret_rev"] = s.sctRev
 
-	err := mergo.Merge(&s.sfs.Spec.Template.Spec, s.ensurePodSpec(), mergo.WithTransformers(transformers.PodSpec))
-	if err != nil {
-		return err
+	templateSpec := appsv1.StatefulSetSpec{
+		Replicas:    s.Spec.Replicas,
+		ServiceName: s.GetNameForResource(utils.StatefulSet),
+		Selector:    metav1.SetAsLabelSelector(s.GetSelectorLabels()),
+		UpdateStrategy: appsv1.StatefulSetUpdateStrategy{
+			Type: appsv1.OnDeleteStatefulSetStrategyType,
+		},
+		Template: corev1.PodTemplateSpec{
+			ObjectMeta: metav1.ObjectMeta{
+				Labels:      podLables,
+				Annotations: podAnnotations,
+			},
+			Spec: ensurePodSpec(s.MysqlCluster),
+		},
 	}
-	s.sfs.Spec.Template.Spec.Tolerations = s.Spec.PodPolicy.Tolerations
-
 	if s.Spec.Persistence.Enabled {
-		if s.sfs.Spec.VolumeClaimTemplates, err = s.EnsureVolumeClaimTemplates(s.cli.Scheme()); err != nil {
+		var err error
+		if templateSpec.VolumeClaimTemplates, err = s.EnsureVolumeClaimTemplates(s.cli.Scheme()); err != nil {
 			return err
 		}
 	}
-
 	// Set owner reference only if owner resource is not being deleted, otherwise the owner
 	// reference will be reset in case of deleting with cascade=false.
 	if s.Unwrap().GetDeletionTimestamp().IsZero() {
@@ -419,27 +421,27 @@ func (s *StatefulSetSyncer) mutate() error {
 		// will not delete it again because has no owner reference set.
 		return fmt.Errorf("owner is deleted")
 	}
-	return nil
+	return mergo.Merge(&s.sfs.Spec, templateSpec, mergo.WithTransformers(utils.StsSpec))
 }
 
 // ensurePodSpec used to ensure the podspec.
-func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
-	initSidecar := container.EnsureContainer(utils.ContainerInitSidecarName, s.MysqlCluster)
-	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, s.MysqlCluster)
+func ensurePodSpec(c *mysqlcluster.MysqlCluster) corev1.PodSpec {
+	initSidecar := container.EnsureContainer(utils.ContainerInitSidecarName, c)
+	initMysql := container.EnsureContainer(utils.ContainerInitMysqlName, c)
 	initContainers := []corev1.Container{initSidecar, initMysql}
 
-	mysql := container.EnsureContainer(utils.ContainerMysqlName, s.MysqlCluster)
-	xenon := container.EnsureContainer(utils.ContainerXenonName, s.MysqlCluster)
-	backup := container.EnsureContainer(utils.ContainerBackupName, s.MysqlCluster)
+	mysql := container.EnsureContainer(utils.ContainerMysqlName, c)
+	xenon := container.EnsureContainer(utils.ContainerXenonName, c)
+	backup := container.EnsureContainer(utils.ContainerBackupName, c)
 	containers := []corev1.Container{mysql, xenon, backup}
-	if s.Spec.MetricsOpts.Enabled {
-		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, s.MysqlCluster))
+	if c.Spec.MetricsOpts.Enabled {
+		containers = append(containers, container.EnsureContainer(utils.ContainerMetricsName, c))
 	}
-	if s.Spec.PodPolicy.SlowLogTail {
-		containers = append(containers, container.EnsureContainer(utils.ContainerSlowLogName, s.MysqlCluster))
+	if c.Spec.PodPolicy.SlowLogTail {
+		containers = append(containers, container.EnsureContainer(utils.ContainerSlowLogName, c))
 	}
-	if s.Spec.PodPolicy.AuditLogTail {
-		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, s.MysqlCluster))
+	if c.Spec.PodPolicy.AuditLogTail {
+		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, c))
 	}
 	if s.Spec.PodPolicy.ErrorLogTail {
 		// 1.create errorLog
@@ -449,12 +451,12 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 	return corev1.PodSpec{
 		InitContainers:     initContainers,
 		Containers:         containers,
-		Volumes:            s.EnsureVolumes(),
-		SchedulerName:      s.Spec.PodPolicy.SchedulerName,
-		ServiceAccountName: s.GetNameForResource(utils.ServiceAccount),
-		Affinity:           s.Spec.PodPolicy.Affinity,
-		PriorityClassName:  s.Spec.PodPolicy.PriorityClassName,
-		Tolerations:        s.Spec.PodPolicy.Tolerations,
+		Volumes:            c.EnsureVolumes(),
+		SchedulerName:      c.Spec.PodPolicy.SchedulerName,
+		ServiceAccountName: c.GetNameForResource(utils.ServiceAccount),
+		Affinity:           c.Spec.PodPolicy.Affinity,
+		PriorityClassName:  c.Spec.PodPolicy.PriorityClassName,
+		Tolerations:        c.Spec.PodPolicy.Tolerations,
 	}
 }
 
@@ -592,6 +594,9 @@ func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
 
 // Updates to statefulset spec for fields other than 'replicas', 'template', and 'updateStrategy' are forbidden.
 func (s *StatefulSetSyncer) sfsUpdated(existing *appsv1.StatefulSet) bool {
+	if s.sfs.Status.UpdateRevision != s.sfs.Status.CurrentRevision {
+		return true
+	}
 	var resizeVolume = false
 	// TODO: this is a temporary workaround until we figure out a better way to do this.
 	if len(existing.Spec.VolumeClaimTemplates) > 0 && len(s.sfs.Spec.VolumeClaimTemplates) > 0 {
