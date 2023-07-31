@@ -313,7 +313,7 @@ func putMySQLReadOnly(s *StatefulSetSyncer, host string) error {
 		// 3. change master
 		var isReplicating corev1.ConditionStatus
 		var err error
-		if _, isReplicating, err = internal.CheckSlaveStatus(sqlRunner); err != nil {
+		if _, isReplicating, err = internal.CheckSlaveStatus(sqlRunner, s.Spec.ReplicaLag); err != nil {
 			//Notice!!! this has error, just show error message, can not return.
 			s.log.V(1).Info("slave status has gotten error", "error", err)
 		}

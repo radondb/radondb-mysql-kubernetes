@@ -408,6 +408,7 @@ func Convert_v1alpha1_MysqlClusterList_To_v1beta1_MysqlClusterList(in *v1alpha1.
 func autoConvert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *MysqlClusterSpec, out *v1alpha1.MysqlClusterSpec, s conversion.Scope) error {
 	out.Replicas = (*int32)(unsafe.Pointer(in.Replicas))
 	out.ReadOnlys = (*v1alpha1.ReadOnlyType)(unsafe.Pointer(in.ReadOnlys))
+	out.ReplicaLag = (*int32)(unsafe.Pointer(in.ReplicaLag))
 	// WARNING: in.User requires manual conversion: does not exist in peer-type
 	// WARNING: in.MySQLConfig requires manual conversion: does not exist in peer-type
 	// WARNING: in.Resources requires manual conversion: does not exist in peer-type
@@ -435,6 +436,7 @@ func autoConvert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *Mysql
 func autoConvert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alpha1.MysqlClusterSpec, out *MysqlClusterSpec, s conversion.Scope) error {
 	out.Replicas = (*int32)(unsafe.Pointer(in.Replicas))
 	out.ReadOnlys = (*ReadOnlyType)(unsafe.Pointer(in.ReadOnlys))
+	out.ReplicaLag = (*int32)(unsafe.Pointer(in.ReplicaLag))
 	out.MinAvailable = in.MinAvailable
 	// WARNING: in.MysqlOpts requires manual conversion: does not exist in peer-type
 	// WARNING: in.XenonOpts requires manual conversion: does not exist in peer-type

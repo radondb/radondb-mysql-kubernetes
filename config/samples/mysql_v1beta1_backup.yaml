@@ -3,9 +3,12 @@ kind: Backup
 metadata:
   name: backup-sample
 spec:
-  # Add fields here
-  image: radondb/mysql57-sidecar:v3.0.0
-  # hostfrom if empty, use the leader as hostfrom
-  hostfrom: sample-mysql-0
+  backupops:
+    s3:
+      secretName: sample-backup-secret
   clusterName: sample
-  # nfsServerAddress: ""
+  method: xtrabackup
+  # schedule:
+  #   cronExpression: "*/2 * * * *"
+  #   type: s3
+

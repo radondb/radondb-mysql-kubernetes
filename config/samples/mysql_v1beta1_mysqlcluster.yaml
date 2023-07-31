@@ -1,12 +1,68 @@
 apiVersion: mysql.radondb.com/v1beta1
 kind: MysqlCluster
 metadata:
-  labels:
-    app.kubernetes.io/name: mysqlcluster
-    app.kubernetes.io/instance: mysqlcluster-sample
-    app.kubernetes.io/part-of: radondb-mysql-kubernetes
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: radondb-mysql-kubernetes
-  name: mysqlcluster-sample
+  name: sample
 spec:
-  # TODO(user): Add fields here
+  backupOpts:
+    image: radondb/mysql80-sidecar:v3.0.0
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+  customTLSSecret: {}
+  dataSource:
+    S3backup:
+      name: ""
+      secretName: ""
+    remote: {}
+  image: percona/percona-server:8.0.25
+  imagePullPolicy: Always
+  logOpts:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+  maxLagTime: 30
+  minAvailable: 50%
+  monitoringSpec:
+    exporter:
+      enabled: true
+      image: prom/mysqld-exporter:v0.12.1
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 10m
+          memory: 32Mi
+  mysqlConfig: {}
+  mysqlVersion: "8.0"
+  replicas: 3
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  storage:
+    accessModes:
+    - ReadWriteOnce
+    storageClassName: local-path
+    resources:
+      requests:
+        storage: 20Gi
+  user: radondb_usr
+  xenonOpts:
+    admitDefeatHearbeatCount: 5
+    electionTimeout: 10000
+    image: radondb/xenon:v3.0.0
+    resources:
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+
