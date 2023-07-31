@@ -79,6 +79,10 @@ spec:
                   s3Schedule:
                     type: string
                 type: object
+              lag:
+                description: Lagged
+                format: int32
+                type: integer
               metricsOpts:
                 default:
                   enabled: false
@@ -3508,6 +3512,10 @@ spec:
                 - Never
                 - IfNotPresent
                 type: string
+              lag:
+                description: Lagged
+                format: int32
+                type: integer
               logOpts:
                 description: LogOpts is the options of log settings.
                 properties:

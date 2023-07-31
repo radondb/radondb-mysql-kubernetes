@@ -37,6 +37,9 @@ type MysqlClusterSpec struct {
 	// Readonlys Info.
 	// +optional
 	ReadOnlys *ReadOnlyType `json:"readonlys,omitempty"`
+	// Lagged
+	ReplicaLag *int32 `json:"lag,omitempty"`
+
 	// Username of new user to create.
 	// Only be a combination of letters, numbers or underlines. The length can not exceed 26 characters.
 	// +optional

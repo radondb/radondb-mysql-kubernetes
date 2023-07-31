@@ -37,6 +37,8 @@ type MysqlClusterSpec struct {
 	// Readonlys Info.
 	// +optional
 	ReadOnlys *ReadOnlyType `json:"readonlys,omitempty"`
+	// Lagged
+	ReplicaLag *int32 `json:"lag,omitempty"`
 	// The number of pods from that set that must still be available after the
 	// eviction, even in the absence of the evicted pod
 	// +optional

@@ -310,7 +310,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		case <-time.After(time.Second * 5):
 		}
 		if sqlRunner != nil {
-			isLagged, isReplicating, err = internal.CheckSlaveStatusWithRetry(sqlRunner, checkNodeStatusRetry)
+			isLagged, isReplicating, err = internal.CheckSlaveStatusWithRetry(sqlRunner, checkNodeStatusRetry, s.Spec.ReplicaLag)
 			if err != nil {
 				s.log.V(1).Info("failed to check slave status", "node", node.Name, "error", err)
 				node.Message = err.Error()
@@ -616,7 +616,7 @@ func (s *StatusSyncer) RoCheckStatus(ctx context.Context, cli client.Client, pod
 				isCloseSemi = corev1.ConditionTrue
 			}
 			// 3. change master
-			if _, isReplicating, err = internal.CheckSlaveStatus(sqlRunner); err != nil {
+			if _, isReplicating, err = internal.CheckSlaveStatus(sqlRunner, s.Spec.ReplicaLag); err != nil {
 				node.Message = err.Error()
 			}
 		}

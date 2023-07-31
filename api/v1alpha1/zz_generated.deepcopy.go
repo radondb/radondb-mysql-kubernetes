@@ -279,6 +279,11 @@ func (in *MysqlClusterSpec) DeepCopyInto(out *MysqlClusterSpec) {
 		*out = new(ReadOnlyType)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ReplicaLag != nil {
+		in, out := &in.ReplicaLag, &out.ReplicaLag
+		*out = new(int32)
+		**out = **in
+	}
 	in.MysqlOpts.DeepCopyInto(&out.MysqlOpts)
 	in.XenonOpts.DeepCopyInto(&out.XenonOpts)
 	in.MetricsOpts.DeepCopyInto(&out.MetricsOpts)

@@ -182,13 +182,13 @@ func (s sqlRunner) QueryRows(query Query) (*sql.Rows, error) {
 }
 
 // CheckSlaveStatusWithRetry check the slave status with retry time.
-func CheckSlaveStatusWithRetry(sqlRunner SQLRunner, retry uint32) (isLagged, isReplicating corev1.ConditionStatus, err error) {
+func CheckSlaveStatusWithRetry(sqlRunner SQLRunner, retry uint32, replicaLag *int32) (isLagged, isReplicating corev1.ConditionStatus, err error) {
 	for {
 		if retry == 0 {
 			break
 		}
 
-		if isLagged, isReplicating, err = CheckSlaveStatus(sqlRunner); err == nil {
+		if isLagged, isReplicating, err = CheckSlaveStatus(sqlRunner, replicaLag); err == nil {
 			return
 		}
 
@@ -200,7 +200,7 @@ func CheckSlaveStatusWithRetry(sqlRunner SQLRunner, retry uint32) (isLagged, isR
 }
 
 // CheckSlaveStatus check the slave status.
-func CheckSlaveStatus(sqlRunner SQLRunner) (isLagged, isReplicating corev1.ConditionStatus, err error) {
+func CheckSlaveStatus(sqlRunner SQLRunner, ReplicaLag *int32) (isLagged, isReplicating corev1.ConditionStatus, err error) {
 	var rows *sql.Rows
 	isLagged, isReplicating = corev1.ConditionUnknown, corev1.ConditionUnknown
 	rows, err = sqlRunner.QueryRows(NewQuery("show slave status;"))
@@ -258,7 +258,11 @@ func CheckSlaveStatus(sqlRunner SQLRunner) (isLagged, isReplicating corev1.Condi
 
 	// Check whether the slave is lagged.
 	sec, _ := strconv.ParseFloat(secondsBehindMaster, 64)
-	if sec > longQueryTime*100 {
+	lagTime := longQueryTime * 100
+	if ReplicaLag != nil {
+		lagTime = float64(*ReplicaLag)
+	}
+	if sec > lagTime {
 		isLagged = corev1.ConditionTrue
 	} else {
 		isLagged = corev1.ConditionFalse
