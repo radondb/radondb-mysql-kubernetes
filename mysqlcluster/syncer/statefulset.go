@@ -237,7 +237,10 @@ func (s *StatefulSetSyncer) doExpandPVCs(ctx context.Context) error {
 				// for example:
 				// Pod0 has created successful,but Pod1 is creating. then change PVC from 20Gi to 30Gi .
 				// Pod0's PVC need to expand, but Pod1's PVC has created as 30Gi, so need to skip it.
-				if equality.Semantic.DeepEqual(currentPVC.Status.Capacity, item.Spec.Resources.Requests) {
+				// Notice: bug: greater is also good
+				// see `newStorage.Cmp(*oldRequest.Storage())`
+				if currentPVC.Status.Capacity.Storage().Cmp(*item.Spec.Resources.Requests.Storage()) == 1 ||
+					equality.Semantic.DeepEqual(currentPVC.Status.Capacity, item.Spec.Resources.Requests) {
 					return true, nil
 				}
 				return false, nil
@@ -276,13 +279,23 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 	}
 	// Deep copy the old statefulset from StatefulSetSyncer.
 	existing := s.sfs.DeepCopy()
+
 	// Sync data from mysqlcluster.spec to statefulset.
 	if err = s.mutate(); err != nil {
 		return controllerutil.OperationResultNone, err
 	}
+
 	// Check if statefulset changed.
 	if !s.sfsUpdated(existing) {
 		if s.podsAllUpdated(ctx) {
+			if s.sfs.Labels != nil && s.sfs.Status.ReadyReplicas == s.sfs.Status.Replicas {
+				s.sfs.Labels = nil
+				// If changed, update statefulset.
+				if err := s.cli.Update(ctx, s.sfs); err != nil {
+					return controllerutil.OperationResultNone, err
+				}
+			}
+
 			return controllerutil.OperationResultNone, nil
 		} else {
 			if err := s.updatePod(ctx); err != nil {
@@ -371,6 +384,11 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 
 // mutate set the statefulset.
 func (s *StatefulSetSyncer) mutate() error {
+	if s.sfs.Spec.Template.Spec.Containers != nil && s.sfs.Spec.Template.Spec.Containers[0].Image != s.Spec.MysqlOpts.Image {
+		s.sfs.Labels = map[string]string{
+			"needUpdate": "true",
+		}
+	}
 	s.sfs.Spec.ServiceName = s.GetNameForResource(utils.StatefulSet)
 	s.sfs.Spec.Replicas = s.Spec.Replicas
 	s.sfs.Spec.Selector = metav1.SetAsLabelSelector(s.GetSelectorLabels())
@@ -395,7 +413,11 @@ func (s *StatefulSetSyncer) mutate() error {
 	}
 	s.sfs.Spec.Template.ObjectMeta.Annotations["config_rev"] = s.cmRev
 	s.sfs.Spec.Template.ObjectMeta.Annotations["secret_rev"] = s.sctRev
-
+	if s.sfs.Labels["needUpdate"] == "true" {
+		s.NeedUpgrade = true
+	} else {
+		s.NeedUpgrade = false
+	}
 	err := mergo.Merge(&s.sfs.Spec.Template.Spec, s.ensurePodSpec(), mergo.WithTransformers(transformers.PodSpec))
 	if err != nil {
 		return err

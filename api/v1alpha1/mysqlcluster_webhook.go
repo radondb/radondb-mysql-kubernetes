@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/blang/semver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -64,7 +65,7 @@ func (r *MysqlCluster) ValidateCreate() error {
 		return err
 	}
 
-	if err := r.validateMysqlVersionAndImage(); err != nil {
+	if err := r.validateMysqlVersionAndImage(r); err != nil {
 		return err
 	}
 
@@ -96,7 +97,7 @@ func (r *MysqlCluster) ValidateUpdate(old runtime.Object) error {
 		return err
 	}
 
-	if err := r.validateMysqlVersionAndImage(); err != nil {
+	if err := r.validateMysqlVersionAndImage(oldCluster); err != nil {
 		return err
 	}
 
@@ -198,10 +199,29 @@ func (r *MysqlCluster) validateLowTableCase(oldCluster *MysqlCluster) error {
 }
 
 // Validate MysqlVersion and spec.MysqlOpts.image are conflict.
-func (r *MysqlCluster) validateMysqlVersionAndImage() error {
+func (r *MysqlCluster) validateMysqlVersionAndImage(oldCluster *MysqlCluster) error {
 	if r.Spec.MysqlOpts.Image != "" && r.Spec.MysqlVersion != "" {
 		if !strings.Contains(r.Spec.MysqlOpts.Image, r.Spec.MysqlVersion) {
 			return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlOpts.Image and spec.MysqlVersion are conflict"))
+		}
+		//  little version upgrade
+		if r.Spec.MysqlOpts.Image != oldCluster.Spec.MysqlOpts.Image {
+			// just to greater, cannot be less.
+			arr := strings.Split(r.Spec.MysqlOpts.Image, ":")
+			vernew := arr[len(arr)-1]
+			arr = strings.Split(oldCluster.Spec.MysqlOpts.Image, ":")
+			verold := arr[len(arr)-1]
+			mysqlSemVernew, _ := semver.Parse(vernew)
+			mysqlSemVerOld, _ := semver.Parse(verold)
+			if mysqlSemVernew.Major < mysqlSemVerOld.Major ||
+				(mysqlSemVernew.Major == mysqlSemVerOld.Major && mysqlSemVernew.Minor < mysqlSemVerOld.Minor) ||
+				(mysqlSemVernew.Major == mysqlSemVerOld.Major && mysqlSemVernew.Minor == mysqlSemVerOld.Minor &&
+					mysqlSemVernew.Patch < mysqlSemVerOld.Patch) {
+				return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlOpts.Image cannot downgrade"))
+			}
+			if mysqlSemVerOld.Major == 5 && mysqlSemVernew.Major == 8 {
+				return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("spec.MysqlOpts.Image do not support upgrade from 5 to 8"))
+			}
 		}
 	}
 	return nil

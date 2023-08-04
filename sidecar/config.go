@@ -127,6 +127,9 @@ type Config struct {
 	XCloudS3AccessKey string
 	XCloudS3SecretKey string
 	XCloudS3Bucket    string
+
+	// Need Upgrade
+	NeedUpgrade bool
 }
 
 // NewInitConfig returns a pointer to Config.
@@ -149,6 +152,10 @@ func NewInitConfig() *Config {
 	initTokuDB := false
 	if len(getEnvValue("INIT_TOKUDB")) > 0 {
 		initTokuDB = true
+	}
+	needUpgrade := false
+	if len(getEnvValue("NEED_UPGRADE")) > 0 {
+		needUpgrade = true
 	}
 
 	admitDefeatHearbeatCount, err := strconv.ParseInt(getEnvValue("ADMIT_DEFEAT_HEARBEAT_COUNT"), 10, 32)
@@ -205,6 +212,8 @@ func NewInitConfig() *Config {
 		ClusterName: getEnvValue("CLUSTER_NAME"),
 		CloneFlag:   false,
 		GtidPurged:  "",
+		// need upgrade
+		NeedUpgrade: needUpgrade,
 	}
 }
 

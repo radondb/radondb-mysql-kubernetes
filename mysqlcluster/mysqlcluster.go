@@ -52,6 +52,8 @@ const (
 type MysqlCluster struct {
 	*apiv1alpha1.MysqlCluster
 	log logr.Logger
+	// add flag to indict need upgrade
+	NeedUpgrade bool
 }
 
 // New returns a pointer to MysqlCluster.

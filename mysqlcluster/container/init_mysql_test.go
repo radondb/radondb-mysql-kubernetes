@@ -113,7 +113,7 @@ func TestGetInitMysqlImage(t *testing.T) {
 }
 
 func TestGetInitMysqlCommand(t *testing.T) {
-	assert.Equal(t, initMysqlCase.Command, []string{"bash", "-c", "/docker-entrypoint.sh mysqld;if test -f /docker-entrypoint-initdb.d/clone.sh; then /docker-entrypoint-initdb.d/clone.sh;fi;if test -f /docker-entrypoint-initdb.d/plugin.sh; then /docker-entrypoint-initdb.d/plugin.sh; fi "})
+	assert.Equal(t, initMysqlCase.Command, []string{"bash", "-c", "/docker-entrypoint.sh mysqld;if test -f /docker-entrypoint-initdb.d/upgrade.sh; then /docker-entrypoint-initdb.d/upgrade.sh;fi;if test -f /docker-entrypoint-initdb.d/clone.sh; then /docker-entrypoint-initdb.d/clone.sh;fi;if test -f /docker-entrypoint-initdb.d/plugin.sh; then /docker-entrypoint-initdb.d/plugin.sh; fi "})
 }
 
 func TestGetInitMysqlEnvVar(t *testing.T) {

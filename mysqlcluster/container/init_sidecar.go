@@ -137,7 +137,12 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Value: "1",
 		})
 	}
-
+	if c.NeedUpgrade {
+		envs = append(envs, corev1.EnvVar{
+			Name:  "NEED_UPGRADE",
+			Value: "1",
+		})
+	}
 	return envs
 }
 
