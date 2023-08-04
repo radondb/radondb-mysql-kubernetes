@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	leaderStopCommand  = "kill -9 $(pidof mysqld)"
+	leaderStopCommand  = "kill -9 $(cat %s)"
 	mysqlUser          = "root"
 	mysqlHost          = "127.0.0.1"
 	mysqlPwd           = ""
@@ -126,7 +126,7 @@ func leaderStop() error {
 		return fmt.Errorf("failed to get the connection of local MySQL: %s", err.Error())
 	}
 	defer conn.Close()
-
+	pidfile := "/var/run/mysqld/mysqld.pid"
 	if isReadonly(conn) {
 		log.Info("I am readonly, skip the leader stop")
 		os.Exit(0)
@@ -193,13 +193,18 @@ func leaderStop() error {
 			ch <- err
 		}
 		log.Info("flushed binary logs:", stmt)
+		pidfile, err = getPidFile(conn)
+		if err != nil {
+			ch <- err
+		}
 	}()
 	select {
 	case err := <-ch:
 		return err
 	case <-time.After(5 * time.Second):
 		log.Info("timeout")
-		if err := killMysqld(); err != nil {
+
+		if err := killMysqld(pidfile); err != nil {
 			return err
 		}
 		return nil
@@ -427,6 +432,15 @@ func isReadonly(db *sql.DB) bool {
 	return readOnly == 1
 }
 
+func getPidFile(db *sql.DB) (string, error) {
+	pidfile := ""
+	err := db.QueryRow("SELECT @@pid_file").Scan(&pidfile)
+	if err != nil {
+		return "", err
+	}
+	return pidfile, err
+}
+
 // Returns true if all GTIDs in mySet are also in leaderSet. Returns false otherwise.
 // https://dev.mysql.com/doc/refman/5.7/en/gtid-functions.html#function_gtid-subset
 func HaveErrantTransactions(db *sql.DB, leaderSet, mySet string) (bool, error) {
@@ -566,7 +580,7 @@ func patchPodLabel(n MySQLNode, patch string) error {
 	return nil
 }
 
-func killMysqld() error {
+func killMysqld(pidfile string) error {
 	config, err := NewConfig()
 	if err != nil {
 		panic(err)
@@ -580,9 +594,9 @@ func killMysqld() error {
 		Namespace: ns,
 		Container: "mysql",
 	}
-
-	killMySQLCommand := []string{leaderStopCommand}
-	log.Infof("killing mysql command: %s", leaderStopCommand)
+	comstr := fmt.Sprintf(leaderStopCommand, pidfile)
+	killMySQLCommand := []string{comstr}
+	log.Infof("killing mysql command: %s", comstr)
 	var output, stderr string
 	output, stderr, err = RunRemoteCommand(k, cfg, killMySQLCommand)
 	log.Info("output=[" + output + "]")

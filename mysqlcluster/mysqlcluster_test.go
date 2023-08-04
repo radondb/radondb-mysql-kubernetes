@@ -50,12 +50,14 @@ var (
 	}
 	testCluster = MysqlCluster{
 		&mysqlCluster, logf.Log.WithName("mysqlcluster"),
+		false,
 	}
 )
 
 func TestNew(t *testing.T) {
 	want := &MysqlCluster{
 		&mysqlCluster, logf.Log.WithName("mysqlcluster"),
+		false,
 	}
 	assert.Equal(t, want, New(&mysqlCluster))
 }
@@ -403,7 +405,7 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 			},
 		}
 		testCase := MysqlCluster{
-			&testMysql, logf.Log.WithName("mysqlcluster"),
+			&testMysql, logf.Log.WithName("mysqlcluster"), false,
 		}
 		want := []corev1.PersistentVolumeClaim{
 			{
@@ -449,6 +451,7 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 		testMysql.Spec.Persistence.StorageClass = &storageClass
 		testCase := MysqlCluster{
 			&testMysql, logf.Log.WithName("mysqlcluster"),
+			testCluster.NeedUpgrade,
 		}
 		guard := gomonkey.ApplyFunc(controllerutil.SetControllerReference, func(_ metav1.Object, _ metav1.Object, _ *runtime.Scheme) error {
 			return nil
@@ -467,6 +470,7 @@ func TestEnsureVolumeClaimTemplates(t *testing.T) {
 		testMysql.Spec.Persistence.Size = "10Gi"
 		testCase := MysqlCluster{
 			&testMysql, logf.Log.WithName("mysqlcluster"),
+			false,
 		}
 		guard := gomonkey.ApplyFunc(controllerutil.SetControllerReference, func(_ metav1.Object, _ metav1.Object, _ *runtime.Scheme) error {
 			return fmt.Errorf("test")
@@ -537,6 +541,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		testMysqlCase := testMysql
 		testCase := MysqlCluster{
 			&testMysqlCase, logf.Log.WithName("mysqlcluster"),
+			false,
 		}
 		testCase.EnsureMysqlConf()
 		wantSize = strconv.FormatUint(uint64(0.45*float64(gb)), 10)
@@ -555,6 +560,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		testMysqlCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = strconv.FormatUint(uint64(600*mb), 10)
 		testCase := MysqlCluster{
 			&testMysqlCase, logf.Log.WithName("mysqlcluster"),
+			false,
 		}
 		testCase.EnsureMysqlConf()
 		wantSize := strconv.FormatUint(uint64(600*float64(mb)), 10)
@@ -575,6 +581,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		testMysqlCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = strconv.FormatUint(uint64(1.7*float64(gb)), 10)
 		testCase := MysqlCluster{
 			&testMysqlCase, logf.Log.WithName("mysqlcluster"),
+			false,
 		}
 		testCase.EnsureMysqlConf()
 		wantSize := strconv.FormatUint(uint64(1.6*float64(gb)), 10)
@@ -594,6 +601,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		testMysqlCase.Spec.MysqlOpts.MysqlConf["innodb_buffer_pool_size"] = strconv.FormatUint(uint64(1.7*float64(gb)), 10)
 		testCase := MysqlCluster{
 			&testMysqlCase, logf.Log.WithName("mysqlcluster"),
+			false,
 		}
 		testCase.EnsureMysqlConf()
 		wantSize := strconv.FormatUint(uint64(1.2*float64(gb)), 10)
@@ -615,6 +623,7 @@ func TestEnsureMysqlConf(t *testing.T) {
 		testMysqlCase.Spec.MysqlOpts.Resources.Requests["memory"] = *memoryCase
 		testCase := MysqlCluster{
 			&testMysqlCase, logf.Log.WithName("mysqlcluster"),
+			false,
 		}
 		testCase.EnsureMysqlConf()
 		wantSize := strconv.FormatUint(uint64(2*float64(gb)), 10)

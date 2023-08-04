@@ -139,7 +139,7 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 		}
-		err := mysqlcluster.validateMysqlVersionAndImage()
+		err := mysqlcluster.validateMysqlVersionAndImage(mysqlcluster)
 		assert.Error(t, err)
 	}
 	{
@@ -151,7 +151,7 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 		}
-		err := mysqlcluster.validateMysqlVersionAndImage()
+		err := mysqlcluster.validateMysqlVersionAndImage(mysqlcluster)
 		assert.NoError(t, err)
 	}
 }

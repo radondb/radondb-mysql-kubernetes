@@ -46,6 +46,7 @@ func (c *initMysql) getImage() string {
 func (c *initMysql) getCommand() []string {
 	// Because initialize mysql contain error, so do it in commands.
 	return []string{"bash", "-c", "/docker-entrypoint.sh mysqld;" +
+		"if test -f /docker-entrypoint-initdb.d/upgrade.sh; then /docker-entrypoint-initdb.d/upgrade.sh;fi;" +
 		"if test -f /docker-entrypoint-initdb.d/clone.sh; then /docker-entrypoint-initdb.d/clone.sh;fi;" +
 		"if test -f /docker-entrypoint-initdb.d/plugin.sh; then /docker-entrypoint-initdb.d/plugin.sh; fi "}
 }

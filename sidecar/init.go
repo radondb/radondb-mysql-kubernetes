@@ -95,6 +95,8 @@ func runCloneAndInit(cfg *Config) (bool, error) {
 	var err error
 	// Check the rebuildFrom exist?
 	if serviceURL, server, err = getPod(cfg); err == nil {
+		// rebuild, remove restoreFrom
+		cfg.XRestoreFrom = ""
 		log.Info("found the rebuild-from pod", "service", serviceURL)
 	} else {
 		log.Info("found the rebuild-from pod", "error", err.Error())
@@ -108,13 +110,18 @@ func runCloneAndInit(cfg *Config) (bool, error) {
 		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "leader", utils.XBackupPort)
 		server = fmt.Sprintf("%s-%s", cfg.ClusterName, "leader")
 	}
-
+	// Check has initialized. If so just return.
+	hasInitialized, _ = checkIfPathExists(path.Join(dataPath, "mysql"))
+	log.Info("mysqld is", "initialize", hasInitialized)
+	if hasInitialized {
+		if err := UpgradeShGen(cfg); err != nil {
+			return hasInitialized, err
+		}
+	}
 	if len(serviceURL) != 0 {
-		// Check has initialized. If so just return.
-		hasInitialized, _ = checkIfPathExists(path.Join(dataPath, "mysql"))
-		// TODO is MySQL8, CLone it
-		if cfg.MySQLVersion.Major == 8 {
-			// TODO return clone int
+		// is MySQL8, CLone it
+		if cfg.MySQLVersion.Major == 8 && len(cfg.XRestoreFrom) == 0 {
+			// return clone int
 			log.Info("server choose ", "server", server)
 			err := DoCLone(cfg, server)
 			return hasInitialized, err
@@ -462,11 +469,12 @@ func removeRebuildFrom(clientset *kubernetes.Clientset, cfg *Config, podName str
 }
 
 func DoCLone(cfg *Config, server string) error {
-	sql := fmt.Sprintf(`SET GLOBAL clone_valid_donor_list = '%s:3306' ;
+	sql := fmt.Sprintf(`RESET SLAVE ALL;SET GLOBAL clone_valid_donor_list = '%s:3306' ;
 	CLONE INSTANCE FROM '%s'@'%s':3306
 	IDENTIFIED BY '%s';
 `, server, cfg.DonorClone, server, cfg.DonorClonePassword)
 	cloneSh := fmt.Sprintf(`#!/bin/bash
+echo 'now is doing clone.'
 mysqld &
 mysql=( mysql -uroot -hlocalhost  --password="" )
 
@@ -478,11 +486,54 @@ for i in {120..0}; do
 	sleep 1
 done
 mysql -uroot -hlocalhost  --password="" -e "%s"
+echo "now delete socks file"
+rm -rf /var/lib/mysql/*.sock
+rm -rf /var/lib/mysql/mysql.sock.lock
 `, sql)
 	log.Info("write clone shell", "shell", cloneSh)
 	//write to docker.
 	if err := ioutil.WriteFile(initFilePath+"/clone.sh", []byte(cloneSh), 0755); err != nil {
 		return fmt.Errorf("failed to write clone.sh: %s", err)
+	}
+	return nil
+}
+
+func UpgradeShGen(cfg *Config) error {
+	if !cfg.NeedUpgrade {
+		log.Info("do not upgrade mysqld")
+		return nil
+	}
+	upgradesh := `#!/bin/bash
+	echo 'now is doing upgrade'
+	mysqld --upgrade=force &
+	mysql=( mysql -uroot -hlocalhost  --password="" )
+	
+	for i in {120..0}; do
+		if echo 'SELECT 1' | "${mysql[@]}" &> /dev/null; then
+			break
+		fi
+		echo 'MySQL run process in progress...'
+		sleep 1
+	done
+	mysql -uroot -hlocalhost  --password="" -e "shutdown"
+	# waiting it stop
+	for i in {120..0}; do
+		if echo 'SELECT 1' | "${mysql[@]}" &> /dev/null; then
+			echo 'MySQLD is shutdown...'
+			sleep 1
+		else
+			echo 'MySQLD is shutted.'
+			pkill mysql
+			rm -rf /var/lib/mysql/*.sock
+			rm -rf /var/lib/mysql/mysql.sock.lock
+			break
+		fi
+	done
+	`
+	log.Info("write upgrade shell", "shell", upgradesh)
+	//write to docker.
+	if err := ioutil.WriteFile(initFilePath+"/upgrade.sh", []byte(upgradesh), 0755); err != nil {
+		return fmt.Errorf("failed to write upgrade.sh: %s", err)
 	}
 	return nil
 }
