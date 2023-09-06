@@ -221,6 +221,11 @@ spec:
                         description: S3 Bucket
                         type: string
                     type: object
+                  s3binlog:
+                    properties:
+                      secretName:
+                        type: string
+                    type: object
                 type: object
               clusterName:
                 description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster

@@ -45,11 +45,16 @@ type BackupSpec struct {
 type BackupOps struct {
 	// BackupHost
 	// +optional
-	BackupHost string `json:"host,omitempty"`
-	S3         *S3    `json:"s3,omitempty"`
-	NFS        *NFS   `json:"nfs,omitempty"`
+	BackupHost string    `json:"host,omitempty"`
+	S3         *S3       `json:"s3,omitempty"`
+	NFS        *NFS      `json:"nfs,omitempty"`
+	S3Binlog   *S3Binlog `json:"s3binlog,omitempty"`
 }
 
+type S3Binlog struct {
+	// +optional
+	BackupSecretName string `json:"secretName,omitempty"`
+}
 type S3 struct {
 	// S3 Bucket
 	// +optional

@@ -26,6 +26,11 @@ COPY utils/ utils/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/sidecar cmd/sidecar/main.go
 
 # Build mysql checker for mysql conatiner
+COPY cmd/s3cmd/main.go cmd/s3cmd/main.go
+COPY cmd/s3cmd/s3upload.go cmd/s3cmd/s3upload.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/s3upload cmd/s3cmd/main.go cmd/s3cmd/s3upload.go
+
+# Build mysql checker for mysql conatiner
 COPY cmd/mysql/main.go cmd/mysql/main.go
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/mysqlchecker cmd/mysql/main.go
 
@@ -57,4 +62,5 @@ RUN set -ex; \
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 COPY --from=builder /workspace/bin/mysqlchecker /mnt/mysqlchecker
+COPY --from=builder /workspace/bin/s3upload /mnt/s3upload
 ENTRYPOINT ["sidecar"]
