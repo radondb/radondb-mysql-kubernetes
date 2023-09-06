@@ -293,7 +293,7 @@ func (r *BackupReconciler) reconcileManualBackup(ctx context.Context,
 	labels := ManualBackupLabels(cluster.Name)
 	backupJob.ObjectMeta.Labels = labels
 
-	spec, err := generateBackupJobSpec(backup, cluster, labels)
+	spec, err := r.generateBackupJobSpec(backup, cluster, labels)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -417,7 +417,7 @@ func (r *BackupReconciler) reconcileCronBackup(ctx context.Context, backup *v1be
 	}
 	objectMeta.Labels = labels
 	// objectmeta.Annotations = annotations
-	jobSpec, err := generateBackupJobSpec(backup, cluster, labels)
+	jobSpec, err := r.generateBackupJobSpec(backup, cluster, labels)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -449,7 +449,7 @@ func (r *BackupReconciler) reconcileCronBackup(ctx context.Context, backup *v1be
 
 }
 
-func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster, labels map[string]string) (*batchv1.JobSpec, error) {
+func (r *BackupReconciler) generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster, labels map[string]string) (*batchv1.JobSpec, error) {
 
 	// If backup.Spec.BackupOpts.S3 is not nil then use ENV BACKUP_TYPE=s3 and set the s3SecretName
 	// If backup.Spec.BackupOpts.NFS is not nil then use ENV BACKUP_TYPE=nfs and mount the nfs volume
@@ -479,7 +479,9 @@ func generateBackupJobSpec(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster
 		backupTypeEnv = corev1.EnvVar{Name: "BACKUP_TYPE", Value: "s3"}
 
 	}
-
+	if backup.Spec.BackupOpts.S3Binlog != nil {
+		return r.genBinlogJobTemplate(backup, cluster)
+	}
 	if backup.Spec.BackupOpts.NFS != nil {
 		NFSVolume = &corev1.Volume{
 			Name:         "nfs-backup",
@@ -688,4 +690,93 @@ func (r *BackupReconciler) createBinlogJob(ctx context.Context, backup *v1beta1.
 	}
 
 	return nil
+}
+
+func (r *BackupReconciler) genBinlogJobTemplate(backup *v1beta1.Backup, cluster *v1beta1.MysqlCluster) (*batchv1.JobSpec, error) {
+	var S3BackuptEnv []corev1.EnvVar
+	s3SecretName := backup.Spec.BackupOpts.S3Binlog.BackupSecretName
+	log := log.FromContext(context.TODO()).WithValues("backup", "BinLog")
+	S3BackuptEnv = append(S3BackuptEnv,
+		getEnvVarFromSecret(s3SecretName, "S3_ENDPOINT", "s3-endpoint", false),
+		getEnvVarFromSecret(s3SecretName, "S3_ACCESSKEY", "s3-access-key", true),
+		getEnvVarFromSecret(s3SecretName, "S3_SECRETKEY", "s3-secret-key", true),
+		getEnvVarFromSecret(s3SecretName, "S3_BUCKET", "s3-bucket", true),
+		corev1.EnvVar{Name: "BACKUP_TYPE", Value: "s3"},
+		corev1.EnvVar{Name: "CLUSTER_NAME", Value: cluster.Name},
+	)
+	hostname := func() string {
+		if backup.Spec.BackupOpts.BackupHost != "" {
+			return fmt.Sprintf("%s.%s-mysql.%s", backup.Spec.BackupOpts.BackupHost, backup.Spec.ClusterName, backup.Namespace)
+		} else {
+			return backup.Spec.ClusterName + "-follower"
+		}
+	}()
+	c := &v1alpha1.MysqlCluster{}
+	c.Name = backup.Spec.ClusterName
+	secret := &corev1.Secret{}
+	secretKey := client.ObjectKey{Name: mysqlcluster.New(c).GetNameForResource(utils.Secret), Namespace: backup.Namespace}
+
+	if err := r.Get(context.TODO(), secretKey, secret); err != nil {
+		log.V(4).Info("binlogjob", "is is creating", "err", err)
+	}
+	internalRootPass := string(secret.Data["internal-root-password"])
+
+	jobSpec := &batchv1.JobSpec{
+		Template: corev1.PodTemplateSpec{
+			ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
+				"Host": hostname,
+				"Type": utils.BackupJobTypeName,
+
+				// Cluster used as selector.
+				"Cluster": backup.Spec.ClusterName,
+			}},
+			Spec: corev1.PodSpec{
+				InitContainers: []corev1.Container{
+					{
+						Name:            "initial",
+						Image:           cluster.Spec.Backup.Image,
+						ImagePullPolicy: cluster.Spec.ImagePullPolicy,
+						Command: []string{
+							"bash", "-c", "cp /mnt/s3upload /opt/radondb; chown -R 1001.1001 /opt/radondb",
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      utils.MySQLcheckerVolumeName,
+								MountPath: "/opt/radondb",
+							},
+						},
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:            utils.ContainerBackupName,
+						Image:           "percona:8.0",
+						ImagePullPolicy: cluster.Spec.ImagePullPolicy,
+						Env:             S3BackuptEnv,
+						Command: []string{
+							"bash", "-c", fmt.Sprintf("/opt/radondb/s3upload %s %s", hostname, internalRootPass),
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      utils.MySQLcheckerVolumeName,
+								MountPath: "/opt/radondb",
+							},
+						},
+					},
+				},
+				RestartPolicy:      corev1.RestartPolicyNever,
+				ServiceAccountName: backup.Spec.ClusterName,
+				Volumes: []corev1.Volume{
+					{
+						Name: utils.MySQLcheckerVolumeName,
+						VolumeSource: corev1.VolumeSource{
+							EmptyDir: &corev1.EmptyDirVolumeSource{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return jobSpec, nil
 }
