@@ -193,6 +193,12 @@ func leaderStop() error {
 			ch <- err
 		}
 		log.Info("flushed binary logs:", stmt)
+		// Step 8: Unlock tables
+		stmt, err = UnlockTables(conn)
+		if err != nil {
+			ch <- err
+		}
+		log.Info("unlock tables:", stmt)
 		pidfile, err = getPidFile(conn)
 		if err != nil {
 			ch <- err
@@ -414,6 +420,12 @@ func KillThread(db *sql.DB, id string) (string, error) {
 
 func FlushTablesWithReadLock(db *sql.DB) (string, error) {
 	query := "FLUSH NO_WRITE_TO_BINLOG TABLES WITH READ LOCK"
+	_, err := db.Exec(query)
+	return query, err
+}
+
+func UnlockTables(db *sql.DB) (string, error) {
+	query := "UNLOCK TABLES"
 	_, err := db.Exec(query)
 	return query, err
 }

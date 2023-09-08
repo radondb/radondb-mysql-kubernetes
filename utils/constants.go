@@ -203,6 +203,7 @@ const (
 const LableRebuild = "rebuild"
 const LabelRebuildFrom = "rebuild-from"
 const LabelMaintain = "maintain"
+const LabelTryLeader = "tryleader"
 
 // XenonHttpUrl is a http url corresponding to the xenon instruction.
 type XenonHttpUrl string

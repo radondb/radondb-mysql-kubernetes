@@ -116,3 +116,15 @@ func (p *PodExecutor) CloseXenonSemiCheck(namespace, podName string) error {
 	}
 	return nil
 }
+
+func (p *PodExecutor) XenonTryLeader(namespace, podName string) error {
+	cmd := []string{"xenoncli", "raft", "trytoleader"}
+	_, stderr, err := p.Exec(namespace, podName, "xenon", cmd...)
+	if err != nil {
+		return err
+	}
+	if len(stderr) != 0 {
+		return fmt.Errorf("run command %s in xenon failed: %s", cmd, stderr)
+	}
+	return nil
+}
