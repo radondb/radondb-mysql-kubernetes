@@ -114,6 +114,8 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 
 	// get ready nodes.
 	var readyNodes []corev1.Pod
+	var PodLeader, PodTryLeader *corev1.Pod
+	PodLeader, PodTryLeader = nil, nil
 	for _, pod := range list.Items {
 		if len(pod.ObjectMeta.Labels[utils.LableRebuild]) > 0 {
 			if err := s.AutoRebuild(ctx, &pod, list.Items); err != nil {
@@ -121,6 +123,15 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 			}
 			continue
 		}
+		if pod.ObjectMeta.Labels != nil {
+			if len(pod.ObjectMeta.Labels[utils.LabelTryLeader]) != 0 {
+				PodTryLeader = &pod
+			}
+			if pod.ObjectMeta.Labels["role"] == string(utils.Leader) {
+				PodLeader = &pod
+			}
+		}
+
 		for _, cond := range pod.Status.Conditions {
 			switch cond.Type {
 			case corev1.ContainersReady:
@@ -142,7 +153,17 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 			}
 		}
 	}
-
+	// try leader
+	if PodTryLeader != nil {
+		if PodLeader != nil {
+			if err := s.SetLeaderReadOnly(PodLeader); err != nil {
+				s.log.Info("set leader readonly", "error", err.Error())
+			}
+		}
+		if err := s.TryLeader(ctx, PodTryLeader); err != nil {
+			s.log.Error(err, "failed to Try leader", "pod", PodTryLeader.Name, "namespace", PodTryLeader.Namespace)
+		}
+	}
 	s.Status.ReadyNodes = len(readyNodes)
 	if s.Status.ReadyNodes == int(*s.Spec.Replicas) && int(*s.Spec.Replicas) != 0 {
 		if err := s.reconcileXenon(s.Status.ReadyNodes); err != nil {
@@ -799,6 +820,64 @@ func (s *StatusSyncer) DoRoRebuild(ctx context.Context, pod *corev1.Pod, items [
 	}
 	if err := s.cli.Delete(ctx, &pvc); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *StatusSyncer) TryLeader(ctx context.Context, pod *corev1.Pod) error {
+
+	// 1. close the xenon's SemiCheck.
+	executor, err := internal.NewPodExecutor()
+	if err != nil {
+		return err
+	}
+
+	err = executor.XenonTryLeader(s.Namespace, pod.Name)
+	s.log.Info("the xenon's tryleader", "pod", pod.Name)
+	delete(pod.ObjectMeta.Labels, utils.LabelTryLeader)
+	if err != nil {
+		return err
+	}
+
+	if err := s.cli.Update(ctx, pod); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *StatusSyncer) SetLeaderReadOnly(pod *corev1.Pod) error {
+	var sqlRunner internal.SQLRunner
+	closeCh := make(chan func())
+
+	var closeConn func()
+	errCh := make(chan error)
+	host := fmt.Sprintf("%s.%s-mysql.%s", pod.Name, s.Name, s.Namespace)
+	cfg, errOut := internal.NewConfigFromClusterKey(
+		s.cli, s.MysqlCluster.GetClusterKey(), utils.RootUser, host)
+	go func(sqlRunner *internal.SQLRunner, errCh chan error, closeCh chan func()) {
+		var err error
+		*sqlRunner, closeConn, err = s.SQLRunnerFactory(cfg, errOut)
+		if err != nil {
+			s.log.V(1).Info("failed to get sql runner", "error", err)
+			errCh <- err
+			return
+		}
+		if closeConn != nil {
+			closeCh <- closeConn
+			return
+		}
+		errCh <- nil
+	}(&sqlRunner, errCh, closeCh)
+
+	select {
+	case errOut = <-errCh:
+		return errOut
+	case closeConn := <-closeCh:
+		defer closeConn()
+	case <-time.After(time.Second * 5):
+	}
+	if sqlRunner != nil {
+		return sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL super_read_only=on"))
 	}
 	return nil
 }
