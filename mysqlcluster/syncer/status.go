@@ -610,7 +610,6 @@ func (s *StatusSyncer) RoCheckStatus(ctx context.Context, cli client.Client, pod
 		host := fmt.Sprintf("%s.%s.%s", podName, s.GetNameForResource(utils.ReadOnlyHeadlessSVC), s.Namespace)
 		index := s.getRoStatusIndex(host)
 		node := &s.Status.Nodes[index]
-		node.Message = ""
 
 		isInitial, isReadonly, isCloseSemi, isReplicating := corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown
 		isSupperReadOnly := corev1.ConditionUnknown
@@ -661,7 +660,21 @@ func (s *StatusSyncer) RoCheckStatus(ctx context.Context, cli client.Client, pod
 			}
 			// 3. change master
 			if _, isReplicating, err = internal.CheckSlaveStatus(sqlRunner, s.Spec.ReplicaLag); err != nil {
-				node.Message = err.Error()
+				parts := strings.Split(node.Message, " ")
+				now := time.Now().Unix()
+				var last int64
+				var err2 error
+				if len(parts[0]) == 0 {
+					node.Message = fmt.Sprintf("%d unixtime error:", now) + err.Error()
+				} else if last, err2 = strconv.ParseInt(parts[0], 10, 64); err2 != nil {
+					s.log.Info("get times from message", "times", last)
+				}
+				if now-last > 10 {
+					node.Message = fmt.Sprintf("%d unixseconds error:", now) + err.Error()
+				}
+
+			} else {
+				node.Message = ""
 			}
 		}
 		//update node Rostatus
