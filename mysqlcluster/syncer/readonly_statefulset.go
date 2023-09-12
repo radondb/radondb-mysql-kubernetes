@@ -318,10 +318,16 @@ func putMySQLReadOnly(s *StatefulSetSyncer, host string) error {
 			s.log.V(1).Info("slave status has gotten error", "error", err)
 		}
 		if isReplicating == corev1.ConditionFalse {
-			// chang master
-			changeSql := fmt.Sprintf(`stop slave;CHANGE MASTER TO MASTER_HOST='%s', MASTER_PORT=%d, MASTER_USER='%s', MASTER_PASSWORD='%s',
+			// No.1 start slave
+			if errStart := sqlRunner.QueryExec(internal.NewQuery("start slave;")); errStart != nil {
+				s.log.V(1).Info("start slave gotten error", "error", errStart)
+				// No2. change master and start
+				changeSql := fmt.Sprintf(`stop slave;CHANGE MASTER TO MASTER_HOST='%s', MASTER_PORT=%d, MASTER_USER='%s', MASTER_PASSWORD='%s',
 MASTER_AUTO_POSITION=1; start slave;`, buildMasterName(s), 3306, "root", cfg.Password)
-			sqlRunner.QueryExec(internal.NewQuery(changeSql))
+				if err2 := sqlRunner.QueryExec(internal.NewQuery(changeSql)); err2 != nil {
+					s.log.V(1).Info("change master and start slave gotten error", "error", err2)
+				}
+			}
 		}
 	}
 	return errOut
