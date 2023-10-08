@@ -47,13 +47,13 @@ You can use `ClusterIp` to perform NFS backup. The cluster IP address in the exa
 ### 1. Configure the NFS server address
 
 ```yaml
-# config/samples/mysql_v1alpha1_backup.yaml
+# config/samples/mysql_v1beta1_backup.yaml
 nfsServerAddress: "10.96.253.82"
 ```
 
 ### 2. Create a backup
 ```shell
-kubectl apply -f config/samples/mysql_v1alpha1_backup.yaml
+kubectl apply -f config/samples/mysql_v1beta1_backup.yaml
 ```
 > Note: The backup CRD and MySQL cluster CRD must be in the same namespace.
 
@@ -67,7 +67,7 @@ index.html  initbackup  sample_2022419101946
 
  ## Restore the cluster from the NFS backup
 
-Configure the `nfsServerAddress` attribute to the NFS server address in the `mysql_v1alpha1_cluster.yaml` file.
+Configure the `nfsServerAddress` attribute to the NFS server address in the `mysql_v1alpha1_cluster.yaml` file or `mysql_v1beta1_cluster.yaml` file.
 
  ```yaml
  ...

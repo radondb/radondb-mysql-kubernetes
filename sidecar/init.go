@@ -316,6 +316,10 @@ func runInitCommand(cfg *Config, hasInitialized bool) error {
 			}
 			// Check has initialized again.
 			hasInitialized, _ = checkIfPathExists(path.Join(dataPath, "mysql"))
+		} else if len(cfg.XRemoteDateSource) != 0 {
+			if err_r := cfg.ExecuteRemoteSource(); err_r != nil {
+				return fmt.Errorf("failed to remote source from %s: %s", cfg.XRestoreFrom, err_r)
+			}
 		}
 	}
 	// Build init.sql after restore

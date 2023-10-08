@@ -190,5 +190,12 @@ func (c *mysql) getVolumeMounts() []corev1.VolumeMount {
 			},
 		)
 	}
+	// Just for test
+	// if c.Spec.SourceConfig != nil {
+	// 	volumeMounts = append(volumeMounts, corev1.VolumeMount{
+	// 		Name:      utils.RemoteSourceVolume,
+	// 		MountPath: utils.RemoteSourcePath,
+	// 	})
+	// }
 	return volumeMounts
 }

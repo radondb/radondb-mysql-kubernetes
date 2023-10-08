@@ -147,6 +147,12 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Value: "1",
 		})
 	}
+	if c.Spec.SourceConfig != nil {
+		envs = append(envs, corev1.EnvVar{
+			Name:  "REMOTESRC",
+			Value: "1",
+		})
+	}
 	return envs
 }
 
@@ -252,6 +258,11 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			},
 		)
 	}
-
+	if c.Spec.SourceConfig != nil {
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      utils.RemoteSourceVolume,
+			MountPath: utils.RemoteSourcePath,
+		})
+	}
 	return volumeMounts
 }

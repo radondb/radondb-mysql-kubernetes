@@ -14,7 +14,15 @@ spec:
     S3backup:
       name: ""
       secretName: ""
-    remote: {}
+    remote: 
+      # sourceConfig:
+      #     name: remotesecret
+      #     items:
+      #     - key: passwd
+      #       path: passwd
+      #     - key: host
+      #       path: host
+    
   image: percona/percona-server:8.0.25
   imagePullPolicy: Always
   logOpts:

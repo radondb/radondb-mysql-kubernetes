@@ -1,5 +1,5 @@
 English | [简体中文](../en-cn/how_to_use_nfsbcp.md)
-# Quickstart for nfsbcp
+# Quickstart for nfsbcp （Deprecated）
 
 ## Contents
 * [Introduction](#Introduction)
