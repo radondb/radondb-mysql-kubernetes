@@ -286,6 +286,20 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			EmptyDir: &corev1.EmptyDirVolumeSource{},
 		},
 	})
+	if c.Spec.SourceConfig != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: utils.RemoteSourceVolume,
+			VolumeSource: corev1.VolumeSource{
+				Projected: &corev1.ProjectedVolumeSource{
+					Sources: []corev1.VolumeProjection{
+						{
+							Secret: c.Spec.SourceConfig,
+						},
+					},
+				},
+			},
+		})
+	}
 	return volumes
 }
 

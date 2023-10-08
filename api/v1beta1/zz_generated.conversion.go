@@ -454,6 +454,7 @@ func autoConvert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alp
 	// WARNING: in.BothS3NFS requires manual conversion: does not exist in peer-type
 	// WARNING: in.BackupScheduleJobsHistoryLimit requires manual conversion: does not exist in peer-type
 	// WARNING: in.TlsSecretName requires manual conversion: does not exist in peer-type
+	// WARNING: in.SourceConfig requires manual conversion: does not exist in peer-type
 	return nil
 }
 

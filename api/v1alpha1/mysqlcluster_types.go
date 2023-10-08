@@ -113,6 +113,10 @@ type MysqlClusterSpec struct {
 	// Containing CA (ca.crt) and server cert (tls.crt), server private key (tls.key) for SSL
 	// +optional
 	TlsSecretName string `json:"tlsSecretName,omitempty"`
+
+	// Bootstraping from remote data source
+	// +optional
+	SourceConfig *corev1.SecretProjection `json:"sourceConfig,omitempty"`
 }
 
 // ReadOnly define the ReadOnly pods
@@ -345,7 +349,8 @@ const (
 	// ClusterUpdateState indicates whether the cluster is being updated.
 	ClusterUpdateState ClusterState = "Updating"
 	// ClusterReadyState indicates whether all containers in the pod are ready.
-	ClusterReadyState ClusterState = "Ready"
+	ClusterReadyState      ClusterState = "Ready"
+	ClusterRemoteCompleted ClusterState = "RemoteCompleted"
 	// ClusterCloseState indicates whether the cluster is closed.
 	ClusterCloseState ClusterState = "Closed"
 	// ClusterScaleInState indicates whether the cluster replicas is decreasing.

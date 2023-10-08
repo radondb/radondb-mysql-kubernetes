@@ -46,7 +46,7 @@ kubectl create -f config/samples/backup_secret.yaml
 ```
 
 ### Step 2: Configure the backup Secret for the Operator cluster
-Configure the `backupSecretName` property in `mysql_v1alpha1_mysqlcluster.yaml`, for example, `sample-backup-secre`.
+Configure the `backupSecretName` property in `mysql_v1beta1_mysqlcluster.yaml`, for example, `sample-backup-secre`.
 
 ```yaml
 spec:

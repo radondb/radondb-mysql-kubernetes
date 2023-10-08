@@ -1,4 +1,4 @@
-Contents
+Contents(Deprecated)
 =============
 - [Overview](#overview)
 - [Configuration of scheduled backups](#configuration-of-scheduled-backups)

@@ -1,4 +1,4 @@
-English | [简体中文](../zh-cn/rebuild.md)
+English | [简体中文](../zh-cn/rebuild.md) (Deprecated)
 
 # Reason for rebuilding Pod
 RadonDB cluster implements MySQL semisynchronous replication. Semisynchronous replication may cause the replica nodes to update more data than the source node. So, the Pod needs to be rebuilt when it is detected as invalid by Xenon. 

@@ -130,7 +130,7 @@ type Config struct {
 	XCloudS3AccessKey string
 	XCloudS3SecretKey string
 	XCloudS3Bucket    string
-
+	XRemoteDateSource string
 	// Need Upgrade
 	NeedUpgrade bool
 }
@@ -212,10 +212,10 @@ func NewInitConfig() *Config {
 		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
 		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
 		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
-
-		ClusterName: getEnvValue("CLUSTER_NAME"),
-		CloneFlag:   false,
-		GtidPurged:  "",
+		XRemoteDateSource: getEnvValue("REMOTESRC"),
+		ClusterName:       getEnvValue("CLUSTER_NAME"),
+		CloneFlag:         false,
+		GtidPurged:        "",
 		// need upgrade
 		NeedUpgrade: needUpgrade,
 	}
@@ -840,5 +840,54 @@ func (cfg *Config) ExecuteNFSRestore() error {
 		return fmt.Errorf("restore point parse error : %s", err)
 	}
 	cfg.BuildScript(gtid, restorePoint)
+	return nil
+}
+
+func (cfg *Config) ExecuteRemoteSource() error {
+	// Check /var/lib/mysql exists or not.
+	log.Info("now get data from remote source")
+	if _, err := os.Stat(utils.DataVolumeMountPath); os.IsNotExist(err) {
+		err = os.MkdirAll(utils.DataVolumeMountPath, 0755)
+		if err != nil {
+			return fmt.Errorf("create /var/lib/mysql fail : %s", err)
+		}
+		// Change the owner of /var/lib/mysql
+		cmd := exec.Command("chown", "mysql.mysql", utils.DataVolumeMountPath)
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to chown -R mysql.mysql : %s", err)
+		}
+	}
+	// Remove the data directory
+	cmd := exec.Command("rm", "-rf", utils.DataVolumeMountPath+"/*")
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to rm -rf %s : %s", utils.DataVolumeMountPath, err)
+	}
+	//sshpass -p rootpass ssh root@172.16.0.29 xtrabackup --user=root --password='' --backup --stream=xbstream --target-dir=./  > backup.xbstream 2>backup.log
+	CmdStr := "sshpass -p rootpass ssh  -o 'StrictHostKeyChecking no' root@`cat /etc/rsrc/host` xtrabackup --user=root --password=`cat /etc/rsrc/passwd` --backup --stream=xbstream --target-dir=/  > backup.xbstream 2>backup.log;"
+	CmdStr += fmt.Sprintf("cd %s ; xbstream -x < /backup.xbstream", utils.DataVolumeMountPath)
+	cmd = exec.Command("/bin/bash", "-c", "--", CmdStr)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to rm -rf %s : %s", utils.DataVolumeMountPath, err)
+	}
+	// Prepare the append-only file
+	cmd = exec.Command("xtrabackup", "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--apply-log-only", "--target-dir="+utils.DataVolumeMountPath)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup prepare append-only: %s", err)
+	}
+	// Prepare the data directory
+	cmd = exec.Command("xtrabackup", "--defaults-file="+utils.MysqlConfVolumeMountPath+"/my.cnf", "--use-memory=3072M", "--prepare", "--target-dir="+utils.DataVolumeMountPath)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to xtrabackup prepare: %s", err)
+	}
+	cmd = exec.Command("chown", "-R", "mysql.mysql", utils.DataVolumeMountPath)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chown -R mysql.mysql : %s", err)
+	}
 	return nil
 }

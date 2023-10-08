@@ -135,6 +135,9 @@ const (
 	// TlsMountPath is the volume mount path for tls
 	TlsMountPath = "/etc/mysql-ssl"
 
+	// RemoteSource
+	RemoteSourceVolume = "rsrc"
+	RemoteSourcePath   = "/etc/rsrc"
 	//extra env for readonly
 	ROIbPool = "IB_POOL"
 	ROIbInst = "IB_INST"

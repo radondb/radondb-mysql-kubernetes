@@ -52,7 +52,7 @@ RUN set -ex; \
 ARG XTRABACKUP_PKG=percona-xtrabackup-24
 RUN set -ex; \
     apt-get update; \
-    apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl bc; \
+    apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl bc openssh-server  sshpass;\
     wget -P /tmp --no-check-certificate https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb; \
     dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb; \
     apt-get update; \
