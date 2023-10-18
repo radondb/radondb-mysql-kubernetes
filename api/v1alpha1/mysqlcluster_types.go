@@ -117,6 +117,11 @@ type MysqlClusterSpec struct {
 	// Bootstraping from remote data source
 	// +optional
 	SourceConfig *corev1.SecretProjection `json:"sourceConfig,omitempty"`
+
+	// Leader as follower represents if make leader use as follower to read
+	// +optional
+	// +kubebuilder:default:=false
+	LeaderAsFollower bool `json:"leaderAsfollower,omitempty"`
 }
 
 // ReadOnly define the ReadOnly pods

@@ -149,6 +149,11 @@ type MysqlClusterSpec struct {
 	// Specification of the service that exposes the MySQL leader instance.
 	// +optional
 	Service *ServiceSpec `json:"service,omitempty"`
+
+	// Leader as follower represents if make leader use as follower to read
+	// +optional
+	// +kubebuilder:default:=false
+	LeaderAsFollower bool `json:"leaderAsfollower,omitempty"`
 }
 
 // ReadOnly define the ReadOnly pods
