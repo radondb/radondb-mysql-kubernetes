@@ -101,6 +101,11 @@ spec:
                 description: Lagged
                 format: int32
                 type: integer
+              leaderAsfollower:
+                default: false
+                description: Leader as follower represents if make leader use as follower
+                  to read
+                type: boolean
               metricsOpts:
                 default:
                   enabled: false
@@ -3598,6 +3603,11 @@ spec:
                 description: Lagged
                 format: int32
                 type: integer
+              leaderAsfollower:
+                default: false
+                description: Leader as follower represents if make leader use as follower
+                  to read
+                type: boolean
               logOpts:
                 description: LogOpts is the options of log settings.
                 properties:

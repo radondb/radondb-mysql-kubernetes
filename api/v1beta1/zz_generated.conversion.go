@@ -432,6 +432,7 @@ func autoConvert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *Mysql
 	// WARNING: in.EnableAutoRebuild requires manual conversion: does not exist in peer-type
 	// WARNING: in.Log requires manual conversion: does not exist in peer-type
 	// WARNING: in.Service requires manual conversion: does not exist in peer-type
+	out.LeaderAsFollower = in.LeaderAsFollower
 	return nil
 }
 
@@ -455,6 +456,7 @@ func autoConvert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alp
 	// WARNING: in.BackupScheduleJobsHistoryLimit requires manual conversion: does not exist in peer-type
 	// WARNING: in.TlsSecretName requires manual conversion: does not exist in peer-type
 	// WARNING: in.SourceConfig requires manual conversion: does not exist in peer-type
+	out.LeaderAsFollower = in.LeaderAsFollower
 	return nil
 }
 
