@@ -32,7 +32,11 @@ var (
 	mysqlServerIDOffset = 100
 
 	//MySQL readonly server id start index
-	mysqlReadOnlyIDOffset = 200
+	// mysqlReadOnlyIDOffset = 200
+	mysqlServerIDOffsetInc = 100
+
+	// Remote cluster server id start index
+	//remoteClusterServerIDOffset = 300
 
 	// mysqlConfigPath is the mysql configs path.
 	mysqlConfigPath = utils.MysqlConfVolumeMountPath

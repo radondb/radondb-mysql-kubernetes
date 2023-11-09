@@ -2246,6 +2246,17 @@ spec:
                 required:
                 - num
                 type: object
+              remoteCluster:
+                description: remote replica source
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               replicas:
                 default: 3
                 description: Replicas is the number of pods.
@@ -3503,12 +3514,19 @@ spec:
                   remote:
                     description: Bootstraping from remote data source
                     properties:
+                      remoteCluster:
+                        description: remote replica source
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        - namespace
+                        type: object
                       sourceConfig:
-                        description: "Adapts a secret into a projected volume. \n
-                          The contents of the target Secret's Data field will be presented
-                          in a projected volume as files using the keys in the Data
-                          field as the file names. Note that this is identical to
-                          a secret volume source without the default mode."
+                        description: xtrabackup remote source
                         properties:
                           items:
                             description: If unspecified, each key-value pair in the

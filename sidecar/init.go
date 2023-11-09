@@ -299,7 +299,14 @@ func runInitCommand(cfg *Config, hasInitialized bool) error {
 	// if /var/lib/mysql/mysql is empty, then run the restore.
 	// otherwise , it must be has data, then do nothing.
 	if !hasInitialized {
-		if len(cfg.XRestoreFrom) != 0 {
+		// In this case, it means that the cluster is new, and the first pod is starting.
+		// but this cluster action as disatery standby. So need clone from Remote cluster's Leader.
+		if len(cfg.RemoteClusterName) != 0 {
+			// Do xtrabackup restore
+			if err := RunClusterScript(cfg); err != nil {
+				return err
+			}
+		} else if len(cfg.XRestoreFrom) != 0 {
 			var err_f error
 			if cfg.CloneFlag {
 				err_f = cfg.executeCloneRestore()
@@ -661,6 +668,17 @@ func UpgradeShGen(cfg *Config) error {
 	//write to docker.
 	if err := ioutil.WriteFile(initFilePath+"/upgrade.sh", []byte(upgradesh), 0755); err != nil {
 		return fmt.Errorf("failed to write upgrade.sh: %s", err)
+	}
+	return nil
+}
+
+func RunClusterScript(cfg *Config) error {
+	log.Info("Now run the cluster script")
+	cmd := exec.Command("bash", "-c", path.Join(utils.RemoteClusterCMMountPath, "RemoteCluster.sh"))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to cluster scripts: %s", err)
 	}
 	return nil
 }

@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -288,6 +289,13 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 	// Check if statefulset changed.
 	if !s.sfsUpdated(existing) {
 		if s.podsAllUpdated(ctx) {
+			if s.Spec.RemoteCluster != nil {
+
+				s.log.V(1).Info("update remote cluster replication")
+				if err := s.checkAndUpdateRemoteStatus(ctx); err != nil {
+					return controllerutil.OperationResultNone, err
+				}
+			}
 			if s.sfs.Labels != nil && s.sfs.Status.ReadyReplicas == s.sfs.Status.Replicas {
 				s.sfs.Labels = nil
 				// If changed, update statefulset.
@@ -615,7 +623,7 @@ func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
 // Updates to statefulset spec for fields other than 'replicas', 'template', and 'updateStrategy' are forbidden.
 func (s *StatefulSetSyncer) sfsUpdated(existing *appsv1.StatefulSet) bool {
 	var resizeVolume = false
-	// TODO: this is a temporary workaround until we figure out a better way to do this.
+	// this is a temporary workaround until we figure out a better way to do this.
 	if len(existing.Spec.VolumeClaimTemplates) > 0 && len(s.sfs.Spec.VolumeClaimTemplates) > 0 {
 		resizeVolume = existing.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage().Cmp(*s.sfs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage()) != 0
 	}
@@ -677,4 +685,95 @@ func (s *StatefulSetSyncer) SingleLeaderAction() error {
 	}
 
 	return nil
+}
+
+// check slave status
+func (s *StatefulSetSyncer) checkAndUpdateRemoteStatus(ctx context.Context) error {
+	clusterName := s.Spec.RemoteCluster.Name
+	clusterNameSpace := s.Spec.RemoteCluster.NameSpace
+	// get cluster status
+	cluster := &apiv1alpha1.MysqlCluster{}
+	if err := s.cli.Get(ctx, types.NamespacedName{Namespace: clusterNameSpace, Name: clusterName}, cluster); err != nil {
+		return err
+	}
+	// get cluster state, if the state is Ready go on, otherwise return
+	if cluster.Status.State != apiv1alpha1.ClusterReadyState || s.Status.State != apiv1alpha1.ClusterReadyState {
+		return nil
+	} else {
+		// 1. check the cluster is ready
+		host := fmt.Sprintf("%s.%s", s.GetNameForResource(utils.LeaderService), s.Namespace)
+		cfg, err := internal.NewConfigFromClusterKey(
+			s.cli, s.MysqlCluster.GetClusterKey(), utils.RootUser, host)
+		if err != nil {
+			return err
+		}
+		sqlRunner, closeConn, err := s.SQLRunnerFactory(cfg)
+		if err != nil {
+			return err
+		}
+		defer closeConn()
+		//if sqlRunner.
+		if sqlRunner != nil {
+			var remoteInterPass string = ""
+			var errtmp error
+			if remoteInterPass, errtmp = s.getRemoteClusterInternalRootPass(ctx); errtmp != nil {
+				return errtmp
+			}
+			// change master
+			var isReplicating corev1.ConditionStatus
+			var err error
+			if _, isReplicating, err = internal.CheckSlaveStatus(sqlRunner, s.Spec.ReplicaLag); err != nil {
+				//Notice!!! this has error, just show error message, can not return.
+				s.log.V(1).Info("slave status has gotten error", "error", err)
+				if strings.HasPrefix(err.Error(), "Slave_IO_State: connecting to master") {
+					changeSql := fmt.Sprintf(`stop slave;reset slave;CHANGE MASTER TO MASTER_HOST='%s', MASTER_PORT=%d, MASTER_USER='%s', MASTER_PASSWORD='%s',
+	MASTER_AUTO_POSITION=1; start slave;`, fmt.Sprintf("%s-leader.%s", s.Spec.RemoteCluster.Name, s.Spec.RemoteCluster.NameSpace), 3306, "root", remoteInterPass)
+					s.log.V(1).Info("change master and start slave", "sql", changeSql)
+					if err2 := sqlRunner.QueryExec(internal.NewQuery(changeSql)); err2 != nil {
+						s.log.V(1).Info("change master and start slave gotten error", "error", err2)
+						return err2
+					}
+				}
+			}
+			if isReplicating == corev1.ConditionFalse {
+
+				// No.1 start slave
+				if errStart := sqlRunner.QueryExec(internal.NewQuery("start slave;")); errStart != nil {
+					s.log.V(1).Info("start slave gotten error", "error", errStart)
+					// No2. change master and start
+					changeSql := fmt.Sprintf(`stop slave;CHANGE MASTER TO MASTER_HOST='%s', MASTER_PORT=%d, MASTER_USER='%s', MASTER_PASSWORD='%s',
+	MASTER_AUTO_POSITION=1; start slave;`, fmt.Sprintf("%s-leader.%s", s.Spec.RemoteCluster.Name, s.Spec.RemoteCluster.NameSpace), 3306, "root", remoteInterPass)
+					s.log.V(1).Info("change master and start slave", "sql", changeSql)
+					if err2 := sqlRunner.QueryExec(internal.NewQuery(changeSql)); err2 != nil {
+						s.log.V(1).Info("change master and start slave gotten error", "error", err2)
+						return err2
+					}
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// Note!!! the remote cluster must exists.
+func (s *StatefulSetSyncer) getRemoteClusterInternalRootPass(ctx context.Context) (string, error) {
+	cluster := &apiv1alpha1.MysqlCluster{}
+	clusterKey := types.NamespacedName{Namespace: s.Spec.RemoteCluster.NameSpace, Name: s.Spec.RemoteCluster.Name}
+	if err := s.cli.Get(context.TODO(), clusterKey, cluster); err != nil {
+		return "", err
+	}
+
+	secret := &corev1.Secret{}
+	secretKey := client.ObjectKey{Name: mysqlcluster.New(cluster).GetNameForResource(utils.Secret), Namespace: cluster.Namespace}
+
+	if err := s.cli.Get(context.TODO(), secretKey, secret); err != nil {
+		return "", err
+	}
+	password, ok := secret.Data["internal-root-password"]
+	if !ok {
+		return "", fmt.Errorf("internal-root-password cannot be empty")
+	}
+	return string(password), nil
 }

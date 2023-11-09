@@ -96,6 +96,8 @@ const (
 	InitFileVolumeName     = "init-mysql"
 	MySQLcheckerVolumeName = "mysql-checker"
 
+	RemoteClusterCMVolumeName = "remote-cluster-cm"
+
 	// volumes mount path.
 	MysqlConfVolumeMountPath = "/etc/mysql"
 	MysqlCMVolumeMountPath   = "/mnt/mysql-cm"
@@ -108,6 +110,8 @@ const (
 	XenonConfVolumeMountPath = "/etc/xenon"
 	InitFileVolumeMountPath  = "/docker-entrypoint-initdb.d"
 	PodInfoVolumeMountPath   = "/etc/podinfo"
+
+	RemoteClusterCMMountPath = "/mnt/remote-cluster-cm"
 
 	// Volume timezone name.
 	SysLocalTimeZone = "localtime"
@@ -178,6 +182,9 @@ const (
 	PodDisruptionBudget ResourceName = "pdb"
 	// XenonMetaData is the name of the configmap that contains xenon metadata.
 	XenonMetaData ResourceName = "xenon-metadata"
+
+	// Remote Cluster info
+	RemoteCluster ResourceName = "remote-cluster"
 	// Job Annonations name
 	JobAnonationName = "backupName"
 	// Job Annonations date

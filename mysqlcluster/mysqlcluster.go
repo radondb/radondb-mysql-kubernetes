@@ -300,6 +300,22 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			},
 		})
 	}
+	if c.Spec.RemoteCluster != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: utils.RemoteClusterCMVolumeName,
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: c.GetNameForResource(utils.RemoteCluster),
+					},
+					DefaultMode: func() *int32 {
+						var tmp int32 = 0777
+						return &tmp
+					}(),
+				},
+			},
+		})
+	}
 	return volumes
 }
 
@@ -354,6 +370,8 @@ func (c *MysqlCluster) GetNameForResource(name utils.ResourceName) string {
 		return fmt.Sprintf("%s-secret", c.Name)
 	case utils.XenonMetaData:
 		return fmt.Sprintf("%s-xenon", c.Name)
+	case utils.RemoteCluster:
+		return fmt.Sprintf("%s-remote", c.Name)
 	case utils.ConfigMap:
 		if template := c.Spec.MysqlOpts.MysqlConfTemplate; template != "" {
 			return template
