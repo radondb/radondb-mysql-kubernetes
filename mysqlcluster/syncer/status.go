@@ -89,7 +89,67 @@ func (s *StatusSyncer) GetOwner() runtime.Object { return s.MysqlCluster }
 
 // Sync persists data into the external store.
 func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
-	clusterCondition := s.updateClusterStatus()
+
+	// init all contions for ClusterConditionType in file mysqlcluster_types.go
+	if len(s.Status.Conditions) == 0 {
+		// init all contions for ClusterConditionType in file mysqlcluster_types.go
+		s.Status.Conditions = []apiv1alpha1.ClusterCondition{
+			{
+				Type:               apiv1alpha1.ConditionInit,
+				Status:             corev1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			},
+			{
+				Type:               apiv1alpha1.ConditionUpdate,
+				Status:             corev1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			},
+			{
+				Type:               apiv1alpha1.ConditionReady,
+				Status:             corev1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			},
+			{
+				Type:               apiv1alpha1.ConditionClose,
+				Status:             corev1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			},
+			{
+				Type:               apiv1alpha1.ConditionError,
+				Status:             corev1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			},
+			{
+				Type:               apiv1alpha1.ConditionScaleIn,
+				Status:             corev1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			},
+			{
+				Type:               apiv1alpha1.ConditionScaleOut,
+				Status:             corev1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			},
+			{
+				Type:               apiv1alpha1.ConditionRemoteSlave,
+				Status:             corev1.ConditionFalse,
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			},
+		}
+	} else {
+		errCond := apiv1alpha1.ClusterCondition{
+			Type:               apiv1alpha1.ConditionError,
+			Status:             corev1.ConditionFalse,
+			LastTransitionTime: metav1.NewTime(time.Now()),
+			Reason:             "",
+			Message:            "",
+		}
+		s.updateClusterCondition(int(apiv1alpha1.ClIndexError), errCond, false)
+	}
+	clusterCondition, condInd := s.updateClusterStatus()
+	if condInd != -1 {
+		s.updateClusterCondition(condInd, clusterCondition, false)
+	}
+
 	labelSelector := s.GetLabels().AsSelector()
 	// Find the pods that revision is old.
 	r, err := labels.NewRequirement("readonly", selection.DoesNotExist, []string{})
@@ -149,6 +209,8 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 						Reason:             corev1.PodReasonUnschedulable,
 						Message:            cond.Message,
 					}
+
+					s.updateClusterCondition(int(apiv1alpha1.ClIndexError), clusterCondition, false)
 				}
 			}
 		}
@@ -169,18 +231,18 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 		if err := s.reconcileXenon(s.Status.ReadyNodes); err != nil {
 			clusterCondition.Message = fmt.Sprintf("%s", err)
 			clusterCondition.Type = apiv1alpha1.ConditionError
+			s.updateClusterCondition(int(apiv1alpha1.ClIndexError), clusterCondition, false)
 		} else {
 			s.Status.State = apiv1alpha1.ClusterReadyState
 			clusterCondition.Type = apiv1alpha1.ConditionReady
-		}
-	}
-
-	if len(s.Status.Conditions) == 0 {
-		s.Status.Conditions = append(s.Status.Conditions, clusterCondition)
-	} else {
-		lastCond := s.Status.Conditions[len(s.Status.Conditions)-1]
-		if lastCond.Type != clusterCondition.Type {
-			s.Status.Conditions = append(s.Status.Conditions, clusterCondition)
+			s.updateClusterCondition(int(apiv1alpha1.ClIndexReady), clusterCondition, false)
+			// change scale out, Initializing, scale in to false
+			for _, ind := range []int{int(apiv1alpha1.ClIndexInit),
+				int(apiv1alpha1.ClIndexScaleIn), int(apiv1alpha1.ClIndexScaleOut)} {
+				tmpCond := s.Status.Conditions[ind]
+				tmpCond.Status = corev1.ConditionFalse
+				s.updateClusterCondition(ind, clusterCondition, false)
+			}
 		}
 	}
 
@@ -195,21 +257,7 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 		//Notice!!! ReadOnly node fail, just show the error log, do not return here!
 		s.log.Error(err, "ReadOnly pod fail", "namespace", s.Namespace)
 	}
-	// conditions := s.Status.Conditions
-	// sort.Slice(conditions, func(i, j int) bool {
-	// 	if conditions[i].Type < conditions[j].Type {
-	// 		return true
-	// 	} else if conditions[i].Type == conditions[j].Type &&
-	// 		conditions[i].LastTransitionTime.Before(&conditions[j].LastTransitionTime) {
-	// 		return true
-	// 	} else {
-	// 		return false
-	// 	}
-	// })
-	// s.Status.Conditions = conditions
-	if len(s.Status.Conditions) > maxStatusesQuantity {
-		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
-	}
+
 	// update backup Status
 	s.updateLastBackup()
 
@@ -252,7 +300,7 @@ func (s *StatusSyncer) updateLastBackup() error {
 }
 
 // updateClusterStatus update the cluster status and returns condition.
-func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
+func (s *StatusSyncer) updateClusterStatus() (apiv1alpha1.ClusterCondition, int) {
 	clusterCondition := apiv1alpha1.ClusterCondition{
 		Type:               apiv1alpha1.ConditionInit,
 		Status:             corev1.ConditionTrue,
@@ -263,14 +311,18 @@ func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
 	// If the state does not exist, the cluster is being initialized.
 	if oldState == "" {
 		s.Status.State = apiv1alpha1.ClusterInitState
-		return clusterCondition
+		return clusterCondition, int(apiv1alpha1.ClIndexInit)
+	}
+	if oldState == apiv1alpha1.ClusterUpdateState {
+		clusterCondition.Type = apiv1alpha1.ClusterConditionType(oldState)
+		return clusterCondition, int(apiv1alpha1.ClIndexUpdate)
 	}
 	// If the expected number of replicas and the actual number
 	// of replicas are both 0, the cluster has been closed.
 	if int(*s.Spec.Replicas) == 0 && s.Status.ReadyNodes == 0 {
 		clusterCondition.Type = apiv1alpha1.ConditionClose
 		s.Status.State = apiv1alpha1.ClusterCloseState
-		return clusterCondition
+		return clusterCondition, int(apiv1alpha1.ClIndexClose)
 	}
 	// When the cluster is ready or closed, the number of replicas changes,
 	// indicating that the cluster is updating nodes.
@@ -278,16 +330,17 @@ func (s *StatusSyncer) updateClusterStatus() apiv1alpha1.ClusterCondition {
 		if int(*s.Spec.Replicas) > s.Status.ReadyNodes {
 			clusterCondition.Type = apiv1alpha1.ConditionScaleOut
 			s.Status.State = apiv1alpha1.ClusterScaleOutState
-			return clusterCondition
+			return clusterCondition, int(apiv1alpha1.ClIndexScaleOut)
 		} else if int(*s.Spec.Replicas) < s.Status.ReadyNodes {
 			clusterCondition.Type = apiv1alpha1.ConditionScaleIn
 			s.Status.State = apiv1alpha1.ClusterScaleInState
-			return clusterCondition
+			return clusterCondition, int(apiv1alpha1.ClIndexScaleIn)
 		}
 	}
 
 	clusterCondition.Type = apiv1alpha1.ClusterConditionType(oldState)
-	return clusterCondition
+
+	return clusterCondition, -1
 }
 
 // Rebuild Pod by deleting and creating it.
@@ -934,22 +987,30 @@ func (s *StatusSyncer) clusterSlaveCheck() error {
 		}
 		if isReplicating == corev1.ConditionFalse {
 			s.log.Info("remote cluster has no slave, change the status")
+			// here need force update the status.
+			s.updateClusterCondition(int(apiv1alpha1.ClIndexRemoteSlave), clusterCondition, true)
 		} else {
 			clusterCondition.Status = corev1.ConditionTrue
 			clusterCondition.Message = ""
 			clusterCondition.Reason = ""
 		}
-		s.Status.Conditions = append(s.Status.Conditions, clusterCondition)
+		s.updateClusterCondition(int(apiv1alpha1.ClIndexRemoteSlave), clusterCondition, false)
 	}
 	return nil
 }
 
-func (s *StatusSyncer) updateClusterCondition(idx int, status corev1.ConditionStatus) {
-	if s.Status.Conditions[idx].Status != status {
-		t := time.Now()
-		s.log.V(3).Info(fmt.Sprintf("Found status change for cluster %q condition %q: %q -> %q; setting lastTransitionTime to %v",
-			s.Name, s.Status.Conditions[idx].Type, s.Status.Conditions[idx].Status, status, t))
-		s.Status.Conditions[idx].Status = status
-		s.Status.Conditions[idx].LastTransitionTime = metav1.NewTime(t)
+func (s *StatusSyncer) updateClusterCondition(idx int, cond apiv1alpha1.ClusterCondition, force bool) {
+	if idx >= len(s.Status.Conditions) {
+		s.log.Info("the cluster condition index is out of range, it may be upgrade the old version", "index", idx)
+		s.Status.Conditions = nil
+		return
+	}
+	if force {
+		s.Status.Conditions[idx] = cond
+	} else if s.Status.Conditions[idx].Status != cond.Status {
+		s.log.V(3).Info(fmt.Sprintf("Found status change for cluster %q condition %q: %q -> %q",
+			s.Name, s.Status.Conditions[idx].Type, s.Status.Conditions[idx].Status, cond.Status))
+		s.Status.Conditions[idx] = cond
+
 	}
 }
