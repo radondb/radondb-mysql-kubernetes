@@ -276,6 +276,9 @@ const (
 	ConditionScaleIn ClusterConditionType = "ScaleIn"
 	// ConditionScaleOut indicates whether the cluster replicas is increasing.
 	ConditionScaleOut ClusterConditionType = "ScaleOut"
+
+	// is it a slave for Remote cluster?
+	ConditionRemoteSlave ClusterConditionType = "RemoteSlave"
 )
 
 // ClusterCondition defines type for cluster conditions.
@@ -438,10 +441,15 @@ type DataSource struct {
 	// +optional
 	RestorePoint string `json:"restorePoint"`
 }
-
+type RemoteSourceStruct struct {
+	Name      string `json:"name"`
+	NameSpace string `json:"namespace"`
+}
 type RemoteDataSource struct {
-	//
+	// xtrabackup remote source
 	SourceConfig *corev1.SecretProjection `json:"sourceConfig,omitempty"`
+	// remote replica source
+	RemoteCluster *RemoteSourceStruct `json:"remoteCluster,omitempty"`
 }
 
 type S3BackupDataSource struct {

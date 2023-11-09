@@ -98,6 +98,9 @@ func Convert_v1alpha1_MysqlClusterSpec_To_v1beta1_MysqlClusterSpec(in *v1alpha1.
 	if in.SourceConfig != nil {
 		out.DataSource.Remote.SourceConfig = in.SourceConfig
 	}
+	if in.RemoteCluster != nil {
+		out.DataSource.Remote.RemoteCluster = (*RemoteSourceStruct)(in.RemoteCluster)
+	}
 	if len(in.NFSServerAddress) != 0 {
 		ipStr := strings.Split(in.NFSServerAddress, ":")
 		out.DataSource.RestorePoint = in.RestorePoint
@@ -164,6 +167,9 @@ func Convert_v1beta1_MysqlClusterSpec_To_v1alpha1_MysqlClusterSpec(in *MysqlClus
 	out.XenonOpts.EnableAutoRebuild = in.EnableAutoRebuild
 	if in.DataSource.Remote.SourceConfig != nil {
 		out.SourceConfig = in.DataSource.Remote.SourceConfig
+	}
+	if in.DataSource.Remote.RemoteCluster != nil {
+		out.RemoteCluster = (*v1alpha1.RemoteSourceStruct)(in.DataSource.Remote.RemoteCluster)
 	}
 	if len(in.DataSource.S3Backup.Name) != 0 {
 		out.RestoreFrom = in.DataSource.S3Backup.Name

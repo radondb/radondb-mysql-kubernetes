@@ -153,6 +153,18 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Value: "1",
 		})
 	}
+
+	if c.Spec.RemoteCluster != nil {
+		envs = append(envs, corev1.EnvVar{
+			Name:  "REMOTE_CLUSTER_NAME",
+			Value: c.Spec.RemoteCluster.Name,
+		}, corev1.EnvVar{
+			Name:  "REMOTE_CLUSTER_NAMESPACE",
+			Value: c.Spec.RemoteCluster.NameSpace,
+		})
+
+	}
+
 	return envs
 }
 
@@ -263,6 +275,13 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			Name:      utils.RemoteSourceVolume,
 			MountPath: utils.RemoteSourcePath,
 		})
+	}
+	if c.Spec.RemoteCluster != nil {
+		volumeMounts = append(volumeMounts,
+			corev1.VolumeMount{
+				Name:      utils.RemoteClusterCMVolumeName,
+				MountPath: utils.RemoteClusterCMMountPath,
+			})
 	}
 	return volumeMounts
 }

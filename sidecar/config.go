@@ -133,6 +133,11 @@ type Config struct {
 	XRemoteDateSource string
 	// Need Upgrade
 	NeedUpgrade bool
+
+	RemoteClusterName      string
+	RemoteClusterNamespace string
+	//TODO: add it in env
+	ServerIDStartOffset string
 }
 
 // NewInitConfig returns a pointer to Config.
@@ -217,7 +222,9 @@ func NewInitConfig() *Config {
 		CloneFlag:         false,
 		GtidPurged:        "",
 		// need upgrade
-		NeedUpgrade: needUpgrade,
+		NeedUpgrade:            needUpgrade,
+		RemoteClusterName:      getEnvValue("REMOTE_CLUSTER_NAME"),
+		RemoteClusterNamespace: getEnvValue("REMOTE_CLUSTER_NAMESPACE"),
 	}
 }
 
@@ -304,10 +311,15 @@ func (cfg *Config) buildExtraConfig(filePath string) (*ini.File, error) {
 	startIndex := mysqlServerIDOffset
 	ordinal, err := utils.GetOrdinal(cfg.HostName)
 	arr := strings.Split(cfg.HostName, "-")
-	if len(arr) == 3 && arr[1] == "ro" {
-		log.Info("It is readonly pod, server-id start at 200")
-		startIndex = mysqlReadOnlyIDOffset
+	if len(cfg.RemoteClusterName) > 0 {
+		log.Info("It has remote cluster server-id start offset  +100")
+		startIndex += mysqlServerIDOffsetInc
 	}
+	if len(arr) == 3 && arr[1] == "ro" {
+		log.Info("It is readonly pod,  server-id start offset  +100")
+		startIndex += mysqlServerIDOffsetInc
+	}
+
 	if err != nil {
 		return nil, err
 	}

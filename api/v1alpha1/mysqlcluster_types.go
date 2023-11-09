@@ -117,7 +117,8 @@ type MysqlClusterSpec struct {
 	// Bootstraping from remote data source
 	// +optional
 	SourceConfig *corev1.SecretProjection `json:"sourceConfig,omitempty"`
-
+	// remote replica source
+	RemoteCluster *RemoteSourceStruct `json:"remoteCluster,omitempty"`
 	// Leader as follower represents if make leader use as follower to read
 	// +optional
 	// +kubebuilder:default:=false
@@ -138,6 +139,11 @@ type ReadOnlyType struct {
 	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 	// +optional
 	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+}
+
+type RemoteSourceStruct struct {
+	Name      string `json:"name"`
+	NameSpace string `json:"namespace"`
 }
 
 // MysqlOpts defines the options of MySQL container.
@@ -366,7 +372,18 @@ const (
 
 // ClusterConditionType defines type for cluster condition type.
 type ClusterConditionType string
+type ClusterConditionsIndex uint8
 
+const (
+	ClIndexInit ClusterConditionsIndex = iota
+	ClIndexUpdate
+	ClIndexReady
+	ClIndexClose
+	ClIndexError
+	ClIndexScaleIn
+	ClIndexScaleOut
+	ClIndexRemoteSlave
+)
 const (
 	// ConditionInit indicates whether the cluster is initializing.
 	ConditionInit ClusterConditionType = "Initializing"
@@ -382,6 +399,8 @@ const (
 	ConditionScaleIn ClusterConditionType = "ScaleIn"
 	// ConditionScaleOut indicates whether the cluster replicas is increasing.
 	ConditionScaleOut ClusterConditionType = "ScaleOut"
+	// is it a slave for Remote cluster?
+	ConditionRemoteSlave ClusterConditionType = "RemoteSlave"
 )
 
 // ClusterCondition defines type for cluster conditions.

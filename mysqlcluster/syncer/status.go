@@ -183,17 +183,33 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 			s.Status.Conditions = append(s.Status.Conditions, clusterCondition)
 		}
 	}
-	if len(s.Status.Conditions) > maxStatusesQuantity {
-		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
-	}
 
+	//update read slave status for remote cluster
+	if err := s.clusterSlaveCheck(); err != nil {
+		//Notice!!! remote Cluster slave  node fail, just show the error log, do not return here!
+		s.log.Error(err, "slace for Remote cluster fail", "namespace", s.Namespace)
+	}
 	//(RO) because the ReadOnly Pods create after the cluster ready, so the ReadOnly pods are always
 	// the last part of node status
 	if err := s.updateReadOnlyNodeStatus(ctx, s.cli, list.Items); err != nil {
 		//Notice!!! ReadOnly node fail, just show the error log, do not return here!
 		s.log.Error(err, "ReadOnly pod fail", "namespace", s.Namespace)
 	}
-
+	// conditions := s.Status.Conditions
+	// sort.Slice(conditions, func(i, j int) bool {
+	// 	if conditions[i].Type < conditions[j].Type {
+	// 		return true
+	// 	} else if conditions[i].Type == conditions[j].Type &&
+	// 		conditions[i].LastTransitionTime.Before(&conditions[j].LastTransitionTime) {
+	// 		return true
+	// 	} else {
+	// 		return false
+	// 	}
+	// })
+	// s.Status.Conditions = conditions
+	if len(s.Status.Conditions) > maxStatusesQuantity {
+		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
+	}
 	// update backup Status
 	s.updateLastBackup()
 
@@ -880,4 +896,60 @@ func (s *StatusSyncer) SetLeaderReadOnly(pod *corev1.Pod) error {
 		return sqlRunner.QueryExec(internal.NewQuery("SET GLOBAL super_read_only=on"))
 	}
 	return nil
+}
+
+func (s *StatusSyncer) clusterSlaveCheck() error {
+	if s.Spec.RemoteCluster == nil {
+		return nil
+	}
+	//check remote cluster slave status
+	//1. connect the leader pod.
+	host := fmt.Sprintf("%s.%s", s.GetNameForResource(utils.LeaderService), s.Namespace)
+	cfg, err := internal.NewConfigFromClusterKey(
+		s.cli, s.MysqlCluster.GetClusterKey(), utils.RootUser, host)
+	if err != nil {
+		return err
+	}
+	sqlRunner, closeConn, err := s.SQLRunnerFactory(cfg)
+	if err != nil {
+		return err
+	}
+	defer closeConn()
+	//if sqlRunner.
+	if sqlRunner != nil {
+		// check remote cluster slave status.
+		s.log.Info("check remote cluster slave status", "namespace", s.Namespace)
+		var isReplicating corev1.ConditionStatus
+		var err error
+		if _, isReplicating, err = internal.CheckSlaveStatus(sqlRunner, s.Spec.ReplicaLag); err != nil {
+			//Notice!!! this has error, just show error message, can not return.
+			s.log.V(1).Info("slave status has gotten error", "error", err)
+		}
+		clusterCondition := apiv1alpha1.ClusterCondition{
+			Type:               apiv1alpha1.ConditionRemoteSlave,
+			Status:             corev1.ConditionFalse,
+			Message:            "the leader is not slave",
+			Reason:             "need change master",
+			LastTransitionTime: metav1.NewTime(time.Now()),
+		}
+		if isReplicating == corev1.ConditionFalse {
+			s.log.Info("remote cluster has no slave, change the status")
+		} else {
+			clusterCondition.Status = corev1.ConditionTrue
+			clusterCondition.Message = ""
+			clusterCondition.Reason = ""
+		}
+		s.Status.Conditions = append(s.Status.Conditions, clusterCondition)
+	}
+	return nil
+}
+
+func (s *StatusSyncer) updateClusterCondition(idx int, status corev1.ConditionStatus) {
+	if s.Status.Conditions[idx].Status != status {
+		t := time.Now()
+		s.log.V(3).Info(fmt.Sprintf("Found status change for cluster %q condition %q: %q -> %q; setting lastTransitionTime to %v",
+			s.Name, s.Status.Conditions[idx].Type, s.Status.Conditions[idx].Status, status, t))
+		s.Status.Conditions[idx].Status = status
+		s.Status.Conditions[idx].LastTransitionTime = metav1.NewTime(t)
+	}
 }

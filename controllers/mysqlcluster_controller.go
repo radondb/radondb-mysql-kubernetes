@@ -164,6 +164,10 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			clustersyncer.NewXenonCMSyncer(r.Client, instance),
 		)
 	}
+
+	if instance.Spec.RemoteCluster != nil {
+		syncers = append(syncers, clustersyncer.NewRemoteClusterCMSyncer(r.Client, instance))
+	}
 	if instance.Spec.MetricsOpts.Enabled {
 		syncers = append(syncers, clustersyncer.NewMetricsSVCSyncer(r.Client, instance))
 	}

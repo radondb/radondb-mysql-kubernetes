@@ -117,7 +117,9 @@ type sqlRunner struct {
 type SQLRunner interface {
 	QueryExec(query Query) error
 	QueryRow(query Query, dest ...interface{}) error
+	QueryRowContext(ctx context.Context, query Query, dest ...interface{}) error
 	QueryRows(query Query) (*sql.Rows, error)
+	QueryRowsContext(ctx context.Context, query Query) (*sql.Rows, error)
 }
 
 type closeFunc func()
@@ -168,12 +170,35 @@ func (s sqlRunner) QueryExec(query Query) error {
 	return nil
 }
 
+// QueryExec used to run the query with args.
+func (s sqlRunner) ExecContext(ctx context.Context, query Query) error {
+	if _, err := s.db.ExecContext(ctx, query.String(), query.args...); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s sqlRunner) QueryRow(query Query, dest ...interface{}) error {
 	return s.db.QueryRow(query.escapedQuery, query.args...).Scan(dest...)
 }
 
+// QueryExec used to run the query with args.
+func (s sqlRunner) QueryRowContext(ctx context.Context, query Query, dest ...interface{}) error {
+	return s.db.QueryRowContext(ctx, query.String(), query.args...).Scan(dest...)
+}
+
 func (s sqlRunner) QueryRows(query Query) (*sql.Rows, error) {
 	rows, err := s.db.Query(query.escapedQuery, query.args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, rows.Err()
+}
+
+func (s sqlRunner) QueryRowsContext(ctx context.Context, query Query) (*sql.Rows, error) {
+	rows, err := s.db.QueryContext(ctx, query.escapedQuery, query.args...)
 	if err != nil {
 		return nil, err
 	}
@@ -202,8 +227,11 @@ func CheckSlaveStatusWithRetry(sqlRunner SQLRunner, retry uint32, replicaLag *in
 // CheckSlaveStatus check the slave status.
 func CheckSlaveStatus(sqlRunner SQLRunner, ReplicaLag *int32) (isLagged, isReplicating corev1.ConditionStatus, err error) {
 	var rows *sql.Rows
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	isLagged, isReplicating = corev1.ConditionUnknown, corev1.ConditionUnknown
-	rows, err = sqlRunner.QueryRows(NewQuery("show slave status;"))
+	rows, err = sqlRunner.QueryRowsContext(ctx, NewQuery("show slave status;"))
 	if err != nil {
 		return
 	}
@@ -287,12 +315,16 @@ func CheckReadOnly(sqlRunner SQLRunner) (corev1.ConditionStatus, error) {
 
 // GetGlobalVariable used to get the global variable by param.
 func GetGlobalVariable(sqlRunner SQLRunner, param string, val interface{}) error {
-	return sqlRunner.QueryRow(NewQuery("select @@global.?", param), val)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return sqlRunner.QueryRowContext(ctx, NewQuery("select @@global.?", param), val)
 }
 
 func CheckProcesslist(sqlRunner SQLRunner) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	var rows *sql.Rows
-	rows, err := sqlRunner.QueryRows(NewQuery("show processlist;"))
+	rows, err := sqlRunner.QueryRowsContext(ctx, NewQuery("show processlist;"))
 	if err != nil {
 		return false, err
 	}
