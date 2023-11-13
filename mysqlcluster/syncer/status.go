@@ -43,7 +43,7 @@ import (
 )
 
 // The max quantity of the statuses.
-const maxStatusesQuantity = 10
+// const maxStatusesQuantity = 10
 
 // The retry time for check node status.
 const checkNodeStatusRetry = 3

@@ -136,7 +136,7 @@ type Config struct {
 
 	RemoteClusterName      string
 	RemoteClusterNamespace string
-	//TODO: add it in env
+	// add it in env
 	ServerIDStartOffset string
 }
 
@@ -225,6 +225,8 @@ func NewInitConfig() *Config {
 		NeedUpgrade:            needUpgrade,
 		RemoteClusterName:      getEnvValue("REMOTE_CLUSTER_NAME"),
 		RemoteClusterNamespace: getEnvValue("REMOTE_CLUSTER_NAMESPACE"),
+		// SERVER_ID_OFFSET
+		ServerIDStartOffset: getEnvValue("SERVER_ID_OFFSET"),
 	}
 }
 
@@ -308,10 +310,22 @@ func (cfg *Config) XBackupName() (string, string) {
 func (cfg *Config) buildExtraConfig(filePath string) (*ini.File, error) {
 	conf := ini.Empty()
 	sec := conf.Section("mysqld")
-	startIndex := mysqlServerIDOffset
+	// convert cfg.SERVER_ID_OFFSET to int
+	var offset int
+	var err error
+	if offset, err = strconv.Atoi(cfg.ServerIDStartOffset); err != nil {
+		offset = 0
+	}
+	startIndex := func() int {
+		if offset <= 0 {
+			return mysqlServerIDOffset
+		}
+		return offset
+	}()
+
 	ordinal, err := utils.GetOrdinal(cfg.HostName)
 	arr := strings.Split(cfg.HostName, "-")
-	if len(cfg.RemoteClusterName) > 0 {
+	if len(cfg.RemoteClusterName) > 0 && offset <= 0 {
 		log.Info("It has remote cluster server-id start offset  +100")
 		startIndex += mysqlServerIDOffsetInc
 	}

@@ -154,6 +154,11 @@ type MysqlClusterSpec struct {
 	// +optional
 	// +kubebuilder:default:=false
 	LeaderAsFollower bool `json:"leaderAsfollower,omitempty"`
+
+	// Specification offset of mysql serverid start at
+	// +optional
+	// +kubebuilder:default:0
+	ServerIDOffset int `json:"serverIDOffset,omitempty"`
 }
 
 // ReadOnly define the ReadOnly pods
