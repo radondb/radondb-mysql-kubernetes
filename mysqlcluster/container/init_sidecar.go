@@ -164,6 +164,12 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 		})
 
 	}
+	if c.Spec.ServerIDOffset > 0 {
+		envs = append(envs, corev1.EnvVar{
+			Name:  "SERVER_ID_OFFSET",
+			Value: strconv.Itoa(int(c.Spec.ServerIDOffset)),
+		})
+	}
 
 	return envs
 }
