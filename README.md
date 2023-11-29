@@ -15,6 +15,7 @@
 <a href="https://img.shields.io/github/forks/radondb/radondb-mysql-kubernetes"><img src="https://img.shields.io/github/forks/radondb/radondb-mysql-kubernetes"></a>
 <a href="https://img.shields.io/github/v/release/radondb/radondb-mysql-kubernetes?include_prereleases"><img src="https://img.shields.io/github/v/release/radondb/radondb-mysql-kubernetes?include_prereleases"></a>
 <a href="https://img.shields.io/github/license/radondb/radondb-mysql-kubernetes"><img src="https://img.shields.io/github/license/radondb/radondb-mysql-kubernetes"></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fradondb%2Fradondb-mysql-kubernetes?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fradondb%2Fradondb-mysql-kubernetes.svg?type=shield"/></a>
 </p>
 
 ----
@@ -110,6 +111,9 @@ kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/la
 ## License
 
 RadonDB MySQL is based on Apache 2.0 protocol. See [License](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/LICENSE).
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fradondb%2Fradondb-mysql-kubernetes.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fradondb%2Fradondb-mysql-kubernetes?ref=badge_large)
 
 ## Welcome to join us ❤️
 
