@@ -320,6 +320,19 @@ func GetGlobalVariable(sqlRunner SQLRunner, param string, val interface{}) error
 	return sqlRunner.QueryRowContext(ctx, NewQuery("select @@global.?", param), val)
 }
 
+// Check user exists or not.
+func CheckUserExists(sqlRunner SQLRunner, userName string) (bool, error) {
+	var rows *sql.Rows
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	rows, err := sqlRunner.QueryRowsContext(ctx, NewQuery("select user from mysql.user where user =?", userName))
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+	return rows.Next(), nil
+}
+
 func CheckProcesslist(sqlRunner SQLRunner) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
