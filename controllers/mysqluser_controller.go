@@ -180,6 +180,14 @@ func (r *MysqlUserReconciler) reconcileUserInDB(ctx context.Context, mysqlUser *
 	if password == "" {
 		return fmt.Errorf("the MySQL user's password must not be empty")
 	}
+	var exists bool
+	var err2 error
+	if exists, err2 = internal.CheckUserExists(sqlRunner, mysqlUser.Spec.User); err2 != nil {
+		return fmt.Errorf("failed to check if user exists: %v", err2)
+	}
+	if !exists {
+		mysqlUser.Status.Revision = ""
+	}
 	// Remove allowed hosts for user.
 	toRemove := utils.StringDiffIn(mysqlUser.Status.AllowedHosts, mysqlUser.Spec.Hosts)
 	for _, host := range toRemove {
