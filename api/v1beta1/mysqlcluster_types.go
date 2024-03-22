@@ -490,11 +490,10 @@ type LogOpts struct {
 	// +kubebuilder:default:=false
 	AuditLogTail bool `json:"auditLogTail,omitempty"`
 
-	// ErrorLogTail represents if tail the mysql error log.
+	// logPvc represents pvc which save the mysql error log.
+	// Log file to pvc
 	// +optional
-	// +kubebuilder:default:=false
-	ErrorLogTail bool `json:"errorLogTail,omitempty"`
-
+	LogfilePVC *corev1.PersistentVolumeClaimSpec `json:"logfilePVC,omitempty"`
 	//Log container resources of a MySQL container.
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }

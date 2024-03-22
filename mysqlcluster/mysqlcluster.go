@@ -182,16 +182,19 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			},
 		)
 	}
-
+	if c.Spec.MysqlOpts.LogfilePVC == nil {
+		volumes = append(volumes,
+			corev1.Volume{
+				Name: utils.LogsVolumeName,
+				VolumeSource: corev1.VolumeSource{
+					EmptyDir: &corev1.EmptyDirVolumeSource{},
+				},
+			},
+		)
+	}
 	volumes = append(volumes,
 		corev1.Volume{
 			Name: utils.MysqlConfVolumeName,
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		},
-		corev1.Volume{
-			Name: utils.LogsVolumeName,
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
@@ -321,38 +324,69 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 
 // EnsureVolumeClaimTemplates ensure the volume claim templates.
 func (c *MysqlCluster) EnsureVolumeClaimTemplates(schema *runtime.Scheme) ([]corev1.PersistentVolumeClaim, error) {
-	if !c.Spec.Persistence.Enabled {
+	if !c.Spec.Persistence.Enabled && c.Spec.MysqlOpts.LogfilePVC == nil {
 		return nil, nil
 	}
-
-	if c.Spec.Persistence.StorageClass != nil {
-		if *c.Spec.Persistence.StorageClass == "-" {
-			*c.Spec.Persistence.StorageClass = ""
+	res := []corev1.PersistentVolumeClaim{}
+	if c.Spec.Persistence.Enabled {
+		if c.Spec.Persistence.StorageClass != nil {
+			if *c.Spec.Persistence.StorageClass == "-" {
+				*c.Spec.Persistence.StorageClass = ""
+			}
 		}
-	}
 
-	data := corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      utils.DataVolumeName,
-			Namespace: c.Namespace,
-			Labels:    c.GetLabels(),
-		},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: c.Spec.Persistence.AccessModes,
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceStorage: resource.MustParse(c.Spec.Persistence.Size),
-				},
+		data := corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      utils.DataVolumeName,
+				Namespace: c.Namespace,
+				Labels:    c.GetLabels(),
 			},
-			StorageClassName: c.Spec.Persistence.StorageClass,
-		},
-	}
+			Spec: corev1.PersistentVolumeClaimSpec{
+				AccessModes: c.Spec.Persistence.AccessModes,
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceStorage: resource.MustParse(c.Spec.Persistence.Size),
+					},
+				},
+				StorageClassName: c.Spec.Persistence.StorageClass,
+			},
+		}
 
-	if err := controllerutil.SetControllerReference(c.MysqlCluster, &data, schema); err != nil {
-		return nil, fmt.Errorf("failed setting controller reference: %v", err)
+		if err := controllerutil.SetControllerReference(c.MysqlCluster, &data, schema); err != nil {
+			return nil, fmt.Errorf("failed setting controller reference: %v", err)
+		}
+		res = append(res, data)
 	}
+	if c.Spec.MysqlOpts.LogfilePVC != nil {
+		if c.Spec.MysqlOpts.LogfilePVC.StorageClass != nil {
+			if *c.Spec.MysqlOpts.LogfilePVC.StorageClass == "-" {
+				*c.Spec.MysqlOpts.LogfilePVC.StorageClass = ""
+			}
+		}
 
-	return []corev1.PersistentVolumeClaim{data}, nil
+		logdata := corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      utils.LogsVolumeName,
+				Namespace: c.Namespace,
+				Labels:    c.GetLabels(),
+			},
+			Spec: corev1.PersistentVolumeClaimSpec{
+				AccessModes: c.Spec.Persistence.AccessModes,
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceStorage: resource.MustParse(c.Spec.Persistence.Size),
+					},
+				},
+				StorageClassName: c.Spec.Persistence.StorageClass,
+			},
+		}
+
+		if err := controllerutil.SetControllerReference(c.MysqlCluster, &logdata, schema); err != nil {
+			return nil, fmt.Errorf("failed setting controller reference: %v", err)
+		}
+		res = append(res, logdata)
+	}
+	return res, nil
 }
 
 // GetNameForResource returns the name of a resource from above
@@ -461,8 +495,11 @@ func (c *MysqlCluster) EnsureMysqlConf() {
 		}
 
 	}
-	if c.Spec.PodPolicy.ErrorLogTail {
-		c.Spec.MysqlOpts.MysqlConf["log-error"] = utils.LogsVolumeMountPath + "/mysql-error.log"
+
+	if _, ok := c.Spec.MysqlOpts.MysqlConf["log_error"]; !ok {
+		if c.Spec.MysqlOpts.LogfilePVC != nil { //has been set logpvc, change log error to file.
+			c.Spec.MysqlOpts.MysqlConf["log-error"] = utils.LogsVolumeMountPath + "/mysql-error.log"
+		}
 	}
 }
 
