@@ -432,7 +432,7 @@ func (s *StatefulSetSyncer) mutate() error {
 	}
 	s.sfs.Spec.Template.Spec.Tolerations = s.Spec.PodPolicy.Tolerations
 
-	if s.Spec.Persistence.Enabled {
+	if s.Spec.Persistence.Enabled || s.Spec.MysqlOpts.LogfilePVC != nil {
 		if s.sfs.Spec.VolumeClaimTemplates, err = s.EnsureVolumeClaimTemplates(s.cli.Scheme()); err != nil {
 			return err
 		}
@@ -471,10 +471,9 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 	if s.Spec.PodPolicy.AuditLogTail {
 		containers = append(containers, container.EnsureContainer(utils.ContainerAuditLogName, s.MysqlCluster))
 	}
-	if s.Spec.PodPolicy.ErrorLogTail {
+	if s.Spec.MysqlOpts.LogfilePVC != nil {
 		// 1.create errorLog
 		containers = append(containers, container.EnsureContainer(utils.ContainerErrorLogName, s.MysqlCluster))
-
 	}
 	return corev1.PodSpec{
 		InitContainers:     initContainers,

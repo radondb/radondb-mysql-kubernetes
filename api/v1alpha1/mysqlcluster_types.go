@@ -227,6 +227,11 @@ type MysqlOpts struct {
 	// +kubebuilder:validation:Minimum=0
 	// +optional
 	MaxLagSeconds int `json:"maxLagTime,omitempty"`
+
+	// LogfilePVC represents the pvc which save the mysql error log.
+	// Log file to pvc
+	// +optional
+	LogfilePVC *LogPVC `json:"logfilePVC,omitempty"`
 }
 
 // XenonOpts defines the options of xenon container.
@@ -317,11 +322,6 @@ type PodPolicy struct {
 	// +optional
 	// +kubebuilder:default:=false
 	AuditLogTail bool `json:"auditLogTail,omitempty"`
-
-	// ErrorLogTail represents if tail the mysql error log.
-	// +optional
-	// +kubebuilder:default:=false
-	ErrorLogTail bool `json:"errorLogTail,omitempty"`
 }
 
 // Persistence is the desired spec for storing mysql data. Only one of its
@@ -331,6 +331,27 @@ type Persistence struct {
 	// +optional
 	// +kubebuilder:default:=true
 	Enabled bool `json:"enabled,omitempty"`
+
+	// AccessModes contains the desired access modes the volume should have.
+	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1
+	// +optional
+	// +kubebuilder:default:={"ReadWriteOnce"}
+	AccessModes []corev1.PersistentVolumeAccessMode `json:"accessModes,omitempty"`
+
+	// Name of the StorageClass required by the claim.
+	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1
+	// +optional
+	StorageClass *string `json:"storageClass,omitempty"`
+
+	// Size of persistent volume claim.
+	// +optional
+	// +kubebuilder:default:="10Gi"
+	Size string `json:"size,omitempty"`
+}
+
+// Persistence is the desired spec for storing mysql data. Only one of its
+// members may be specified.
+type LogPVC struct {
 
 	// AccessModes contains the desired access modes the volume should have.
 	// More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1
