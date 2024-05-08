@@ -50,8 +50,8 @@ func getStartupProbe(name string) *corev1.Probe {
 				},
 			},
 			InitialDelaySeconds: 10,
-			TimeoutSeconds:      5,
-			PeriodSeconds:       10,
+			TimeoutSeconds:      15,
+			PeriodSeconds:       15,
 			SuccessThreshold:    1,
 			FailureThreshold:    5,
 		}

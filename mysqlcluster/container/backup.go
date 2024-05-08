@@ -106,8 +106,8 @@ func (c *backupSidecar) getLivenessProbe() *corev1.Probe {
 			},
 		},
 		InitialDelaySeconds: 15,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}
@@ -122,8 +122,8 @@ func (c *backupSidecar) getReadinessProbe() *corev1.Probe {
 			},
 		},
 		InitialDelaySeconds: 5,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}
