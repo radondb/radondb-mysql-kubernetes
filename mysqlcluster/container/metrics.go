@@ -84,8 +84,8 @@ func (c *metrics) getLivenessProbe() *corev1.Probe {
 			},
 		},
 		InitialDelaySeconds: 15,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}
@@ -100,9 +100,9 @@ func (c *metrics) getReadinessProbe() *corev1.Probe {
 				Port: intstr.FromInt(utils.MetricsPort),
 			},
 		},
-		InitialDelaySeconds: 5,
-		TimeoutSeconds:      1,
-		PeriodSeconds:       10,
+		InitialDelaySeconds: 15,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}

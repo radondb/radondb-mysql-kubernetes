@@ -117,8 +117,8 @@ func TestGetMetricsLivenessProbe(t *testing.T) {
 			},
 		},
 		InitialDelaySeconds: 15,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}
@@ -136,9 +136,9 @@ func TestGetMetricsReadinessProbe(t *testing.T) {
 				},
 			},
 		},
-		InitialDelaySeconds: 5,
-		TimeoutSeconds:      1,
-		PeriodSeconds:       10,
+		InitialDelaySeconds: 15,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}

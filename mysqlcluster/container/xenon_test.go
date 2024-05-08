@@ -148,8 +148,8 @@ func TestGetXenonLivenessProbe(t *testing.T) {
 			},
 		},
 		InitialDelaySeconds: 30,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}
@@ -164,8 +164,8 @@ func TestGetXenonReadinessProbe(t *testing.T) {
 			},
 		},
 		InitialDelaySeconds: 10,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}

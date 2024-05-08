@@ -134,8 +134,8 @@ func (c *xenon) getLivenessProbe() *corev1.Probe {
 			},
 		},
 		InitialDelaySeconds: 30,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}
@@ -150,8 +150,8 @@ func (c *xenon) getReadinessProbe() *corev1.Probe {
 			},
 		},
 		InitialDelaySeconds: 10,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}

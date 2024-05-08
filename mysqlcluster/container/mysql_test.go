@@ -136,8 +136,8 @@ func TestGetMysqlLivenessProbe(t *testing.T) {
 			},
 		},
 		InitialDelaySeconds: 30,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}
@@ -152,8 +152,8 @@ func TestGetMysqlReadinessProbe(t *testing.T) {
 			},
 		},
 		InitialDelaySeconds: 10,
-		TimeoutSeconds:      5,
-		PeriodSeconds:       10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,
 	}
