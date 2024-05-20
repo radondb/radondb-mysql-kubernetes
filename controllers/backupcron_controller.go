@@ -166,9 +166,9 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 				}
 				break
 			}
-			if j.Image != cluster.Spec.PodPolicy.SidecarImage {
-				log.Info("update cluster image", "key", cluster, "image", cluster.Spec.PodPolicy.SidecarImage)
-				j.Image = cluster.Spec.PodPolicy.SidecarImage
+			if j.Image != mysqlcluster.GetImage(cluster.Spec.PodPolicy.SidecarImage) {
+				log.Info("update cluster image", "key", cluster, "image", mysqlcluster.GetImage(cluster.Spec.PodPolicy.SidecarImage))
+				j.Image = mysqlcluster.GetImage(cluster.Spec.PodPolicy.SidecarImage)
 			}
 			return nil
 		}
@@ -184,7 +184,7 @@ func (r *BackupCronReconciler) updateClusterSchedule(ctx context.Context, cluste
 		ClusterName:                    cluster.Name,
 		Namespace:                      cluster.Namespace,
 		Client:                         r.Client,
-		Image:                          cluster.Spec.PodPolicy.SidecarImage,
+		Image:                          mysqlcluster.GetImage(cluster.Spec.PodPolicy.SidecarImage),
 		BackupScheduleJobsHistoryLimit: cluster.Spec.BackupScheduleJobsHistoryLimit,
 		NFSServerAddress:               nfsServerAddress,
 		BackupType:                     BackupType,

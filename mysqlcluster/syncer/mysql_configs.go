@@ -45,7 +45,7 @@ var mysqlSysConfigs = map[string]string{
 }
 
 var pluginConfigs = map[string]string{
-	"plugin-load": "\"semisync_master.so;semisync_slave.so;audit_log.so;connection_control.so\"",
+	"plugin-load": "\"semisync_master.so;semisync_slave.so;audit_log.so\"",
 
 	"rpl_semi_sync_master_enabled":       "OFF",
 	"rpl_semi_sync_slave_enabled":        "ON",
@@ -59,10 +59,6 @@ var pluginConfigs = map[string]string{
 	"audit_log_rotate_on_size":   "104857600",
 	"audit_log_rotations":        "6",
 	"audit_log_format":           "OLD",
-
-	"connection_control_failed_connections_threshold": "3",
-	"connection_control_min_connection_delay":         "1000",
-	"connection_control_max_connection_delay":         "2147483647",
 }
 
 var mysql57Configs = map[string]string{
@@ -126,13 +122,14 @@ var mysqlStaticConfigs = map[string]string{
 	"innodb_ft_max_token_size":    "84",
 	"innodb_ft_min_token_size":    "3",
 	"sql_mode":                    "STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION",
-	"slave_parallel_workers":      "8",
+	"slave_parallel_workers":      "0",
 	"slave_pending_jobs_size_max": "1073741824",
 	"innodb_log_buffer_size":      "16777216",
 	//"innodb_log_file_size":        "1073741824",
 	"innodb_log_files_in_group": "2",
 	"innodb_flush_method":       "O_DIRECT",
 
+	"slave_preserve_commit_order": "ON",
 	// TODO(cluster): Some machine do not support native aio.
 	//"innodb_use_native_aio": "1",
 

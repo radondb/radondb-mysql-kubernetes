@@ -24,6 +24,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/blang/semver"
 	"github.com/go-ini/ini"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -253,7 +254,10 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	var log = logf.Log.WithName("mysqlcluster.syncer.buildMysqlConf")
 	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
 	sec := cfg.Section("mysqld")
-
+	arr := strings.Split(c.Spec.MysqlOpts.Image, ":")
+	VerCurrent := arr[len(arr)-1]
+	mysqlSemVerCurr, _ := semver.Parse(VerCurrent)
+	mysqlSemVer31, _ := semver.Parse("8.0.31")
 	c.EnsureMysqlConf()
 	mysqlVersion := ""
 	if strings.Contains(c.Spec.MysqlOpts.Image, "8.0") {
@@ -267,14 +271,47 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	case "5.7":
 		addKVConfigsToSection(sec, mysql57Configs)
 	}
-
-	addKVConfigsToSection(sec, mysqlSysConfigs, mysqlCommonConfigs, mysqlStaticConfigs)
+	if mysqlSemVerCurr.GE(mysqlSemVer31) {
+		// at first , copy all the map, just for version over 8.0.31
+		//var mysqlStaticConfigsCpy, mysqlSysConfigsCpy, mysqlCommonConfigsCpy map[string]string
+		mysqlStaticConfigsCpy := make(map[string]string)
+		mysqlSysConfigsCpy := make(map[string]string)
+		mysqlCommonConfigsCpy := make(map[string]string)
+		cpyMap(mysqlStaticConfigs, mysqlStaticConfigsCpy)
+		cpyMap(mysqlSysConfigs, mysqlSysConfigsCpy)
+		cpyMap(mysqlCommonConfigs, mysqlCommonConfigsCpy)
+		replaceMapKey(mysqlStaticConfigsCpy, "slave_pending_jobs_size_max", "replica_pending_jobs_size_max")
+		replaceMapKey(mysqlStaticConfigsCpy, "slave_preserve_commit_order", "replica_preserve_commit_order")
+		// slave_parallel_workers -> replica_parallel_workers
+		replaceMapKey(mysqlStaticConfigsCpy, "slave_parallel_workers", "replica_parallel_workers")
+		mysqlStaticConfigsCpy["replica_parallel_workers"] = "1"
+		// mysqlSysConfigs
+		// 1. slave_parallel_type -> replica_parallel_type
+		replaceMapKey(mysqlSysConfigsCpy, "slave_parallel_type", "replica_parallel_type")
+		// mysqlCommonConfigs
+		// sync_master_info -> sync_source_info
+		replaceMapKey(mysqlCommonConfigsCpy, "sync_master_info", "sync_source_info")
+		addKVConfigsToSection(sec, mysqlSysConfigsCpy, mysqlCommonConfigsCpy, mysqlStaticConfigsCpy)
+	} else {
+		addKVConfigsToSection(sec, mysqlSysConfigs, mysqlCommonConfigs, mysqlStaticConfigs)
+	}
 
 	if c.Spec.MysqlOpts.InitTokuDB {
 		addKVConfigsToSection(sec, mysqlTokudbConfigs)
 	}
 
 	for _, key := range mysqlBooleanConfigs {
+		if mysqlSemVerCurr.GE(mysqlSemVer31) {
+			switch key {
+			case "skip-host-cache":
+				sec.NewKey("host_cache_size", "0")
+				continue
+			case "skip-slave-start":
+				key = "skip_replica_start"
+			case "log-slave-updates":
+				key = "log_replica_updates"
+			}
+		}
 		if _, err := sec.NewBooleanKey(key); err != nil {
 			log.Error(err, "failed to add boolean key to config section", "key", key)
 		}
@@ -359,3 +396,14 @@ type StringsConnectedByBar []string
 func (x StringsConnectedByBar) Len() int           { return len(x) }
 func (x StringsConnectedByBar) Less(i, j int) bool { return barskey(x[i]) < barskey(x[j]) }
 func (x StringsConnectedByBar) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
+
+func replaceMapKey(dict map[string]string, key1 string, key2 string) {
+	dict[key2] = dict[key1]
+	delete(dict, key1)
+}
+
+func cpyMap(src map[string]string, dest map[string]string) {
+	for k, v := range src {
+		dest[k] = v
+	}
+}

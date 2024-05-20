@@ -126,17 +126,17 @@ func runCloneAndInit(cfg *Config) (bool, error) {
 		}
 	}
 	if len(serviceURL) != 0 {
+		// When it has /var/lib/mysql/mysql do not need clone and restore.
+		if hasInitialized {
+			log.Info("MySQL data directory existing!")
+			return hasInitialized, nil
+		}
 		// is MySQL8, CLone it
 		if cfg.MySQLVersion.Major == 8 && len(cfg.XRestoreFrom) == 0 {
 			// return clone int
 			log.Info("server choose ", "server", server)
 			err := DoCLone(cfg, server)
 			return hasInitialized, err
-		}
-
-		if hasInitialized {
-			log.Info("MySQL data directory existing!")
-			return hasInitialized, nil
 		}
 
 		// backup at first
@@ -329,6 +329,8 @@ func runInitCommand(cfg *Config, hasInitialized bool) error {
 			}
 		}
 	}
+	//hasInitialized, _ = checkIfPathExists(path.Join(dataPath, "mysql"))
+	log.Info("begin writing initsql", "initialize", hasInitialized)
 	// Build init.sql after restore
 	if err = ioutil.WriteFile(initSqlPath, cfg.buildInitSql(hasInitialized), 0644); err != nil {
 		return fmt.Errorf("failed to write init.sql: %s", err)
@@ -609,24 +611,41 @@ func DoCLone(cfg *Config, server string) error {
 `, server, cfg.DonorClone, server, cfg.DonorClonePassword)
 	cloneSh := fmt.Sprintf(`#!/bin/bash
 echo 'now is doing clone.'
+while true; do
+	if pgrep mysqld; then
+		echo 'waiting mysqld exit'
+	else
+		break
+	fi	
+	sleep 1
+done
 mysqld &
+pid=$!
 mysql=( mysql -uroot -hlocalhost  --password="" )
 
-for i in {120..0}; do
+for i in {500..0}; do
 	if echo 'SELECT 1' | "${mysql[@]}" &> /dev/null; then
 		break
 	fi
 	echo 'MySQL run process in progress...'
 	sleep 1
 done
+for i in {500..0}; do
+	if echo SELECT PLUGIN_NAME, PLUGIN_STATUS FROM INFORMATION_SCHEMA.PLUGINS where PLUGIN_NAME="'clone'"| "${mysql[@]}" |grep -q ACTIVE; then
+		break
+	fi
+	echo 'check plugin whether is installed...'
+	sleep 1
+done
 mysql -uroot -hlocalhost  --password="" -e "%s"
+wait $pid
 echo "now delete socks file"
 rm -rf /var/lib/mysql/*.sock
 rm -rf /var/lib/mysql/mysql.sock.lock
 `, sql)
 	log.Info("write clone shell", "shell", cloneSh)
 	//write to docker.
-	if err := ioutil.WriteFile(initFilePath+"/clone.sh", []byte(cloneSh), 0755); err != nil {
+	if err := ioutil.WriteFile(utils.RadonDBBinDir+"/clone.sh", []byte(cloneSh), 0755); err != nil {
 		return fmt.Errorf("failed to write clone.sh: %s", err)
 	}
 	return nil
@@ -666,7 +685,7 @@ func UpgradeShGen(cfg *Config) error {
 	`
 	log.Info("write upgrade shell", "shell", upgradesh)
 	//write to docker.
-	if err := ioutil.WriteFile(initFilePath+"/upgrade.sh", []byte(upgradesh), 0755); err != nil {
+	if err := ioutil.WriteFile(utils.RadonDBBinDir+"/upgrade.sh", []byte(upgradesh), 0755); err != nil {
 		return fmt.Errorf("failed to write upgrade.sh: %s", err)
 	}
 	return nil

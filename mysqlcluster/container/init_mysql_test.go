@@ -71,6 +71,10 @@ var (
 			Name:      utils.SysLocalTimeZone,
 			MountPath: utils.SysLocalTimeZoneMountPath,
 		},
+		{
+			Name:      utils.MySQLcheckerVolumeName,
+			MountPath: utils.RadonDBBinDir,
+		},
 	}
 	optFalse      = false
 	optTrue       = true
@@ -113,12 +117,7 @@ func TestGetInitMysqlImage(t *testing.T) {
 }
 
 func TestGetInitMysqlCommand(t *testing.T) {
-	assert.Equal(t, initMysqlCase.Command, []string{"bash", "-c", "/docker-entrypoint.sh mysqld;" +
-		"if test -f /docker-entrypoint-initdb.d/restore.sh; then /docker-entrypoint-initdb.d/restore.sh; fi ;" +
-		"if test -f /docker-entrypoint-initdb.d/upgrade.sh; then /docker-entrypoint-initdb.d/upgrade.sh;fi;" +
-		"if test -f /docker-entrypoint-initdb.d/clone.sh; then /docker-entrypoint-initdb.d/clone.sh;fi;" +
-		"if test -f /docker-entrypoint-initdb.d/plugin.sh; then /docker-entrypoint-initdb.d/plugin.sh; fi ",
-	})
+	assert.Equal(t, initMysqlCase.Command, []string{"bash", "-c", "/docker-entrypoint.sh mysqld;if test -f /docker-entrypoint-initdb.d/plugin.sh; then /docker-entrypoint-initdb.d/plugin.sh; fi ;if test -f /opt/radondb/clone.sh; then /opt/radondb/clone.sh;fi;if test -f /opt/radondb/upgrade.sh; then /opt/radondb/upgrade.sh;fi;if test -f /opt/radondb/restore.sh; then /opt/radondb/restore.sh; fi ;"})
 }
 
 func TestGetInitMysqlEnvVar(t *testing.T) {

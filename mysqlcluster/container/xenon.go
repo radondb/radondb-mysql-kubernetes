@@ -17,6 +17,8 @@ limitations under the License.
 package container
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
@@ -43,11 +45,14 @@ func (c *xenon) getImage() string {
 
 // getCommand get the container command.
 func (c *xenon) getCommand() []string {
+	cmdstr := ""
 	if *c.Spec.Replicas == 1 {
-		return []string{"xenon", "-c", "/etc/xenon/xenon.json", "-r", "LEADER"}
+		cmdstr = strings.Join([]string{"xenon", "-c", "/etc/xenon/xenon.json", "-r", "LEADER"}, " ")
+	} else {
+		// If return nil, statefulset never update command , And I don't know why.
+		cmdstr = strings.Join([]string{"xenon", "-c", "/etc/xenon/xenon.json"}, " ")
 	}
-	// If return nil, statefulset never update command , And I don't know why.
-	return []string{"xenon", "-c", "/etc/xenon/xenon.json"}
+	return []string{"sh", "-c", "while  [ -f '/etc/xenon/sleep-forever' ] ;do sleep 2;done; command " + cmdstr + " & pid=$!;wait $pid;"}
 }
 
 // getEnvVars get the container env.
@@ -129,7 +134,7 @@ func (c *xenon) getLivenessProbe() *corev1.Probe {
 				Command: []string{
 					"sh",
 					"-c",
-					"pgrep xenon && xenoncli xenon ping",
+					"while  [ -f '/etc/xenon/sleep-forever' ] ;do sleep 2;done;pgrep xenon && xenoncli xenon ping",
 				},
 			},
 		},
@@ -146,7 +151,7 @@ func (c *xenon) getReadinessProbe() *corev1.Probe {
 	return &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "xenoncli xenon ping"},
+				Command: []string{"sh", "-c", "while  [ -f '/etc/xenon/sleep-forever' ] ;do sleep 2;done; xenoncli xenon ping"},
 			},
 		},
 		InitialDelaySeconds: 10,

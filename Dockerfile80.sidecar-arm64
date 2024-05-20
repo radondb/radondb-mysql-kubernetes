@@ -1,0 +1,90 @@
+
+##############################################################################
+#  Build Sidecar
+###############################################################################
+# Build the manager binary
+FROM golang:1.17.13 as builder
+
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+ARG GO_PROXY=off
+# cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+# RUN if [ $(date +%z) = "+0800" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi
+RUN echo "GO_PROXY argument is: ${GO_PROXY}"
+RUN if [ "$GO_PROXY" = "on" ]; then \
+    go env -w GOPROXY=https://goproxy.cn,direct; \
+    fi
+RUN go mod download
+
+# Copy the go source
+COPY cmd/sidecar/main.go cmd/sidecar/main.go
+COPY sidecar/ sidecar/
+COPY utils/ utils/
+
+# Build
+RUN CGO_ENABLED=0 GOOS=linux  go build -a -o bin/sidecar cmd/sidecar/main.go
+
+
+# Build mysql checker for mysql conatiner
+COPY cmd/s3cmd/main.go cmd/s3cmd/main.go
+COPY cmd/s3cmd/s3upload.go cmd/s3cmd/s3upload.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -a -o bin/s3upload cmd/s3cmd/main.go cmd/s3cmd/s3upload.go
+
+# Build mysql checker for mysql conatiner
+COPY cmd/mysql/main.go cmd/mysql/main.go
+RUN CGO_ENABLED=0 GOOS=linux  go build -ldflags="-s -w" -a -o bin/mysqlchecker cmd/mysql/main.go
+
+###############################################################################
+#  Docker image for Sidecar
+###############################################################################
+# FROM oraclelinux:8-slim
+
+# LABEL org.opencontainers.image.authors="info@percona.com"
+# RUN set -ex; \
+#     groupadd --gid 1001 --system mysql; \
+#     useradd \
+#     --uid 1001 \
+#     --system \
+#     --home-dir /var/lib/mysql \
+#     --no-create-home \
+#     --gid mysql \
+#     mysql;
+
+# RUN microdnf -y update; \
+#     microdnf -y install glibc-langpack-en
+
+# ARG XTRABACKUP_PKG=percona-xtrabackup-24
+
+# # check repository package signature in secure way
+# #percona-xtrabackup-24-2.4.26
+# #percona-xtrabackup-test-80-8.0.28
+# RUN set -ex; \
+#          { \
+#     echo '[mysql-server-minimal]'; \
+#     echo 'name=MySQL  Server Minimal'; \
+#     echo 'enabled=1'; \
+#     echo 'baseurl=http://139.198.40.93:801' ;\
+#     echo 'gpgcheck=0'; \
+#     echo 'module_hotfixes=true' ;\
+#     } | tee /etc/yum.repos.d/mysql-community-minimal.repo
+
+# RUN set -ex; \
+#     #dnf --setopt=install_weak_deps=False install -y \
+#     microdnf -y install \
+#         ${XTRABACKUP_PKG} \
+#         libev \
+#         curl \
+#         gnutls \
+#         wget; 
+# RUN microdnf --enablerepo='*' update; \
+#     microdnf clean all; \
+#     rm -rf /var/cache/dnf /var/cache/yum; 
+from radondb/mysql80-sidecar:v2.4.0
+WORKDIR /
+COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
+COPY --from=builder /workspace/bin/mysqlchecker /mnt/mysqlchecker
+COPY --from=builder /workspace/bin/s3upload /mnt/s3upload
+ENTRYPOINT ["sidecar"]

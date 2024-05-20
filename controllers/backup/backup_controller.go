@@ -455,7 +455,7 @@ func (r *BackupReconciler) generateBackupJobSpec(backup *v1beta1.Backup, cluster
 	// If backup.Spec.BackupOpts.NFS is not nil then use ENV BACKUP_TYPE=nfs and mount the nfs volume
 
 	backupHost := GetBackupHost(cluster)
-	backupImage := cluster.Spec.Backup.Image
+	backupImage := mysqlcluster.GetImage(cluster.Spec.Backup.Image)
 	serviceAccountName := backup.Spec.ClusterName
 	clusterAuthsctName := fmt.Sprintf("%s-secret", cluster.GetName())
 	var S3BackuptEnv []corev1.EnvVar
@@ -734,7 +734,7 @@ func (r *BackupReconciler) genBinlogJobTemplate(backup *v1beta1.Backup, cluster 
 				InitContainers: []corev1.Container{
 					{
 						Name:            "initial",
-						Image:           cluster.Spec.Backup.Image,
+						Image:           mysqlcluster.GetImage(cluster.Spec.Backup.Image),
 						ImagePullPolicy: cluster.Spec.ImagePullPolicy,
 						Command: []string{
 							"bash", "-c", "cp /mnt/s3upload /opt/radondb; chown -R 1001.1001 /opt/radondb",

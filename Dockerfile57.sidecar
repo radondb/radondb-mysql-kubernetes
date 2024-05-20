@@ -37,28 +37,29 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/my
 ###############################################################################
 #  Docker image for Sidecar
 ###############################################################################
-FROM ubuntu:focal
+# FROM ubuntu:focal
 
-RUN set -ex; \
-    groupadd --gid 1001 --system mysql; \
-    useradd \
-    --uid 1001 \
-    --system \
-    --home-dir /var/lib/mysql \
-    --no-create-home \
-    --gid mysql \
-    mysql;
+# RUN set -ex; \
+#     groupadd --gid 1001 --system mysql; \
+#     useradd \
+#     --uid 1001 \
+#     --system \
+#     --home-dir /var/lib/mysql \
+#     --no-create-home \
+#     --gid mysql \
+#     mysql;
 
-ARG XTRABACKUP_PKG=percona-xtrabackup-24
-RUN set -ex; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl bc openssh-server  sshpass;\
-    wget -P /tmp --no-check-certificate https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb; \
-    dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends ${XTRABACKUP_PKG} mysql-client jq; \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# ARG XTRABACKUP_PKG=percona-xtrabackup-24
+# RUN set -ex; \
+#     apt-get update; \
+#     apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl bc openssh-server  sshpass;\
+#     wget -P /tmp --no-check-certificate https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb; \
+#     dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb; \
+#     apt-get update; \
+#     apt-get install -y --no-install-recommends ${XTRABACKUP_PKG} mysql-client jq; \
+#     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+FROM radondb/mysql57-sidecar:v2.4.0
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 COPY --from=builder /workspace/bin/mysqlchecker /mnt/mysqlchecker

@@ -45,11 +45,11 @@ func (c *initMysql) getImage() string {
 // getCommand get the container command.
 func (c *initMysql) getCommand() []string {
 	// Because initialize mysql contain error, so do it in commands.
-	return []string{"bash", "-c", "/docker-entrypoint.sh mysqld;" +
-		"if test -f /docker-entrypoint-initdb.d/restore.sh; then /docker-entrypoint-initdb.d/restore.sh; fi ;" +
-		"if test -f /docker-entrypoint-initdb.d/upgrade.sh; then /docker-entrypoint-initdb.d/upgrade.sh;fi;" +
-		"if test -f /docker-entrypoint-initdb.d/clone.sh; then /docker-entrypoint-initdb.d/clone.sh;fi;" +
-		"if test -f /docker-entrypoint-initdb.d/plugin.sh; then /docker-entrypoint-initdb.d/plugin.sh; fi "}
+	pluginscript := "if test -f /docker-entrypoint-initdb.d/plugin.sh; then /docker-entrypoint-initdb.d/plugin.sh; fi ;"
+	clonescript := "if test -f " + utils.RadonDBBinDir + "/clone.sh;" + " then " + utils.RadonDBBinDir + "/clone.sh;fi;"
+	updgradescript := "if test -f " + utils.RadonDBBinDir + "/upgrade.sh; then " + utils.RadonDBBinDir + "/upgrade.sh;fi;"
+	restorescript := "if test -f " + utils.RadonDBBinDir + "/restore.sh; then " + utils.RadonDBBinDir + "/restore.sh; fi ;"
+	return []string{"bash", "-c", "/docker-entrypoint.sh mysqld;" + pluginscript + clonescript + updgradescript + restorescript}
 }
 
 // getEnvVars get the container env.
@@ -132,6 +132,10 @@ func (c *initMysql) getVolumeMounts() []corev1.VolumeMount {
 		{
 			Name:      utils.SysLocalTimeZone,
 			MountPath: utils.SysLocalTimeZoneMountPath,
+		},
+		{
+			Name:      utils.MySQLcheckerVolumeName,
+			MountPath: utils.RadonDBBinDir,
 		},
 	}
 }
