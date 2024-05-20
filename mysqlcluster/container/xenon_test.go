@@ -64,7 +64,7 @@ func TestGetXenonImage(t *testing.T) {
 }
 
 func TestGetXenonCommand(t *testing.T) {
-	assert.Equal(t, []string{"xenon", "-c", "/etc/xenon/xenon.json"}, xenonCase.Command)
+	assert.Equal(t, []string{"sh", "-c", "while  [ -f '/etc/xenon/sleep-forever' ] ;do sleep 2;done; command xenon -c /etc/xenon/xenon.json & pid=$!;wait $pid;"}, xenonCase.Command)
 }
 
 func TestGetXenonEnvVar(t *testing.T) {
@@ -143,7 +143,7 @@ func TestGetXenonLivenessProbe(t *testing.T) {
 				Command: []string{
 					"sh",
 					"-c",
-					"pgrep xenon && xenoncli xenon ping",
+					"while  [ -f '/etc/xenon/sleep-forever' ] ;do sleep 2;done;pgrep xenon && xenoncli xenon ping",
 				},
 			},
 		},
@@ -160,7 +160,7 @@ func TestGetXenonReadinessProbe(t *testing.T) {
 	readinessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", "xenoncli xenon ping"},
+				Command: []string{"sh", "-c", "while  [ -f '/etc/xenon/sleep-forever' ] ;do sleep 2;done; xenoncli xenon ping"},
 			},
 		},
 		InitialDelaySeconds: 10,

@@ -655,13 +655,17 @@ func (cfg *Config) executeS3Restore(pathArg string) error {
 				return fmt.Errorf("error mkdir %s: %s", buildBinlogDir(cfg.XRestoreFrom), err)
 			}
 		}
-		restorePoint, err := time.Parse("2006-01-02 15:04:05", cfg.RestorePoint)
-		if err != nil {
-			return fmt.Errorf("restore point parse error : %s", err)
+		if len(cfg.RestorePoint) != 0 {
+			restorePoint, err := time.Parse("2006-01-02 15:04:05", cfg.RestorePoint)
+			if err != nil {
+				log.Info("restore point parse error : %s", err)
+			} else {
+				s3.S3Download(cfg, buildBinlogDir(cfg.XRestoreFrom))
+				cfg.BuildScript(gtid, restorePoint)
+			}
+
 		}
 
-		s3.S3Download(cfg, buildBinlogDir(cfg.XRestoreFrom))
-		cfg.BuildScript(gtid, restorePoint)
 	}
 	return nil
 }
@@ -694,7 +698,7 @@ if ! kill -s TERM "$pid" || ! wait "$pid"; then
 fi
 `, binlogPathDir, skipGtid, restorePoint.Format(RestoreTimeSample))
 	fmt.Println(script)
-	if err := ioutil.WriteFile(utils.InitFileVolumeMountPath+"/restore.sh", []byte(script), 0755); err != nil {
+	if err := ioutil.WriteFile(utils.RadonDBBinDir+"/restore.sh", []byte(script), 0755); err != nil {
 		return err
 	}
 

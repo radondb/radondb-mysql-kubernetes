@@ -1,0 +1,67 @@
+##############################################################################
+#  Build Sidecar
+###############################################################################
+# Build the manager binary
+FROM golang:1.17.13 as builder
+
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+ARG GO_PROXY=off
+RUN if [ "$GO_PROXY" = "on" ]; then \
+    go env -w GOPROXY=https://goproxy.cn,direct; \
+    fi
+# cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+#     go mod download
+RUN go mod download
+
+# Copy the go source
+COPY cmd/sidecar/main.go cmd/sidecar/main.go
+COPY sidecar/ sidecar/
+COPY utils/ utils/
+
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/sidecar cmd/sidecar/main.go
+
+# Build mysql checker for mysql conatiner
+COPY cmd/s3cmd/main.go cmd/s3cmd/main.go
+COPY cmd/s3cmd/s3upload.go cmd/s3cmd/s3upload.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/s3upload cmd/s3cmd/main.go cmd/s3cmd/s3upload.go
+
+# Build mysql checker for mysql conatiner
+COPY cmd/mysql/main.go cmd/mysql/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/mysqlchecker cmd/mysql/main.go
+
+###############################################################################
+#  Docker image for Sidecar
+###############################################################################
+# FROM ubuntu:focal
+
+# RUN set -ex; \
+#     groupadd --gid 1001 --system mysql; \
+#     useradd \
+#     --uid 1001 \
+#     --system \
+#     --home-dir /var/lib/mysql \
+#     --no-create-home \
+#     --gid mysql \
+#     mysql;
+
+# ARG XTRABACKUP_PKG=percona-xtrabackup-24
+# RUN set -ex; \
+#     apt-get update; \
+#     apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl bc openssh-server  sshpass;\
+#     wget -P /tmp --no-check-certificate https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb; \
+#     dpkg -i /tmp/percona-release_latest.$(lsb_release -sc)_all.deb; \
+#     apt-get update; \
+#     apt-get install -y --no-install-recommends ${XTRABACKUP_PKG} mysql-client jq; \
+#     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+FROM radondb/mysql80-sidecar:v2.4.0
+WORKDIR /
+COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
+COPY --from=builder /workspace/bin/mysqlchecker /mnt/mysqlchecker
+COPY --from=builder /workspace/bin/s3upload /mnt/s3upload
+ENTRYPOINT ["sidecar"]
