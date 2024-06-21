@@ -61,6 +61,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -a -o bin/my
 
 FROM radondb/mysql80-sidecar:v2.4.0
 WORKDIR /
+RUN set -ex; \
+   apt-get update; \
+   apt-get install -y --no-install-recommends mysql-client jq; \
+   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 COPY --from=builder /workspace/bin/mysqlchecker /mnt/mysqlchecker
 COPY --from=builder /workspace/bin/s3upload /mnt/s3upload
