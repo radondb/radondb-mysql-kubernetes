@@ -33,7 +33,7 @@ DOCKER_BUILDKIT=1 docker build -f build/xenon/Dockerfile --build-arg GO_PROXY=${
 docker buildx build --build-arg GO_PROXY=on  --platform linux/arm64 -f build/xenon/Dockerfile.arm64 --build-arg GO_PROXY=${GO_PROXY} -t ${XENON_IMGARM} -o type=docker   .
 docker push $XENON_IMGAMD
 docker push $XENON_IMGARM
-docker manifest create ${IMGPREFIX}xenon:${TAG}  ${XENON_IMGAMD} ${XENON_IMGARM}
+docker manifest create --amend ${IMGPREFIX}xenon:${TAG}  ${XENON_IMGAMD} ${XENON_IMGARM}
 docker manifest  push --purge  ${IMGPREFIX}xenon:${TAG}
 
 
@@ -53,9 +53,9 @@ docker push ${SIDECAR57_IMGAMD}
 docker push ${SIDECAR80_IMGAMD}
 docker push ${SIDECAR57_IMGARM}
 docker push ${SIDECAR80_IMGARM}
-docker manifest create ${IMGPREFIX}mysql57-sidecar:${TAG}  ${SIDECAR57_IMGAMD} ${SIDECAR57_IMGARM}
+docker manifest create --amend ${IMGPREFIX}mysql57-sidecar:${TAG}  ${SIDECAR57_IMGAMD} ${SIDECAR57_IMGARM}
 docker manifest  push --purge  ${IMGPREFIX}mysql57-sidecar:${TAG} 
-docker manifest create ${IMGPREFIX}mysql80-sidecar:${TAG}  ${SIDECAR80_IMGAMD} ${SIDECAR80_IMGARM}
+docker manifest create --amend ${IMGPREFIX}mysql80-sidecar:${TAG}  ${SIDECAR80_IMGAMD} ${SIDECAR80_IMGARM}
 docker manifest  push --purge  ${IMGPREFIX}mysql80-sidecar:${TAG} 
 
 

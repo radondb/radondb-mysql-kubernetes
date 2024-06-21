@@ -1,0 +1,17 @@
+# docker buildx build   --platform linux/arm64 -f Dockerfile.mysql80arm64  -t acekingke/percona-server:8.0.25 -o type=docker   .
+# docker run --rm -ti  -u root  --entrypoint "/bin/bash" --platform linux/arm64 radondb/percona-server:8.0.25
+# docker run --rm -ti  -u root  --entrypoint "/bin/bash" radondb/percona-server:8.0.25-amd64
+# docker run --rm -ti  -u root  --entrypoint "/bin/bash" perconalab/percona-server:8.0.30-22.1-arm64
+from  mysql:8.0.28-oracle
+# COPY --from=base /lib64/libc.so.6 usr/lib64/mysql/plugin/libc.so.6
+# COPY --from=base /usr/lib64/mysql/plugin/debug/audit_log.so /usr/lib64/mysql/plugin/debug/audit_log.so
+# COPY --from=base /usr/lib64/mysql/plugin/audit_log.so /usr/lib64/mysql/plugin/audit_log.so
+COPY ps-entry.sh /usr/local/bin/docker-entrypoint.sh
+RUN set -ex; \
+    usermod -u 1001 mysql ;\
+    groupmod -g 1001 mysql; \
+    chown -R mysql.mysql /var/run/mysqld /var/lib/mysql-keyring  /var/lib/mysql /var/lib/mysql-files; \
+    cp /usr/local/bin/docker-entrypoint.sh  /
+ENTRYPOINT ["docker-entrypoint.sh"]
+EXPOSE 3306 33060
+CMD ["mysqld"]
