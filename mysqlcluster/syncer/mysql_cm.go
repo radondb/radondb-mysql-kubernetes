@@ -21,9 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
-	"strings"
-
 	"github.com/blang/semver"
 	"github.com/go-ini/ini"
 	"github.com/go-logr/logr"
@@ -31,10 +28,13 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	osrun "runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sort"
+	"strings"
 
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
@@ -178,7 +178,10 @@ func (s *mysqlCMSyncer) appendConf() error {
 		return err
 	}
 	if s.Spec.MysqlVersion == "8.0" {
-		str := pluginConfigs["plugin-load"]
+		var str string = pluginConfigs["plugin-load"]
+		if osrun.GOARCH == "aarch64" || osrun.GOARCH == "arm64" {
+			str = "\"semisync_master.so;semisync_slave.so\""
+		}
 		str = str[0:len(str)-1] + ";mysql_clone.so\""
 		if s.Spec.MysqlOpts.PluginConf != nil {
 			s.Spec.MysqlOpts.PluginConf["plugin-load"] = str
@@ -333,7 +336,19 @@ func buildMysqlConf(c *mysqlcluster.MysqlCluster) (string, error) {
 func buildMysqlPluginConf(c *mysqlcluster.MysqlCluster) (string, error) {
 	cfg := ini.Empty(ini.LoadOptions{IgnoreInlineComment: true})
 	sec := cfg.Section("mysqld")
-	addKVConfigsToSection(sec, pluginConfigs)
+	pluginConfigsCpy := make(map[string]string)
+	cpyMap(pluginConfigs, pluginConfigsCpy)
+
+	if osrun.GOARCH == "aarch64" || osrun.GOARCH == "arm64" {
+		delete(pluginConfigsCpy, "audit_log_file")
+		delete(pluginConfigsCpy, "audit_log_exclude_accounts")
+		delete(pluginConfigsCpy, "audit_log_buffer_size")
+		delete(pluginConfigsCpy, "audit_log_policy")
+		delete(pluginConfigsCpy, "audit_log_rotate_on_size")
+		delete(pluginConfigsCpy, "audit_log_rotations")
+		delete(pluginConfigsCpy, "audit_log_format")
+	}
+	addKVConfigsToSection(sec, pluginConfigsCpy)
 	addKVConfigsToSection(sec, c.Spec.MysqlOpts.PluginConf)
 	data, err := writeConfigs(cfg)
 	if err != nil {
