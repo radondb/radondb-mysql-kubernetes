@@ -24,7 +24,7 @@ spec:
       #       path: host
     
   image: percona/percona-server:8.0.25
-  imagePullPolicy: Always
+  imagePullPolicy: IfNotPresent
   logOpts:
     resources:
       requests:

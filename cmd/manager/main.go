@@ -24,6 +24,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -44,6 +45,7 @@ import (
 	"github.com/radondb/radondb-mysql-kubernetes/controllers"
 	"github.com/radondb/radondb-mysql-kubernetes/controllers/backup"
 	"github.com/radondb/radondb-mysql-kubernetes/internal"
+	"github.com/radondb/radondb-mysql-kubernetes/utils"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -58,6 +60,7 @@ func init() {
 	utilruntime.Must(mysqlv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(mysqlv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 }
 
 func main() {
@@ -171,10 +174,12 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
-
+	// check crds
+	utils.RunUpdeteCRD(mgr.GetClient(), &setupLog)
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+
 }

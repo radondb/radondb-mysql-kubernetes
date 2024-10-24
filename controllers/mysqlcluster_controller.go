@@ -55,6 +55,7 @@ type MysqlClusterReconciler struct {
 	internal.XenonExecutor
 }
 
+// +kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=mysql.radondb.com,resources=mysqlclusters,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mysql.radondb.com,resources=mysqlclusters/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mysql.radondb.com,resources=mysqlclusters/finalizers,verbs=update

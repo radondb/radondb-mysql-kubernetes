@@ -10,6 +10,16 @@ metadata:
     heritage: {{ .Release.Service | quote }}
 rules:
 - apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - apps
   resources:
   - statefulsets
