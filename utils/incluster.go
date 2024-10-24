@@ -28,8 +28,12 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -37,6 +41,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/remotecommand"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -206,4 +211,139 @@ func NewConfig() (*rest.Config, error) {
 	// rules produce no results.
 	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		loader, &clientcmd.ConfigOverrides{}).ClientConfig()
+}
+
+func UpdateforCRD(crdName string, cli client.Client, log *logr.Logger) error {
+	// TODO: update CRD
+
+	// MYNS=extension-dmp
+	// CRD1=mysqlclusters.mysql.radondb.com
+	// CRD2=backups.mysql.radondb.com
+	// SEC=radondb-mysql-webhook-certs
+	// CERT=$(kubectl -n $MYNS get secrets $SEC -ojsonpath='{.data.tls\.crt}')
+	// kubectl patch CustomResourceDefinition $CRD1 --type=merge -p '{"spec":{"conversion":{"webhook":{"clientConfig":{"caBundle":"'$CERT'","service":{"namespace":"'$MYNS'"}}}}}}'
+	// kubectl patch CustomResourceDefinition $CRD2 --type=merge -p '{"spec":{"conversion":{"webhook":{"clientConfig":{"caBundle":"'$CERT'","service":{"namespace":"'$MYNS'"}}}}}}'
+	// echo $CERT
+	// fetch a secret in dmp-extension namespace which is named radondb-mysql-webhook-certs
+	// 1. first get os environment value MY_NAMESPACE, if not set, use default namespace ,"dmp-extension"
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	ns := os.Getenv("MY_NAMESPACE")
+	if len(ns) == 0 {
+		ns = "extension-dmp"
+	}
+	//2. get os environment value CERT_NAME, if not set, use default namespace "radondb-mysql-webhook-certs"
+	certName := os.Getenv("CERT_NAME")
+	if len(certName) == 0 {
+		certName = "radondb-mysql-webhook-certs"
+	}
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      certName,
+			Namespace: ns,
+		},
+	}
+	err := cli.Get(ctx, types.NamespacedName{Name: secret.Name, Namespace: secret.Namespace}, secret)
+	// if err is not found, return error
+	if errors.IsNotFound(err) {
+		return fmt.Errorf("secret %s not found", certName)
+	}
+	cert := secret.Data["tls.crt"]
+
+	//fetch the  CustomResourceDefinition ,which name is mysqlclusters.mysql.radondb.com
+	// 创建 CRD 实例
+	//apiextensionsv1.AddToScheme(scheme)
+	//CustomResourceDefinition
+	crd := &apiextensionsv1.CustomResourceDefinition{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "CustomResourceDefinition",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: crdName,
+		},
+	}
+	// 使用客户端获取 CRD 资源
+	errCRD := cli.Get(ctx, types.NamespacedName{Name: crdName}, crd)
+	if errCRD != nil {
+		return errCRD
+	}
+	hasBetaVersion := false
+	for _, v := range crd.Spec.Versions {
+		if v.Name == "v1beta1" {
+			hasBetaVersion = true
+		}
+	}
+	if !hasBetaVersion {
+		return fmt.Errorf("has not v1beta1 version")
+	}
+
+	oldCrd := crd.DeepCopy()
+	// if CustomResourceConversion's CABundle of Webhook is not equal to cert, update it
+	// sometime the path and port are missing, I don't know why
+	if oldCrd.Spec.Conversion == nil || oldCrd.Spec.Conversion.Webhook == nil || oldCrd.Spec.Conversion.Webhook.ClientConfig == nil ||
+		oldCrd.Spec.Conversion.Webhook.ClientConfig.CABundle == nil ||
+		oldCrd.Spec.Conversion.Webhook.ClientConfig.Service.Path == nil ||
+		oldCrd.Spec.Conversion.Webhook.ClientConfig.Service.Port == nil ||
+		!bytes.Equal(oldCrd.Spec.Conversion.Webhook.ClientConfig.CABundle, cert) {
+		crd.Spec.Conversion = &apiextensionsv1.CustomResourceConversion{
+			Strategy: apiextensionsv1.WebhookConverter,
+			Webhook: &apiextensionsv1.WebhookConversion{
+				ClientConfig: &apiextensionsv1.WebhookClientConfig{
+					CABundle: []byte(cert),
+					Service: &apiextensionsv1.ServiceReference{
+						Namespace: ns,
+						Name: func() string {
+							if oldCrd.Spec.Conversion != nil && oldCrd.Spec.Conversion.Webhook != nil && oldCrd.Spec.Conversion.Webhook.ClientConfig != nil {
+								return oldCrd.Spec.Conversion.Webhook.ClientConfig.Service.Name
+							} else {
+								return "radondb-mysql-webhook"
+							}
+						}(),
+						Path: func() *string {
+							var p string = "/convert"
+							return &p
+						}(),
+						Port: func() *int32 {
+							var serverPort int32 = 443
+							return &serverPort
+						}(),
+					},
+				},
+				ConversionReviewVersions: []string{"v1"},
+			},
+		}
+		log.Info("covert crd", "value", crd.Spec.Conversion)
+	} else {
+		return nil
+	}
+	errCRD = cli.Patch(ctx, crd, client.MergeFrom(oldCrd))
+	if errCRD != nil {
+		return errCRD
+	}
+
+	return nil
+}
+
+func RunUpdeteCRD(cli client.Client, log *logr.Logger) {
+	go func() {
+		// Just run in the first 500 seconds,almost eight minutes, because the crd webhook's CABundle is not correct just in the DMP reinstall period
+		// if this process failed, just need to restart the operetor pod
+		for i := 0; i < 100; i++ {
+			time.Sleep(time.Second * 5)
+			err := UpdateforCRD("mysqlclusters.mysql.radondb.com", cli, log)
+			if err != nil {
+				log.Info("update CRD failed", "error", err)
+			}
+			err = UpdateforCRD("backups.mysql.radondb.com", cli, log)
+			if err != nil {
+				log.Info("update CRD failed", "error", err)
+			}
+		}
+		log.Info("check the crd about 8 minutes, now exit.")
+	}()
 }
