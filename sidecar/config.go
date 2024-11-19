@@ -329,7 +329,7 @@ func (cfg *Config) buildExtraConfig(filePath string) (*ini.File, error) {
 		log.Info("It has remote cluster server-id start offset  +100")
 		startIndex += mysqlServerIDOffsetInc
 	}
-	if len(arr) == 3 && arr[1] == "ro" {
+	if len(arr) >= 3 && arr[len(arr)-2] == "ro" {
 		log.Info("It is readonly pod,  server-id start offset  +100")
 		startIndex += mysqlServerIDOffsetInc
 	}
@@ -426,7 +426,10 @@ func (cfg *Config) buildInitSql(hasInit bool) []byte {
 	if err != nil {
 		log.Info("failed to read /mnt/mysql-cm/init.sql")
 	}
-	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
+	var sql string
+	if cfg.MySQLVersion.Major == 5 {
+		log.Info("version is 5.7, need not donor userq")
+		sql = fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
 CREATE DATABASE IF NOT EXISTS %s;
 DROP user IF EXISTS 'root'@'127.0.0.1';
 CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY '%s';
@@ -446,36 +449,82 @@ GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%';
 DROP user IF EXISTS '%s'@'%%';
 CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
 GRANT ALL ON %s.* TO '%s'@'%%' ;
-DROP user IF EXISTS '%s'@'%%';
-CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
-GRANT BACKUP_ADMIN ON *.* TO '%s'@'%%' ;
 FLUSH PRIVILEGES;
 
 %s
 `,
-		cfg.Database, //database
-		cfg.RootPassword,
-		cfg.InternalRootPassword,
-		cfg.ReplicationUser,                          //drop user
-		cfg.ReplicationUser, cfg.ReplicationPassword, //create user
-		cfg.ReplicationUser, //grant REPLICATION
+			cfg.Database, //database
+			cfg.RootPassword,
+			cfg.InternalRootPassword,
+			cfg.ReplicationUser,                          //drop user
+			cfg.ReplicationUser, cfg.ReplicationPassword, //create user
+			cfg.ReplicationUser, //grant REPLICATION
 
-		cfg.MetricsUser,                      //drop user MetricsUser
-		cfg.MetricsUser, cfg.MetricsPassword, //create user
-		cfg.MetricsUser, //grant
+			cfg.MetricsUser,                      //drop user MetricsUser
+			cfg.MetricsUser, cfg.MetricsPassword, //create user
+			cfg.MetricsUser, //grant
 
-		cfg.OperatorUser,                       //drop user
-		cfg.OperatorUser, cfg.OperatorPassword, //create
-		cfg.OperatorUser, //grant
+			cfg.OperatorUser,                       //drop user
+			cfg.OperatorUser, cfg.OperatorPassword, //create
+			cfg.OperatorUser, //grant
 
-		cfg.User,               //drop user
-		cfg.User, cfg.Password, //create user
-		cfg.Database, cfg.User, //grant
-		cfg.DonorClone,
-		cfg.DonorClone, cfg.DonorClonePassword,
-		cfg.DonorClone, // grant
-		initSQL,
-	)
+			cfg.User,               //drop user
+			cfg.User, cfg.Password, //create user
+			cfg.Database, cfg.User, //grant
+			initSQL,
+		)
+	} else {
+		sql = fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
+		CREATE DATABASE IF NOT EXISTS %s;
+		DROP user IF EXISTS 'root'@'127.0.0.1';
+		CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY '%s';
+		GRANT ALL ON *.* TO 'root'@'127.0.0.1'  with grant option;
+		DROP user IF EXISTS 'root'@'%%';
+		CREATE USER 'root'@'%%' IDENTIFIED BY '%s';
+		GRANT ALL ON *.* TO 'root'@'%%' with grant option;
+		DROP user IF EXISTS '%s'@'%%';
+		CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+		GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '%s'@'%%';
+		DROP user IF EXISTS '%s'@'%%';
+		CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+		GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* TO '%s'@'%%';
+		DROP user IF EXISTS '%s'@'%%';
+		CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+		GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%';
+		DROP user IF EXISTS '%s'@'%%';
+		CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+		GRANT ALL ON %s.* TO '%s'@'%%' ;
+		DROP user IF EXISTS '%s'@'%%';
+		CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
+		GRANT BACKUP_ADMIN ON *.* TO '%s'@'%%' ;
+		FLUSH PRIVILEGES;
+		
+		%s
+		`,
+			cfg.Database, //database
+			cfg.RootPassword,
+			cfg.InternalRootPassword,
+			cfg.ReplicationUser,                          //drop user
+			cfg.ReplicationUser, cfg.ReplicationPassword, //create user
+			cfg.ReplicationUser, //grant REPLICATION
+
+			cfg.MetricsUser,                      //drop user MetricsUser
+			cfg.MetricsUser, cfg.MetricsPassword, //create user
+			cfg.MetricsUser, //grant
+
+			cfg.OperatorUser,                       //drop user
+			cfg.OperatorUser, cfg.OperatorPassword, //create
+			cfg.OperatorUser, //grant
+
+			cfg.User,               //drop user
+			cfg.User, cfg.Password, //create user
+			cfg.Database, cfg.User, //grant
+			cfg.DonorClone,
+			cfg.DonorClone, cfg.DonorClonePassword,
+			cfg.DonorClone, // grant
+			initSQL,
+		)
+	}
 
 	if hasInit {
 		sql += "\nRESET SLAVE ALL;\n"
