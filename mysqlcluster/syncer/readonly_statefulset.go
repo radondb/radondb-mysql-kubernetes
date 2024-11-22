@@ -167,6 +167,23 @@ func GetReadonlyStatefulSet(cr *StatefulSetSyncer) (*appsv1.StatefulSet, error) 
 	}
 
 	mysql := container.EnsureContainer(utils.ContainerMysqlName, cr.MysqlCluster)
+	// ReadOnly mysql cannot use the mysqlchecker to do readness check
+	mysql.ReadinessProbe = &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"sh",
+					"-c",
+					`if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql -uroot -NB -e "SELECT 1") -eq 1`,
+				},
+			},
+		},
+		InitialDelaySeconds: 10,
+		TimeoutSeconds:      15,
+		PeriodSeconds:       15,
+		SuccessThreshold:    1,
+		FailureThreshold:    3,
+	}
 	if cr.Spec.ReadOnlys.Resources != nil {
 		mysql.Resources = *cr.Spec.ReadOnlys.Resources
 		// (RO) calc innodb buffer and add it to env
