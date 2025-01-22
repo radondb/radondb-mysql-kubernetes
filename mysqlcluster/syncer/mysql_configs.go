@@ -118,7 +118,7 @@ var mysqlStaticConfigs = map[string]string{
 	"default-storage-engine":      "InnoDB",
 	"back_log":                    "2048",
 	"ft_min_word_len":             "4",
-	"lower_case_table_names":      "0",
+	"lower_case_table_names":      "1",
 	"innodb_ft_max_token_size":    "84",
 	"innodb_ft_min_token_size":    "3",
 	"sql_mode":                    "STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION",
