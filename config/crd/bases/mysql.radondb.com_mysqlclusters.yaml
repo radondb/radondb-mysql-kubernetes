@@ -206,6 +206,13 @@ spec:
                       the mysqld container will not be not healthy.
                     minimum: 0
                     type: integer
+                  mysqlBoolConf:
+                    description: A []string that will be passed to my.cnf file The
+                      string array is persisted in the configmap. Delete key is not
+                      valid, it is recommended to edit the configmap directly.
+                    items:
+                      type: string
+                    type: array
                   mysqlConf:
                     additionalProperties:
                       type: string

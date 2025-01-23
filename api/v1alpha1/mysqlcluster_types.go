@@ -210,6 +210,12 @@ type MysqlOpts struct {
 	// +optional
 	MysqlConf MysqlConf `json:"mysqlConf,omitempty"`
 
+	// A []string that will be passed to my.cnf file
+	// The string array is persisted in the configmap.
+	// Delete key is not valid, it is recommended to edit the configmap directly.
+	// +optional
+	MysqlBoolConf MysqlBoolConfig `json:"mysqlBoolConf,omitempty"`
+
 	// A map[string]string that will be passed to plugin.cnf file.
 	// The key/value pairs is persisted in the configmap.
 	// Delete key is not valid, it is recommended to edit the configmap directly.
@@ -283,6 +289,9 @@ type MetricsOpts struct {
 // MysqlConf defines type for extra cluster configs. It's a simple map between
 // string and string.
 type MysqlConf map[string]string
+
+// MysqlBoolConfig defines type for extra cluster bool configs. It's a string array.
+type MysqlBoolConfig []string
 
 // PodPolicy defines the general configuration and extra resources of pod.
 type PodPolicy struct {
